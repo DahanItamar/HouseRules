@@ -9,7 +9,7 @@ production-readiness certification.
 - Godot 4.7.2 standard resource import completed without script errors.
 - `gdformat --check src tests`: 33 files unchanged; pass.
 - `gdlint src tests`: no problems; pass.
-- GUT 9.5.0: **21 tests, 20 passing, 1 failing; 963/964 assertions**. The sole
+- GUT 9.5.0: **22 tests, 21 passing, 1 failing; 973/974 assertions**. The sole
   failure is the strict slot RTP tolerance. Process exit status is 1.
 - The suite ran locally on Windows using the installed Godot binary. A GitHub
   Actions workflow is provided, but **no remote CI run was performed**.
@@ -52,6 +52,10 @@ AC-024 now has automated coverage: a losing spin can complete the participation
 contract, its flat reward is applied after the cabinet settlement, a replacement
 keeps three contracts active, and progress survives save/load through schema
 version 2.
+
+AC-051 now has automated coverage for both v1 transition points. Approaching the
+High-Roller staircase or VIP elevator displays its lifetime-wagered threshold,
+and interaction is refused while those out-of-scope wings remain locked.
 
 Headless evidence does not certify physical gamepad use, 7-inch handheld
 readability, full rendered animation or power-loss/crash behavior. Those require

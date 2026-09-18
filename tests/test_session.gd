@@ -149,6 +149,17 @@ func test_ac024_contract_reward_is_independent_of_round_outcome() -> void:
 	)
 
 
+func test_ac051_locked_wings_show_lifetime_wagered_thresholds() -> void:
+	for id: StringName in FloorController.WING_POSITIONS:
+		_floor.avatar_position = FloorController.WING_POSITIONS[id]
+		_floor.refresh_proximity()
+		assert_eq(_floor.nearby_wing, id)
+		assert_string_contains(_floor._prompt.text, tr("WING_" + String(id).to_upper()))
+		assert_string_contains(_floor._prompt.text, str(FloorController.WING_THRESHOLDS[id]))
+		assert_false(_floor.interact(), "v1 transition points remain locked")
+		assert_null(SceneRouter.session)
+
+
 func test_back_input_exits_cabinet_without_also_leaving_floor() -> void:
 	_approach_slot()
 	assert_true(_floor.interact())

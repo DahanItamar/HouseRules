@@ -39,6 +39,7 @@ directories; they do not overwrite the player's normal save.
 | AC-024 | A losing slot round completes a participation contract and grants its flat reward; progress survives save/load. |
 | AC-027 | Strict million-round test for each cabinet; current slot sample fails. |
 | AC-028–036 | Exhaustive slot paytable, blackjack naturals/soft 17/double, fixed unique mines, cashout, bust and cap. |
+| AC-051 | Both v1 wing transition points show their lifetime-wagered thresholds and refuse entry while locked. |
 
 The input regression injects a real `InputEventAction` and verifies cabinet back
 does not also trigger menu exit. Physical controller use, handheld readability,

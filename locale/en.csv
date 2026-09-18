@@ -26,6 +26,9 @@ FLOOR_HELP,Move with WASD / left stick / D-pad.  [%s] Menu
 CASHIER_NAME,CASHIER
 CASHIER_PROMPT,[%s] Visit cashier
 CASHIER_ACTIONS,[%s] Take 100-chip marker (below 20 chips)   [%s] Repay debt   [%s] Leave
+WING_HIGH_ROLLER,HIGH-ROLLER STAIRCASE
+WING_VIP,VIP ELEVATOR
+WING_LOCKED,%s LOCKED\nRequires %d lifetime wagered
 CABINET_STAKE,STAKE  %d
 CABINET_CONTROLS,[%s] Play   Left / Right: Stake   [%s] Leave
 ROUND_READY,Choose your stake.

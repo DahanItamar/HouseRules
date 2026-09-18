@@ -4,8 +4,19 @@ extends Node2D
 const SPEED: float = 180.0
 const INTERACTION_RADIUS: float = 76.0
 const CASHIER_POSITION := Vector2(780, 350)
+const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(90, 180), &"vip": Vector2(870, 180)}
+const WING_THRESHOLDS: Dictionary = {&"high_roller": 5000, &"vip": 100_000}
+const FLOOR_TEXTURES: Dictionary = {
+	&"slot_classic": preload("res://assets/drafts/m2/slot_classic_floor.png"),
+	&"blackjack": preload("res://assets/drafts/m2/blackjack_table_floor.png"),
+	&"minefield_vault": preload("res://assets/drafts/m2/vault_door_floor.png"),
+	&"cashier": preload("res://assets/drafts/m2/cashier_cage.png"),
+	&"high_roller": preload("res://assets/drafts/m2/staircase_up.png"),
+	&"vip": preload("res://assets/drafts/m2/elevator_doors.png"),
+}
 var avatar_position := Vector2(200, 330)
 var nearby_definition: CabinetDefinition
+var nearby_wing: StringName = &""
 var cabinet_positions: Dictionary = {
 	&"slot_classic": Vector2(250, 200),
 	&"blackjack": Vector2(480, 200),
@@ -46,12 +57,19 @@ func move_avatar(direction: Vector2, delta: float) -> void:
 
 func refresh_proximity() -> void:
 	nearby_definition = null
+	nearby_wing = &""
 	var nearest: float = INTERACTION_RADIUS
 	for id: StringName in cabinet_positions:
 		var distance: float = avatar_position.distance_to(cabinet_positions[id])
 		if distance <= nearest:
 			nearest = distance
 			nearby_definition = definitions.get(id)
+	for id: StringName in WING_POSITIONS:
+		var distance: float = avatar_position.distance_to(WING_POSITIONS[id])
+		if distance <= nearest:
+			nearest = distance
+			nearby_definition = null
+			nearby_wing = id
 	if _prompt != null:
 		_update_prompt()
 	queue_redraw()
@@ -63,6 +81,9 @@ func interact() -> bool:
 			return false
 		SceneRouter.enter_cabinet(nearby_definition)
 		return true
+	if nearby_wing != &"":
+		_update_prompt()
+		return false
 	if avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_cashier_open = true
 		_update_prompt()
@@ -132,6 +153,12 @@ func _update_prompt() -> void:
 					InputRouter.glyph("interact")
 				]
 			)
+	elif nearby_wing != &"":
+		_prompt.position = WING_POSITIONS[nearby_wing] + Vector2(-80, 74)
+		_prompt.text = (
+			tr("WING_LOCKED")
+			% [tr("WING_" + String(nearby_wing).to_upper()), WING_THRESHOLDS[nearby_wing]]
+		)
 	elif avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_prompt.text = tr("CASHIER_PROMPT") % InputRouter.glyph("interact")
 	else:
@@ -144,13 +171,10 @@ func _draw() -> void:
 		draw_line(Vector2(x, 94), Vector2(x, 452), Color("2d2a3e"))
 	for id: StringName in cabinet_positions:
 		var at: Vector2 = cabinet_positions[id]
-		draw_rect(Rect2(at - Vector2(32, 24), Vector2(64, 48)), Color("474259"))
-		draw_rect(
-			Rect2(at - Vector2(28, 20), Vector2(56, 40)),
-			Color("123a2e") if id == &"blackjack" else Color("2d2a3e")
-		)
-		draw_line(at + Vector2(-24, -17), at + Vector2(24, -17), Color("00e5ff"), 3)
-	draw_rect(Rect2(CASHIER_POSITION - Vector2(50, 24), Vector2(100, 48)), Color("474259"))
+		draw_texture_rect(FLOOR_TEXTURES[id], Rect2(at - Vector2(32, 24), Vector2(64, 48)), false)
+	draw_texture_rect(
+		FLOOR_TEXTURES.cashier, Rect2(CASHIER_POSITION - Vector2(50, 38), Vector2(100, 76)), false
+	)
 	draw_string(
 		ThemeDB.fallback_font,
 		CASHIER_POSITION + Vector2(-42, 4),
@@ -159,6 +183,14 @@ func _draw() -> void:
 		-1,
 		16,
 		Color("e8e6f0")
+	)
+	draw_texture_rect(
+		FLOOR_TEXTURES.high_roller,
+		Rect2(WING_POSITIONS.high_roller - Vector2(36, 48), Vector2(72, 96)),
+		false
+	)
+	draw_texture_rect(
+		FLOOR_TEXTURES.vip, Rect2(WING_POSITIONS.vip - Vector2(30, 42), Vector2(60, 84)), false
 	)
 	draw_circle(avatar_position, 12, Color("e8e6f0"))
 	draw_circle(avatar_position + Vector2(0, -5), 5, Color("ff3d7f"))
