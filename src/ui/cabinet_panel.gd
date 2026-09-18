@@ -93,7 +93,7 @@ func _refresh_blackjack() -> void:
 
 func _refresh_vault() -> void:
 	var math: MinefieldMath = cabinet.get("math")
-	var cursor: int = cabinet.get("cursor")
+	var cursor: int = (cabinet.get("snap_cursor") as SnapCursor).index
 	var grid: String = ""
 	for index: int in range(25):
 		var tile: String = "#"

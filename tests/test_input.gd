@@ -95,6 +95,25 @@ func test_ac037_active_gamepad_disconnect_pauses_until_reconnect() -> void:
 	assert_false(get_tree().paused)
 
 
+func test_ac039_dpad_and_left_stick_move_a_wrapping_snap_cursor() -> void:
+	var cursor := SnapCursor.new(5, 5)
+	var dpad := InputEventJoypadButton.new()
+	dpad.button_index = JOY_BUTTON_DPAD_LEFT
+	dpad.pressed = true
+	assert_true(InputRouter.move_snap_cursor(cursor, dpad))
+	assert_eq(cursor.index, 4, "Left wraps inside the current row")
+
+	var stick := InputEventJoypadMotion.new()
+	stick.axis = JOY_AXIS_LEFT_Y
+	stick.axis_value = 1.0
+	assert_true(InputRouter.move_snap_cursor(cursor, stick))
+	assert_eq(cursor.index, 9, "Down preserves the selected column")
+
+	cursor.index = 24
+	assert_true(InputRouter.move_snap_cursor(cursor, stick))
+	assert_eq(cursor.index, 4, "Vertical movement wraps inside the grid")
+
+
 func _has_button(action: StringName, button: JoyButton) -> bool:
 	for event: InputEvent in InputMap.action_get_events(action):
 		if event is InputEventJoypadButton and event.button_index == button:

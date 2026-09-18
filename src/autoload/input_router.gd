@@ -83,6 +83,19 @@ func _on_joy_connection_changed(device: int, connected: bool) -> void:
 		gamepad_connection_changed.emit(false)
 
 
+func move_snap_cursor(cursor: SnapCursor, event: InputEvent) -> bool:
+	var direction := Vector2i.ZERO
+	if event.is_action_pressed("move_left"):
+		direction = Vector2i.LEFT
+	elif event.is_action_pressed("move_right"):
+		direction = Vector2i.RIGHT
+	elif event.is_action_pressed("move_up"):
+		direction = Vector2i.UP
+	elif event.is_action_pressed("move_down"):
+		direction = Vector2i.DOWN
+	return cursor.move(direction)
+
+
 func _bind(action: String, key: Key, button: JoyButton) -> void:
 	if InputMap.has_action(action):
 		return
