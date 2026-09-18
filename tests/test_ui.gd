@@ -149,6 +149,29 @@ func test_higgsfield_slot_symbols_are_high_resolution_and_transparent() -> void:
 		assert_gt(image.get_used_rect().size.x, 400, "%s retains a substantial opaque subject" % symbol_name)
 
 
+func test_slot_uses_a_full_screen_sharp_higgsfield_stage() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	assert_eq(panel._frame.position, Vector2.ZERO)
+	assert_eq(panel._frame.size, Vector2(960, 540))
+	assert_eq(panel._slot_reels.size(), 3, "Classic rules expose exactly three evaluated reels")
+	for reel: Control in panel._slot_reels:
+		assert_gte(reel.size.x, 190.0, "Each reel is large enough for handheld readability")
+		assert_gte(reel.size.y, 230.0, "Three visible rows fill the main stage")
+	var bezel: Texture2D = load(
+		"res://assets/production/slot/symbols/slot_fullscreen_bezel.png"
+	)
+	assert_gte(bezel.get_width(), 1200, "The bezel retains a high-resolution master")
+	var bezel_image := bezel.get_image()
+	assert_lt(
+		bezel_image.get_pixel(bezel_image.get_width() / 2, bezel_image.get_height() / 2).a,
+		0.05,
+		"The reel aperture is true transparency, not magenta"
+	)
+
+
 func test_blackjack_uses_dealt_cards_and_a_revealing_hole_card() -> void:
 	var session := CabinetSession.new()
 	add_child_autofree(session)

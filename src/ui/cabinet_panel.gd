@@ -5,6 +5,8 @@ extends CanvasLayer
 var cabinet: MiniGame
 var _title: Label
 var _frame: ColorRect
+var _shade: ColorRect
+var _controls_backdrop: ColorRect
 var _stake: Label
 var _status: Label
 var _detail: Label
@@ -23,6 +25,7 @@ var _slot_spin_elapsed: float = 0.0
 var _slot_spinning: bool = false
 var _slot_finish_callback: Callable
 var _slot_lever: Node2D
+var _slot_spin_label: Label
 var _vault_tiles: Array[VaultTile] = []
 var _vault_cursor: Node2D
 var _art_id: StringName = &""
@@ -33,8 +36,12 @@ var _blackjack_dealt: bool = false
 var _blackjack_cards: Array[PlayingCard] = []
 var _vault_revealed: Dictionary = {}
 
-const SLOT_BODY := preload("res://assets/production/slot/slot_classic_body.png")
+const SLOT_BODY := preload("res://assets/production/slot/symbols/slot_fullscreen_bezel.png")
 const SLOT_SYMBOL_COUNT: int = 6
+const SLOT_REEL_TOP: float = 151.0
+const SLOT_REEL_BOUNCE_Y: float = 144.0
+const SLOT_CELL_HEIGHT: float = 78.0
+const SLOT_STRIP_HEIGHT: float = SLOT_CELL_HEIGHT * 5.0
 const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const BLACKJACK_DEALER := preload("res://assets/drafts/m2/dealer.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
@@ -46,10 +53,10 @@ const VAULT_TILE_MINE := preload("res://assets/drafts/m2/tile_mine_revealed.png"
 
 func _ready() -> void:
 	layer = 5
-	var shade := ColorRect.new()
-	shade.color = Color("0b0a12e8")
-	shade.size = Vector2(960, 540)
-	add_child(shade)
+	_shade = ColorRect.new()
+	_shade.color = Color("0b0a12e8")
+	_shade.size = Vector2(960, 540)
+	add_child(_shade)
 	_frame = ColorRect.new()
 	_frame.color = Color("17161af2")
 	_frame.position = Vector2(48, 76)
@@ -58,11 +65,11 @@ func _ready() -> void:
 	_art_root = Node2D.new()
 	_art_root.name = "CabinetArt"
 	add_child(_art_root)
-	var controls_backdrop := ColorRect.new()
-	controls_backdrop.position = Vector2(64, 400)
-	controls_backdrop.size = Vector2(832, 56)
-	controls_backdrop.color = Color("1a1826")
-	add_child(controls_backdrop)
+	_controls_backdrop = ColorRect.new()
+	_controls_backdrop.position = Vector2(64, 400)
+	_controls_backdrop.size = Vector2(832, 56)
+	_controls_backdrop.color = Color("1a1826")
+	add_child(_controls_backdrop)
 	_title = _label(Vector2(80, 90), 24)
 	_stake = _label(Vector2(80, 138), Typography.PROMINENT)
 	_status = _label(Vector2(80, 184), 18)
@@ -120,7 +127,7 @@ func _process(delta: float) -> void:
 	for reel_index: int in range(_slot_reels.size()):
 		if _slot_stopped[reel_index]:
 			continue
-		_slot_offsets[reel_index] += delta * (380.0 + reel_index * 55.0)
+		_slot_offsets[reel_index] += delta * (760.0 + reel_index * 70.0)
 		_update_spinning_reel(reel_index)
 		if _slot_spin_elapsed >= _slot_stop_times[reel_index]:
 			_stop_reel(reel_index)
@@ -208,6 +215,7 @@ func _ensure_art() -> void:
 	_art_id = id
 	if id == &"slot_classic":
 		_build_slot_art()
+		_apply_slot_fullscreen_layout()
 	elif id == &"blackjack":
 		_build_blackjack_art()
 	elif id == &"minefield_vault":
@@ -216,26 +224,34 @@ func _ensure_art() -> void:
 
 
 func _build_slot_art() -> void:
-	var body := _texture("SlotCabinetArt", SLOT_BODY, Vector2(300, 34), Vector2(350, 450))
-	body.material = _chroma_material(Color("2d2638"), 0.14)
-	_art_root.add_child(body)
+	var backdrop := ColorRect.new()
+	backdrop.name = "SlotBackdrop"
+	backdrop.position = Vector2.ZERO
+	backdrop.size = Vector2(960, 540)
+	backdrop.color = Color("13090b")
+	_art_root.add_child(backdrop)
+	var reel_shadow := ColorRect.new()
+	reel_shadow.position = Vector2(158, 145)
+	reel_shadow.size = Vector2(644, 252)
+	reel_shadow.color = Color("080707")
+	_art_root.add_child(reel_shadow)
 	var reel_back := ColorRect.new()
-	reel_back.position = Vector2(374, 214)
-	reel_back.size = Vector2(205, 158)
-	reel_back.color = Color("f1e8d8")
+	reel_back.position = Vector2(166, SLOT_REEL_TOP)
+	reel_back.size = Vector2(628, SLOT_CELL_HEIGHT * 3.0)
+	reel_back.color = Color("f3ead8")
 	_art_root.add_child(reel_back)
 	for index: int in range(3):
 		var reel := Control.new()
 		reel.name = "ReelColumn%d" % index
-		reel.position = Vector2(381 + index * 65, 219)
-		reel.size = Vector2(58, 148)
+		reel.position = Vector2(171 + index * 207, SLOT_REEL_TOP)
+		reel.size = Vector2(198, SLOT_CELL_HEIGHT * 3.0)
 		reel.clip_contents = true
 		var cells: Array[SlotSymbol] = []
 		for cell_index: int in range(5):
 			var cell := SlotSymbol.new()
 			cell.name = "Reel%dCell%d" % [index, cell_index]
-			cell.position = Vector2(3, (cell_index - 1) * 48)
-			cell.size = Vector2(52, 44)
+			cell.position = Vector2(4, (cell_index - 1) * SLOT_CELL_HEIGHT)
+			cell.size = Vector2(190, SLOT_CELL_HEIGHT - 4.0)
 			cell.symbol_index = (cell_index + index) % SLOT_SYMBOL_COUNT
 			reel.add_child(cell)
 			cells.append(cell)
@@ -244,20 +260,69 @@ func _build_slot_art() -> void:
 		_slot_symbols.append(cells[2])
 		_art_root.add_child(reel)
 		_stop_reel(index)
-	_slot_lever = Node2D.new()
-	_slot_lever.name = "LeverArt"
-	_slot_lever.position = Vector2(651, 218)
-	var arm := ColorRect.new()
-	arm.position = Vector2(-3, 0)
-	arm.size = Vector2(7, 92)
-	arm.color = Color("b8ad9c")
-	_slot_lever.add_child(arm)
-	var knob := ColorRect.new()
-	knob.position = Vector2(-12, -10)
-	knob.size = Vector2(24, 24)
-	knob.color = Color("a53243")
-	_slot_lever.add_child(knob)
-	_art_root.add_child(_slot_lever)
+	for separator_x: float in [372.0, 579.0]:
+		var separator := ColorRect.new()
+		separator.position = Vector2(separator_x, SLOT_REEL_TOP)
+		separator.size = Vector2(5, SLOT_CELL_HEIGHT * 3.0)
+		separator.color = Color("8a682f")
+		_art_root.add_child(separator)
+	var body := _texture("SlotCabinetArt", SLOT_BODY, Vector2(20, 5), Vector2(920, 528))
+	_art_root.add_child(body)
+	var payline := ColorRect.new()
+	payline.name = "WinningPayline"
+	payline.position = Vector2(151, SLOT_REEL_TOP + SLOT_CELL_HEIGHT * 1.5 - 2.0)
+	payline.size = Vector2(658, 4)
+	payline.color = Color("d9b44a")
+	_art_root.add_child(payline)
+
+
+func _apply_slot_fullscreen_layout() -> void:
+	_frame.position = Vector2.ZERO
+	_frame.size = Vector2(960, 540)
+	_frame.color = Color("13090b")
+	_controls_backdrop.position = Vector2(236, 496)
+	_controls_backdrop.size = Vector2(488, 34)
+	_controls_backdrop.color = Color("090708cc")
+	_title.position = Vector2(248, 43)
+	_title.size = Vector2(464, 54)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.add_theme_font_size_override("font_size", 34)
+	_title.add_theme_color_override("font_color", Color("f5e6bd"))
+	_stake.position = Vector2(83, 443)
+	_stake.size = Vector2(280, 42)
+	_stake.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stake.add_theme_font_size_override("font_size", 24)
+	_status.position = Vector2(330, 99)
+	_status.size = Vector2(300, 32)
+	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status.add_theme_font_size_override("font_size", 16)
+	_status.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_detail.position = Vector2(620, 439)
+	_detail.size = Vector2(260, 46)
+	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_detail.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_detail.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_controls.position = Vector2(248, 502)
+	_controls.size = Vector2(464, 24)
+	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_controls.add_theme_font_size_override("font_size", 16)
+	_slot_spin_label = _slot_deck_label(Vector2(410, 433), Vector2(140, 48), 23)
+	_slot_spin_label.name = "SlotSpinLabel"
+	_slot_spin_label.text = tr("SLOT_SPIN")
+
+
+func _slot_deck_label(at: Vector2, dimensions: Vector2, font_size: int) -> Label:
+	var label := Label.new()
+	label.position = at
+	label.size = dimensions
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color("f5e6bd"))
+	add_child(label)
+	return label
 
 
 func _build_blackjack_art() -> void:
@@ -366,14 +431,14 @@ func _refresh_slot() -> void:
 	var symbols: Array = [0, 1, 2]
 	if _result != null:
 		symbols = _result.detail.get("symbols", symbols)
-	var names: PackedStringArray = []
 	for index: int in range(mini(symbols.size(), 3)):
 		var symbol: int = symbols[index]
 		if not _slot_spinning and index < _slot_reels.size():
 			_slot_spin_targets[index] = symbol
 			_stop_reel(index)
-		names.append(tr("SYMBOL_" + str(symbol)))
-	_detail.text = "  •  ".join(names)
+	_detail.text = (
+		tr("SLOT_LAST_WIN") % _result.payout if _result != null else tr("SLOT_CENTER_PAYLINE")
+	)
 
 
 func has_active_motion() -> bool:
@@ -406,6 +471,14 @@ func _start_slot_motion() -> void:
 		_motion_tween = create_tween()
 		_motion_tween.tween_property(_slot_lever, "rotation", 0.42, 0.16)
 		_motion_tween.tween_property(_slot_lever, "rotation", 0.0, 0.18)
+	elif _slot_spin_label != null:
+		_slot_spin_label.scale = Vector2.ONE
+		_slot_spin_label.pivot_offset = _slot_spin_label.size * 0.5
+		_motion_tween = create_tween()
+		_motion_tween.tween_property(_slot_spin_label, "scale", Vector2(0.88, 0.88), 0.12)
+		_motion_tween.tween_property(_slot_spin_label, "scale", Vector2.ONE, 0.16).set_trans(
+			Tween.TRANS_BACK
+		)
 
 
 func _stop_motion() -> void:
@@ -417,13 +490,13 @@ func _stop_motion() -> void:
 
 func _update_spinning_reel(reel_index: int) -> void:
 	var cells: Array = _slot_reel_cells[reel_index]
-	var step: int = int(_slot_offsets[reel_index] / 48.0)
-	var remainder: float = fmod(_slot_offsets[reel_index], 48.0)
+	var step: int = int(_slot_offsets[reel_index] / SLOT_CELL_HEIGHT)
+	var remainder: float = fmod(_slot_offsets[reel_index], SLOT_CELL_HEIGHT)
 	for cell_index: int in range(cells.size()):
 		var cell: SlotSymbol = cells[cell_index]
-		cell.position.y = (cell_index - 1) * 48.0 + remainder
-		if cell.position.y >= 192.0:
-			cell.position.y -= 240.0
+		cell.position.y = (cell_index - 1) * SLOT_CELL_HEIGHT + remainder
+		if cell.position.y >= SLOT_CELL_HEIGHT * 4.0:
+			cell.position.y -= SLOT_STRIP_HEIGHT
 		cell.symbol_index = (cell_index - step + reel_index) % SLOT_SYMBOL_COUNT
 
 
@@ -435,11 +508,13 @@ func _stop_reel(reel_index: int) -> void:
 	var cells: Array = _slot_reel_cells[reel_index]
 	for cell_index: int in range(cells.size()):
 		var cell: SlotSymbol = cells[cell_index]
-		cell.position.y = (cell_index - 1) * 48.0
+		cell.position.y = (cell_index - 1) * SLOT_CELL_HEIGHT
 		cell.symbol_index = posmod(target + cell_index - 2, SLOT_SYMBOL_COUNT)
 	var reel: Control = _slot_reels[reel_index]
-	reel.position.y = 214.0
-	create_tween().tween_property(reel, "position:y", 219.0, 0.09).set_trans(Tween.TRANS_BACK)
+	reel.position.y = SLOT_REEL_BOUNCE_Y
+	create_tween().tween_property(reel, "position:y", SLOT_REEL_TOP, 0.11).set_trans(
+		Tween.TRANS_BACK
+	)
 
 
 func _chroma_material(key_color: Color, threshold: float) -> ShaderMaterial:

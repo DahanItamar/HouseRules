@@ -24,3 +24,9 @@ transparent, mipmapped runtime files under `slot/symbols/`.
 | BAR | `f3bfa26f-33fb-4ba4-ba0c-50d631a39465` |
 | Seven | `3da5920b-5b1a-4227-afb6-608e1903a57f` |
 | Diamond | `3ef5350d-ba4b-457d-b5d8-cd3498fa919f` |
+
+## Slot-screen provenance
+
+| File | Generator | Job ID | Date | Purpose |
+| --- | --- | --- | --- | --- |
+| `slot/symbols/slot_fullscreen_bezel.png` | Higgsfield GPT Image 2.5 | `16f8cc7e-58ae-4b65-93dc-978d2620bd58` | 2026-09-18 | Full-screen transparent Art Deco reel bezel and control deck |

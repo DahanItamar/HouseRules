@@ -33,6 +33,9 @@ WING_VIP,VIP ELEVATOR
 WING_LOCKED,%s LOCKED\nRequires %d lifetime wagered
 CABINET_STAKE,STAKE  %d
 CABINET_CONTROLS,[%s] Play   %s: Stake   [%s] Leave
+SLOT_SPIN,SPIN
+SLOT_CENTER_PAYLINE,CENTER PAYLINE
+SLOT_LAST_WIN,RETURNED  %d
 ROUND_READY,Choose your stake.
 ROUND_SPINNING,Reels spinning…
 ROUND_RESULT,Stake %d · Returned %d
