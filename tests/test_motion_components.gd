@@ -1,5 +1,7 @@
 extends GutTest
 
+const BLACKJACK_DEFINITION: CabinetDefinition = preload("res://data/cabinets/blackjack.tres")
+
 
 func test_slot_spin_strength_is_clamped_and_presentation_only() -> void:
 	var symbol := SlotSymbol.new()
@@ -50,3 +52,28 @@ func test_vault_safe_reveal_finishes_with_a_pop_and_restored_scale() -> void:
 	assert_eq(tile.face, VaultTile.Face.SAFE)
 	assert_eq(tile.scale, Vector2.ONE)
 	assert_signal_emitted(tile, "reveal_completed")
+
+
+func test_number_ticker_reaches_exact_target_and_handles_infinity() -> void:
+	var ticker := AnimatedNumberLabel.new()
+	add_child_autofree(ticker)
+	ticker.set_number(10, "%d", false)
+	ticker.set_number(110)
+	assert_eq(ticker.target_value, 110)
+	await wait_seconds(0.65)
+	assert_eq(ticker.text, "110")
+	assert_eq(int(ticker.displayed_value), 110)
+	ticker.set_infinity()
+	assert_eq(ticker.text, "∞")
+
+
+func test_blackjack_input_unlocks_from_completed_deal_motion() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	assert_true(session.cabinet.start_round(10))
+	assert_false(session.cabinet.panel.blackjack_input_ready())
+	assert_gt(session.cabinet.panel._blackjack_pending_motions, 0)
+	await wait_seconds(0.62)
+	assert_true(session.cabinet.panel.blackjack_input_ready())
+	assert_eq(session.cabinet.panel._blackjack_pending_motions, 0)

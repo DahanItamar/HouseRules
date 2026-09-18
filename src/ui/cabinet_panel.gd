@@ -29,7 +29,7 @@ var _slot_finish_callback: Callable
 var _slot_lever: Node2D
 var _slot_spin_label: SlotSpinButton
 var _slot_payline: ColorRect
-var _slot_credit_value: Label
+var _slot_credit_value: AnimatedNumberLabel
 var _slot_result_value: Label
 var _slot_result_formula: Label
 var _celebration: WinCelebration
@@ -48,15 +48,16 @@ var _motion_tween: Tween
 var _entrance_tween: Tween
 var _cursor_tween: Tween
 var _blackjack_dealt: bool = false
-var _blackjack_input_locked_until: int = 0
+var _blackjack_pending_motions: int = 0
+var _blackjack_preparing: bool = false
 var _blackjack_cards: Array[PlayingCard] = []
 var _blackjack_dealer_total: Label
 var _blackjack_player_total: Label
-var _blackjack_credit_value: Label
+var _blackjack_credit_value: AnimatedNumberLabel
 var _blackjack_primary: Button
 var _blackjack_stand: Button
 var _blackjack_double: Button
-var _vault_credit_value: Label
+var _vault_credit_value: AnimatedNumberLabel
 var _vault_open: Button
 var _vault_cash_out: Button
 var _vault_revealed: Dictionary = {}
@@ -390,11 +391,16 @@ func _refresh_blackjack() -> void:
 			else tr("BLACKJACK_TOTAL") % BlackjackMath.hand_value(math.dealer)
 		)
 	if _blackjack_credit_value != null:
-		_blackjack_credit_value.text = str(
-			maxi(0, cabinet.context.balance - (cabinet.current_stake if cabinet.is_round_active else 0))
-		)
 		if Wallet.test_mode_enabled:
-			_blackjack_credit_value.text = "∞"
+			_blackjack_credit_value.set_infinity()
+		else:
+			_blackjack_credit_value.set_number(
+				maxi(
+					0,
+					cabinet.context.balance
+					- (cabinet.current_stake if cabinet.is_round_active else 0)
+				)
+			)
 		_blackjack_primary.text = tr("ACTION_HIT") if cabinet.is_round_active else tr("ACTION_DEAL")
 		_blackjack_double.text = (
 			tr("ACTION_DOUBLE_TO") % (cabinet.current_stake * 2)
@@ -452,11 +458,16 @@ func _refresh_vault() -> void:
 	)
 	if _vault_credit_value != null:
 		var cash_out_was_disabled := _vault_cash_out.disabled
-		_vault_credit_value.text = str(
-			maxi(0, cabinet.context.balance - (cabinet.current_stake if cabinet.is_round_active else 0))
-		)
 		if Wallet.test_mode_enabled:
-			_vault_credit_value.text = "∞"
+			_vault_credit_value.set_infinity()
+		else:
+			_vault_credit_value.set_number(
+				maxi(
+					0,
+					cabinet.context.balance
+					- (cabinet.current_stake if cabinet.is_round_active else 0)
+				)
+			)
 		_vault_open.text = tr("ACTION_OPEN") if cabinet.is_round_active else tr("ACTION_ENTER")
 		_vault_open.disabled = (
 			not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance
@@ -598,7 +609,7 @@ func _build_slot_deck() -> void:
 	)
 	credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	credit_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_slot_credit_value = _help_label(
+	_slot_credit_value = _help_number_label(
 		credits_panel, Vector2(10, 38), Vector2(110, 38), 30, Color("f2c84b")
 	)
 	_slot_credit_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -704,7 +715,7 @@ func _build_vault_deck() -> void:
 	)
 
 
-func _add_credit_meter(parent: Control, at: Vector2, dimensions: Vector2) -> Label:
+func _add_credit_meter(parent: Control, at: Vector2, dimensions: Vector2) -> AnimatedNumberLabel:
 	var panel := Panel.new()
 	panel.position = at
 	panel.size = dimensions
@@ -715,7 +726,9 @@ func _add_credit_meter(parent: Control, at: Vector2, dimensions: Vector2) -> Lab
 	var caption := _help_label(panel, Vector2(8, 4), Vector2(dimensions.x - 16, 18), 14, Color("b8ad9c"))
 	caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var value := _help_label(panel, Vector2(8, 30), Vector2(dimensions.x - 16, 38), 28, Color("f2c84b"))
+	var value := _help_number_label(
+		panel, Vector2(8, 30), Vector2(dimensions.x - 16, 38), 28, Color("f2c84b")
+	)
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	return value
 
@@ -815,15 +828,19 @@ func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], 
 	for index: int in range(player_cards.size()):
 		_sync_playing_card(player_cards[index], index, player_cards.size(), false, false, deal_index)
 		deal_index += 1
+	if _blackjack_preparing:
+		_blackjack_preparing = false
+		_complete_blackjack_motion()
 
 
 func prepare_blackjack_round() -> void:
 	_blackjack_dealt = false
-	_blackjack_input_locked_until = Time.get_ticks_msec() + 620
+	_blackjack_preparing = true
+	_blackjack_pending_motions = 1
 
 
 func blackjack_input_ready() -> bool:
-	return Time.get_ticks_msec() >= _blackjack_input_locked_until
+	return _blackjack_pending_motions == 0
 
 
 func _clear_blackjack_cards() -> void:
@@ -842,9 +859,6 @@ func _sync_playing_card(
 			card.set_face_down(hidden, card.face_down and not hidden)
 			return
 	_add_playing_card(rank, hand_index, hand_size, dealer_hand, hidden, deal_index)
-	_blackjack_input_locked_until = maxi(
-		_blackjack_input_locked_until, Time.get_ticks_msec() + 360
-	)
 
 
 func _add_playing_card(
@@ -865,15 +879,21 @@ func _add_playing_card(
 	card.modulate.a = 0.0
 	_art_root.add_child(card)
 	_blackjack_cards.append(card)
+	_blackjack_pending_motions += 1
 	var deal := create_tween().set_parallel(true)
 	deal.tween_property(card, "position", destination, 0.26).set_delay(deal_index * 0.08)
 	deal.tween_property(card, "rotation", (hand_index - 1) * 0.025, 0.26).set_delay(
 		deal_index * 0.08
 	)
 	deal.tween_property(card, "modulate:a", 1.0, 0.12).set_delay(deal_index * 0.08)
+	deal.finished.connect(_complete_blackjack_motion)
 	if dealer_hand and not hidden and hand_index == 1:
 		card.scale.x = 0.05
 		create_tween().tween_property(card, "scale:x", 1.0, 0.14).set_delay(0.18)
+
+
+func _complete_blackjack_motion() -> void:
+	_blackjack_pending_motions = maxi(0, _blackjack_pending_motions - 1)
 
 
 func _build_vault_art() -> void:
@@ -966,9 +986,10 @@ func _refresh_slot() -> void:
 	var displayed_credit: int = cabinet.context.balance
 	if cabinet.is_round_active:
 		displayed_credit = maxi(0, displayed_credit - cabinet.current_stake)
-	_slot_credit_value.text = str(displayed_credit)
 	if Wallet.test_mode_enabled:
-		_slot_credit_value.text = "∞"
+		_slot_credit_value.set_infinity()
+	else:
+		_slot_credit_value.set_number(displayed_credit)
 	if _result != null:
 		var multiplier: int = _result.payout / maxi(_result.stake, 1)
 		_slot_result_value.text = tr("SLOT_RETURNED") % _result.payout
@@ -1117,6 +1138,19 @@ func _help_label(
 	parent: Control, at: Vector2, dimensions: Vector2, font_size: int, color: Color
 ) -> Label:
 	var label := Label.new()
+	label.position = at
+	label.size = dimensions
+	label.add_theme_font_override("font", Typography.UI_FONT)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	parent.add_child(label)
+	return label
+
+
+func _help_number_label(
+	parent: Control, at: Vector2, dimensions: Vector2, font_size: int, color: Color
+) -> AnimatedNumberLabel:
+	var label := AnimatedNumberLabel.new()
 	label.position = at
 	label.size = dimensions
 	label.add_theme_font_override("font", Typography.UI_FONT)

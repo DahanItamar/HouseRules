@@ -6,7 +6,7 @@ var _menu: CanvasLayer
 var _hud_layer: CanvasLayer
 var _bank_panel: Panel
 var _chip_icon: CreditChipIcon
-var _hud: Label
+var _hud: AnimatedNumberLabel
 var _credit_caption: Label
 var _message_panel: Panel
 var _message: Label
@@ -60,7 +60,7 @@ func _build_hud() -> void:
 	_credit_caption.add_theme_font_size_override("font_size", Typography.BODY_MIN)
 	_credit_caption.add_theme_color_override("font_color", Color("b8ad9c"))
 	_hud_layer.add_child(_credit_caption)
-	_hud = Label.new()
+	_hud = AnimatedNumberLabel.new()
 	_hud.add_theme_font_override("font", Typography.DISPLAY_FONT)
 	_hud.position = Vector2(72, 34)
 	_hud.size = Vector2(126, 30)
@@ -189,9 +189,15 @@ func _refresh_menu() -> void:
 
 
 func _refresh_hud() -> void:
-	_hud.text = "∞" if Wallet.test_mode_enabled else str(Wallet.balance)
+	if Wallet.test_mode_enabled:
+		_hud.set_infinity()
+	else:
+		var balance_format := "%d"
+		if Economy.debt > 0:
+			balance_format += "  /  " + str(Economy.debt)
+		_hud.set_number(Wallet.balance, balance_format)
 	_credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
-	if Economy.debt > 0:
+	if Wallet.test_mode_enabled and Economy.debt > 0:
 		_hud.text += "  /  " + str(Economy.debt)
 	if Economy.is_below_solvency_floor():
 		_show_message("HUD_CASHIER")
