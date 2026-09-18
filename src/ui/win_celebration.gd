@@ -1,0 +1,44 @@
+class_name WinCelebration
+extends Control
+## Higgsfield-authored chip/coin atlas animated by Godot for deterministic win bursts.
+
+const SHEET := preload("res://assets/production/effects/casino_win_burst.png")
+const CELL_SIZE := Vector2(256, 341.3333)
+var _rng := RandomNumberGenerator.new()
+
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_rng.seed = 20260918
+
+
+func burst(origin: Vector2, count: int = 12) -> void:
+	for index: int in range(count):
+		var atlas := AtlasTexture.new()
+		atlas.atlas = SHEET
+		var cell := index % 12
+		atlas.region = Rect2(
+			Vector2(cell % 4, cell / 4) * CELL_SIZE,
+			CELL_SIZE
+		)
+		var token := TextureRect.new()
+		token.texture = atlas
+		token.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		token.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		token.size = Vector2(54, 54)
+		token.pivot_offset = token.size * 0.5
+		token.position = origin - token.pivot_offset
+		token.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(token)
+		var direction := -1.0 if index % 2 == 0 else 1.0
+		var destination := origin + Vector2(
+			direction * _rng.randf_range(170.0, 520.0),
+			-_rng.randf_range(180.0, 450.0)
+		)
+		var duration := _rng.randf_range(0.72, 1.05)
+		var motion := create_tween().set_parallel(true)
+		motion.tween_property(token, "position", destination, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		motion.tween_property(token, "rotation", direction * _rng.randf_range(2.8, 7.2), duration)
+		motion.tween_property(token, "scale", Vector2(0.55, 0.55), duration)
+		motion.tween_property(token, "modulate:a", 0.0, duration * 0.42).set_delay(duration * 0.58)
+		motion.chain().tween_callback(token.queue_free)

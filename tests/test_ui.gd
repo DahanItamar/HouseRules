@@ -165,6 +165,20 @@ func test_m5_cabinet_motion_runs_in_engine() -> void:
 	add_child_autofree(vault_session)
 	vault_session.begin(VAULT_DEFINITION)
 	assert_true(vault_session.cabinet.panel.has_active_motion(), "Vault cursor pulse is active")
+	for session: CabinetSession in [slot_session, vault_session]:
+		assert_not_null(session.cabinet.panel.find_child("CasinoAmbient", true, false))
+		assert_not_null(session.cabinet.panel.find_child("WinCelebration", true, false))
+
+
+func test_higgsfield_win_effect_is_sharp_and_transparent() -> void:
+	var texture: Texture2D = load("res://assets/production/effects/casino_win_burst.png")
+	assert_not_null(texture)
+	assert_eq(texture.get_size(), Vector2(1024, 1024))
+	assert_eq(texture.get_image().get_pixel(0, 0).a, 0.0)
+	var celebration := WinCelebration.new()
+	add_child_autofree(celebration)
+	celebration.burst(Vector2(480, 300), 4)
+	assert_eq(celebration.get_child_count(), 4, "A win launches visible chip/coin pieces")
 
 
 func test_slot_reels_spin_independently_and_gate_settlement() -> void:

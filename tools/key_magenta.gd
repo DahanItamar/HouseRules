@@ -5,6 +5,8 @@ const SOURCE_DIR := "res://assets/source/redesign/slot_symbols"
 const OUTPUT_DIR := "res://assets/production/slot/symbols"
 const NAMES: Array[String] = ["cherry", "lemon", "bell", "bar", "seven", "diamond"]
 const FRAMES: Array[String] = ["slot_fullscreen_bezel"]
+const EFFECT_SOURCE := "res://assets/source/redesign/effects/casino_win_burst_mask.png"
+const EFFECT_OUTPUT := "res://assets/production/effects/casino_win_burst.png"
 
 
 func _initialize() -> void:
@@ -22,12 +24,20 @@ func _initialize() -> void:
 		var error := image.save_png(OUTPUT_DIR.path_join(asset_name + ".png"))
 		assert(error == OK, "Could not save keyed frame: %s" % asset_name)
 		print("KEYED+CROPPED ", asset_name, " ", image.get_size())
+	var effect := _key_path(EFFECT_SOURCE)
+	var effect_error := effect.save_png(EFFECT_OUTPUT)
+	assert(effect_error == OK, "Could not save keyed win effect")
+	print("KEYED casino_win_burst ", effect.get_size())
 	quit()
 
 
 func _key_image(asset_name: String) -> Image:
-	var image := Image.load_from_file(SOURCE_DIR.path_join(asset_name + "_mask.png"))
-	assert(not image.is_empty(), "Missing magenta-mask source: %s" % asset_name)
+	return _key_path(SOURCE_DIR.path_join(asset_name + "_mask.png"))
+
+
+func _key_path(path: String) -> Image:
+	var image := Image.load_from_file(path)
+	assert(not image.is_empty(), "Missing magenta-mask source: %s" % path)
 	image.convert(Image.FORMAT_RGBA8)
 	for y: int in range(image.get_height()):
 		for x: int in range(image.get_width()):

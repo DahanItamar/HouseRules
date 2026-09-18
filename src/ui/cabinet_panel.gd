@@ -28,6 +28,8 @@ var _slot_spinning: bool = false
 var _slot_finish_callback: Callable
 var _slot_lever: Node2D
 var _slot_spin_label: Label
+var _slot_payline: ColorRect
+var _celebration: WinCelebration
 var _stake_selector: StakeSelector
 var _help_button: Button
 var _help_overlay: Control
@@ -97,6 +99,10 @@ func _ready() -> void:
 	_stake_selector.name = "StakeSelector"
 	_stake_selector.cabinet = cabinet
 	add_child(_stake_selector)
+	_celebration = WinCelebration.new()
+	_celebration.name = "WinCelebration"
+	_celebration.size = Vector2(960, 540)
+	add_child(_celebration)
 	_build_help_ui()
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh())
 	refresh()
@@ -136,6 +142,9 @@ func show_result(result: RoundResult) -> void:
 	refresh()
 	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
 	AudioService.play(&"win" if result.payout > result.stake else &"loss")
+	if result.payout > result.stake:
+		_celebration.burst(Vector2(480, 300), 12)
+		_pulse_slot_win()
 	_status.add_theme_color_override(
 		"font_color", Color("3fc276") if result.payout > result.stake else Color("d55353")
 	)
@@ -367,6 +376,7 @@ func _ensure_art() -> void:
 
 
 func _build_slot_art() -> void:
+	_add_ambient(Color("c8a34b"))
 	var backdrop := ColorRect.new()
 	backdrop.name = "SlotBackdrop"
 	backdrop.position = Vector2.ZERO
@@ -411,12 +421,12 @@ func _build_slot_art() -> void:
 		_art_root.add_child(separator)
 	var body := _texture("SlotCabinetArt", SLOT_BODY, Vector2(20, 5), Vector2(920, 528))
 	_art_root.add_child(body)
-	var payline := ColorRect.new()
-	payline.name = "WinningPayline"
-	payline.position = Vector2(151, SLOT_REEL_TOP + SLOT_CELL_HEIGHT * 1.5 - 2.0)
-	payline.size = Vector2(658, 4)
-	payline.color = Color("d9b44a")
-	_art_root.add_child(payline)
+	_slot_payline = ColorRect.new()
+	_slot_payline.name = "WinningPayline"
+	_slot_payline.position = Vector2(151, SLOT_REEL_TOP + SLOT_CELL_HEIGHT * 1.5 - 2.0)
+	_slot_payline.size = Vector2(658, 4)
+	_slot_payline.color = Color("d9b44a")
+	_art_root.add_child(_slot_payline)
 
 
 func _apply_slot_fullscreen_layout() -> void:
@@ -471,6 +481,7 @@ func _slot_deck_label(at: Vector2, dimensions: Vector2, font_size: int) -> Label
 
 
 func _build_blackjack_art() -> void:
+	_add_ambient(Color("e6c36a"))
 	var room := ColorRect.new()
 	room.position = Vector2.ZERO
 	room.size = Vector2(960, 540)
@@ -619,6 +630,7 @@ func _add_playing_card(
 
 
 func _build_vault_art() -> void:
+	_add_ambient(Color("48c5d5"))
 	_art_root.add_child(
 		_texture("VaultBackdropArt", VAULT_BACKDROP, Vector2.ZERO, Vector2(960, 540))
 	)
@@ -825,6 +837,29 @@ func _panel_style(
 	style.set_border_width_all(border_width)
 	style.set_corner_radius_all(radius)
 	return style
+
+
+func _add_ambient(color: Color) -> void:
+	var ambient := CasinoAmbient.new()
+	ambient.name = "CasinoAmbient"
+	ambient.size = Vector2(960, 110)
+	ambient.accent = color
+	ambient.z_index = 10
+	_art_root.add_child(ambient)
+
+
+func _pulse_slot_win() -> void:
+	if cabinet.context.definition.id != &"slot_classic" or _slot_payline == null:
+		return
+	_slot_payline.color = Color("fff0a0")
+	_slot_payline.scale = Vector2(1.0, 2.5)
+	var pulse := create_tween().set_parallel(true)
+	pulse.tween_property(_slot_payline, "scale", Vector2.ONE, 0.48).set_trans(Tween.TRANS_BACK)
+	pulse.tween_property(_slot_payline, "color", Color("d9b44a"), 0.48)
+	for symbol: Control in _slot_symbols:
+		symbol.pivot_offset = symbol.size * 0.5
+		symbol.scale = Vector2(1.08, 1.08)
+		pulse.tween_property(symbol, "scale", Vector2.ONE, 0.48).set_trans(Tween.TRANS_BACK)
 
 
 func _card_names(cards: Array[int]) -> String:
