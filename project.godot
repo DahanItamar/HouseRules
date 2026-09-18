@@ -45,6 +45,10 @@ window/stretch/scale_mode="fractional"
 fonts/dynamic_fonts/use_oversampling=true
 theme/default_font_multichannel_signed_distance_field=true
 
+[house_rules]
+
+testing/unlimited_bankroll=true
+
 [internationalization]
 
 locale/translations=PackedStringArray("res://locale/en.en.translation")

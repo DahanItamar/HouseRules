@@ -13,9 +13,26 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	Wallet.set_test_mode(false)
 	SaveService.platform = _original_platform
 	SaveService.slot = _original_slot
 	SaveService.new_game(12345)
+
+
+func test_developer_bankroll_is_unlimited_without_polluting_the_save() -> void:
+	Wallet.reset(321)
+	Wallet.set_test_mode(true)
+	assert_eq(Wallet.balance, Wallet.TEST_BANKROLL)
+	assert_true(Wallet.try_apply(Wallet.TEST_BANKROLL, Wallet.MAX_CHIPS))
+	assert_eq(Wallet.balance, Wallet.TEST_BANKROLL)
+	assert_eq(Wallet.persistent_balance(), 321)
+	assert_eq(SaveService.save(), OK)
+	var data: Dictionary = JSON.parse_string(
+		SaveService.platform.read_save(&"qa").get_string_from_utf8()
+	)
+	assert_eq(int(data.chips), 321)
+	Wallet.set_test_mode(false)
+	assert_eq(Wallet.balance, 321)
 
 
 func test_ac010_through_ac012_wallet_atomic_signals_and_rejection() -> void:

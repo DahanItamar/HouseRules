@@ -5,6 +5,7 @@ MENU_SUBTITLE,"Three games. One bankroll. The house remembers."
 MENU_CONTROLS,"[%s] Enter the casino\n[%s] Save and quit"
 HUD_CHIPS,CHIPS  %d
 HUD_CREDITS,CREDITS
+HUD_TEST_BANK,TEST BANK
 HUD_DEBT,DEBT  %d
 CONTRACTS_HEADING,CONTRACTS
 CONTRACT_LINE,%s  %d/%d  +%d

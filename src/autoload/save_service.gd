@@ -23,7 +23,8 @@ func save() -> Error:
 		return ERR_UNAVAILABLE
 	if state == null:
 		new_game()
-	state.chips = Wallet.balance
+	# Developer bankroll never leaks into the player's persistent economy.
+	state.chips = Wallet.persistent_balance()
 	state.debt = Economy.debt
 	state.lifetime_wagered = Economy.lifetime_wagered
 	state.active_contracts = Economy.contract_snapshot()

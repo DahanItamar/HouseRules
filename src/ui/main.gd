@@ -29,6 +29,7 @@ func _ready() -> void:
 	_build_hud()
 	add_child(DisconnectPauseOverlay.new())
 	var error: Error = SaveService.load_game()
+	Wallet.set_test_mode(bool(ProjectSettings.get_setting("house_rules/testing/unlimited_bankroll", false)))
 	_build_menu()
 	if error != OK:
 		_message.text = tr("SAVE_INCOMPATIBLE")
@@ -54,7 +55,7 @@ func _build_hud() -> void:
 	_credit_caption = Label.new()
 	_credit_caption.add_theme_font_override("font", Typography.UI_FONT)
 	_credit_caption.position = Vector2(72, 20)
-	_credit_caption.text = tr("HUD_CREDITS")
+	_credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	_credit_caption.add_theme_font_size_override("font_size", Typography.BODY_MIN)
 	_credit_caption.add_theme_color_override("font_color", Color("b8ad9c"))
 	_hud_layer.add_child(_credit_caption)
@@ -172,7 +173,7 @@ func _refresh_menu() -> void:
 
 
 func _refresh_hud() -> void:
-	_hud.text = str(Wallet.balance)
+	_hud.text = "∞" if Wallet.test_mode_enabled else str(Wallet.balance)
 	if Economy.debt > 0:
 		_hud.text += "  /  " + str(Economy.debt)
 	if Economy.is_below_solvency_floor():
