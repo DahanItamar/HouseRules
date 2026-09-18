@@ -7,6 +7,8 @@ signal exit_requested
 
 var context: MiniGameContext
 var is_round_active: bool = false
+var is_result_pending: bool = false
+var _pending_result: RoundResult
 var current_stake: int = 0
 var selected_stake: int = 1
 var panel: CabinetPanel
@@ -164,14 +166,36 @@ func _ready() -> void:
 
 
 func _finish(result: RoundResult) -> void:
-	if not is_round_active:
+	if not is_round_active or is_result_pending:
 		return
 	if exit_confirmation != null:
 		exit_confirmation.dismiss()
+	if (
+		result.outcome != RoundResult.Outcome.ABANDONED
+		and panel != null
+		and context.definition.id in [&"blackjack", &"minefield_vault"]
+	):
+		is_result_pending = true
+		_pending_result = result
+		panel.present_result_after_reveal(result, _complete_finish.bind(result))
+		return
+	_complete_finish(result)
+
+
+func _complete_finish(result: RoundResult) -> void:
+	if not is_round_active:
+		return
+	is_result_pending = false
+	_pending_result = null
 	is_round_active = false
 	round_resolved.emit(result)
 	if panel != null:
 		panel.show_result(result)
+
+
+func complete_pending_result() -> void:
+	if is_result_pending and _pending_result != null:
+		_complete_finish(_pending_result)
 
 
 func _unhandled_input(event: InputEvent) -> void:

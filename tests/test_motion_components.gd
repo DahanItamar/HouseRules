@@ -88,6 +88,13 @@ func test_blackjack_input_unlocks_from_completed_deal_motion() -> void:
 	var session := CabinetSession.new()
 	add_child_autofree(session)
 	session.begin(BLACKJACK_DEFINITION)
+	var math: BlackjackMath = session.cabinet.get("math")
+	var shoe: Array[int] = []
+	for _index: int in range(48):
+		shoe.append(2)
+	# pop_back deal order: player 10, dealer 9, player 7, dealer 8.
+	shoe.append_array([8, 7, 9, 10])
+	math.shoe = shoe
 	assert_true(session.cabinet.start_round(10))
 	assert_false(session.cabinet.panel.blackjack_input_ready())
 	assert_gt(session.cabinet.panel._blackjack_pending_motions, 0)

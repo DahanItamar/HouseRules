@@ -199,8 +199,6 @@ func _refresh_hud() -> void:
 	_credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	if Wallet.test_mode_enabled and Economy.debt > 0:
 		_hud.text += "  /  " + str(Economy.debt)
-	if Economy.is_below_solvency_floor():
-		_show_message("HUD_CASHIER")
 	if _contracts != null:
 		var on_floor: bool = _is_playing and SceneRouter.session == null
 		_bank_panel.visible = on_floor

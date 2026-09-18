@@ -1,11 +1,13 @@
 extends GutTest
 
 var _original_platform: PlatformServices
+var _original_test_mode: bool
 var _floor: FloorController
 
 
 func before_each() -> void:
 	_original_platform = SaveService.platform
+	_original_test_mode = Wallet.test_mode_enabled
 	SaveService.platform = LocalPlatform.new("user://tests/session_%s" % Time.get_ticks_usec())
 	SaveService.new_game(1234)
 	_floor = FloorController.new()
@@ -19,6 +21,7 @@ func after_each() -> void:
 	await get_tree().process_frame
 	SceneRouter.floor = null
 	SaveService.platform = _original_platform
+	Wallet.set_test_mode(_original_test_mode)
 	SaveService.new_game(1234)
 
 
@@ -136,6 +139,7 @@ func test_floor_machine_rings_have_concise_persistent_identity_labels() -> void:
 
 
 func test_cashier_opens_a_real_focusable_menu() -> void:
+	Economy.debt = 50
 	_floor.avatar_position = _floor.CASHIER_POSITION
 	_floor.refresh_proximity()
 	assert_true(_floor.interact())
@@ -143,6 +147,103 @@ func test_cashier_opens_a_real_focusable_menu() -> void:
 	assert_not_null(_floor._cashier_panel.get_node("TakeMarker"))
 	assert_not_null(_floor._cashier_panel.get_node("RepayDebt"))
 	assert_not_null(_floor._cashier_panel.get_node("CloseCashier"))
+	await get_tree().process_frame
+	assert_eq(
+		get_viewport().gui_get_focus_owner(),
+		_floor._cashier_repay,
+		"The enabled repayment confirmation receives controller focus"
+	)
+
+
+func test_cashier_repayment_picker_clamps_previews_and_confirms_selected_amount() -> void:
+	Wallet.set_test_mode(false)
+	Wallet.reset(37)
+	Economy.debt = 25
+	_floor.avatar_position = _floor.CASHIER_POSITION
+	_floor.refresh_proximity()
+	assert_true(_floor.interact())
+	assert_eq(_floor._cashier_repay_amount, 10)
+	assert_string_contains(_floor._cashier_preview.text, "CHIPS 27")
+	assert_string_contains(_floor._cashier_preview.text, "DEBT 15")
+	_floor._adjust_cashier_repayment(-10)
+	assert_eq(_floor._cashier_repay_amount, 1, "Repayment never falls below one chip")
+	_floor._adjust_cashier_repayment(1)
+	assert_eq(_floor._cashier_repay_amount, 2, "Every whole-chip amount is reachable")
+	_floor._confirm_cashier_repayment()
+	assert_eq(Wallet.balance, 35, "Confirm pays only the displayed amount")
+	assert_eq(Economy.debt, 23)
+	_floor._maximize_cashier_repayment()
+	assert_eq(_floor._cashier_repay_amount, 23, "Pay all is bounded by debt and available chips")
+	_floor._confirm_cashier_repayment()
+	assert_eq(Wallet.balance, 12)
+	assert_eq(Economy.debt, 0)
+	assert_true(_floor._cashier_repay.disabled)
+	assert_string_contains(_floor._cashier_preview.text, "DEBT 0")
+
+
+func test_cashier_marker_behavior_and_safe_focus_are_preserved() -> void:
+	Wallet.set_test_mode(false)
+	Wallet.reset(10)
+	Economy.debt = 0
+	_floor.avatar_position = _floor.CASHIER_POSITION
+	_floor.refresh_proximity()
+	assert_true(_floor.interact())
+	await get_tree().process_frame
+	assert_eq(get_viewport().gui_get_focus_owner(), _floor._cashier_marker)
+	_floor._cashier_marker.pressed.emit()
+	assert_eq(Wallet.balance, 110)
+	assert_eq(Economy.debt, Economy.MARKER_STIPEND)
+
+
+func test_insolvent_player_gets_a_safe_area_cashier_route_until_arrival() -> void:
+	Wallet.reset(Economy.SOLVENCY_FLOOR - 1)
+	_floor.avatar_position = Vector2(300, 300)
+	_floor.refresh_proximity()
+	var waypoint: CashierWaypoint = _floor._cashier_waypoint
+	assert_true(waypoint.visible)
+	assert_eq((waypoint.get_node("Caption") as Label).text, tr("CASHIER_WAYPOINT"))
+	assert_gte(waypoint.position.x, CashierWaypoint.SAFE_MARGIN)
+	assert_gte(waypoint.position.y, CashierWaypoint.SAFE_MARGIN)
+	assert_lte(
+		waypoint.position.x + waypoint.size.x,
+		960.0 - CashierWaypoint.SAFE_MARGIN,
+		"Cashier route remains inside the 960-wide controller-safe viewport"
+	)
+	assert_lte(
+		waypoint.position.y + waypoint.size.y,
+		540.0 - CashierWaypoint.SAFE_MARGIN,
+		"Cashier route remains inside the 540-high controller-safe viewport"
+	)
+	assert_lt(absf(waypoint.route_angle()), 0.8, "Arrow points right toward the cashier")
+	waypoint.update_route(Vector2(300, 300), Vector2(4000, -500), true)
+	assert_true(waypoint.visible, "An offscreen cashier target keeps its edge route visible")
+	assert_lte(waypoint.position.x + waypoint.size.x, 960.0 - CashierWaypoint.SAFE_MARGIN)
+	assert_gte(waypoint.position.y, CashierWaypoint.SAFE_MARGIN)
+
+	_floor.avatar_position = FloorController.CASHIER_POSITION
+	_floor.refresh_proximity()
+	assert_false(waypoint.visible, "The route yields to the nearby cashier interaction prompt")
+	assert_string_contains(_floor._prompt.text, InputRouter.glyph("interact"))
+
+
+func test_cashier_route_clears_as_soon_as_the_bankroll_recovers() -> void:
+	Wallet.reset(Economy.SOLVENCY_FLOOR - 1)
+	_floor.refresh_proximity()
+	assert_true(_floor._cashier_waypoint.visible)
+	Wallet.reset(Economy.SOLVENCY_FLOOR)
+	assert_false(_floor._cashier_waypoint.visible)
+
+
+func test_cashier_route_never_leaks_over_a_cabinet_or_main_menu() -> void:
+	Wallet.reset(Economy.SOLVENCY_FLOOR - 1)
+	_floor.refresh_proximity()
+	assert_true(_floor._cashier_waypoint.visible)
+	_floor.set_prompt_visible(false)
+	assert_false(_floor._cashier_waypoint.visible)
+	_floor.set_prompt_visible(true)
+	assert_true(_floor._cashier_waypoint.visible)
+	_floor.hide()
+	assert_false(_floor._directions_layer.visible)
 
 
 func test_floor_collision_blocks_furniture_and_prevents_tunneling() -> void:

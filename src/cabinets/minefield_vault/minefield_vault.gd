@@ -22,6 +22,8 @@ func abandon() -> void:
 
 
 func request_open() -> bool:
+	if is_result_pending:
+		return false
 	var result: RoundResult
 	if is_round_active:
 		result = math.reveal(snap_cursor.index)
@@ -34,7 +36,7 @@ func request_open() -> bool:
 
 
 func request_cash_out() -> bool:
-	if not is_round_active:
+	if is_result_pending or not is_round_active:
 		return false
 	var result := math.cash_out()
 	if result != null:
@@ -45,6 +47,9 @@ func request_cash_out() -> bool:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if handle_common_input(event):
+		return
+	if is_result_pending:
+		get_viewport().set_input_as_handled()
 		return
 	var result: RoundResult
 	if event.is_action_pressed("interact"):

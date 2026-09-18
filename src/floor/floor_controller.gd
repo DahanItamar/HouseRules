@@ -9,6 +9,7 @@ const WING_THRESHOLDS: Dictionary = {&"high_roller": 5000, &"vip": 100_000}
 const FLOOR_ART := preload("res://assets/production/environments/casino_floor.png")
 const FLOOR_AVATAR_SCRIPT := preload("res://src/floor/floor_avatar.gd")
 const CASINO_PATRON_SCRIPT := preload("res://src/floor/casino_patron.gd")
+const CASHIER_WAYPOINT_SCRIPT := preload("res://src/floor/cashier_waypoint.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
@@ -50,6 +51,12 @@ var _avatar_visual: Node2D
 var _cashier_panel: Panel
 var _cashier_balance: Label
 var _cashier_debt: Label
+var _cashier_amount: Label
+var _cashier_preview: Label
+var _cashier_marker: Button
+var _cashier_repay: Button
+var _cashier_close: Button
+var _cashier_repay_amount: int = 0
 var _ambient_time: float = 0.0
 var _dismissed_game: StringName = &""
 var _last_nearby_game: StringName = &""
@@ -62,6 +69,9 @@ var _floor_camera: Camera2D
 var _camera_tween: Tween
 var _camera_focus_id: StringName = &""
 var _dust: CPUParticles2D
+var _cashier_waypoint: CashierWaypoint
+var _directions_layer: CanvasLayer
+var _floor_prompts_visible: bool = true
 
 
 func _ready() -> void:
@@ -91,6 +101,7 @@ func _ready() -> void:
 	_prompt.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_prompt.add_theme_color_override("font_color", IVORY)
 	add_child(_prompt)
+	_build_cashier_waypoint()
 	_build_cashier_menu()
 	SceneRouter.register_floor(self)
 	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: refresh_proximity())
@@ -167,6 +178,7 @@ func refresh_proximity() -> void:
 	_last_nearby_game = current_game
 	if _prompt != null:
 		_update_prompt()
+	_update_cashier_waypoint()
 	queue_redraw()
 
 
@@ -184,6 +196,7 @@ func interact() -> bool:
 		return false
 	if avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_cashier_open = true
+		_cashier_repay_amount = mini(10, _cashier_repayment_limit())
 		AudioService.play(&"confirm")
 		_update_prompt()
 		return true
@@ -191,8 +204,10 @@ func interact() -> bool:
 
 
 func set_prompt_visible(is_visible: bool) -> void:
+	_floor_prompts_visible = is_visible
 	if _prompt != null:
 		_prompt.visible = is_visible
+	_update_cashier_waypoint()
 	queue_redraw()
 
 
@@ -218,6 +233,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		or event.is_action_pressed("secondary")
 	):
 		get_viewport().set_input_as_handled()
+	if _cashier_open:
+		if event.is_action_pressed("back"):
+			_close_cashier()
+		elif event.is_action_pressed("interact"):
+			var focused := get_viewport().gui_get_focus_owner()
+			if focused is Button and _cashier_panel.is_ancestor_of(focused):
+				(focused as Button).pressed.emit()
+		return
 	if event.is_action_pressed("back"):
 		if _cashier_open:
 			_close_cashier()
@@ -232,9 +255,6 @@ func _unhandled_input(event: InputEvent) -> void:
 			_update_prompt()
 		else:
 			interact()
-	elif _cashier_open and event.is_action_pressed("secondary"):
-		Economy.repay_debt(Economy.debt)
-		_update_prompt()
 
 
 func _update_prompt() -> void:
@@ -242,12 +262,14 @@ func _update_prompt() -> void:
 	_prompt.size = Vector2(848, 54)
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _cashier_open:
+		_prompt.position = Vector2(56, 486)
+		_prompt.size = Vector2(848, 42)
 		_refresh_cashier_menu()
 		_prompt.text = (
 			tr("CASHIER_ACTIONS")
 			% [
+				InputRouter.glyph("move"),
 				InputRouter.glyph("interact"),
-				InputRouter.glyph("secondary"),
 				InputRouter.glyph("back")
 			]
 		)
@@ -345,6 +367,33 @@ func _build_camera() -> void:
 	_floor_camera.position_smoothing_enabled = false
 	_floor_camera.enabled = true
 	add_child(_floor_camera)
+
+
+func _build_cashier_waypoint() -> void:
+	_directions_layer = CanvasLayer.new()
+	_directions_layer.name = "FloorDirections"
+	_directions_layer.layer = 4
+	add_child(_directions_layer)
+	_cashier_waypoint = CASHIER_WAYPOINT_SCRIPT.new() as CashierWaypoint
+	_directions_layer.add_child(_cashier_waypoint)
+	visibility_changed.connect(func() -> void: _directions_layer.visible = visible)
+
+
+func _update_cashier_waypoint() -> void:
+	if _cashier_waypoint == null:
+		return
+	var near_cashier := avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS
+	_cashier_waypoint.update_route(
+		avatar_position,
+		CASHIER_POSITION,
+		(
+			_floor_prompts_visible
+			and visible
+			and Economy.is_below_solvency_floor()
+			and not near_cashier
+			and not _cashier_open
+		)
+	)
 
 
 func _build_patrons() -> void:
@@ -522,8 +571,8 @@ func _machine_accent(id: StringName) -> Color:
 func _build_cashier_menu() -> void:
 	_cashier_panel = Panel.new()
 	_cashier_panel.name = "CashierMenu"
-	_cashier_panel.position = Vector2(270, 112)
-	_cashier_panel.size = Vector2(420, 316)
+	_cashier_panel.position = Vector2(250, 56)
+	_cashier_panel.size = Vector2(460, 410)
 	_cashier_panel.z_index = 30
 	_cashier_panel.visible = false
 	var panel_style := StyleBoxFlat.new()
@@ -535,26 +584,80 @@ func _build_cashier_menu() -> void:
 	panel_style.shadow_size = 14
 	_cashier_panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(_cashier_panel)
-	var title := _cashier_label("CASHIER", Vector2(24, 18), Vector2(372, 42), 32, Color("f1e8d8"))
+	var title := _cashier_label(
+		tr("CASHIER_NAME"), Vector2(24, 16), Vector2(412, 42), 32, Color("f1e8d8")
+	)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var rule := ColorRect.new()
-	rule.position = Vector2(54, 68)
-	rule.size = Vector2(312, 2)
+	rule.position = Vector2(54, 64)
+	rule.size = Vector2(352, 2)
 	rule.color = BRASS
 	_cashier_panel.add_child(rule)
-	_cashier_balance = _cashier_label("", Vector2(32, 86), Vector2(356, 42), 24, Color("f2c84b"))
+	_cashier_balance = _cashier_label(
+		"", Vector2(32, 74), Vector2(396, 34), 22, Color("f2c84b")
+	)
 	_cashier_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_cashier_debt = _cashier_label("", Vector2(32, 128), Vector2(356, 28), 16, Color("b8ad9c"))
+	_cashier_debt = _cashier_label(
+		"", Vector2(32, 108), Vector2(396, 26), 16, Color("b8ad9c")
+	)
 	_cashier_debt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var marker := _cashier_button("TAKE 100 MARKER", Vector2(28, 180), Vector2(176, 62))
-	marker.name = "TakeMarker"
-	marker.pressed.connect(func() -> void: Economy.take_marker(); _refresh_cashier_menu())
-	var repay := _cashier_button("REPAY DEBT", Vector2(216, 180), Vector2(176, 62))
-	repay.name = "RepayDebt"
-	repay.pressed.connect(func() -> void: Economy.repay_debt(Economy.debt); _refresh_cashier_menu())
-	var close := _cashier_button("CLOSE", Vector2(122, 254), Vector2(176, 42))
-	close.name = "CloseCashier"
-	close.pressed.connect(_close_cashier)
+	var amount_caption := _cashier_label(
+		tr("CASHIER_REPAY_AMOUNT"), Vector2(32, 142), Vector2(196, 24), 14, Color("b8ad9c")
+	)
+	amount_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_cashier_amount = _cashier_label("", Vector2(228, 138), Vector2(200, 32), 22, IVORY)
+	_cashier_amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	var adjustment_specs: Array[Dictionary] = [
+		{
+			"name": "RepayMinusTen",
+			"text": "-10",
+			"action": func() -> void: _adjust_cashier_repayment(-10)
+		},
+		{"name": "RepayMinusOne", "text": "-1", "action": func() -> void: _adjust_cashier_repayment(-1)},
+		{"name": "RepayPlusOne", "text": "+1", "action": func() -> void: _adjust_cashier_repayment(1)},
+		{"name": "RepayPlusTen", "text": "+10", "action": func() -> void: _adjust_cashier_repayment(10)},
+		{"name": "RepayMaximum", "text": tr("CASHIER_PAY_ALL"), "action": _maximize_cashier_repayment},
+	]
+	var adjustment_buttons: Array[Button] = []
+	for index: int in range(adjustment_specs.size()):
+		var spec: Dictionary = adjustment_specs[index]
+		var adjust := _cashier_button(
+			String(spec.text), Vector2(20 + index * 84, 178), Vector2(76, 46)
+		)
+		adjust.name = String(spec.name)
+		adjust.pressed.connect(spec.action as Callable)
+		adjustment_buttons.append(adjust)
+	_cashier_preview = _cashier_label(
+		"", Vector2(24, 232), Vector2(412, 26), 15, Color("b8ad9c")
+	)
+	_cashier_preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cashier_marker = _cashier_button(
+		tr("CASHIER_TAKE_MARKER"), Vector2(20, 272), Vector2(200, 56)
+	)
+	_cashier_marker.name = "TakeMarker"
+	_cashier_marker.pressed.connect(func() -> void: Economy.take_marker(); _refresh_cashier_menu())
+	_cashier_repay = _cashier_button("", Vector2(240, 272), Vector2(200, 56))
+	_cashier_repay.name = "RepayDebt"
+	_cashier_repay.pressed.connect(_confirm_cashier_repayment)
+	_cashier_close = _cashier_button(
+		tr("CASHIER_CLOSE"), Vector2(130, 348), Vector2(200, 44)
+	)
+	_cashier_close.name = "CloseCashier"
+	_cashier_close.pressed.connect(_close_cashier)
+	for index: int in range(adjustment_buttons.size()):
+		var button := adjustment_buttons[index]
+		button.focus_neighbor_left = adjustment_buttons[maxi(index - 1, 0)].get_path()
+		button.focus_neighbor_right = adjustment_buttons[
+			mini(index + 1, adjustment_buttons.size() - 1)
+		].get_path()
+		button.focus_neighbor_bottom = _cashier_repay.get_path()
+	_cashier_marker.focus_neighbor_top = adjustment_buttons[0].get_path()
+	_cashier_marker.focus_neighbor_right = _cashier_repay.get_path()
+	_cashier_marker.focus_neighbor_bottom = _cashier_close.get_path()
+	_cashier_repay.focus_neighbor_top = adjustment_buttons[adjustment_buttons.size() - 1].get_path()
+	_cashier_repay.focus_neighbor_left = _cashier_marker.get_path()
+	_cashier_repay.focus_neighbor_bottom = _cashier_close.get_path()
+	_cashier_close.focus_neighbor_top = _cashier_repay.get_path()
 
 
 func _cashier_label(
@@ -585,6 +688,13 @@ func _cashier_button(text_value: String, at: Vector2, dimensions: Vector2) -> Bu
 		style.set_border_width_all(2)
 		style.set_corner_radius_all(8)
 		button.add_theme_stylebox_override(state, style)
+	var disabled_style := StyleBoxFlat.new()
+	disabled_style.bg_color = Color("24191c")
+	disabled_style.border_color = Color("5e554c")
+	disabled_style.set_border_width_all(2)
+	disabled_style.set_corner_radius_all(8)
+	button.add_theme_stylebox_override("disabled", disabled_style)
+	button.add_theme_color_override("font_disabled_color", Color("756d64"))
 	_cashier_panel.add_child(button)
 	ButtonFeedback.attach(button)
 	return button
@@ -607,10 +717,77 @@ func _refresh_cashier_menu() -> void:
 		_cashier_tween.tween_property(
 			_cashier_panel, "scale", Vector2.ONE, duration
 		).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	_cashier_balance.text = "TEST BANK  ∞" if Wallet.test_mode_enabled else "CHIPS  %d" % Wallet.balance
-	_cashier_debt.text = "NO OUTSTANDING MARKER" if Economy.debt == 0 else "MARKER DEBT  %d" % Economy.debt
-	(_cashier_panel.get_node("TakeMarker") as Button).disabled = not Economy.is_below_solvency_floor()
-	(_cashier_panel.get_node("RepayDebt") as Button).disabled = Economy.debt <= 0
+	var repayment_limit := _cashier_repayment_limit()
+	_cashier_repay_amount = (
+		clampi(_cashier_repay_amount, 1, repayment_limit) if repayment_limit > 0 else 0
+	)
+	_cashier_balance.text = (
+		tr("CASHIER_TEST_BANK")
+		if Wallet.test_mode_enabled
+		else tr("CASHIER_CHIPS") % Wallet.balance
+	)
+	_cashier_debt.text = (
+		tr("CASHIER_NO_DEBT") if Economy.debt == 0 else tr("CASHIER_DEBT") % Economy.debt
+	)
+	_cashier_amount.text = tr("CASHIER_REPAY_VALUE") % _cashier_repay_amount
+	var remaining_debt := maxi(Economy.debt - _cashier_repay_amount, 0)
+	_cashier_preview.text = (
+		tr("CASHIER_PREVIEW_TEST") % remaining_debt
+		if Wallet.test_mode_enabled
+		else (
+			tr("CASHIER_PREVIEW")
+			% [maxi(Wallet.balance - _cashier_repay_amount, 0), remaining_debt]
+		)
+	)
+	_cashier_marker.disabled = not Economy.is_below_solvency_floor()
+	_cashier_repay.disabled = repayment_limit <= 0
+	_cashier_repay.text = tr("CASHIER_CONFIRM_REPAY") % _cashier_repay_amount
+	for button_name: String in ["RepayMinusTen", "RepayMinusOne"]:
+		(_cashier_panel.get_node(button_name) as Button).disabled = (
+			repayment_limit <= 0 or _cashier_repay_amount <= 1
+		)
+	for button_name: String in ["RepayPlusOne", "RepayPlusTen", "RepayMaximum"]:
+		(_cashier_panel.get_node(button_name) as Button).disabled = (
+			repayment_limit <= 0 or _cashier_repay_amount >= repayment_limit
+		)
+	if opening:
+		_cashier_initial_focus().call_deferred("grab_focus")
+
+
+func _cashier_repayment_limit() -> int:
+	return mini(Wallet.balance, Economy.debt)
+
+
+func _adjust_cashier_repayment(delta: int) -> void:
+	var repayment_limit := _cashier_repayment_limit()
+	if repayment_limit <= 0:
+		return
+	_cashier_repay_amount = clampi(_cashier_repay_amount + delta, 1, repayment_limit)
+	AudioService.play(&"move")
+	_refresh_cashier_menu()
+
+
+func _maximize_cashier_repayment() -> void:
+	_cashier_repay_amount = _cashier_repayment_limit()
+	AudioService.play(&"move")
+	_refresh_cashier_menu()
+
+
+func _confirm_cashier_repayment() -> void:
+	if _cashier_repay_amount <= 0 or not Economy.repay_debt(_cashier_repay_amount):
+		return
+	AudioService.play(&"confirm")
+	_cashier_repay_amount = mini(10, _cashier_repayment_limit())
+	_refresh_cashier_menu()
+	_cashier_initial_focus().call_deferred("grab_focus")
+
+
+func _cashier_initial_focus() -> Button:
+	if not _cashier_marker.disabled:
+		return _cashier_marker
+	if not _cashier_repay.disabled:
+		return _cashier_repay
+	return _cashier_close
 
 
 func _close_cashier() -> void:

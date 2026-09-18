@@ -68,6 +68,12 @@ var _ambient: CasinoAmbient
 var _lighting: CasinoLighting
 var _blackjack_fx_tween: Tween
 var _vault_fx_tween: Tween
+var _result_reveal_callback: Callable
+var _result_reveal_active: bool = false
+var _result_reveal_beat: Tween
+var _vault_pending_reveals: int = 0
+
+const RESULT_READABLE_BEAT: float = 0.22
 
 const SLOT_BODY := preload("res://assets/production/slot/symbols/slot_fullscreen_bezel.png")
 const SLOT_SYMBOL_COUNT: int = 6
@@ -190,6 +196,13 @@ func show_result(result: RoundResult) -> void:
 	_status.add_theme_color_override(
 		"font_color", Color("3fc276") if result.payout > result.stake else Color("d55353")
 	)
+
+
+func present_result_after_reveal(_result: RoundResult, on_ready: Callable) -> void:
+	_result_reveal_active = true
+	_result_reveal_callback = on_ready
+	refresh()
+	_try_complete_result_reveal()
 
 
 func _process(delta: float) -> void:
@@ -386,8 +399,10 @@ func _refresh_blackjack() -> void:
 			InputRouter.glyph("back")
 		]
 	)
-	_render_blackjack_hand(math.player, math.dealer, cabinet.is_round_active)
-	if _blackjack_player_total != null:
+	_render_blackjack_hand(
+		math.player, math.dealer, cabinet.is_round_active and not cabinet.is_result_pending
+	)
+	if _blackjack_player_total != null and not cabinet.is_result_pending:
 		_blackjack_player_total.set_number(
 			BlackjackMath.hand_value(math.player), tr("BLACKJACK_TOTAL")
 		)
@@ -417,10 +432,13 @@ func _refresh_blackjack() -> void:
 			else tr("ACTION_DOUBLE")
 		)
 		_blackjack_primary.disabled = (
-			not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance
+			cabinet.is_result_pending
+			or (not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance)
 		)
-		_blackjack_stand.disabled = not cabinet.is_round_active
-		_blackjack_double.disabled = not math.can_double(cabinet.context.balance)
+		_blackjack_stand.disabled = not cabinet.is_round_active or cabinet.is_result_pending
+		_blackjack_double.disabled = (
+			cabinet.is_result_pending or not math.can_double(cabinet.context.balance)
+		)
 
 
 func _refresh_vault() -> void:
@@ -434,6 +452,7 @@ func _refresh_vault() -> void:
 				next_face = VaultTile.Face.MINE if index in math.mines else VaultTile.Face.SAFE
 			if index in math.revealed and not _vault_revealed.has(index):
 				_vault_revealed[index] = true
+				_vault_pending_reveals += 1
 				_vault_tiles[index].reveal(next_face)
 			elif not _vault_tiles[index].is_flipping:
 				_vault_tiles[index].set_face_immediate(next_face)
@@ -488,9 +507,12 @@ func _refresh_vault() -> void:
 			)
 		_vault_open.text = tr("ACTION_OPEN") if cabinet.is_round_active else tr("ACTION_ENTER")
 		_vault_open.disabled = (
-			not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance
+			cabinet.is_result_pending
+			or (not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance)
 		)
-		_vault_cash_out.disabled = not cabinet.is_round_active or math.revealed.is_empty()
+		_vault_cash_out.disabled = (
+			cabinet.is_result_pending or not cabinet.is_round_active or math.revealed.is_empty()
+		)
 		if cash_out_was_disabled and not _vault_cash_out.disabled:
 			_vault_cash_out.pivot_offset = _vault_cash_out.size * 0.5
 			_vault_cash_out.scale = Vector2(1.045, 1.045)
@@ -855,7 +877,7 @@ func prepare_blackjack_round() -> void:
 
 
 func blackjack_input_ready() -> bool:
-	return _blackjack_pending_motions == 0
+	return _blackjack_pending_motions == 0 and not _result_reveal_active
 
 
 func _clear_blackjack_cards() -> void:
@@ -871,6 +893,10 @@ func _sync_playing_card(
 	var card_name := ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
 	for card: PlayingCard in _blackjack_cards:
 		if card.name == card_name:
+			var tracks_flip := card.face_down and not hidden and card.is_inside_tree()
+			if tracks_flip:
+				_blackjack_pending_motions += 1
+				card.flip_completed.connect(_on_blackjack_flip_completed, CONNECT_ONE_SHOT)
 			card.set_face_down(hidden, card.face_down and not hidden)
 			return
 	_add_playing_card(rank, hand_index, hand_size, dealer_hand, hidden, deal_index)
@@ -909,6 +935,33 @@ func _add_playing_card(
 
 func _complete_blackjack_motion() -> void:
 	_blackjack_pending_motions = maxi(0, _blackjack_pending_motions - 1)
+	_try_complete_result_reveal()
+
+
+func _on_blackjack_flip_completed() -> void:
+	_complete_blackjack_motion()
+
+
+func _try_complete_result_reveal() -> void:
+	if not _result_reveal_active:
+		return
+	if _blackjack_pending_motions > 0 or _vault_pending_reveals > 0:
+		return
+	if _result_reveal_beat != null and _result_reveal_beat.is_running():
+		return
+	_result_reveal_beat = create_tween()
+	_result_reveal_beat.tween_interval(MotionPolicy.finite_duration(RESULT_READABLE_BEAT))
+	_result_reveal_beat.tween_callback(_complete_result_reveal)
+
+
+func _complete_result_reveal() -> void:
+	if not _result_reveal_active:
+		return
+	_result_reveal_active = false
+	var callback := _result_reveal_callback
+	_result_reveal_callback = Callable()
+	if callback.is_valid():
+		callback.call()
 
 
 func _build_vault_art() -> void:
@@ -929,6 +982,7 @@ func _build_vault_art() -> void:
 		)
 		tile.size = Vector2(48, 48)
 		tile.reveal_effect_requested.connect(_on_vault_reveal_effect.bind(tile))
+		tile.reveal_completed.connect(_on_vault_reveal_completed)
 		_vault_tiles.append(tile)
 		_art_root.add_child(tile)
 	_vault_cursor = Node2D.new()
@@ -951,7 +1005,7 @@ func _build_vault_art() -> void:
 
 func _on_vault_reveal_effect(face_value: int, local_origin: Vector2, tile: VaultTile) -> void:
 	var mine_hit := face_value == VaultTile.Face.MINE
-	AudioService.play(&"loss" if mine_hit else &"reveal")
+	AudioService.play(&"reveal")
 	ImpactBurst.spawn(
 		_art_root,
 		tile.position + local_origin,
@@ -960,6 +1014,11 @@ func _on_vault_reveal_effect(face_value: int, local_origin: Vector2, tile: Vault
 	)
 	if mine_hit:
 		_shake_stage(5.0, 0.22)
+
+
+func _on_vault_reveal_completed(_face_value: int) -> void:
+	_vault_pending_reveals = maxi(0, _vault_pending_reveals - 1)
+	_try_complete_result_reveal()
 
 
 func _apply_vault_fullscreen_layout() -> void:
@@ -1035,6 +1094,7 @@ func has_active_motion() -> bool:
 		or (_cursor_tween != null and _cursor_tween.is_running())
 		or (_blackjack_fx_tween != null and _blackjack_fx_tween.is_running())
 		or (_vault_fx_tween != null and _vault_fx_tween.is_running())
+		or _result_reveal_active
 	)
 
 

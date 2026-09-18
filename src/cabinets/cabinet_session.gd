@@ -52,5 +52,8 @@ func close() -> void:
 	if _is_closed:
 		return
 	if cabinet != null:
-		cabinet.abandon()
+		if cabinet.is_result_pending:
+			cabinet.complete_pending_result()
+		else:
+			cabinet.abandon()
 	_is_closed = true

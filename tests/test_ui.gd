@@ -5,17 +5,30 @@ const SLOT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/slot_cla
 const BLACKJACK_DEFINITION: CabinetDefinition = preload("res://data/cabinets/blackjack.tres")
 const VAULT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/minefield_vault.tres")
 var _original_platform: PlatformServices
+var _original_test_mode: bool
 
 
 func before_each() -> void:
 	_original_platform = SaveService.platform
+	_original_test_mode = Wallet.test_mode_enabled
 	SaveService.platform = LocalPlatform.new("user://tests/ui_%s" % Time.get_ticks_usec())
 	SaveService.new_game(20260918)
 
 
 func after_each() -> void:
 	SaveService.platform = _original_platform
+	Wallet.set_test_mode(_original_test_mode)
 	SaveService.new_game(20260918)
+
+
+func test_cashier_recovery_uses_floor_waypoint_not_a_global_game_banner() -> void:
+	var main := MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	Wallet.set_test_mode(false)
+	Wallet.reset(Economy.SOLVENCY_FLOOR - 1)
+	main._message_panel.visible = false
+	main._refresh_hud()
+	assert_false(main._message_panel.visible, "Recovery guidance never covers a cabinet screen")
 
 
 func test_ac042_all_runtime_labels_respect_the_body_text_floor() -> void:

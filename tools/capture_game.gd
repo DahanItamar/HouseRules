@@ -15,6 +15,8 @@ func _initialize() -> void:
 func _capture() -> void:
 	var saves: Node = root.get_node("SaveService")
 	var router: Node = root.get_node("SceneRouter")
+	var wallet: Node = root.get_node("Wallet")
+	var economy: Node = root.get_node("Economy")
 	var isolated := _output.path_join("session_" + str(OS.get_process_id()))
 	DirAccess.make_dir_recursive_absolute(isolated)
 	saves.platform = LocalPlatform.new(isolated)
@@ -27,6 +29,24 @@ func _capture() -> void:
 	main._start_playing()
 	await create_timer(0.55).timeout
 	await _snapshot("02_floor")
+	wallet.call("set_test_mode", false)
+	wallet.call("reset", 10)
+	main._floor.avatar_position = Vector2(480, 360)
+	main._floor._avatar_visual.position = main._floor.avatar_position
+	main._floor.refresh_proximity()
+	await _snapshot("02_cashier_waypoint")
+	wallet.call("reset", 37)
+	economy.set("debt", 25)
+	main._floor.avatar_position = main._floor.CASHIER_POSITION
+	main._floor._avatar_visual.position = main._floor.avatar_position
+	main._floor.refresh_proximity()
+	main._floor.interact()
+	await create_timer(0.25).timeout
+	await _snapshot("02_cashier_menu")
+	main._floor._close_cashier()
+	wallet.call("set_test_mode", true)
+	wallet.call("reset", 200)
+	economy.set("debt", 0)
 	main._floor.avatar_position = main._floor.cabinet_positions[&"slot_classic"]
 	main._floor._avatar_visual.position = main._floor.avatar_position
 	main._floor.refresh_proximity()

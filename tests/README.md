@@ -29,7 +29,7 @@ directories; they do not overwrite the player's normal save.
 | AC-006 | Real slot emits one RoundResult; wallet unchanged before settlement. |
 | AC-007 | Stake and payout settle together; replaying the same result is rejected. |
 | AC-008 | Exit restores the recorded floor position. |
-| AC-009 | Mid-spin exit emits ABANDONED once, forfeits stake, saves, ignores late timer resolution. |
+| AC-009 | Mid-spin Back opens a stake-at-risk confirmation; confirmed exit emits ABANDONED once, forfeits stake, saves, and ignores late resolution. |
 | AC-010 | Wallet and round amounts remain integer typed; negative requests rejected. |
 | AC-011 | Unfunded transaction leaves balance unchanged and emits rejection. |
 | AC-012 | Balance change signal includes exact previous/current values once. |
@@ -38,12 +38,12 @@ directories; they do not overwrite the player's normal save.
 | AC-015 | Leaving cabinet and returning to menu both persist state through real storage. |
 | AC-016–022 | Save replacement, schema, migration, corrupt/zero-byte preservation, future-version refusal through LocalPlatform. |
 | AC-024 | A losing slot round completes a participation contract and grants its flat reward; progress survives save/load. |
-| AC-027 | Strict million-round test for each cabinet; current slot sample fails. |
+| AC-027 | Strict million-round test for each cabinet; all three shipped samples pass. |
 | AC-028–036 | Exhaustive slot paytable, blackjack naturals/soft 17/double, fixed unique mines, cashout, bust and cap. |
 | AC-037 | Every gameplay action has its documented gamepad button; movement also has D-pad and left-stick bindings. |
 | AC-038 | Raw device changes swap glyphs and synchronously refresh a live floor prompt in both directions. |
 | AC-039 | Physical D-pad and left-stick events move the reusable wrapping snap cursor. |
-| AC-040 | FHD, DCI 2K, QHD and 4K targets retain the reviewed integer scale; cabinet captures remain 960×540. |
+| AC-040 | Native canvas rendering is verified at exact FHD and QHD output sizes; 4K configuration/aspect coverage is automated. |
 | AC-042 | Runtime labels meet the 8px body floor; chips, stake and multiplier meet the 16px critical floor. |
 | AC-043 | CI validates every translation reference and rejects literal text assigned to UI or scene text sinks. |
 | M5 audio | Deterministic 16-bit PCM cues are cached and emitted for navigation and cabinet events. |

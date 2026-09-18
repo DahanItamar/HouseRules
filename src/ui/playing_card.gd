@@ -2,6 +2,8 @@ class_name PlayingCard
 extends Control
 ## Sharp resolution-independent blackjack card with a real face/back state.
 
+signal flip_completed
+
 const SUITS: Array[String] = ["\u2660", "\u2665", "\u2666", "\u2663"]
 const RED := Color("a53243")
 const BLACK := Color("17161a")
@@ -80,6 +82,7 @@ func set_face_down(hidden: bool, animated: bool = false) -> void:
 	).set_ease(Tween.EASE_OUT)
 	_flip_tween.tween_property(self, "scale:y", 1.0, open_duration).set_trans(Tween.TRANS_QUAD)
 	_flip_tween.tween_property(self, "rotation", resting_rotation, open_duration).set_trans(Tween.TRANS_QUAD)
+	_flip_tween.chain().tween_callback(func() -> void: flip_completed.emit())
 
 
 func _trigger_sheen() -> void:
