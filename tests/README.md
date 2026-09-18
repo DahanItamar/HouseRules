@@ -46,6 +46,7 @@ directories; they do not overwrite the player's normal save.
 | AC-040 | FHD, DCI 2K, QHD and 4K targets retain the reviewed integer scale; cabinet captures remain 960×540. |
 | AC-042 | Runtime labels meet the 8px body floor; chips, stake and multiplier meet the 16px critical floor. |
 | AC-043 | CI validates every translation reference and rejects literal text assigned to UI or scene text sinks. |
+| M5 audio | Deterministic 16-bit PCM cues are cached and emitted for navigation and cabinet events. |
 | AC-037 disconnect | Losing the active gamepad pauses behind a blocking overlay; reconnecting resumes it. |
 | AC-051 | Both v1 wing transition points show their lifetime-wagered thresholds and refuse entry while locked. |
 

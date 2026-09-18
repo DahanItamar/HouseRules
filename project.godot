@@ -20,6 +20,7 @@ Wallet="*res://src/autoload/wallet.gd"
 RNGService="*res://src/autoload/rng_service.gd"
 Economy="*res://src/autoload/economy.gd"
 SaveService="*res://src/autoload/save_service.gd"
+AudioService="*res://src/autoload/audio_service.gd"
 InputRouter="*res://src/autoload/input_router.gd"
 SceneRouter="*res://src/autoload/scene_router.gd"
 

@@ -106,6 +106,7 @@ func _start_playing() -> void:
 	_floor.set_process_unhandled_input(true)
 	_menu.hide()
 	_is_playing = true
+	AudioService.play(&"confirm")
 
 
 func _show_menu() -> void:

@@ -80,12 +80,14 @@ func interact() -> bool:
 		if Wallet.balance < nearby_definition.min_bet:
 			return false
 		SceneRouter.enter_cabinet(nearby_definition)
+		AudioService.play(&"confirm")
 		return true
 	if nearby_wing != &"":
 		_update_prompt()
 		return false
 	if avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_cashier_open = true
+		AudioService.play(&"confirm")
 		_update_prompt()
 		return true
 	return false

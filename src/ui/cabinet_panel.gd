@@ -99,6 +99,7 @@ func show_result(result: RoundResult) -> void:
 	_status_key = "ROUND_READY"
 	refresh()
 	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
+	AudioService.play(&"win" if result.payout > result.stake else &"loss")
 	_frame.color = Color("ffd23f")
 	create_tween().tween_property(_frame, "color", Color("2d2a3e"), 0.3)
 
@@ -111,6 +112,7 @@ func set_status(key: String) -> void:
 		_vault_revealed.clear()
 	refresh()
 	if key == "ROUND_SPINNING":
+		AudioService.play(&"spin")
 		_start_slot_motion()
 
 
@@ -153,6 +155,7 @@ func _refresh_vault() -> void:
 			)
 			if index in math.revealed and not _vault_revealed.has(index):
 				_vault_revealed[index] = true
+				AudioService.play(&"reveal")
 				_vault_tiles[index].modulate.a = 0.0
 				create_tween().tween_property(_vault_tiles[index], "modulate:a", 1.0, 0.18)
 	if _vault_cursor != null:

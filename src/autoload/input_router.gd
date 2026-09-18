@@ -93,7 +93,10 @@ func move_snap_cursor(cursor: SnapCursor, event: InputEvent) -> bool:
 		direction = Vector2i.UP
 	elif event.is_action_pressed("move_down"):
 		direction = Vector2i.DOWN
-	return cursor.move(direction)
+	var moved: bool = cursor.move(direction)
+	if moved:
+		AudioService.play(&"move")
+	return moved
 
 
 func _bind(action: String, key: Key, button: JoyButton) -> void:
