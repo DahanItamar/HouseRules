@@ -9,6 +9,7 @@ const BUTTON_ACTIONS := {
 	&"back": JOY_BUTTON_B,
 	&"secondary": JOY_BUTTON_X,
 	&"tertiary": JOY_BUTTON_Y,
+	&"help": JOY_BUTTON_START,
 }
 const AXIS_ACTIONS := {
 	&"move_left": [JOY_AXIS_LEFT_X, -1.0],

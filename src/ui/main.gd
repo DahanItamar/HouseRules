@@ -4,7 +4,9 @@ var _guard := InstanceGuard.new()
 var _floor: FloorController
 var _menu: CanvasLayer
 var _hud_layer: CanvasLayer
+var _bank_panel: Panel
 var _hud: Label
+var _credit_caption: Label
 var _message: Label
 var _contracts: Label
 var _contracts_panel: Panel
@@ -41,11 +43,21 @@ func _build_hud() -> void:
 	_hud_layer = CanvasLayer.new()
 	_hud_layer.layer = 10
 	add_child(_hud_layer)
-	var bank_panel := _panel(Vector2(22, 18), Vector2(286, 54), Color("17161ae8"), Color("c8a34b"))
-	_hud_layer.add_child(bank_panel)
+	_bank_panel = _panel(Vector2(18, 16), Vector2(196, 56), Color("17161af2"), Color("c8a34b"))
+	_hud_layer.add_child(_bank_panel)
+	var chip_icon := CreditChipIcon.new()
+	chip_icon.position = Vector2(28, 25)
+	_hud_layer.add_child(chip_icon)
+	_credit_caption = Label.new()
+	_credit_caption.position = Vector2(72, 20)
+	_credit_caption.text = tr("HUD_CREDITS")
+	_credit_caption.add_theme_font_size_override("font_size", Typography.BODY_MIN)
+	_credit_caption.add_theme_color_override("font_color", Color("b8ad9c"))
+	_hud_layer.add_child(_credit_caption)
 	_hud = Label.new()
-	_hud.position = Vector2(38, 29)
-	_hud.add_theme_font_size_override("font_size", Typography.PROMINENT)
+	_hud.position = Vector2(72, 34)
+	_hud.size = Vector2(126, 30)
+	_hud.add_theme_font_size_override("font_size", 24)
 	_hud.add_theme_color_override("font_color", Color("f2c84b"))
 	_hud_layer.add_child(_hud)
 	_message = Label.new()
@@ -143,11 +155,11 @@ func _refresh_menu() -> void:
 
 
 func _refresh_hud() -> void:
-	_hud.text = tr("HUD_CHIPS") % Wallet.balance
+	_hud.text = str(Wallet.balance)
 	if Economy.debt > 0:
-		_hud.text += "     " + tr("HUD_DEBT") % Economy.debt
+		_hud.text += "  /  " + str(Economy.debt)
 	if Economy.is_below_solvency_floor():
-		_hud.text += "     " + tr("HUD_CASHIER")
+		_message.text = tr("HUD_CASHIER")
 	if _contracts != null:
 		_contracts.visible = SceneRouter.session == null
 		_contracts_panel.visible = _contracts.visible

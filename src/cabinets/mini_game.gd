@@ -34,6 +34,49 @@ func can_stake(amount: int) -> bool:
 	)
 
 
+func stake_options() -> Array[int]:
+	var by_game: Dictionary = {
+		&"slot_classic": [1, 2, 5, 10, 25, 50],
+		&"blackjack": [5, 10, 25, 50, 100],
+		&"minefield_vault": [1, 2, 5, 10, 25],
+	}
+	var options: Array[int] = []
+	for amount: int in by_game.get(context.definition.id, [context.definition.min_bet]):
+		if amount >= context.definition.min_bet and amount <= context.definition.max_bet:
+			options.append(amount)
+	return options
+
+
+func adjust_stake(direction: int) -> bool:
+	if is_round_active or context == null or direction == 0:
+		return false
+	var available: Array[int] = stake_options().filter(
+		func(amount: int) -> bool: return amount <= context.balance
+	)
+	if available.is_empty():
+		return false
+	var index: int = available.find(selected_stake)
+	if index < 0:
+		index = 0
+	var next_index: int = clampi(index + signi(direction), 0, available.size() - 1)
+	var changed: bool = selected_stake != available[next_index]
+	selected_stake = available[next_index]
+	return changed
+
+
+func handle_common_input(event: InputEvent) -> bool:
+	if event.is_action_pressed("help"):
+		panel.toggle_help()
+		get_viewport().set_input_as_handled()
+		return true
+	if panel.help_open:
+		if event.is_action_pressed("back"):
+			panel.set_help_open(false)
+		get_viewport().set_input_as_handled()
+		return true
+	return false
+
+
 func _ready() -> void:
 	panel = CabinetPanel.new()
 	panel.cabinet = self
@@ -50,15 +93,16 @@ func _finish(result: RoundResult) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if handle_common_input(event):
+		return
 	if event.is_action_pressed("back"):
 		get_viewport().set_input_as_handled()
 		exit_requested.emit()
 	elif not is_round_active and context != null:
+		var changed := false
 		if event.is_action_pressed("move_left"):
-			selected_stake = maxi(context.definition.min_bet, selected_stake - 1)
+			changed = adjust_stake(-1)
 		elif event.is_action_pressed("move_right"):
-			selected_stake = mini(
-				mini(context.definition.max_bet, context.balance), selected_stake + 1
-			)
-		if panel != null:
+			changed = adjust_stake(1)
+		if changed and panel != null:
 			panel.refresh()

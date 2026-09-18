@@ -27,6 +27,8 @@ func _resolve(result: RoundResult) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if handle_common_input(event):
+		return
 	if event.is_action_pressed("interact"):
 		if is_round_active:
 			_resolve(math.hit())

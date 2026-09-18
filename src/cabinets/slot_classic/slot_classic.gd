@@ -32,6 +32,8 @@ func abandon() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if handle_common_input(event):
+		return
 	if event.is_action_pressed("interact"):
 		start_round(selected_stake)
 		get_viewport().set_input_as_handled()

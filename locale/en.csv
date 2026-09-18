@@ -4,6 +4,7 @@ MENU_KICKER,VELVET DECO CASINO
 MENU_SUBTITLE,"Three games. One bankroll. The house remembers."
 MENU_CONTROLS,"[%s] Enter the casino\n[%s] Save and quit"
 HUD_CHIPS,CHIPS  %d
+HUD_CREDITS,CREDITS
 HUD_DEBT,DEBT  %d
 CONTRACTS_HEADING,CONTRACTS
 CONTRACT_LINE,%s  %d/%d  +%d
@@ -33,6 +34,50 @@ WING_VIP,VIP ELEVATOR
 WING_LOCKED,%s LOCKED\nRequires %d lifetime wagered
 CABINET_STAKE,STAKE  %d
 CABINET_CONTROLS,[%s] Play   %s: Stake   [%s] Leave
+STAKE_BET,BET
+HELP_BUTTON,?  HOW TO PLAY
+HELP_TITLE,HOW TO PLAY — %s
+HELP_RULES,RULES
+HELP_CONTROLS,CONTROLS
+HELP_CLOSE_HINT,%s or Back closes this guide
+HELP_SLOT_CLASSIC_RULES,"The center payline decides the round.
+
+Match three symbols to win. Two cherries also pay.
+
+Higher bets multiply both cost and payout."
+HELP_SLOT_CLASSIC_CONTROLS,"[%s] Spin
+
+%s  Change bet
+
+[%s] Leave"
+HELP_BLACKJACK_RULES,"Reach 21 without going over.
+
+Dealer stands on 17. A natural blackjack pays 3:2.
+
+Double is available only on the opening two cards."
+HELP_BLACKJACK_CONTROLS,"[%s] Deal / Hit
+
+[%s] Stand
+
+[%s] Double
+
+%s  Change bet
+
+[%s] Leave"
+HELP_MINEFIELD_VAULT_RULES,"Choose risk before the round.
+
+Every safe box raises the multiplier. Cash out before finding a mine.
+
+More mines mean higher rewards."
+HELP_MINEFIELD_VAULT_CONTROLS,"[%s] Open
+
+[%s] Cash out
+
+%s  Change bet
+
+%s  Choose mines
+
+[%s] Leave"
 SLOT_SPIN,SPIN
 SLOT_CENTER_PAYLINE,CENTER PAYLINE
 SLOT_LAST_WIN,RETURNED  %d
@@ -57,6 +102,8 @@ INPUT_AD,A / D
 INPUT_WS,W / S
 INPUT_WASD,WASD
 INPUT_DPAD,D-pad
+INPUT_F1,F1
+INPUT_MENU,Menu
 INPUT_STICK_HORIZONTAL,Left stick / D-pad left-right
 INPUT_STICK_VERTICAL,Left stick / D-pad up-down
 INPUT_STICK_DPAD,Left stick / D-pad

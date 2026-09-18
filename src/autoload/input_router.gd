@@ -20,6 +20,7 @@ func _ready() -> void:
 	_bind("back", KEY_ESCAPE, JOY_BUTTON_B)
 	_bind("secondary", KEY_X, JOY_BUTTON_X)
 	_bind("tertiary", KEY_Y, JOY_BUTTON_Y)
+	_bind("help", KEY_F1, JOY_BUTTON_START)
 	_axis("move_left", JOY_AXIS_LEFT_X, -1.0)
 	_axis("move_right", JOY_AXIS_LEFT_X, 1.0)
 	_axis("move_up", JOY_AXIS_LEFT_Y, -1.0)
@@ -35,6 +36,7 @@ func glyph(action: String) -> String:
 		"move_horizontal": "INPUT_AD",
 		"move_vertical": "INPUT_WS",
 		"move": "INPUT_WASD",
+		"help": "INPUT_F1",
 	}
 	var buttons: Dictionary = {
 		"interact": "INPUT_A",
@@ -44,6 +46,7 @@ func glyph(action: String) -> String:
 		"move_horizontal": "INPUT_STICK_HORIZONTAL",
 		"move_vertical": "INPUT_STICK_VERTICAL",
 		"move": "INPUT_STICK_DPAD",
+		"help": "INPUT_MENU",
 	}
 	var key: String = (
 		buttons.get(action, "INPUT_DPAD")

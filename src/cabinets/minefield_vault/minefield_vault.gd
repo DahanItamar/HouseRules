@@ -22,6 +22,8 @@ func abandon() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if handle_common_input(event):
+		return
 	var result: RoundResult
 	if event.is_action_pressed("interact"):
 		if is_round_active:

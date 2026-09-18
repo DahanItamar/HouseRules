@@ -26,6 +26,13 @@ var _slot_spinning: bool = false
 var _slot_finish_callback: Callable
 var _slot_lever: Node2D
 var _slot_spin_label: Label
+var _stake_selector: StakeSelector
+var _help_button: Button
+var _help_overlay: Control
+var _help_title: Label
+var _help_rules: Label
+var _help_controls: Label
+var help_open: bool = false
 var _vault_tiles: Array[VaultTile] = []
 var _vault_cursor: Node2D
 var _art_id: StringName = &""
@@ -81,6 +88,13 @@ func _ready() -> void:
 	_detail.size = Vector2(250, 130)
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_controls = _label(Vector2(80, 412), Typography.CRITICAL)
+	_controls.hide()
+	_controls_backdrop.hide()
+	_stake_selector = StakeSelector.new()
+	_stake_selector.name = "StakeSelector"
+	_stake_selector.cabinet = cabinet
+	add_child(_stake_selector)
+	_build_help_ui()
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh())
 	refresh()
 
@@ -91,6 +105,8 @@ func refresh() -> void:
 	_ensure_art()
 	_title.text = tr(cabinet.context.definition.name_key)
 	_stake.text = tr("CABINET_STAKE") % cabinet.selected_stake
+	_stake.hide()
+	_stake_selector.queue_redraw()
 	_status.text = tr(_status_key)
 	_controls.text = (
 		tr("CABINET_CONTROLS")
@@ -107,6 +123,7 @@ func refresh() -> void:
 		_refresh_vault()
 	else:
 		_refresh_slot()
+	_refresh_help()
 
 
 func show_result(result: RoundResult) -> void:
@@ -123,7 +140,7 @@ func show_result(result: RoundResult) -> void:
 
 
 func _process(delta: float) -> void:
-	if not _slot_spinning:
+	if help_open or not _slot_spinning:
 		return
 	_slot_spin_elapsed += delta
 	for reel_index: int in range(_slot_reels.size()):
@@ -158,6 +175,113 @@ func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 		_slot_spin_targets.append(int(symbols[index]))
 	_slot_finish_callback = on_finished
 	set_status("ROUND_SPINNING")
+
+
+func toggle_help() -> void:
+	set_help_open(not help_open)
+
+
+func set_help_open(open: bool) -> void:
+	help_open = open
+	if _help_overlay != null:
+		_help_overlay.visible = open
+	if open and _help_overlay != null:
+		var close_button := _help_overlay.find_child("HelpClose", true, false) as Button
+		if close_button != null:
+			close_button.grab_focus()
+
+
+func _build_help_ui() -> void:
+	_help_button = Button.new()
+	_help_button.name = "HowToPlayButton"
+	_help_button.position = Vector2(790, 18)
+	_help_button.size = Vector2(150, 38)
+	_help_button.text = tr("HELP_BUTTON")
+	_help_button.add_theme_font_size_override("font_size", 14)
+	_help_button.add_theme_stylebox_override("normal", _panel_style(Color("17161af2"), Color("c8a34b"), 6))
+	_help_button.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
+	_help_button.pressed.connect(toggle_help)
+	add_child(_help_button)
+
+	_help_overlay = Control.new()
+	_help_overlay.name = "HelpOverlay"
+	_help_overlay.size = Vector2(960, 540)
+	_help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_help_overlay.visible = false
+	add_child(_help_overlay)
+	var shade := ColorRect.new()
+	shade.size = Vector2(960, 540)
+	shade.color = Color("080708d9")
+	shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	_help_overlay.add_child(shade)
+	var modal := Panel.new()
+	modal.position = Vector2(170, 64)
+	modal.size = Vector2(620, 412)
+	modal.add_theme_stylebox_override("panel", _panel_style(Color("17161af7"), Color("c8a34b"), 8))
+	_help_overlay.add_child(modal)
+	_help_title = _help_label(modal, Vector2(32, 20), Vector2(470, 42), 28, Color("f1e8d8"))
+	var rules_heading := _help_label(modal, Vector2(32, 76), Vector2(326, 24), 14, Color("c8a34b"))
+	rules_heading.text = tr("HELP_RULES")
+	_help_rules = _help_label(modal, Vector2(32, 108), Vector2(326, 238), 16, Color("f1e8d8"))
+	_help_rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var controls_heading := _help_label(modal, Vector2(388, 76), Vector2(194, 24), 14, Color("c8a34b"))
+	controls_heading.text = tr("HELP_CONTROLS")
+	_help_controls = _help_label(modal, Vector2(388, 108), Vector2(194, 238), 15, Color("f1e8d8"))
+	_help_controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	var footer := _help_label(
+		modal, Vector2(32, 366), Vector2(420, 24), Typography.BODY_MIN, Color("b8ad9c")
+	)
+	footer.text = tr("HELP_CLOSE_HINT") % InputRouter.glyph("help")
+	var close := Button.new()
+	close.name = "HelpClose"
+	close.position = Vector2(548, 16)
+	close.size = Vector2(44, 44)
+	close.text = "×"
+	close.add_theme_font_size_override("font_size", 24)
+	close.add_theme_stylebox_override("normal", _panel_style(Color("252126"), Color("6e5225"), 6))
+	close.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
+	close.pressed.connect(func() -> void: set_help_open(false))
+	modal.add_child(close)
+
+
+func _refresh_help() -> void:
+	if _help_title == null:
+		return
+	var id := String(cabinet.context.definition.id).to_upper()
+	_help_button.text = tr("HELP_BUTTON")
+	_help_title.text = tr("HELP_TITLE") % tr(cabinet.context.definition.name_key)
+	_help_rules.text = tr("HELP_" + id + "_RULES")
+	if cabinet.context.definition.id == &"slot_classic":
+		_help_controls.text = (
+			tr("HELP_SLOT_CLASSIC_CONTROLS")
+			% [
+				InputRouter.glyph("interact"),
+				InputRouter.glyph("move_horizontal"),
+				InputRouter.glyph("back"),
+			]
+		)
+	elif cabinet.context.definition.id == &"blackjack":
+		_help_controls.text = (
+			tr("HELP_BLACKJACK_CONTROLS")
+			% [
+				InputRouter.glyph("interact"),
+				InputRouter.glyph("secondary"),
+				InputRouter.glyph("tertiary"),
+				InputRouter.glyph("move_horizontal"),
+				InputRouter.glyph("back"),
+			]
+		)
+	else:
+		_help_controls.text = (
+			tr("HELP_MINEFIELD_VAULT_CONTROLS")
+			% [
+				InputRouter.glyph("interact"),
+				InputRouter.glyph("secondary"),
+				InputRouter.glyph("move_horizontal"),
+				InputRouter.glyph("move_vertical"),
+				InputRouter.glyph("back"),
+			]
+		)
 
 
 func _refresh_blackjack() -> void:
@@ -319,6 +443,8 @@ func _apply_slot_fullscreen_layout() -> void:
 	_slot_spin_label = _slot_deck_label(Vector2(410, 433), Vector2(140, 48), 23)
 	_slot_spin_label.name = "SlotSpinLabel"
 	_slot_spin_label.text = tr("SLOT_SPIN")
+	_stake_selector.position = Vector2(76, 433)
+	_stake_selector.size = Vector2(306, 58)
 
 
 func _slot_deck_label(at: Vector2, dimensions: Vector2, font_size: int) -> Label:
@@ -410,6 +536,8 @@ func _apply_blackjack_fullscreen_layout() -> void:
 	_controls.size = Vector2(796, 24)
 	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls.add_theme_font_size_override("font_size", 16)
+	_stake_selector.position = Vector2(78, 456)
+	_stake_selector.size = Vector2(334, 58)
 
 
 func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], hide_hole: bool) -> void:
@@ -512,6 +640,8 @@ func _apply_vault_fullscreen_layout() -> void:
 	_controls.size = Vector2(796, 24)
 	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls.add_theme_font_size_override("font_size", 16)
+	_stake_selector.position = Vector2(44, 430)
+	_stake_selector.size = Vector2(300, 58)
 
 
 func _refresh_slot() -> void:
@@ -642,6 +772,29 @@ func _label(at: Vector2, font_size: int) -> Label:
 	label.add_theme_color_override("font_color", Color("e8e6f0"))
 	add_child(label)
 	return label
+
+
+func _help_label(
+	parent: Control, at: Vector2, dimensions: Vector2, font_size: int, color: Color
+) -> Label:
+	var label := Label.new()
+	label.position = at
+	label.size = dimensions
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	parent.add_child(label)
+	return label
+
+
+func _panel_style(
+	fill: Color, border: Color, radius: int, border_width: int = 1
+) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(radius)
+	return style
 
 
 func _card_names(cards: Array[int]) -> String:

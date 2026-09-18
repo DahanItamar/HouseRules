@@ -45,6 +45,37 @@ func test_ac042_chips_stake_and_multiplier_use_critical_text() -> void:
 	assert_gte(panel._detail.get_theme_font_size("font_size"), Typography.CRITICAL)
 
 
+func test_each_game_has_chip_stakes_and_contextual_help() -> void:
+	for definition: CabinetDefinition in [SLOT_DEFINITION, BLACKJACK_DEFINITION, VAULT_DEFINITION]:
+		var session := CabinetSession.new()
+		add_child_autofree(session)
+		session.begin(definition)
+		var game: MiniGame = session.cabinet
+		var panel: CabinetPanel = game.panel
+		assert_not_null(panel.find_child("StakeSelector", true, false))
+		assert_not_null(panel.find_child("HowToPlayButton", true, false))
+		assert_false(panel._controls.visible, "Key legend stays off the play surface")
+		panel.set_help_open(true)
+		assert_true(panel._help_overlay.visible)
+		assert_string_contains(panel._help_title.text, tr(definition.name_key))
+		assert_false(panel._help_rules.text.begins_with("HELP_"), "Rules are localized")
+		panel.set_help_open(false)
+		assert_false(panel._help_overlay.visible)
+
+
+func test_stakes_move_between_casino_denominations() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	var game: MiniGame = session.cabinet
+	assert_eq(game.stake_options(), [1, 2, 5, 10, 25, 50])
+	game.selected_stake = 1
+	assert_true(game.adjust_stake(1))
+	assert_eq(game.selected_stake, 2)
+	assert_true(game.adjust_stake(1))
+	assert_eq(game.selected_stake, 5)
+
+
 func test_m5_each_cabinet_integrates_its_generated_art() -> void:
 	var expected := {
 		&"slot_classic": "SlotCabinetArt",
