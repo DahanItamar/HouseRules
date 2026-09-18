@@ -14,7 +14,7 @@
 		{
 			"absolute_error": 0.0000830000000000553,
 			"cabinet": "slot_classic",
-			"elapsed_ms": 3241,
+			"elapsed_ms": 3238,
 			"observed_rtp": 0.955083,
 			"returned": 9550830,
 			"rounds": 1000000,
@@ -26,7 +26,7 @@
 		{
 			"absolute_error": 0.0000518885176702399,
 			"cabinet": "blackjack",
-			"elapsed_ms": 8864,
+			"elapsed_ms": 7736,
 			"observed_rtp": 0.99005188851767,
 			"returned": 10854820,
 			"rounds": 1000000,
@@ -38,7 +38,7 @@
 		{
 			"absolute_error": 0.00601359999999995,
 			"cabinet": "minefield_vault",
-			"elapsed_ms": 7294,
+			"elapsed_ms": 6232,
 			"observed_rtp": 0.9639864,
 			"returned": 24099660,
 			"rounds": 1000000,
