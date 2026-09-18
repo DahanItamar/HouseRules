@@ -1,0 +1,48 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="House Rules"
+run/main_scene="res://src/ui/main.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+Wallet="*res://src/autoload/wallet.gd"
+RNGService="*res://src/autoload/rng_service.gd"
+Economy="*res://src/autoload/economy.gd"
+SaveService="*res://src/autoload/save_service.gd"
+InputRouter="*res://src/autoload/input_router.gd"
+SceneRouter="*res://src/autoload/scene_router.gd"
+
+[debug]
+
+gdscript/warnings/untyped_declaration=1
+
+[display]
+
+window/size/viewport_width=960
+window/size/viewport_height=540
+window/size/window_width_override=960
+window/size/window_height_override=540
+window/stretch/mode="viewport"
+window/stretch/scale_mode="integer"
+
+[internationalization]
+
+locale/translations=PackedStringArray("res://locale/en.en.translation")
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+environment/defaults/default_clear_color=Color(0.043, 0.039, 0.071, 1)

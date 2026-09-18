@@ -1,0 +1,10 @@
+.godot/
+export/
+*.translation
+.tools/
+test-results/
+*.tmp
+.venv/
+tools/uv/
+tools/uv.zip
+tests/results/screenshots/session_*/
