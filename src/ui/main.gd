@@ -7,6 +7,7 @@ var _hud_layer: CanvasLayer
 var _hud: Label
 var _message: Label
 var _contracts: Label
+var _contracts_panel: Panel
 var _is_playing: bool = false
 
 
@@ -54,10 +55,10 @@ func _build_hud() -> void:
 	_message.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_message.add_theme_color_override("font_color", Color("f1e8d8"))
 	_hud_layer.add_child(_message)
-	var contracts_panel := _panel(
+	_contracts_panel = _panel(
 		Vector2(638, 18), Vector2(300, 108), Color("17161ae8"), Color("6e5225")
 	)
-	_hud_layer.add_child(contracts_panel)
+	_hud_layer.add_child(_contracts_panel)
 	_contracts = Label.new()
 	_contracts.position = Vector2(654, 27)
 	_contracts.size = Vector2(268, 92)
@@ -149,6 +150,7 @@ func _refresh_hud() -> void:
 		_hud.text += "     " + tr("HUD_CASHIER")
 	if _contracts != null:
 		_contracts.visible = SceneRouter.session == null
+		_contracts_panel.visible = _contracts.visible
 		_contracts.text = tr("CONTRACTS_HEADING") + "\n" + "\n".join(Economy.contract_lines())
 
 

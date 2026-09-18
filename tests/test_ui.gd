@@ -2,6 +2,7 @@ extends GutTest
 
 const MAIN_SCENE := preload("res://src/ui/main.tscn")
 const SLOT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/slot_classic.tres")
+const BLACKJACK_DEFINITION: CabinetDefinition = preload("res://data/cabinets/blackjack.tres")
 const VAULT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/minefield_vault.tres")
 var _original_platform: PlatformServices
 
@@ -146,3 +147,17 @@ func test_higgsfield_slot_symbols_are_high_resolution_and_transparent() -> void:
 		var image := texture.get_image()
 		assert_eq(image.get_pixel(0, 0).a, 0.0, "%s magenta corner is transparent" % symbol_name)
 		assert_gt(image.get_used_rect().size.x, 400, "%s retains a substantial opaque subject" % symbol_name)
+
+
+func test_blackjack_uses_dealt_cards_and_a_revealing_hole_card() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var game: MiniGame = session.cabinet
+	assert_true(game.start_round(10))
+	assert_eq(game.panel._blackjack_cards.size(), 4)
+	assert_true(game.panel._blackjack_cards[1].face_down, "Dealer hole card starts face-down")
+	var result: RoundResult = game.get("math").stand()
+	game.call("_resolve", result)
+	for card: PlayingCard in game.panel._blackjack_cards:
+		assert_false(card.face_down, "Resolved dealer hand is face-up")

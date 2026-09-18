@@ -30,6 +30,7 @@ var _motion_tween: Tween
 var _entrance_tween: Tween
 var _cursor_tween: Tween
 var _blackjack_dealt: bool = false
+var _blackjack_cards: Array[PlayingCard] = []
 var _vault_revealed: Dictionary = {}
 
 const SLOT_BODY := preload("res://assets/production/slot/slot_classic_body.png")
@@ -150,10 +151,7 @@ func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 
 func _refresh_blackjack() -> void:
 	var math: BlackjackMath = cabinet.get("math")
-	var dealer_text: String = _card_names(math.dealer)
-	if cabinet.is_round_active and not math.dealer.is_empty():
-		dealer_text = _card_names([math.dealer[0]]) + "  ?"
-	_detail.text = tr("BLACKJACK_HANDS") % [_card_names(math.player), dealer_text]
+	_detail.text = ""
 	_controls.text = (
 		tr("BLACKJACK_CONTROLS")
 		% [
@@ -164,15 +162,7 @@ func _refresh_blackjack() -> void:
 			InputRouter.glyph("back")
 		]
 	)
-	if cabinet.is_round_active and not _blackjack_dealt:
-		_blackjack_dealt = true
-		var card := _art_root.get_node_or_null("CardBackArt") as Sprite2D
-		if card != null:
-			card.position.y = 154
-			card.modulate.a = 0.0
-			var deal := create_tween().set_parallel(true)
-			deal.tween_property(card, "position:y", 194.0, 0.24)
-			deal.tween_property(card, "modulate:a", 1.0, 0.18)
+	_render_blackjack_hand(math.player, math.dealer, cabinet.is_round_active)
 
 
 func _refresh_vault() -> void:
@@ -266,13 +256,77 @@ func _build_slot_art() -> void:
 
 
 func _build_blackjack_art() -> void:
-	_art_root.add_child(
-		_texture("BlackjackTableArt", BLACKJACK_FELT, Vector2(390, 250), Vector2(500, 146))
+	var felt := ColorRect.new()
+	felt.name = "BlackjackTableArt"
+	felt.position = Vector2(342, 126)
+	felt.size = Vector2(542, 270)
+	felt.color = Color("073b31")
+	_art_root.add_child(felt)
+	var rail := ColorRect.new()
+	rail.position = Vector2(342, 126)
+	rail.size = Vector2(542, 8)
+	rail.color = Color("c8a34b")
+	_art_root.add_child(rail)
+	for label_data: Array in [
+		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(360, 154)],
+		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(360, 282)],
+	]:
+		var hand_label := Label.new()
+		hand_label.name = label_data[0]
+		hand_label.position = label_data[2]
+		hand_label.text = tr(label_data[1])
+		hand_label.add_theme_font_size_override("font_size", Typography.SUPPORTING)
+		hand_label.add_theme_color_override("font_color", Color("c8a34b"))
+		_art_root.add_child(hand_label)
+	var shoe := ColorRect.new()
+	shoe.name = "CardShoeArt"
+	shoe.position = Vector2(796, 154)
+	shoe.size = Vector2(54, 82)
+	shoe.color = Color("252126")
+	_art_root.add_child(shoe)
+	var shoe_trim := ColorRect.new()
+	shoe_trim.position = Vector2(801, 160)
+	shoe_trim.size = Vector2(44, 5)
+	shoe_trim.color = Color("c8a34b")
+	_art_root.add_child(shoe_trim)
+
+
+func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], hide_hole: bool) -> void:
+	for card: PlayingCard in _blackjack_cards:
+		if is_instance_valid(card):
+			card.queue_free()
+	_blackjack_cards.clear()
+	var deal_index: int = 0
+	for index: int in range(dealer_cards.size()):
+		_add_playing_card(dealer_cards[index], index, true, hide_hole and index == 1, deal_index)
+		deal_index += 1
+	for index: int in range(player_cards.size()):
+		_add_playing_card(player_cards[index], index, false, false, deal_index)
+		deal_index += 1
+
+
+func _add_playing_card(
+	rank: int, hand_index: int, dealer_hand: bool, hidden: bool, deal_index: int
+) -> void:
+	var card := PlayingCard.new()
+	card.name = ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
+	card.size = Vector2(68, 96)
+	card.configure(rank, rank + hand_index + (0 if dealer_hand else 2), hidden)
+	var destination := Vector2(408 + hand_index * 58, 150 if dealer_hand else 278)
+	card.position = Vector2(800, 164)
+	card.rotation = 0.08
+	card.modulate.a = 0.0
+	_art_root.add_child(card)
+	_blackjack_cards.append(card)
+	var deal := create_tween().set_parallel(true)
+	deal.tween_property(card, "position", destination, 0.26).set_delay(deal_index * 0.08)
+	deal.tween_property(card, "rotation", (hand_index - 1) * 0.025, 0.26).set_delay(
+		deal_index * 0.08
 	)
-	_art_root.add_child(
-		_texture("DealerArt", BLACKJACK_DEALER, Vector2(676, 90), Vector2(128, 160))
-	)
-	_art_root.add_child(_texture("CardBackArt", CARD_BACK, Vector2(570, 194), Vector2(56, 80)))
+	deal.tween_property(card, "modulate:a", 1.0, 0.12).set_delay(deal_index * 0.08)
+	if dealer_hand and not hidden and hand_index == 1:
+		card.scale.x = 0.05
+		create_tween().tween_property(card, "scale:x", 1.0, 0.14).set_delay(0.18)
 
 
 func _build_vault_art() -> void:

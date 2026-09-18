@@ -35,6 +35,7 @@ func _capture() -> void:
 	router.enter_cabinet(load("res://data/cabinets/blackjack.tres"))
 	router.session.cabinet.selected_stake = 10
 	router.session.cabinet.start_round(10)
+	await create_timer(0.7).timeout
 	await _snapshot("05_blackjack")
 	router.return_to_floor()
 	router.enter_cabinet(load("res://data/cabinets/minefield_vault.tres"))
