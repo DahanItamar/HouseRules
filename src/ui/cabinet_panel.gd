@@ -10,6 +10,28 @@ var _detail: Label
 var _controls: Label
 var _status_key: String = "ROUND_READY"
 var _result: RoundResult
+var _art_root: Node2D
+var _slot_symbols: Array[Sprite2D] = []
+var _vault_tiles: Array[Sprite2D] = []
+var _vault_cursor: Node2D
+var _art_id: StringName = &""
+
+const SLOT_BODY := preload("res://assets/drafts/slot_classic_body.png")
+const SLOT_SYMBOLS: Array[Texture2D] = [
+	preload("res://assets/drafts/sym_cherry.png"),
+	preload("res://assets/drafts/sym_lemon.png"),
+	preload("res://assets/drafts/sym_bell.png"),
+	preload("res://assets/drafts/sym_bar.png"),
+	preload("res://assets/drafts/sym_seven.png"),
+	preload("res://assets/drafts/sym_diamond.png"),
+]
+const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
+const BLACKJACK_DEALER := preload("res://assets/drafts/m2/dealer.png")
+const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
+const VAULT_BACKDROP := preload("res://assets/drafts/vault_backdrop.png")
+const VAULT_TILE_HIDDEN := preload("res://assets/drafts/m2/tile_unrevealed.png")
+const VAULT_TILE_SAFE := preload("res://assets/drafts/m2/tile_safe_revealed.png")
+const VAULT_TILE_MINE := preload("res://assets/drafts/m2/tile_mine_revealed.png")
 
 
 func _ready() -> void:
@@ -23,6 +45,14 @@ func _ready() -> void:
 	frame.position = Vector2(48, 76)
 	frame.size = Vector2(864, 396)
 	add_child(frame)
+	_art_root = Node2D.new()
+	_art_root.name = "CabinetArt"
+	add_child(_art_root)
+	var controls_backdrop := ColorRect.new()
+	controls_backdrop.position = Vector2(64, 400)
+	controls_backdrop.size = Vector2(832, 56)
+	controls_backdrop.color = Color("1a1826")
+	add_child(controls_backdrop)
 	_title = _label(Vector2(80, 90), 24)
 	_stake = _label(Vector2(80, 138), Typography.PROMINENT)
 	_status = _label(Vector2(80, 184), 18)
@@ -35,6 +65,7 @@ func _ready() -> void:
 func refresh() -> void:
 	if _title == null or cabinet.context == null:
 		return
+	_ensure_art()
 	_title.text = tr(cabinet.context.definition.name_key)
 	_stake.text = tr("CABINET_STAKE") % cabinet.selected_stake
 	_status.text = tr(_status_key)
@@ -51,12 +82,8 @@ func refresh() -> void:
 		_refresh_blackjack()
 	elif id == &"minefield_vault":
 		_refresh_vault()
-	elif _result != null:
-		var symbols: Array = _result.detail.get("symbols", [])
-		var names: PackedStringArray = []
-		for symbol: int in symbols:
-			names.append(tr("SYMBOL_" + str(symbol)))
-		_detail.text = "   |   ".join(names)
+	else:
+		_refresh_slot()
 
 
 func show_result(result: RoundResult) -> void:
@@ -94,15 +121,16 @@ func _refresh_blackjack() -> void:
 func _refresh_vault() -> void:
 	var math: MinefieldMath = cabinet.get("math")
 	var cursor: int = (cabinet.get("snap_cursor") as SnapCursor).index
-	var grid: String = ""
 	for index: int in range(25):
-		var tile: String = "#"
-		if index in math.revealed:
-			tile = "X" if index in math.mines else "+"
-		grid += ("[%s] " if cursor == index else " %s  ") % tile
-		if index % 5 == 4:
-			grid += "\n"
-	_detail.text = tr("VAULT_GRID") % [cabinet.get("mine_count"), math.multiplier(), grid]
+		if index < _vault_tiles.size():
+			_vault_tiles[index].texture = (
+				VAULT_TILE_MINE
+				if index in math.revealed and index in math.mines
+				else VAULT_TILE_SAFE if index in math.revealed else VAULT_TILE_HIDDEN
+			)
+	if _vault_cursor != null:
+		_vault_cursor.position = Vector2(583 + (cursor % 5) * 49, 138 + (cursor / 5) * 49)
+	_detail.text = tr("VAULT_GRID") % [cabinet.get("mine_count"), math.multiplier(), ""]
 	_detail.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_controls.text = (
 		tr("VAULT_CONTROLS")
@@ -114,6 +142,94 @@ func _refresh_vault() -> void:
 			InputRouter.glyph("back")
 		]
 	)
+
+
+func _ensure_art() -> void:
+	var id: StringName = cabinet.context.definition.id
+	if id == _art_id:
+		return
+	_art_id = id
+	if id == &"slot_classic":
+		_build_slot_art()
+	elif id == &"blackjack":
+		_build_blackjack_art()
+	elif id == &"minefield_vault":
+		_build_vault_art()
+
+
+func _build_slot_art() -> void:
+	_art_root.add_child(_texture("SlotCabinetArt", SLOT_BODY, Vector2(600, 92), Vector2(288, 360)))
+	for index: int in range(3):
+		var symbol := _texture(
+			"ReelSymbol%d" % index,
+			SLOT_SYMBOLS[index],
+			Vector2(676 + index * 47, 222),
+			Vector2(48, 48)
+		)
+		_slot_symbols.append(symbol)
+		_art_root.add_child(symbol)
+
+
+func _build_blackjack_art() -> void:
+	_art_root.add_child(
+		_texture("BlackjackTableArt", BLACKJACK_FELT, Vector2(390, 250), Vector2(500, 146))
+	)
+	_art_root.add_child(
+		_texture("DealerArt", BLACKJACK_DEALER, Vector2(676, 90), Vector2(128, 160))
+	)
+	_art_root.add_child(_texture("CardBackArt", CARD_BACK, Vector2(570, 194), Vector2(56, 80)))
+
+
+func _build_vault_art() -> void:
+	_art_root.add_child(
+		_texture("VaultBackdropArt", VAULT_BACKDROP, Vector2(470, 96), Vector2(428, 241))
+	)
+	for index: int in range(25):
+		var tile := _texture(
+			"VaultTile%02d" % index,
+			VAULT_TILE_HIDDEN,
+			Vector2(587 + (index % 5) * 49, 142 + (index / 5) * 49),
+			Vector2(42, 42)
+		)
+		_vault_tiles.append(tile)
+		_art_root.add_child(tile)
+	_vault_cursor = Node2D.new()
+	_vault_cursor.name = "SnapCursorArt"
+	for border: Rect2 in [
+		Rect2(0, 0, 50, 4),
+		Rect2(0, 46, 50, 4),
+		Rect2(0, 0, 4, 50),
+		Rect2(46, 0, 4, 50),
+	]:
+		var edge := ColorRect.new()
+		edge.position = border.position
+		edge.size = border.size
+		edge.color = Color("00e5ff")
+		_vault_cursor.add_child(edge)
+	_art_root.add_child(_vault_cursor)
+
+
+func _refresh_slot() -> void:
+	var symbols: Array = [0, 1, 2]
+	if _result != null:
+		symbols = _result.detail.get("symbols", symbols)
+	var names: PackedStringArray = []
+	for index: int in range(mini(symbols.size(), _slot_symbols.size())):
+		var symbol: int = symbols[index]
+		_slot_symbols[index].texture = SLOT_SYMBOLS[symbol]
+		names.append(tr("SYMBOL_" + str(symbol)))
+	_detail.text = "   |   ".join(names)
+
+
+func _texture(node_name: String, texture: Texture2D, at: Vector2, dimensions: Vector2) -> Sprite2D:
+	var sprite := Sprite2D.new()
+	sprite.name = node_name
+	sprite.texture = texture
+	sprite.centered = false
+	sprite.position = at
+	sprite.scale = dimensions / Vector2(texture.get_width(), texture.get_height())
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	return sprite
 
 
 func _label(at: Vector2, font_size: int) -> Label:

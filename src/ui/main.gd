@@ -28,6 +28,7 @@ func _ready() -> void:
 	Economy.debt_changed.connect(func(_debt: int) -> void: _refresh_hud())
 	Economy.contracts_changed.connect(_refresh_hud)
 	Economy.contract_completed.connect(_show_contract_completed)
+	SceneRouter.session_changed.connect(_refresh_hud)
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: _refresh_menu())
 	_refresh_hud()
 	_refresh_menu()
@@ -90,6 +91,7 @@ func _refresh_hud() -> void:
 	if Economy.is_below_solvency_floor():
 		_hud.text += "     " + tr("HUD_CASHIER")
 	if _contracts != null:
+		_contracts.visible = SceneRouter.session == null
 		_contracts.text = tr("CONTRACTS_HEADING") + "\n" + "\n".join(Economy.contract_lines())
 
 

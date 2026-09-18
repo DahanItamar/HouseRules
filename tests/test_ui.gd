@@ -40,3 +40,20 @@ func test_ac042_chips_stake_and_multiplier_use_critical_text() -> void:
 	var panel: CabinetPanel = session.cabinet.panel
 	assert_gte(panel._stake.get_theme_font_size("font_size"), Typography.CRITICAL)
 	assert_gte(panel._detail.get_theme_font_size("font_size"), Typography.CRITICAL)
+
+
+func test_m5_each_cabinet_integrates_its_generated_art() -> void:
+	var expected := {
+		&"slot_classic": "SlotCabinetArt",
+		&"blackjack": "BlackjackTableArt",
+		&"minefield_vault": "VaultBackdropArt",
+	}
+	for id: StringName in expected:
+		var definition: CabinetDefinition = load("res://data/cabinets/%s.tres" % id)
+		var session := CabinetSession.new()
+		add_child_autofree(session)
+		session.begin(definition)
+		assert_not_null(
+			session.cabinet.panel.find_child(expected[id], true, false),
+			"%s screen includes its generated cabinet art" % id
+		)
