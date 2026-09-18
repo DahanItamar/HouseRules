@@ -2,7 +2,8 @@
 
 Offline Godot casino MVP: a walkable floor, three playable cabinets on one
 session contract, integer chip wallet, contracts, cashier recovery, versioned
-local saves, controller-first UI, generated pixel art, native motion and audio.
+local saves, controller-first UI, high-resolution generated art, native motion
+and audio.
 
 **Engine:** Godot **4.7.2 standard**, GDScript (installed Windows engine reports
 `4.7.2.stable.official.ed1daf0bf`). No .NET or runtime networking.
@@ -14,6 +15,13 @@ The first editor import generates translations and script class metadata.
 
 ```powershell
 & 'C:/Godot/Godot_v4.7.2-stable_win64_console.exe' --editor --path .
+```
+
+From any PowerShell directory, launch the current packaged MVP with absolute
+paths (the PCK path must not be relative to `C:\Users\USER`):
+
+```powershell
+& 'C:\Godot\Godot_v4.7.2-stable_win64.exe' --main-pack 'D:\Dev\repos\HouseRules\export\HouseRules.pck'
 ```
 
 Enter / gamepad A starts or interacts. WASD / left stick / D-pad moves.
@@ -41,7 +49,7 @@ GUT 9.5.0 is vendored and pinned to commit
 Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 `gdlint src tests`. CI runs formatting, lint, GUT and one million production-math
 rounds per cabinet, and uploads JSON evidence even on failure. The current release
-gate passes **35/35 tests and 1,057 assertions**. All three fixed-seed million-round
+gate passes **42/42 tests and 1,115 assertions**. All three fixed-seed million-round
 RTP measurements pass AC-027; see `tests/results/rtp.json`.
 
 ## Windows build
@@ -51,6 +59,12 @@ Desktop**, or run:
 
 ```powershell
 godot --headless --path . --export-release "Windows Desktop" export/HouseRules.exe
+```
+
+Without export templates, rebuild the testable PCK with:
+
+```powershell
+& 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --headless --path . --export-pack "Windows Desktop" export/HouseRules.pck
 ```
 
 The preset embeds the PCK and excludes tests, documentation, tooling, and

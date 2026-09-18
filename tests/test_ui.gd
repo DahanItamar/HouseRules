@@ -100,6 +100,17 @@ func test_reference_captures_keep_a_full_16_by_9_frame() -> void:
 		assert_gte(dimensions.x, 960, "%s is at least the logical canvas width" % filename)
 
 
+func test_exact_fhd_and_qhd_slot_captures_are_native_resolution() -> void:
+	var captures := {
+		"res://tests/results/screenshots/fhd/03_slot_idle.png": Vector2i(1920, 1080),
+		"res://tests/results/screenshots/qhd_exact/03_slot_idle.png": Vector2i(2560, 1440),
+	}
+	for path: String in captures:
+		var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+		assert_false(image.is_empty(), "%s can be decoded" % path)
+		assert_eq(image.get_size(), captures[path], "%s is pixel-exact" % path)
+
+
 func test_redesigned_shell_uses_high_resolution_production_environments() -> void:
 	var main := MAIN_SCENE.instantiate()
 	add_child_autofree(main)
