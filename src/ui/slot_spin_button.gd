@@ -6,6 +6,7 @@ extends Button
 func _ready() -> void:
 	text = ""
 	flat = true
+	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button_down.connect(queue_redraw)
@@ -35,11 +36,11 @@ func _draw() -> void:
 	draw_circle(center, active_radius, face)
 	draw_arc(center, active_radius - 4.0, 0.0, TAU, 48, Color("f1e8d8"), 2.0)
 	var label := tr("SLOT_SPIN")
-	var text_size := ThemeDB.fallback_font.get_string_size(
+	var text_size := Typography.DISPLAY_FONT.get_string_size(
 		label, HORIZONTAL_ALIGNMENT_LEFT, -1, 21
 	)
 	draw_string(
-		ThemeDB.fallback_font,
+		Typography.DISPLAY_FONT,
 		center + Vector2(-text_size.x * 0.5, 7.0),
 		label,
 		HORIZONTAL_ALIGNMENT_LEFT,

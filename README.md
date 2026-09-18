@@ -52,7 +52,7 @@ GUT 9.5.0 is vendored and pinned to commit
 Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 `gdlint src tests`. CI runs formatting, lint, GUT and one million production-math
 rounds per cabinet, and uploads JSON evidence even on failure. The current release
-gate passes **52/52 tests and 1,260 assertions**. All three fixed-seed million-round
+gate passes **55/55 tests and 1,303 assertions**. All three fixed-seed million-round
 RTP measurements pass AC-027; see `tests/results/rtp.json`.
 
 ## Windows build
@@ -72,7 +72,9 @@ Without export templates, rebuild the testable PCK with:
 
 The preset embeds the PCK and excludes tests, documentation, tooling, and
 Higgsfield source masters from the player build. The executable supports
-resizable/high-DPI Windows displays and Xbox-compatible controllers.
+resizable/high-DPI Windows displays, ROG/Xbox Ally-class Windows handhelds, and
+Xbox-compatible controllers. Native Xbox console export and certification are
+outside the current Windows MVP target.
 
 ## Structure
 
@@ -87,6 +89,8 @@ resizable/high-DPI Windows displays and Xbox-compatible controllers.
 
 The upstream agency prompts and license are pinned under `tools/agency-agents/`;
 `docs/AGENT-PIPELINE.md` records their roles and Godot-specific adaptations.
+The bundled Barlow Condensed UI family is licensed under the SIL Open Font
+License; see `assets/fonts/OFL-BarlowCondensed.txt`.
 
 ## Scope and limitations
 

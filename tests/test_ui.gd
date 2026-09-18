@@ -31,6 +31,21 @@ func test_ac042_all_runtime_labels_respect_the_body_text_floor() -> void:
 		)
 
 
+func test_casino_ui_uses_bundled_msdf_ready_fonts() -> void:
+	assert_not_null(Typography.UI_FONT)
+	assert_not_null(Typography.DISPLAY_FONT)
+	assert_string_contains(Typography.UI_FONT.resource_path, "BarlowCondensed-Medium.ttf")
+	assert_string_contains(Typography.DISPLAY_FONT.resource_path, "BarlowCondensed-SemiBold.ttf")
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	assert_eq(session.cabinet.panel._title.get_theme_font("font"), Typography.DISPLAY_FONT)
+	assert_eq(
+		session.cabinet.panel._stake_selector._buttons[0].get_theme_font("font"),
+		Typography.UI_FONT
+	)
+
+
 func test_ac042_chips_stake_and_multiplier_use_critical_text() -> void:
 	var main := MAIN_SCENE.instantiate()
 	add_child_autofree(main)
@@ -137,6 +152,43 @@ func test_every_game_exposes_six_semantic_bet_buttons_and_total_readout() -> voi
 		assert_gte(Typography.PROMINENT, Typography.CRITICAL)
 
 
+func test_cabinet_controls_stay_inside_horizontal_tv_safe_area() -> void:
+	for definition: CabinetDefinition in [SLOT_DEFINITION, BLACKJACK_DEFINITION, VAULT_DEFINITION]:
+		var session := CabinetSession.new()
+		add_child_autofree(session)
+		session.begin(definition)
+		var panel: CabinetPanel = session.cabinet.panel
+		var controls: Array[Control] = [panel._help_button, panel._stake_selector]
+		if definition.id == &"slot_classic":
+			controls.append(panel._slot_spin_label)
+		elif definition.id == &"blackjack":
+			controls.append_array([
+				panel._blackjack_primary, panel._blackjack_stand, panel._blackjack_double
+			])
+		else:
+			controls.append_array([panel._vault_open, panel._vault_cash_out])
+		for control: Control in controls:
+			assert_gte(control.position.x, 48.0, "%s keeps a 5%% left safe area" % control.name)
+			assert_lte(
+				control.position.x + control.size.x,
+				912.0,
+				"%s keeps a 5%% right safe area" % control.name
+			)
+
+
+func test_primary_controller_focus_and_help_focus_restore() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	await get_tree().process_frame
+	var panel: CabinetPanel = session.cabinet.panel
+	assert_eq(get_viewport().gui_get_focus_owner(), panel._slot_spin_label)
+	panel.set_help_open(true)
+	assert_eq(get_viewport().gui_get_focus_owner().name, "HelpClose")
+	panel.set_help_open(false)
+	assert_eq(get_viewport().gui_get_focus_owner(), panel._slot_spin_label)
+
+
 func test_m5_each_cabinet_integrates_its_generated_art() -> void:
 	var expected := {
 		&"slot_classic": "SlotCabinetArt",
@@ -192,10 +244,14 @@ func test_reference_captures_keep_a_full_16_by_9_frame() -> void:
 		assert_gte(dimensions.x, 960, "%s is at least the logical canvas width" % filename)
 
 
-func test_exact_fhd_and_qhd_slot_captures_are_native_resolution() -> void:
+func test_exact_fhd_and_qhd_game_captures_are_native_resolution() -> void:
 	var captures := {
 		"res://tests/results/screenshots/fhd/03_slot_idle.png": Vector2i(1920, 1080),
+		"res://tests/results/screenshots/fhd/05_blackjack.png": Vector2i(1920, 1080),
+		"res://tests/results/screenshots/fhd/06_vault_reveal.png": Vector2i(1920, 1080),
 		"res://tests/results/screenshots/qhd_exact/03_slot_idle.png": Vector2i(2560, 1440),
+		"res://tests/results/screenshots/qhd_exact/05_blackjack.png": Vector2i(2560, 1440),
+		"res://tests/results/screenshots/qhd_exact/06_vault_reveal.png": Vector2i(2560, 1440),
 	}
 	for path: String in captures:
 		var image := Image.load_from_file(ProjectSettings.globalize_path(path))
@@ -289,7 +345,7 @@ func test_slot_uses_a_full_screen_sharp_higgsfield_stage() -> void:
 	var bezel: Texture2D = load(
 		"res://assets/production/slot/symbols/slot_fullscreen_bezel.png"
 	)
-	assert_gte(bezel.get_width(), 1200, "The bezel retains a high-resolution master")
+	assert_gte(bezel.get_width(), 3840, "The bezel retains a native 4K master")
 	var bezel_image := bezel.get_image()
 	assert_lt(
 		bezel_image.get_pixel(bezel_image.get_width() / 2, bezel_image.get_height() / 2).a,
@@ -339,6 +395,7 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 		800.0,
 		"Blackjack felt owns the full game stage"
 	)
+	assert_gte(table.texture.get_width(), 3840, "Blackjack table retains a native 4K master")
 	assert_not_null(blackjack_panel.find_child("BlackjackControlDeck", true, false))
 	assert_true(blackjack_panel._blackjack_primary is Button)
 	assert_true(blackjack_panel._blackjack_stand is Button)
@@ -351,6 +408,8 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 	assert_eq(vault_panel._frame.size, Vector2(960, 540))
 	assert_eq(vault_panel._vault_tiles.size(), 25)
 	assert_eq(vault_panel._vault_tiles[0].size, Vector2(48, 48))
+	var vault_backdrop: Texture2D = load("res://assets/production/vault/vault_backdrop.png")
+	assert_gte(vault_backdrop.get_width(), 3840, "Vault backdrop retains a native 4K master")
 	assert_not_null(vault_panel.find_child("VaultControlDeck", true, false))
 	assert_not_null(vault_panel.find_child("VaultStatusPanel", true, false))
 	assert_true(vault_panel._vault_open is Button)

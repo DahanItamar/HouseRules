@@ -99,6 +99,7 @@ func _ready() -> void:
 	_controls_backdrop.color = Color("1a1826")
 	add_child(_controls_backdrop)
 	_title = _label(Vector2(80, 90), 24)
+	_title.add_theme_font_override("font", Typography.DISPLAY_FONT)
 	_stake = _label(Vector2(80, 138), Typography.PROMINENT)
 	_status = _label(Vector2(80, 184), 18)
 	_status.size = Vector2(250, 54)
@@ -242,9 +243,10 @@ func set_help_open(open: bool) -> void:
 func _build_help_ui() -> void:
 	_help_button = Button.new()
 	_help_button.name = "HowToPlayButton"
-	_help_button.position = Vector2(790, 18)
-	_help_button.size = Vector2(150, 38)
+	_help_button.position = Vector2(770, 28)
+	_help_button.size = Vector2(142, 38)
 	_help_button.text = tr("HELP_BUTTON")
+	_help_button.add_theme_font_override("font", Typography.UI_FONT)
 	_help_button.add_theme_font_size_override("font_size", 14)
 	_help_button.z_index = 90
 	_help_button.add_theme_stylebox_override("normal", _panel_style(Color("17161af2"), Color("c8a34b"), 6))
@@ -287,6 +289,7 @@ func _build_help_ui() -> void:
 	close.position = Vector2(548, 16)
 	close.size = Vector2(44, 44)
 	close.text = "×"
+	close.add_theme_font_override("font", Typography.UI_FONT)
 	close.add_theme_font_size_override("font_size", 24)
 	close.add_theme_stylebox_override("normal", _panel_style(Color("252126"), Color("6e5225"), 6))
 	close.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
@@ -443,7 +446,7 @@ func _ensure_art() -> void:
 
 
 func _focus_default_action() -> void:
-	if help_open:
+	if help_open or not is_inside_tree():
 		return
 	if cabinet.context.definition.id == &"slot_classic" and _slot_spin_label != null:
 		_slot_spin_label.grab_focus()
@@ -527,16 +530,16 @@ func _apply_slot_fullscreen_layout() -> void:
 	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_detail.hide()
 	_controls.hide()
-	_stake_selector.position = Vector2(174, 434)
-	_stake_selector.size = Vector2(350, 80)
+	_stake_selector.position = Vector2(184, 434)
+	_stake_selector.size = Vector2(340, 80)
 	_stake_selector.z_index = 6
 
 
 func _build_slot_deck() -> void:
 	var credits_panel := Panel.new()
 	credits_panel.name = "SlotCreditsMeter"
-	credits_panel.position = Vector2(36, 430)
-	credits_panel.size = Vector2(130, 94)
+	credits_panel.position = Vector2(48, 430)
+	credits_panel.size = Vector2(128, 94)
 	credits_panel.z_index = 4
 	credits_panel.add_theme_stylebox_override(
 		"panel", _panel_style(Color("170c0d"), Color("c8a34b"), 8, 2)
@@ -554,8 +557,8 @@ func _build_slot_deck() -> void:
 
 	var bet_panel := Panel.new()
 	bet_panel.name = "SlotBetTray"
-	bet_panel.position = Vector2(174, 430)
-	bet_panel.size = Vector2(350, 94)
+	bet_panel.position = Vector2(184, 430)
+	bet_panel.size = Vector2(340, 94)
 	bet_panel.z_index = 4
 	bet_panel.add_theme_stylebox_override(
 		"panel", _panel_style(Color("170c0d"), Color("6e5225"), 8, 2)
@@ -577,18 +580,18 @@ func _build_slot_deck() -> void:
 	var result_panel := Panel.new()
 	result_panel.name = "SlotResultMeter"
 	result_panel.position = Vector2(678, 430)
-	result_panel.size = Vector2(246, 94)
+	result_panel.size = Vector2(234, 94)
 	result_panel.z_index = 4
 	result_panel.add_theme_stylebox_override(
 		"panel", _panel_style(Color("170c0d"), Color("c8a34b"), 8, 2)
 	)
 	add_child(result_panel)
 	_slot_result_value = _help_label(
-		result_panel, Vector2(10, 15), Vector2(226, 30), 24, Color("f1e8d8")
+		result_panel, Vector2(10, 15), Vector2(214, 30), 24, Color("f1e8d8")
 	)
 	_slot_result_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_slot_result_formula = _help_label(
-		result_panel, Vector2(10, 53), Vector2(226, 24), 14, Color("b8ad9c")
+		result_panel, Vector2(10, 53), Vector2(214, 24), 14, Color("b8ad9c")
 	)
 	_slot_result_formula.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
@@ -596,8 +599,8 @@ func _build_slot_deck() -> void:
 func _build_blackjack_deck() -> void:
 	var deck := Panel.new()
 	deck.name = "BlackjackControlDeck"
-	deck.position = Vector2(36, 430)
-	deck.size = Vector2(888, 98)
+	deck.position = Vector2(48, 430)
+	deck.size = Vector2(864, 98)
 	deck.z_index = 4
 	deck.add_theme_stylebox_override(
 		"panel", _panel_style(Color("170c0d"), Color("c8a34b"), 7, 2)
@@ -618,7 +621,7 @@ func _build_blackjack_deck() -> void:
 func _build_vault_deck() -> void:
 	var status_panel := Panel.new()
 	status_panel.name = "VaultStatusPanel"
-	status_panel.position = Vector2(44, 98)
+	status_panel.position = Vector2(58, 98)
 	status_panel.size = Vector2(286, 104)
 	status_panel.z_index = 4
 	status_panel.add_theme_stylebox_override(
@@ -636,8 +639,8 @@ func _build_vault_deck() -> void:
 	add_child(risk_panel)
 	var deck := Panel.new()
 	deck.name = "VaultControlDeck"
-	deck.position = Vector2(36, 426)
-	deck.size = Vector2(888, 102)
+	deck.position = Vector2(48, 426)
+	deck.size = Vector2(864, 102)
 	deck.z_index = 4
 	deck.add_theme_stylebox_override(
 		"panel", _panel_style(Color("0d0a1cf2"), Color("6d4fb3"), 7, 2)
@@ -675,6 +678,7 @@ func _action_button(label: String, at: Vector2, dimensions: Vector2, action: Cal
 	button.size = dimensions
 	button.z_index = 6
 	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_override("font", Typography.DISPLAY_FONT)
 	button.add_theme_font_size_override("font_size", 16)
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.add_theme_color_override("font_color", Color("f1e8d8"))
@@ -702,6 +706,7 @@ func _build_blackjack_art() -> void:
 		hand_label.name = label_data[0]
 		hand_label.position = label_data[2]
 		hand_label.text = tr(label_data[1])
+		hand_label.add_theme_font_override("font", Typography.DISPLAY_FONT)
 		hand_label.add_theme_font_size_override("font_size", Typography.SUPPORTING)
 		hand_label.add_theme_color_override("font_color", Color("c8a34b"))
 		_art_root.add_child(hand_label)
@@ -742,7 +747,7 @@ func _apply_blackjack_fullscreen_layout() -> void:
 	_controls.size = Vector2(796, 24)
 	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls.add_theme_font_size_override("font_size", 16)
-	_stake_selector.position = Vector2(174, 438)
+	_stake_selector.position = Vector2(184, 438)
 	_stake_selector.size = Vector2(340, 80)
 	_stake_selector.z_index = 6
 
@@ -887,7 +892,7 @@ func _apply_vault_fullscreen_layout() -> void:
 	_controls.size = Vector2(796, 24)
 	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls.add_theme_font_size_override("font_size", 16)
-	_stake_selector.position = Vector2(174, 434)
+	_stake_selector.position = Vector2(184, 434)
 	_stake_selector.size = Vector2(340, 80)
 	_stake_selector.z_index = 6
 
@@ -1027,6 +1032,7 @@ func _texture(node_name: String, texture: Texture2D, at: Vector2, dimensions: Ve
 func _label(at: Vector2, font_size: int) -> Label:
 	var label := Label.new()
 	label.position = at
+	label.add_theme_font_override("font", Typography.UI_FONT)
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", Color("e8e6f0"))
 	add_child(label)
@@ -1039,6 +1045,7 @@ func _help_label(
 	var label := Label.new()
 	label.position = at
 	label.size = dimensions
+	label.add_theme_font_override("font", Typography.UI_FONT)
 	label.add_theme_font_size_override("font_size", font_size)
 	label.add_theme_color_override("font_color", color)
 	parent.add_child(label)

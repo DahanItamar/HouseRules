@@ -22,6 +22,7 @@ func _ready() -> void:
 		button.name = action.name
 		button.text = action.label
 		button.focus_mode = Control.FOCUS_ALL
+		button.add_theme_font_override("font", Typography.UI_FONT)
 		button.add_theme_font_size_override("font_size", Typography.CONTROL)
 		button.add_theme_color_override("font_color", Color("f2e6cf"))
 		button.add_theme_color_override("font_disabled_color", Color("746a60"))
@@ -99,7 +100,7 @@ func _draw() -> void:
 		return
 	var displayed_stake := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
 	draw_string(
-		ThemeDB.fallback_font,
+		Typography.UI_FONT,
 		Vector2(8, 17),
 		tr("BET_IN_PLAY") if cabinet.is_round_active else tr("BET_TOTAL"),
 		HORIZONTAL_ALIGNMENT_LEFT,
@@ -108,7 +109,7 @@ func _draw() -> void:
 		Color("b8aa97")
 	)
 	draw_string(
-		ThemeDB.fallback_font,
+		Typography.DISPLAY_FONT,
 		Vector2(120, 29),
 		str(displayed_stake),
 		HORIZONTAL_ALIGNMENT_RIGHT,
@@ -118,7 +119,7 @@ func _draw() -> void:
 	)
 	var after_bet := maxi(0, cabinet.context.balance - displayed_stake)
 	draw_string(
-		ThemeDB.fallback_font,
+		Typography.UI_FONT,
 		Vector2(8, 35),
 		tr("BET_AFTER") % after_bet,
 		HORIZONTAL_ALIGNMENT_LEFT,
