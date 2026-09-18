@@ -26,7 +26,8 @@ paths (the PCK path must not be relative to `C:\Users\USER`):
 
 Enter / gamepad A starts or interacts. WASD / left stick / D-pad moves.
 Escape / B leaves a cabinet or returns to the menu; leaving a live round forfeits
-its stake. Left/right adjusts stakes. Blackjack: X stands, Y doubles. Vault:
+its stake. F1 / Menu opens the current game's How to Play card. Left/right moves
+between casino chip denominations. Blackjack: X stands, Y doubles. Vault:
 up/down chooses mines before betting, directional input selects boxes during a
 round, X cashes out. The cashier is at the lower right of the floor.
 
@@ -49,7 +50,7 @@ GUT 9.5.0 is vendored and pinned to commit
 Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 `gdlint src tests`. CI runs formatting, lint, GUT and one million production-math
 rounds per cabinet, and uploads JSON evidence even on failure. The current release
-gate passes **43/43 tests and 1,121 assertions**. All three fixed-seed million-round
+gate passes **48/48 tests and 1,180 assertions**. All three fixed-seed million-round
 RTP measurements pass AC-027; see `tests/results/rtp.json`.
 
 ## Windows build
