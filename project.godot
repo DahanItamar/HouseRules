@@ -32,13 +32,18 @@ gdscript/warnings/untyped_declaration=1
 
 window/size/viewport_width=960
 window/size/viewport_height=540
-window/size/window_width_override=960
-window/size/window_height_override=540
+window/size/window_width_override=1280
+window/size/window_height_override=720
 window/size/resizable=true
 window/dpi/allow_hidpi=true
-window/stretch/mode="viewport"
+window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
-window/stretch/scale_mode="integer"
+window/stretch/scale_mode="fractional"
+
+[gui]
+
+fonts/dynamic_fonts/use_oversampling=true
+theme/default_font_multichannel_signed_distance_field=true
 
 [internationalization]
 
@@ -46,7 +51,7 @@ locale/translations=PackedStringArray("res://locale/en.en.translation")
 
 [rendering]
 
-textures/canvas_textures/default_texture_filter=0
+textures/canvas_textures/default_texture_filter=1
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 environment/defaults/default_clear_color=Color(0.043, 0.039, 0.071, 1)

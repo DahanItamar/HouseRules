@@ -61,27 +61,33 @@ func test_m5_each_cabinet_integrates_its_generated_art() -> void:
 		)
 
 
-func test_ac040_target_displays_use_sharp_integer_scaling() -> void:
+func test_display_targets_render_canvas_items_at_native_resolution() -> void:
 	var base := Vector2i(
 		ProjectSettings.get_setting("display/window/size/viewport_width"),
 		ProjectSettings.get_setting("display/window/size/viewport_height")
 	)
 	assert_eq(base, Vector2i(960, 540))
-	assert_eq(ProjectSettings.get_setting("display/window/stretch/mode"), "viewport")
+	assert_eq(ProjectSettings.get_setting("display/window/stretch/mode"), "canvas_items")
 	assert_eq(ProjectSettings.get_setting("display/window/stretch/aspect"), "keep")
-	assert_eq(ProjectSettings.get_setting("display/window/stretch/scale_mode"), "integer")
+	assert_eq(ProjectSettings.get_setting("display/window/stretch/scale_mode"), "fractional")
+	assert_true(ProjectSettings.get_setting("display/window/dpi/allow_hidpi"))
+	assert_true(ProjectSettings.get_setting("gui/fonts/dynamic_fonts/use_oversampling"))
+	assert_true(
+		ProjectSettings.get_setting("gui/theme/default_font_multichannel_signed_distance_field")
+	)
+	assert_eq(ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter"), 1)
 	var targets := {
-		"FHD / ROG Ally X": [Vector2i(1920, 1080), 2],
-		"DCI 2K": [Vector2i(2048, 1080), 2],
-		"1440p": [Vector2i(2560, 1440), 2],
-		"4K UHD": [Vector2i(3840, 2160), 4],
+		"FHD / ROG Ally X": Vector2i(1920, 1080),
+		"1440p": Vector2i(2560, 1440),
+		"4K UHD": Vector2i(3840, 2160),
 	}
 	for target: String in targets:
-		var dimensions: Vector2i = targets[target][0]
-		var scale: int = mini(dimensions.x / base.x, dimensions.y / base.y)
-		assert_eq(scale, targets[target][1], "%s uses the reviewed integer scale" % target)
-		assert_lte(base.x * scale, dimensions.x)
-		assert_lte(base.y * scale, dimensions.y)
+		var dimensions: Vector2i = targets[target]
+		assert_eq(
+			float(dimensions.x) / dimensions.y,
+			16.0 / 9.0,
+			"%s fills the 16:9 canvas without letterboxing" % target
+		)
 
 
 func test_m5_machine_captures_match_the_pixel_base() -> void:

@@ -65,7 +65,8 @@ resizable/high-DPI Windows displays and Xbox-compatible controllers.
 - `src/platform/`: atomic local storage and the platform interface.
 - `data/`: editable cabinet definitions and paytables.
 - `tests/`: GUT behavioral tests, deterministic replay and real RTP simulations.
-- `assets/drafts/`: palette-quantized runtime art; Higgsfield masters remain under `assets/source/`.
+- `assets/production/`: high-resolution runtime environments and finished art.
+- `assets/drafts/`: legacy palette-quantized prototypes; Higgsfield masters remain under `assets/source/`.
 
 The upstream agency prompts and license are pinned under `tools/agency-agents/`;
 `docs/AGENT-PIPELINE.md` records their roles and Godot-specific adaptations.
@@ -78,8 +79,8 @@ ten-objective Main Floor pool and pay flat rewards independently of cabinet
 outcomes. Higgsfield still and motion masters, processing manifests and provenance
 are retained under `assets/source/`, `assets/drafts/` and `tools/art/`.
 
-The 960×540 pixel base scales exactly to FHD/ROG Ally X and 4K. QHD stays sharp
-with intentional integer-scale letterboxing; see `docs/DISPLAY-VALIDATION.md`.
+The 960×540 logical canvas renders UI directly at FHD/ROG Ally X, QHD and 4K
+output resolution with no QHD letterboxing; see `docs/DISPLAY-VALIDATION.md`.
 Automated tests cannot replace the final physical-device pass for OS DPI,
 sunlight readability, controller firmware and display safe margins. High-Roller
 and VIP wings remain visibly locked because their rooms are v2 scope.

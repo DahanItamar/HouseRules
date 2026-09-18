@@ -11,6 +11,7 @@ var _is_playing: bool = false
 
 func _ready() -> void:
 	Engine.max_fps = 60
+	get_window().min_size = Vector2i(1280, 720)
 	get_tree().auto_accept_quit = false
 	if not _guard.acquire():
 		get_tree().quit()
