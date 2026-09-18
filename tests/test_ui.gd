@@ -250,8 +250,21 @@ func test_blackjack_uses_dealt_cards_and_a_revealing_hole_card() -> void:
 	assert_true(game.start_round(10))
 	assert_eq(game.panel._blackjack_cards.size(), 4)
 	assert_true(game.panel._blackjack_cards[1].face_down, "Dealer hole card starts face-down")
+	var original_cards: Array[int] = []
+	for card: PlayingCard in game.panel._blackjack_cards:
+		original_cards.append(card.get_instance_id())
+	game.panel.refresh()
+	var refreshed_cards: Array[int] = []
+	for card: PlayingCard in game.panel._blackjack_cards:
+		refreshed_cards.append(card.get_instance_id())
+	assert_eq(refreshed_cards, original_cards, "Refresh preserves dealt card nodes")
 	var result: RoundResult = game.get("math").stand()
 	game.call("_resolve", result)
+	assert_eq(
+		game.panel._blackjack_cards[0].get_instance_id(),
+		original_cards[0],
+		"Dealer resolution updates cards instead of rebuilding the table"
+	)
 	for card: PlayingCard in game.panel._blackjack_cards:
 		assert_false(card.face_down, "Resolved dealer hand is face-up")
 

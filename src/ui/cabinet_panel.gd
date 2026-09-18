@@ -42,6 +42,7 @@ var _motion_tween: Tween
 var _entrance_tween: Tween
 var _cursor_tween: Tween
 var _blackjack_dealt: bool = false
+var _blackjack_input_locked_until: int = 0
 var _blackjack_cards: Array[PlayingCard] = []
 var _vault_revealed: Dictionary = {}
 
@@ -130,7 +131,6 @@ func refresh() -> void:
 
 func show_result(result: RoundResult) -> void:
 	_stop_motion()
-	_blackjack_dealt = false
 	_result = result
 	_status_key = "ROUND_READY"
 	refresh()
@@ -552,17 +552,46 @@ func _apply_blackjack_fullscreen_layout() -> void:
 
 
 func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], hide_hole: bool) -> void:
+	if not _blackjack_dealt and not player_cards.is_empty():
+		_clear_blackjack_cards()
+		_blackjack_dealt = true
+	var deal_index: int = 0
+	for index: int in range(dealer_cards.size()):
+		_sync_playing_card(dealer_cards[index], index, true, hide_hole and index == 1, deal_index)
+		deal_index += 1
+	for index: int in range(player_cards.size()):
+		_sync_playing_card(player_cards[index], index, false, false, deal_index)
+		deal_index += 1
+
+
+func prepare_blackjack_round() -> void:
+	_blackjack_dealt = false
+	_blackjack_input_locked_until = Time.get_ticks_msec() + 620
+
+
+func blackjack_input_ready() -> bool:
+	return Time.get_ticks_msec() >= _blackjack_input_locked_until
+
+
+func _clear_blackjack_cards() -> void:
 	for card: PlayingCard in _blackjack_cards:
 		if is_instance_valid(card):
 			card.queue_free()
 	_blackjack_cards.clear()
-	var deal_index: int = 0
-	for index: int in range(dealer_cards.size()):
-		_add_playing_card(dealer_cards[index], index, true, hide_hole and index == 1, deal_index)
-		deal_index += 1
-	for index: int in range(player_cards.size()):
-		_add_playing_card(player_cards[index], index, false, false, deal_index)
-		deal_index += 1
+
+
+func _sync_playing_card(
+	rank: int, hand_index: int, dealer_hand: bool, hidden: bool, deal_index: int
+) -> void:
+	var card_name := ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
+	for card: PlayingCard in _blackjack_cards:
+		if card.name == card_name:
+			card.set_face_down(hidden, card.face_down and not hidden)
+			return
+	_add_playing_card(rank, hand_index, dealer_hand, hidden, deal_index)
+	_blackjack_input_locked_until = maxi(
+		_blackjack_input_locked_until, Time.get_ticks_msec() + 360
+	)
 
 
 func _add_playing_card(

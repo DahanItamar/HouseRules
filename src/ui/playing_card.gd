@@ -18,8 +18,17 @@ func configure(card_rank: int, card_suit: int, hidden: bool) -> void:
 
 
 func reveal() -> void:
-	face_down = false
+	set_face_down(false, true)
+
+
+func set_face_down(hidden: bool, animated: bool = false) -> void:
+	if face_down == hidden:
+		return
+	face_down = hidden
 	queue_redraw()
+	if animated:
+		scale.x = 0.05
+		create_tween().tween_property(self, "scale:x", 1.0, 0.16).set_trans(Tween.TRANS_BACK)
 
 
 func _draw() -> void:

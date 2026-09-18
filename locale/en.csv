@@ -85,6 +85,7 @@ ROUND_READY,Choose your stake.
 ROUND_SPINNING,Reels spinning…
 ROUND_RESULT,Stake %d · Returned %d
 BLACKJACK_DECIDE,Hit / Stand / Double
+BLACKJACK_DOUBLE_UNAVAILABLE,Double is only available on your opening two cards with enough credits
 BLACKJACK_DEALER,DEALER
 BLACKJACK_PLAYER,PLAYER
 BLACKJACK_HANDS,"PLAYER  %s\n\nDEALER  %s\n\nAce = 1 (or 11) · J / Q / K = 10"
