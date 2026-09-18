@@ -3,20 +3,31 @@ extends Node2D
 
 const SPEED: float = 180.0
 const INTERACTION_RADIUS: float = 76.0
-const CASHIER_POSITION := Vector2(780, 350)
-const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(90, 180), &"vip": Vector2(870, 180)}
+const CASHIER_POSITION := Vector2(660, 410)
+const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(250, 265), &"vip": Vector2(790, 242)}
 const WING_THRESHOLDS: Dictionary = {&"high_roller": 5000, &"vip": 100_000}
 const FLOOR_ART := preload("res://assets/production/environments/casino_floor.png")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
+const AVATAR_RADIUS: float = 15.0
+static var NAV_OBSTACLES: Array[PackedVector2Array] = [
+	PackedVector2Array([Vector2(0, 0), Vector2(208, 0), Vector2(236, 72), Vector2(258, 194), Vector2(226, 244), Vector2(0, 250)]),
+	PackedVector2Array([Vector2(265, 48), Vector2(406, 46), Vector2(427, 112), Vector2(420, 187), Vector2(390, 219), Vector2(278, 219), Vector2(250, 184), Vector2(250, 94)]),
+	PackedVector2Array([Vector2(438, 48), Vector2(572, 48), Vector2(591, 99), Vector2(586, 188), Vector2(558, 215), Vector2(450, 215), Vector2(425, 184), Vector2(425, 93)]),
+	PackedVector2Array([Vector2(605, 51), Vector2(742, 50), Vector2(770, 102), Vector2(766, 188), Vector2(738, 216), Vector2(628, 216), Vector2(588, 185), Vector2(590, 94)]),
+	PackedVector2Array([Vector2(782, 0), Vector2(960, 0), Vector2(960, 236), Vector2(914, 240), Vector2(845, 221), Vector2(780, 188)]),
+	PackedVector2Array([Vector2(733, 270), Vector2(960, 248), Vector2(960, 500), Vector2(718, 500), Vector2(690, 451), Vector2(695, 350)]),
+	PackedVector2Array([Vector2(0, 300), Vector2(176, 299), Vector2(228, 344), Vector2(231, 474), Vector2(196, 526), Vector2(0, 540)]),
+	PackedVector2Array([Vector2(278, 465), Vector2(326, 438), Vector2(600, 438), Vector2(681, 478), Vector2(681, 540), Vector2(270, 540)]),
+]
 var avatar_position := Vector2(480, 408)
 var nearby_definition: CabinetDefinition
 var nearby_wing: StringName = &""
 var cabinet_positions: Dictionary = {
-	&"slot_classic": Vector2(250, 200),
-	&"blackjack": Vector2(480, 200),
-	&"minefield_vault": Vector2(710, 200),
+	&"slot_classic": Vector2(334, 242),
+	&"blackjack": Vector2(504, 240),
+	&"minefield_vault": Vector2(680, 242),
 }
 var definitions: Dictionary = {}
 var _prompt: Label
@@ -47,10 +58,45 @@ func _ready() -> void:
 
 func move_avatar(direction: Vector2, delta: float) -> void:
 	if not direction.is_zero_approx():
-		avatar_position += direction.normalized() * SPEED * delta
-	avatar_position = avatar_position.clamp(Vector2(64, 110), Vector2(896, 440))
+		var motion := direction.normalized() * SPEED * delta
+		var steps: int = maxi(1, ceili(motion.length() / 4.0))
+		var step := motion / steps
+		for _index: int in range(steps):
+			var horizontal := avatar_position + Vector2(step.x, 0.0)
+			if _is_walkable(horizontal):
+				avatar_position = horizontal
+			var vertical := avatar_position + Vector2(0.0, step.y)
+			if _is_walkable(vertical):
+				avatar_position = vertical
 	refresh_proximity()
 	queue_redraw()
+
+
+func _is_walkable(point: Vector2) -> bool:
+	if not Rect2(
+		AVATAR_RADIUS,
+		AVATAR_RADIUS,
+		960.0 - AVATAR_RADIUS * 2.0,
+		540.0 - AVATAR_RADIUS * 2.0
+	).has_point(point):
+		return false
+	for polygon: PackedVector2Array in NAV_OBSTACLES:
+		if _circle_hits_polygon(point, AVATAR_RADIUS, polygon):
+			return false
+	return true
+
+
+func _circle_hits_polygon(center: Vector2, radius: float, polygon: PackedVector2Array) -> bool:
+	if Geometry2D.is_point_in_polygon(center, polygon):
+		return true
+	var radius_squared := radius * radius
+	for index: int in range(polygon.size()):
+		var closest := Geometry2D.get_closest_point_to_segment(
+			center, polygon[index], polygon[(index + 1) % polygon.size()]
+		)
+		if center.distance_squared_to(closest) <= radius_squared:
+			return true
+	return false
 
 
 func refresh_proximity() -> void:

@@ -51,6 +51,39 @@ func test_ac001_constant_speed_in_eight_directions() -> void:
 		assert_almost_eq(moved, distance, 0.001)
 
 
+func test_floor_collision_blocks_furniture_and_prevents_tunneling() -> void:
+	for blocked_point: Vector2 in [
+		Vector2(100, 170),
+		Vector2(330, 140),
+		Vector2(500, 140),
+		Vector2(680, 140),
+		Vector2(860, 170),
+		Vector2(120, 400),
+		Vector2(820, 400),
+		Vector2(480, 490),
+	]:
+		assert_false(_floor._is_walkable(blocked_point), "%s is solid furniture" % blocked_point)
+	for approach: Vector2 in _floor.cabinet_positions.values():
+		assert_true(_floor._is_walkable(approach), "%s cabinet approach is reachable" % approach)
+	assert_true(_floor._is_walkable(FloorController.CASHIER_POSITION))
+	for approach: Vector2 in FloorController.WING_POSITIONS.values():
+		assert_true(_floor._is_walkable(approach), "%s wing approach is reachable" % approach)
+
+	_floor.avatar_position = Vector2(504, 280)
+	_floor.move_avatar(Vector2.UP, 0.5)
+	assert_true(_floor._is_walkable(_floor.avatar_position))
+	assert_gte(_floor.avatar_position.y, 230.0, "A large frame cannot tunnel through machines")
+
+
+func test_floor_collision_slides_along_furniture_edges() -> void:
+	_floor.avatar_position = Vector2(504, 236)
+	var origin := _floor.avatar_position
+	for _step: int in range(10):
+		_floor.move_avatar(Vector2(1, -1), 0.016)
+	assert_true(_floor._is_walkable(_floor.avatar_position))
+	assert_gt(_floor.avatar_position.x, origin.x, "Diagonal input keeps its tangential motion")
+
+
 func test_ac002_through_ac008_floor_context_result_transaction_and_return() -> void:
 	var definition := _approach_slot()
 	assert_same(_floor.nearby_definition, definition)
