@@ -18,7 +18,9 @@ var _slot_symbols: Array[Control] = []
 var _slot_reels: Array[Control] = []
 var _slot_reel_cells: Array = []
 var _slot_offsets: Array[float] = [0.0, 0.0, 0.0]
-var _slot_spin_targets: Array[int] = [0, 1, 2]
+var _slot_total_offsets: Array[float] = [0.0, 0.0, 0.0]
+var _slot_start_symbols: Array[int] = [2, 3, 4]
+var _slot_spin_targets: Array[int] = [2, 3, 4]
 var _slot_stop_times: Array[float] = [0.78, 0.98, 1.18]
 var _slot_stopped: Array[bool] = [true, true, true]
 var _slot_spin_elapsed: float = 0.0
@@ -146,9 +148,12 @@ func _process(delta: float) -> void:
 	for reel_index: int in range(_slot_reels.size()):
 		if _slot_stopped[reel_index]:
 			continue
-		_slot_offsets[reel_index] += delta * (760.0 + reel_index * 70.0)
+		var duration: float = _slot_stop_times[reel_index]
+		var progress: float = clampf(_slot_spin_elapsed / duration, 0.0, 1.0)
+		var eased: float = 1.0 - pow(1.0 - progress, 3.0)
+		_slot_offsets[reel_index] = _slot_total_offsets[reel_index] * eased
 		_update_spinning_reel(reel_index)
-		if _slot_spin_elapsed >= _slot_stop_times[reel_index]:
+		if progress >= 1.0:
 			_stop_reel(reel_index)
 	if _slot_stopped.all(func(stopped: bool) -> bool: return stopped):
 		_slot_spinning = false
@@ -173,6 +178,12 @@ func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 	_slot_spin_targets.clear()
 	for index: int in range(3):
 		_slot_spin_targets.append(int(symbols[index]))
+		var center: SlotSymbol = _slot_reel_cells[index][2]
+		_slot_start_symbols[index] = center.symbol_index
+		var target_steps: int = 18 + index * 6 + posmod(
+			_slot_start_symbols[index] - _slot_spin_targets[index], SLOT_SYMBOL_COUNT
+		)
+		_slot_total_offsets[index] = target_steps * SLOT_CELL_HEIGHT
 	_slot_finish_callback = on_finished
 	set_status("ROUND_SPINNING")
 
@@ -645,14 +656,6 @@ func _apply_vault_fullscreen_layout() -> void:
 
 
 func _refresh_slot() -> void:
-	var symbols: Array = [0, 1, 2]
-	if _result != null:
-		symbols = _result.detail.get("symbols", symbols)
-	for index: int in range(mini(symbols.size(), 3)):
-		var symbol: int = symbols[index]
-		if not _slot_spinning and index < _slot_reels.size():
-			_slot_spin_targets[index] = symbol
-			_stop_reel(index)
 	_detail.text = (
 		tr("SLOT_LAST_WIN") % _result.payout if _result != null else tr("SLOT_CENTER_PAYLINE")
 	)
@@ -714,19 +717,17 @@ func _update_spinning_reel(reel_index: int) -> void:
 		cell.position.y = (cell_index - 1) * SLOT_CELL_HEIGHT + remainder
 		if cell.position.y >= SLOT_CELL_HEIGHT * 4.0:
 			cell.position.y -= SLOT_STRIP_HEIGHT
-		cell.symbol_index = (cell_index - step + reel_index) % SLOT_SYMBOL_COUNT
+		cell.symbol_index = posmod(
+			_slot_start_symbols[reel_index] + cell_index - 2 - step, SLOT_SYMBOL_COUNT
+		)
 
 
 func _stop_reel(reel_index: int) -> void:
 	if reel_index >= _slot_reel_cells.size():
 		return
+	_slot_offsets[reel_index] = _slot_total_offsets[reel_index]
+	_update_spinning_reel(reel_index)
 	_slot_stopped[reel_index] = true
-	var target: int = _slot_spin_targets[reel_index]
-	var cells: Array = _slot_reel_cells[reel_index]
-	for cell_index: int in range(cells.size()):
-		var cell: SlotSymbol = cells[cell_index]
-		cell.position.y = (cell_index - 1) * SLOT_CELL_HEIGHT
-		cell.symbol_index = posmod(target + cell_index - 2, SLOT_SYMBOL_COUNT)
 	var reel: Control = _slot_reels[reel_index]
 	reel.position.y = SLOT_REEL_BOUNCE_Y
 	create_tween().tween_property(reel, "position:y", SLOT_REEL_TOP, 0.11).set_trans(

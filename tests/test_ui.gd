@@ -178,6 +178,15 @@ func test_slot_reels_spin_independently_and_gate_settlement() -> void:
 	game.panel._process(1.3)
 	assert_false(game.is_round_active, "Settlement occurs after all three reels stop")
 	assert_eq(game.panel._slot_stopped, [true, true, true])
+	var settled_symbols: Array[int] = []
+	for reel_index: int in range(3):
+		settled_symbols.append(game.panel._slot_reel_cells[reel_index][2].symbol_index)
+	assert_eq(settled_symbols, game.panel._result.detail.get("symbols"))
+	game.panel.refresh()
+	var refreshed_symbols: Array[int] = []
+	for reel_index: int in range(3):
+		refreshed_symbols.append(game.panel._slot_reel_cells[reel_index][2].symbol_index)
+	assert_eq(refreshed_symbols, settled_symbols, "Result refresh never swaps a stopped symbol")
 
 
 func test_higgsfield_slot_symbols_are_high_resolution_and_transparent() -> void:
