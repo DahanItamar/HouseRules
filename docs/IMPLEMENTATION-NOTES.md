@@ -8,6 +8,15 @@ Wallet balances, stakes and payouts use integer chips. Fractional gross payouts 
 
 Save currency, cumulative statistics and RNG seeds serialize as decimal strings to avoid losing 64-bit precision through JSON number parsing. Save readers must validate and accept these strings before conversion.
 
+## Contracts
+
+Three Main Floor contracts are active at a time. The first rotation guarantees
+one participation objective, with replacements drawn from a named deterministic
+RNG stream. Progress and completion count persist in save schema version 2; the
+version 1 migration initializes a fresh rotation. Contract evaluation occurs
+after a round settles, so a losing round can complete an objective and its flat
+reward is applied independently of the cabinet payout (AC-024).
+
 ## Classic slot
 
 The specified strip and paytable give an exact expected return of `31,260 / 32,768 = 0.9539794921875` (95.39794921875%). The cabinet document's `0.95399` is a small arithmetic/rounding discrepancy. The declared `0.955` target remains unchanged and lies within the specified one-percentage-point simulation tolerance. The implementation uses all specified weights and multipliers without retuning.

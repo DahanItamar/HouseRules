@@ -64,8 +64,9 @@ The upstream agency prompts and license are pinned under `tools/agency-agents/`;
 This implementation brings the first three domain models and RTP harness forward
 into M1, as requested. All three have functional controller-operated prototype
 screens. Final pixel art, audio, staged visual transitions, physical handheld
-validation, contract rotation, and later wing content remain later milestone
-work. Generated drafts are not final accepted assets; see
+validation, and later wing content remain later milestone work. Three persistent
+contracts rotate from the ten-objective Main Floor pool and pay flat rewards
+independently of cabinet outcomes. Generated drafts are not final accepted assets; see
 `docs/art/GENERATION-REPORT.md`.
 
 Fractional payouts round down once to whole chips. This affects low-stake vault

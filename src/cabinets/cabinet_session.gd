@@ -32,7 +32,6 @@ func apply_result(result: RoundResult) -> bool:
 	if not Wallet.try_apply(result.stake, result.payout):
 		context.balance = Wallet.balance
 		return false
-	context.balance = Wallet.balance
 	Economy.lifetime_wagered += result.stake
 	if SaveService.state != null:
 		var id: String = str(context.definition.id)
@@ -42,6 +41,8 @@ func apply_result(result: RoundResult) -> bool:
 		stats.returned += result.payout
 		stats.best_win = maxi(stats.best_win, result.payout)
 		SaveService.state.cabinet_stats[id] = stats
+	Economy.record_round(context.definition.id, result)
+	context.balance = Wallet.balance
 	round_applied.emit(result)
 	return true
 

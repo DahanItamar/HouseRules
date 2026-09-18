@@ -9,7 +9,7 @@ production-readiness certification.
 - Godot 4.7.2 standard resource import completed without script errors.
 - `gdformat --check src tests`: 33 files unchanged; pass.
 - `gdlint src tests`: no problems; pass.
-- GUT 9.5.0: **20 tests, 19 passing, 1 failing; 954/955 assertions**. The sole
+- GUT 9.5.0: **21 tests, 20 passing, 1 failing; 963/964 assertions**. The sole
   failure is the strict slot RTP tolerance. Process exit status is 1.
 - The suite ran locally on Windows using the installed Godot binary. A GitHub
   Actions workflow is provided, but **no remote CI run was performed**.
@@ -47,6 +47,11 @@ These checks live in `tests/test_session.gd`, `tests/test_services.gd` and
 dispatch, zero-byte and malformed nested saves, schema migration, newer-version
 refusal, atomic replacement, blackjack naturals/doubling/soft 17, mine placement,
 cashout/bust/cap behavior and exhaustive slot symbol combinations.
+
+AC-024 now has automated coverage: a losing spin can complete the participation
+contract, its flat reward is applied after the cabinet settlement, a replacement
+keeps three contracts active, and progress survives save/load through schema
+version 2.
 
 Headless evidence does not certify physical gamepad use, 7-inch handheld
 readability, full rendered animation or power-loss/crash behavior. Those require

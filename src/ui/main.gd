@@ -5,6 +5,7 @@ var _floor: FloorController
 var _menu: CanvasLayer
 var _hud: Label
 var _message: Label
+var _contracts: Label
 var _is_playing: bool = false
 
 
@@ -24,6 +25,8 @@ func _ready() -> void:
 		_message.text = tr("SAVE_INCOMPATIBLE")
 	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: _refresh_hud())
 	Economy.debt_changed.connect(func(_debt: int) -> void: _refresh_hud())
+	Economy.contracts_changed.connect(_refresh_hud)
+	Economy.contract_completed.connect(_show_contract_completed)
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: _refresh_menu())
 	_refresh_hud()
 	_refresh_menu()
@@ -43,6 +46,13 @@ func _build_hud() -> void:
 	_message.add_theme_font_size_override("font_size", 16)
 	_message.add_theme_color_override("font_color", Color("ff8a3d"))
 	hud_layer.add_child(_message)
+	_contracts = Label.new()
+	_contracts.position = Vector2(610, 20)
+	_contracts.size = Vector2(318, 90)
+	_contracts.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_contracts.add_theme_font_size_override("font_size", 14)
+	_contracts.add_theme_color_override("font_color", Color("e8e6f0"))
+	hud_layer.add_child(_contracts)
 
 
 func _build_menu() -> void:
@@ -78,6 +88,8 @@ func _refresh_hud() -> void:
 		_hud.text += "     " + tr("HUD_DEBT") % Economy.debt
 	if Economy.is_below_solvency_floor():
 		_hud.text += "     " + tr("HUD_CASHIER")
+	if _contracts != null:
+		_contracts.text = tr("CONTRACTS_HEADING") + "\n" + "\n".join(Economy.contract_lines())
 
 
 func _start_playing() -> void:
@@ -105,6 +117,10 @@ func _show_menu() -> void:
 func _show_message(key: String) -> void:
 	if _message != null:
 		_message.text = tr(key)
+
+
+func _show_contract_completed(title_key: String, reward: int) -> void:
+	_message.text = tr("CONTRACT_COMPLETE") % [tr(title_key), reward]
 
 
 func _unhandled_input(event: InputEvent) -> void:

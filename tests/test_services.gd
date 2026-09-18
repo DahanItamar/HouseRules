@@ -48,11 +48,15 @@ func test_ac013_named_rng_streams_are_independent() -> void:
 func test_ac015_through_ac022_save_roundtrip_and_atomic_replacement() -> void:
 	Wallet.reset(721)
 	Economy.debt = 100
+	Economy.active_contracts[0].progress = 7
 	assert_eq(SaveService.save(), OK)
 	Wallet.reset(25)
+	Economy.active_contracts[0].progress = 0
 	assert_eq(SaveService.load_game(), OK)
 	assert_eq(Wallet.balance, 721)
 	assert_eq(Economy.debt, 100)
+	assert_eq(Economy.active_contracts[0].progress, 7)
+	assert_eq(Economy.active_contracts.size(), Economy.CONTRACT_SLOTS)
 	Wallet.reset(722)
 	assert_eq(SaveService.save(), OK, "Replace an existing save on Windows")
 	var data: Dictionary = JSON.parse_string(

@@ -1,12 +1,14 @@
 class_name SaveGame
 extends RefCounted
 
-const CURRENT_SCHEMA_VERSION: int = 1
+const CURRENT_SCHEMA_VERSION: int = 2
 
 var schema_version: int = CURRENT_SCHEMA_VERSION
 var chips: int = 0
 var debt: int = 0
 var lifetime_wagered: int = 0
+var active_contracts: Array[Dictionary] = []
+var contract_completions: int = 0
 var tier_unlocked: CabinetDefinition.Tier = CabinetDefinition.Tier.MAIN_FLOOR
 var cabinet_stats: Dictionary = {}
 var achievements: Dictionary = {}
@@ -26,6 +28,8 @@ func to_dict() -> Dictionary:
 		"chips": str(chips),
 		"debt": str(debt),
 		"lifetime_wagered": str(lifetime_wagered),
+		"active_contracts": active_contracts.duplicate(true),
+		"contract_completions": str(contract_completions),
 		"tier_unlocked": tier_unlocked,
 		"cabinet_stats": stats,
 		"achievements": achievements.duplicate(true),
@@ -42,6 +46,8 @@ static func from_dict(data: Dictionary) -> SaveGame:
 	result.chips = int(data.get("chips", 0))
 	result.debt = int(data.get("debt", 0))
 	result.lifetime_wagered = int(data.get("lifetime_wagered", 0))
+	result.active_contracts.assign(data.get("active_contracts", []))
+	result.contract_completions = int(data.get("contract_completions", 0))
 	result.tier_unlocked = int(data.get("tier_unlocked", 0)) as CabinetDefinition.Tier
 	var stats: Dictionary = data.get("cabinet_stats", {})
 	for key: Variant in stats:

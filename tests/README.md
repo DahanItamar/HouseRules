@@ -36,6 +36,7 @@ directories; they do not overwrite the player's normal save.
 | AC-014 | Identical seeds and inputs reproduce all three domain results. |
 | AC-015 | Leaving cabinet and returning to menu both persist state through real storage. |
 | AC-016–022 | Save replacement, schema, migration, corrupt/zero-byte preservation, future-version refusal through LocalPlatform. |
+| AC-024 | A losing slot round completes a participation contract and grants its flat reward; progress survives save/load. |
 | AC-027 | Strict million-round test for each cabinet; current slot sample fails. |
 | AC-028–036 | Exhaustive slot paytable, blackjack naturals/soft 17/double, fixed unique mines, cashout, bust and cap. |
 

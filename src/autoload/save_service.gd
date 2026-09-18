@@ -26,6 +26,8 @@ func save() -> Error:
 	state.chips = Wallet.balance
 	state.debt = Economy.debt
 	state.lifetime_wagered = Economy.lifetime_wagered
+	state.active_contracts = Economy.contract_snapshot()
+	state.contract_completions = Economy.contract_completions
 	state.rng_states = RNGService.snapshot()
 	state.achievements = platform.achievements.duplicate()
 	var error: Error = platform.write_save(slot, JSON.stringify(state.to_dict()).to_utf8_buffer())
@@ -72,6 +74,7 @@ func _apply_state() -> void:
 	Economy.lifetime_wagered = state.lifetime_wagered
 	RNGService.reset(state.rng_seed)
 	RNGService.restore(state.rng_states)
+	Economy.reset_contracts(state.active_contracts, state.contract_completions)
 	platform.achievements = state.achievements.duplicate()
 	Economy.debt_changed.emit(Economy.debt)
 
@@ -88,17 +91,22 @@ func _recover_corrupt() -> Error:
 
 
 func _migrate(data: Dictionary, version: int) -> Dictionary:
-	if version != 0:
-		return {}
 	var migrated: Dictionary = data.duplicate(true)
-	migrated["schema_version"] = 1
-	migrated["debt"] = data.get("debt", 0)
-	migrated["lifetime_wagered"] = data.get("lifetime_wagered", 0)
+	if version == 0:
+		migrated["schema_version"] = 1
+		migrated["debt"] = data.get("debt", 0)
+		migrated["lifetime_wagered"] = data.get("lifetime_wagered", 0)
+	elif version == 1:
+		migrated["schema_version"] = 2
+		migrated["active_contracts"] = []
+		migrated["contract_completions"] = "0"
+	else:
+		return {}
 	return migrated
 
 
 func _valid_state(data: Dictionary) -> bool:
-	for key: String in ["chips", "debt", "lifetime_wagered"]:
+	for key: String in ["chips", "debt", "lifetime_wagered", "contract_completions"]:
 		var value: Variant = data.get(key, -1)
 		if not _is_integer(value) or int(value) < 0 or int(value) > Wallet.MAX_CHIPS:
 			return false
@@ -119,6 +127,24 @@ func _valid_state(data: Dictionary) -> bool:
 
 
 func _valid_nested_state(data: Dictionary) -> bool:
+	if not data.get("active_contracts", []) is Array:
+		return false
+	var contract_ids: Dictionary = {}
+	for entry: Variant in data.get("active_contracts", []):
+		if not entry is Dictionary:
+			return false
+		var id := StringName(entry.get("id", ""))
+		var progress: Variant = entry.get("progress", -1)
+		if (
+			not Economy.CONTRACTS.has(id)
+			or contract_ids.has(id)
+			or not _is_integer(progress)
+			or int(progress) < 0
+		):
+			return false
+		contract_ids[id] = true
+	if contract_ids.size() > Economy.CONTRACT_SLOTS:
+		return false
 	for key: String in ["cabinet_stats", "achievements", "rng_states"]:
 		if not data.get(key, {}) is Dictionary:
 			return false

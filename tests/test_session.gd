@@ -121,6 +121,34 @@ func test_ac015_return_to_menu_saves() -> void:
 	assert_eq(Wallet.balance, 433)
 
 
+func test_ac024_contract_reward_is_independent_of_round_outcome() -> void:
+	_approach_slot()
+	assert_true(_floor.interact())
+	Economy.active_contracts.assign([{"id": &"slot_rounds", "progress": 24}])
+	watch_signals(Economy)
+	var loss := RoundResult.create(
+		10,
+		0,
+		RoundResult.Outcome.LOSS,
+		{
+			"symbols":
+			[
+				SlotMachineMath.Symbol.CHERRY,
+				SlotMachineMath.Symbol.LEMON,
+				SlotMachineMath.Symbol.BELL
+			]
+		}
+	)
+	assert_true(SceneRouter.session.apply_result(loss))
+	assert_eq(Wallet.balance, 490, "Loss settles before the flat 300-chip contract reward")
+	assert_eq(SceneRouter.session.context.balance, 490)
+	assert_eq(Economy.contract_completions, 1)
+	assert_eq(Economy.active_contracts.size(), Economy.CONTRACT_SLOTS)
+	assert_signal_emitted_with_parameters(
+		Economy, "contract_completed", ["CONTRACT_SLOT_ROUNDS", 300]
+	)
+
+
 func test_back_input_exits_cabinet_without_also_leaving_floor() -> void:
 	_approach_slot()
 	assert_true(_floor.interact())

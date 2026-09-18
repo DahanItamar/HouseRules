@@ -8,6 +8,7 @@ var shoe: Array[int] = []
 var rng: RandomNumberGenerator
 var stake: int = 0
 var active: bool = false
+var doubled: bool = false
 
 
 static func hand_value(cards: Array[int]) -> int:
@@ -58,6 +59,7 @@ func begin(risked: int, stream: RandomNumberGenerator) -> RoundResult:
 	assert(not active and risked > 0)
 	rng = stream
 	stake = risked
+	doubled = false
 	if remaining_cards() < paytable.reshuffle_below:
 		_shuffle()
 	player.clear()
@@ -112,6 +114,7 @@ func stand() -> RoundResult:
 func double_down(balance: int) -> RoundResult:
 	if not can_double(balance):
 		return null
+	doubled = true
 	stake *= 2
 	player.append(_draw())
 	if hand_value(player) > 21:
@@ -131,7 +134,7 @@ func _resolve(payout: int, outcome: RoundResult.Outcome) -> RoundResult:
 		stake,
 		mini(payout, stake * paytable.max_win),
 		outcome,
-		{"player": player.duplicate(), "dealer": dealer.duplicate()}
+		{"player": player.duplicate(), "dealer": dealer.duplicate(), "doubled": doubled}
 	)
 
 
