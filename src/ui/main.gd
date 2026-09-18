@@ -5,12 +5,15 @@ var _floor: FloorController
 var _menu: CanvasLayer
 var _hud_layer: CanvasLayer
 var _bank_panel: Panel
+var _chip_icon: CreditChipIcon
 var _hud: Label
 var _credit_caption: Label
+var _message_panel: Panel
 var _message: Label
 var _contracts: Label
 var _contracts_panel: Panel
 var _is_playing: bool = false
+var _message_serial: int = 0
 
 
 func _ready() -> void:
@@ -45,9 +48,9 @@ func _build_hud() -> void:
 	add_child(_hud_layer)
 	_bank_panel = _panel(Vector2(18, 16), Vector2(196, 56), Color("17161af2"), Color("c8a34b"))
 	_hud_layer.add_child(_bank_panel)
-	var chip_icon := CreditChipIcon.new()
-	chip_icon.position = Vector2(28, 25)
-	_hud_layer.add_child(chip_icon)
+	_chip_icon = CreditChipIcon.new()
+	_chip_icon.position = Vector2(28, 25)
+	_hud_layer.add_child(_chip_icon)
 	_credit_caption = Label.new()
 	_credit_caption.position = Vector2(72, 20)
 	_credit_caption.text = tr("HUD_CREDITS")
@@ -60,11 +63,17 @@ func _build_hud() -> void:
 	_hud.add_theme_font_size_override("font_size", 24)
 	_hud.add_theme_color_override("font_color", Color("f2c84b"))
 	_hud_layer.add_child(_hud)
+	_message_panel = _panel(
+		Vector2(220, 104), Vector2(520, 40), Color("17161af2"), Color("c8a34b")
+	)
+	_message_panel.visible = false
+	_hud_layer.add_child(_message_panel)
 	_message = Label.new()
-	_message.position = Vector2(344, 500)
-	_message.size = Vector2(572, 28)
-	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_message.add_theme_font_size_override("font_size", Typography.CRITICAL)
+	_message.position = Vector2(236, 111)
+	_message.size = Vector2(488, 26)
+	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_message.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	_message.add_theme_font_size_override("font_size", Typography.BODY_MIN)
 	_message.add_theme_color_override("font_color", Color("f1e8d8"))
 	_hud_layer.add_child(_message)
 	_contracts_panel = _panel(
@@ -159,9 +168,14 @@ func _refresh_hud() -> void:
 	if Economy.debt > 0:
 		_hud.text += "  /  " + str(Economy.debt)
 	if Economy.is_below_solvency_floor():
-		_message.text = tr("HUD_CASHIER")
+		_show_message("HUD_CASHIER")
 	if _contracts != null:
-		_contracts.visible = SceneRouter.session == null
+		var on_floor: bool = SceneRouter.session == null
+		_bank_panel.visible = on_floor
+		_chip_icon.visible = on_floor
+		_credit_caption.visible = on_floor
+		_hud.visible = on_floor
+		_contracts.visible = on_floor
 		_contracts_panel.visible = _contracts.visible
 		_contracts.text = tr("CONTRACTS_HEADING") + "\n" + "\n".join(Economy.contract_lines())
 
@@ -192,10 +206,18 @@ func _show_menu() -> void:
 func _show_message(key: String) -> void:
 	if _message != null:
 		_message.text = tr(key)
+		_message_panel.visible = not _message.text.is_empty()
 
 
 func _show_contract_completed(title_key: String, reward: int) -> void:
 	_message.text = tr("CONTRACT_COMPLETE") % [tr(title_key), reward]
+	_message_panel.visible = true
+	_message_serial += 1
+	var serial := _message_serial
+	await get_tree().create_timer(3.2).timeout
+	if serial == _message_serial:
+		_message.text = ""
+		_message_panel.visible = false
 
 
 func _unhandled_input(event: InputEvent) -> void:

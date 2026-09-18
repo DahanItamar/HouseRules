@@ -64,6 +64,18 @@ func adjust_stake(direction: int) -> bool:
 	return changed
 
 
+func select_stake(amount: int) -> bool:
+	if is_round_active or amount == selected_stake or amount not in stake_options():
+		return false
+	if context == null or amount > context.balance:
+		return false
+	selected_stake = amount
+	if panel != null:
+		panel.refresh()
+	AudioService.play(&"confirm")
+	return true
+
+
 func handle_common_input(event: InputEvent) -> bool:
 	if event.is_action_pressed("help"):
 		panel.toggle_help()

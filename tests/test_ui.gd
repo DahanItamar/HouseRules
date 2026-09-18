@@ -189,7 +189,7 @@ func test_slot_reels_spin_independently_and_gate_settlement() -> void:
 	assert_true(game.start_round(10))
 	assert_true(game.is_round_active, "Wager remains active during the reel sequence")
 	assert_eq(game.panel._slot_reels.size(), 3, "Physical presenter has three reel columns")
-	game.panel._process(1.3)
+	game.panel._process(1.7)
 	assert_false(game.is_round_active, "Settlement occurs after all three reels stop")
 	assert_eq(game.panel._slot_stopped, [true, true, true])
 	var settled_symbols: Array[int] = []
@@ -235,6 +235,34 @@ func test_slot_uses_a_full_screen_sharp_higgsfield_stage() -> void:
 		0.05,
 		"The reel aperture is true transparency, not magenta"
 	)
+	var selector: StakeSelector = panel._stake_selector
+	var selector_bounds := Rect2(Vector2.ZERO, selector.size)
+	for chip_rect: Rect2 in selector.chip_rects():
+		assert_true(selector_bounds.encloses(chip_rect), "Every bet chip remains inside its tray")
+	assert_true(panel._slot_spin_label is Button, "SPIN is an interactive button")
+	assert_eq(panel._slot_spin_label.position, Vector2(522, 430))
+	assert_eq(panel._slot_spin_label.size, Vector2(140, 88))
+	assert_not_null(panel.find_child("SlotCreditsMeter", true, false))
+	assert_not_null(panel.find_child("SlotResultMeter", true, false))
+
+
+func test_slot_deck_exposes_bet_multiplier_and_return() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	var game: MiniGame = session.cabinet
+	assert_true(game.select_stake(10))
+	var result := RoundResult.create(
+		10,
+		190,
+		RoundResult.Outcome.WIN,
+		{"symbols": [SlotMachineMath.Symbol.SEVEN, SlotMachineMath.Symbol.SEVEN, SlotMachineMath.Symbol.SEVEN]}
+	)
+	game.panel._result = result
+	game.panel.refresh()
+	assert_eq(game.panel._slot_credit_value.text, str(game.context.balance))
+	assert_eq(game.panel._slot_result_value.text, tr("SLOT_RETURNED") % 190)
+	assert_eq(game.panel._slot_result_formula.text, tr("SLOT_RESULT_FORMULA") % [10, 19, 190])
 
 
 func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
@@ -243,9 +271,17 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 	blackjack_session.begin(BLACKJACK_DEFINITION)
 	var blackjack_panel: CabinetPanel = blackjack_session.cabinet.panel
 	assert_eq(blackjack_panel._frame.size, Vector2(960, 540))
-	var table := blackjack_panel.find_child("BlackjackTableArt", true, false) as ColorRect
+	var table := blackjack_panel.find_child("BlackjackTableArt", true, false) as Sprite2D
 	assert_not_null(table)
-	assert_gte(table.size.x, 800.0, "Blackjack felt owns the full game stage")
+	assert_gte(
+		table.texture.get_width() * table.scale.x,
+		800.0,
+		"Blackjack felt owns the full game stage"
+	)
+	assert_not_null(blackjack_panel.find_child("BlackjackControlDeck", true, false))
+	assert_true(blackjack_panel._blackjack_primary is Button)
+	assert_true(blackjack_panel._blackjack_stand is Button)
+	assert_true(blackjack_panel._blackjack_double is Button)
 
 	var vault_session := CabinetSession.new()
 	add_child_autofree(vault_session)
@@ -254,6 +290,10 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 	assert_eq(vault_panel._frame.size, Vector2(960, 540))
 	assert_eq(vault_panel._vault_tiles.size(), 25)
 	assert_eq(vault_panel._vault_tiles[0].size, Vector2(48, 48))
+	assert_not_null(vault_panel.find_child("VaultControlDeck", true, false))
+	assert_not_null(vault_panel.find_child("VaultStatusPanel", true, false))
+	assert_true(vault_panel._vault_open is Button)
+	assert_true(vault_panel._vault_cash_out is Button)
 
 
 func test_blackjack_uses_dealt_cards_and_a_revealing_hole_card() -> void:

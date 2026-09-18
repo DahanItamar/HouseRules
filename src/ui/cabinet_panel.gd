@@ -21,14 +21,17 @@ var _slot_offsets: Array[float] = [0.0, 0.0, 0.0]
 var _slot_total_offsets: Array[float] = [0.0, 0.0, 0.0]
 var _slot_start_symbols: Array[int] = [2, 3, 4]
 var _slot_spin_targets: Array[int] = [2, 3, 4]
-var _slot_stop_times: Array[float] = [0.78, 0.98, 1.18]
+var _slot_stop_times: Array[float] = [1.05, 1.32, 1.59]
 var _slot_stopped: Array[bool] = [true, true, true]
 var _slot_spin_elapsed: float = 0.0
 var _slot_spinning: bool = false
 var _slot_finish_callback: Callable
 var _slot_lever: Node2D
-var _slot_spin_label: Label
+var _slot_spin_label: SlotSpinButton
 var _slot_payline: ColorRect
+var _slot_credit_value: Label
+var _slot_result_value: Label
+var _slot_result_formula: Label
 var _celebration: WinCelebration
 var _stake_selector: StakeSelector
 var _help_button: Button
@@ -46,6 +49,15 @@ var _cursor_tween: Tween
 var _blackjack_dealt: bool = false
 var _blackjack_input_locked_until: int = 0
 var _blackjack_cards: Array[PlayingCard] = []
+var _blackjack_dealer_total: Label
+var _blackjack_player_total: Label
+var _blackjack_credit_value: Label
+var _blackjack_primary: Button
+var _blackjack_stand: Button
+var _blackjack_double: Button
+var _vault_credit_value: Label
+var _vault_open: Button
+var _vault_cash_out: Button
 var _vault_revealed: Dictionary = {}
 
 const SLOT_BODY := preload("res://assets/production/slot/symbols/slot_fullscreen_bezel.png")
@@ -59,6 +71,7 @@ const VAULT_GRID_PITCH: float = 56.0
 const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const BLACKJACK_DEALER := preload("res://assets/drafts/m2/dealer.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
+const BLACKJACK_TABLE := preload("res://assets/production/blackjack/blackjack_table.png")
 const VAULT_BACKDROP := preload("res://assets/production/vault/vault_backdrop.png")
 const VAULT_TILE_HIDDEN := preload("res://assets/drafts/m2/tile_unrevealed.png")
 const VAULT_TILE_SAFE := preload("res://assets/drafts/m2/tile_safe_revealed.png")
@@ -102,6 +115,7 @@ func _ready() -> void:
 	_celebration = WinCelebration.new()
 	_celebration.name = "WinCelebration"
 	_celebration.size = Vector2(960, 540)
+	_celebration.z_index = 50
 	add_child(_celebration)
 	_build_help_ui()
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh())
@@ -143,8 +157,10 @@ func show_result(result: RoundResult) -> void:
 	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
 	AudioService.play(&"win" if result.payout > result.stake else &"loss")
 	if result.payout > result.stake:
-		_celebration.burst(Vector2(480, 300), 12)
+		_celebration.burst(Vector2(480, 300), 20)
 		_pulse_slot_win()
+	if cabinet.context.definition.id == &"slot_classic":
+		_animate_slot_result(result.payout)
 	_status.add_theme_color_override(
 		"font_color", Color("3fc276") if result.payout > result.stake else Color("d55353")
 	)
@@ -194,6 +210,8 @@ func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 		)
 		_slot_total_offsets[index] = target_steps * SLOT_CELL_HEIGHT
 	_slot_finish_callback = on_finished
+	if _slot_payline != null:
+		_slot_payline.color = Color("8a682f80")
 	set_status("ROUND_SPINNING")
 
 
@@ -209,6 +227,9 @@ func set_help_open(open: bool) -> void:
 		var close_button := _help_overlay.find_child("HelpClose", true, false) as Button
 		if close_button != null:
 			close_button.grab_focus()
+	if _slot_spin_label != null:
+		_slot_spin_label.disabled = open or cabinet.is_round_active
+		_slot_spin_label.queue_redraw()
 
 
 func _build_help_ui() -> void:
@@ -218,6 +239,7 @@ func _build_help_ui() -> void:
 	_help_button.size = Vector2(150, 38)
 	_help_button.text = tr("HELP_BUTTON")
 	_help_button.add_theme_font_size_override("font_size", 14)
+	_help_button.z_index = 90
 	_help_button.add_theme_stylebox_override("normal", _panel_style(Color("17161af2"), Color("c8a34b"), 6))
 	_help_button.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
 	_help_button.pressed.connect(toggle_help)
@@ -227,6 +249,7 @@ func _build_help_ui() -> void:
 	_help_overlay.name = "HelpOverlay"
 	_help_overlay.size = Vector2(960, 540)
 	_help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_help_overlay.z_index = 100
 	_help_overlay.visible = false
 	add_child(_help_overlay)
 	var shade := ColorRect.new()
@@ -318,6 +341,23 @@ func _refresh_blackjack() -> void:
 		]
 	)
 	_render_blackjack_hand(math.player, math.dealer, cabinet.is_round_active)
+	if _blackjack_player_total != null:
+		_blackjack_player_total.text = tr("BLACKJACK_TOTAL") % BlackjackMath.hand_value(math.player)
+		_blackjack_dealer_total.text = (
+			tr("BLACKJACK_SHOWING") % BlackjackMath.hand_value([math.dealer[0]])
+			if cabinet.is_round_active and not math.dealer.is_empty()
+			else tr("BLACKJACK_TOTAL") % BlackjackMath.hand_value(math.dealer)
+		)
+	if _blackjack_credit_value != null:
+		_blackjack_credit_value.text = str(
+			maxi(0, cabinet.context.balance - (cabinet.current_stake if cabinet.is_round_active else 0))
+		)
+		_blackjack_primary.text = tr("ACTION_HIT") if cabinet.is_round_active else tr("ACTION_DEAL")
+		_blackjack_primary.disabled = (
+			not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance
+		)
+		_blackjack_stand.disabled = not cabinet.is_round_active
+		_blackjack_double.disabled = not math.can_double(cabinet.context.balance)
 
 
 func _refresh_vault() -> void:
@@ -356,6 +396,15 @@ func _refresh_vault() -> void:
 			InputRouter.glyph("back")
 		]
 	)
+	if _vault_credit_value != null:
+		_vault_credit_value.text = str(
+			maxi(0, cabinet.context.balance - (cabinet.current_stake if cabinet.is_round_active else 0))
+		)
+		_vault_open.text = tr("ACTION_OPEN") if cabinet.is_round_active else tr("ACTION_ENTER")
+		_vault_open.disabled = (
+			not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance
+		)
+		_vault_cash_out.disabled = not cabinet.is_round_active or math.revealed.is_empty()
 
 
 func _ensure_art() -> void:
@@ -427,90 +476,197 @@ func _build_slot_art() -> void:
 	_slot_payline.size = Vector2(658, 4)
 	_slot_payline.color = Color("d9b44a")
 	_art_root.add_child(_slot_payline)
+	_build_slot_deck()
 
 
 func _apply_slot_fullscreen_layout() -> void:
 	_frame.position = Vector2.ZERO
 	_frame.size = Vector2(960, 540)
 	_frame.color = Color("13090b")
-	_controls_backdrop.position = Vector2(236, 496)
-	_controls_backdrop.size = Vector2(488, 34)
-	_controls_backdrop.color = Color("090708cc")
+	_controls_backdrop.hide()
 	_title.position = Vector2(248, 43)
 	_title.size = Vector2(464, 54)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.add_theme_font_size_override("font_size", 34)
 	_title.add_theme_color_override("font_color", Color("f5e6bd"))
-	_stake.position = Vector2(83, 443)
-	_stake.size = Vector2(280, 42)
-	_stake.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_stake.add_theme_font_size_override("font_size", 24)
+	_stake.hide()
 	_status.position = Vector2(330, 99)
 	_status.size = Vector2(300, 32)
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status.add_theme_font_size_override("font_size", 16)
 	_status.autowrap_mode = TextServer.AUTOWRAP_OFF
 	_status.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_detail.position = Vector2(620, 439)
-	_detail.size = Vector2(260, 46)
-	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_detail.autowrap_mode = TextServer.AUTOWRAP_OFF
-	_detail.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	_controls.position = Vector2(248, 502)
-	_controls.size = Vector2(464, 24)
-	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_controls.add_theme_font_size_override("font_size", 16)
-	_slot_spin_label = _slot_deck_label(Vector2(410, 433), Vector2(140, 48), 23)
-	_slot_spin_label.name = "SlotSpinLabel"
-	_slot_spin_label.text = tr("SLOT_SPIN")
-	_stake_selector.position = Vector2(76, 433)
-	_stake_selector.size = Vector2(306, 58)
+	_detail.hide()
+	_controls.hide()
+	_stake_selector.position = Vector2(216, 442)
+	_stake_selector.size = Vector2(300, 68)
+	_stake_selector.z_index = 6
 
 
-func _slot_deck_label(at: Vector2, dimensions: Vector2, font_size: int) -> Label:
-	var label := Label.new()
-	label.position = at
-	label.size = dimensions
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", font_size)
-	label.add_theme_color_override("font_color", Color("f5e6bd"))
-	add_child(label)
-	return label
+func _build_slot_deck() -> void:
+	var credits_panel := Panel.new()
+	credits_panel.name = "SlotCreditsMeter"
+	credits_panel.position = Vector2(48, 442)
+	credits_panel.size = Vector2(154, 68)
+	credits_panel.z_index = 4
+	credits_panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("170c0d"), Color("c8a34b"), 8, 2)
+	)
+	add_child(credits_panel)
+	var credit_caption := _help_label(
+		credits_panel, Vector2(12, 7), Vector2(130, 18), 14, Color("b8ad9c")
+	)
+	credit_caption.text = tr("HUD_CREDITS")
+	credit_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_slot_credit_value = _help_label(
+		credits_panel, Vector2(12, 24), Vector2(130, 34), 27, Color("f2c84b")
+	)
+	_slot_credit_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+	var bet_panel := Panel.new()
+	bet_panel.name = "SlotBetTray"
+	bet_panel.position = Vector2(216, 442)
+	bet_panel.size = Vector2(300, 68)
+	bet_panel.z_index = 4
+	bet_panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("170c0d"), Color("6e5225"), 8, 2)
+	)
+	add_child(bet_panel)
+
+	_slot_spin_label = SlotSpinButton.new()
+	_slot_spin_label.name = "SlotSpinButton"
+	_slot_spin_label.position = Vector2(522, 430)
+	_slot_spin_label.size = Vector2(140, 88)
+	_slot_spin_label.z_index = 5
+	_slot_spin_label.pressed.connect(
+		func() -> void:
+			if cabinet.has_method("request_spin"):
+				cabinet.call("request_spin")
+	)
+	add_child(_slot_spin_label)
+
+	var result_panel := Panel.new()
+	result_panel.name = "SlotResultMeter"
+	result_panel.position = Vector2(672, 442)
+	result_panel.size = Vector2(240, 68)
+	result_panel.z_index = 4
+	result_panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("170c0d"), Color("c8a34b"), 8, 2)
+	)
+	add_child(result_panel)
+	_slot_result_value = _help_label(
+		result_panel, Vector2(10, 6), Vector2(220, 28), 22, Color("f1e8d8")
+	)
+	_slot_result_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_slot_result_formula = _help_label(
+		result_panel, Vector2(10, 35), Vector2(220, 24), 14, Color("b8ad9c")
+	)
+	_slot_result_formula.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+
+func _build_blackjack_deck() -> void:
+	var deck := Panel.new()
+	deck.name = "BlackjackControlDeck"
+	deck.position = Vector2(64, 466)
+	deck.size = Vector2(832, 64)
+	deck.z_index = 4
+	deck.add_theme_stylebox_override(
+		"panel", _panel_style(Color("170c0d"), Color("c8a34b"), 7, 2)
+	)
+	add_child(deck)
+	_blackjack_credit_value = _add_credit_meter(deck, Vector2(8, 5), Vector2(112, 54))
+	_blackjack_primary = _action_button(
+		tr("ACTION_DEAL"), Vector2(480, 474), Vector2(112, 48), Callable(cabinet, "request_primary")
+	)
+	_blackjack_stand = _action_button(
+		tr("ACTION_STAND"), Vector2(608, 474), Vector2(112, 48), Callable(cabinet, "request_stand")
+	)
+	_blackjack_double = _action_button(
+		tr("ACTION_DOUBLE"), Vector2(736, 474), Vector2(112, 48), Callable(cabinet, "request_double")
+	)
+
+
+func _build_vault_deck() -> void:
+	var status_panel := Panel.new()
+	status_panel.name = "VaultStatusPanel"
+	status_panel.position = Vector2(44, 98)
+	status_panel.size = Vector2(286, 104)
+	status_panel.z_index = 4
+	status_panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("0d0a1cdd"), Color("6d4fb3"), 7, 1)
+	)
+	add_child(status_panel)
+	var risk_panel := Panel.new()
+	risk_panel.name = "VaultRiskMeter"
+	risk_panel.position = Vector2(668, 350)
+	risk_panel.size = Vector2(244, 64)
+	risk_panel.z_index = 4
+	risk_panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("0d0a1cdd"), Color("6d4fb3"), 7, 1)
+	)
+	add_child(risk_panel)
+	var deck := Panel.new()
+	deck.name = "VaultControlDeck"
+	deck.position = Vector2(44, 430)
+	deck.size = Vector2(872, 82)
+	deck.z_index = 4
+	deck.add_theme_stylebox_override(
+		"panel", _panel_style(Color("0d0a1cf2"), Color("6d4fb3"), 7, 2)
+	)
+	add_child(deck)
+	_vault_credit_value = _add_credit_meter(deck, Vector2(8, 9), Vector2(122, 62))
+	_vault_open = _action_button(
+		tr("ACTION_ENTER"), Vector2(484, 442), Vector2(128, 56), Callable(cabinet, "request_open")
+	)
+	_vault_cash_out = _action_button(
+		tr("ACTION_CASH_OUT"), Vector2(626, 442), Vector2(150, 56), Callable(cabinet, "request_cash_out")
+	)
+
+
+func _add_credit_meter(parent: Control, at: Vector2, dimensions: Vector2) -> Label:
+	var panel := Panel.new()
+	panel.position = at
+	panel.size = dimensions
+	panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("17161a"), Color("6e5225"), 6, 1)
+	)
+	parent.add_child(panel)
+	var caption := _help_label(panel, Vector2(8, 4), Vector2(dimensions.x - 16, 18), 14, Color("b8ad9c"))
+	caption.text = tr("HUD_CREDITS")
+	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var value := _help_label(panel, Vector2(8, 21), Vector2(dimensions.x - 16, 30), 24, Color("f2c84b"))
+	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return value
+
+
+func _action_button(label: String, at: Vector2, dimensions: Vector2, action: Callable) -> Button:
+	var button := Button.new()
+	button.text = label
+	button.position = at
+	button.size = dimensions
+	button.z_index = 6
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_size_override("font_size", 16)
+	button.add_theme_color_override("font_color", Color("f1e8d8"))
+	button.add_theme_color_override("font_disabled_color", Color("756d62"))
+	button.add_theme_stylebox_override("normal", _panel_style(Color("5a111c"), Color("c8a34b"), 7, 2))
+	button.add_theme_stylebox_override("hover", _panel_style(Color("731827"), Color("f0c45e"), 7, 2))
+	button.add_theme_stylebox_override("pressed", _panel_style(Color("351016"), Color("f0c45e"), 7, 2))
+	button.add_theme_stylebox_override("focus", _panel_style(Color("5a111c"), Color("48c5d5"), 7, 2))
+	button.add_theme_stylebox_override("disabled", _panel_style(Color("252126"), Color("4b443c"), 7, 1))
+	button.pressed.connect(func() -> void: action.call())
+	add_child(button)
+	return button
 
 
 func _build_blackjack_art() -> void:
 	_add_ambient(Color("e6c36a"))
-	var room := ColorRect.new()
-	room.position = Vector2.ZERO
-	room.size = Vector2(960, 540)
-	room.color = Color("160b0b")
-	_art_root.add_child(room)
-	var wood_header := ColorRect.new()
-	wood_header.position = Vector2(0, 0)
-	wood_header.size = Vector2(960, 92)
-	wood_header.color = Color("351914")
-	_art_root.add_child(wood_header)
-	var felt := ColorRect.new()
-	felt.name = "BlackjackTableArt"
-	felt.position = Vector2(64, 94)
-	felt.size = Vector2(832, 372)
-	felt.color = Color("06483a")
-	_art_root.add_child(felt)
-	var rail := ColorRect.new()
-	rail.position = Vector2(64, 94)
-	rail.size = Vector2(832, 9)
-	rail.color = Color("c8a34b")
-	_art_root.add_child(rail)
-	var lower_rail := ColorRect.new()
-	lower_rail.position = Vector2(64, 457)
-	lower_rail.size = Vector2(832, 9)
-	lower_rail.color = Color("c8a34b")
-	_art_root.add_child(lower_rail)
+	_art_root.add_child(
+		_texture("BlackjackTableArt", BLACKJACK_TABLE, Vector2.ZERO, Vector2(960, 540))
+	)
 	for label_data: Array in [
-		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(104, 141)],
-		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(104, 310)],
+		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(104, 166)],
+		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(104, 330)],
 	]:
 		var hand_label := Label.new()
 		hand_label.name = label_data[0]
@@ -519,17 +675,15 @@ func _build_blackjack_art() -> void:
 		hand_label.add_theme_font_size_override("font_size", Typography.SUPPORTING)
 		hand_label.add_theme_color_override("font_color", Color("c8a34b"))
 		_art_root.add_child(hand_label)
-	var shoe := ColorRect.new()
-	shoe.name = "CardShoeArt"
-	shoe.position = Vector2(792, 137)
-	shoe.size = Vector2(64, 96)
-	shoe.color = Color("252126")
-	_art_root.add_child(shoe)
-	var shoe_trim := ColorRect.new()
-	shoe_trim.position = Vector2(798, 144)
-	shoe_trim.size = Vector2(52, 6)
-	shoe_trim.color = Color("c8a34b")
-	_art_root.add_child(shoe_trim)
+	_blackjack_dealer_total = _label(Vector2(104, 190), 16)
+	_blackjack_dealer_total.size = Vector2(150, 26)
+	_blackjack_dealer_total.add_theme_color_override("font_color", Color("f1e8d8"))
+	_blackjack_dealer_total.z_index = 6
+	_blackjack_player_total = _label(Vector2(104, 354), 16)
+	_blackjack_player_total.size = Vector2(150, 26)
+	_blackjack_player_total.add_theme_color_override("font_color", Color("f1e8d8"))
+	_blackjack_player_total.z_index = 6
+	_build_blackjack_deck()
 
 
 func _apply_blackjack_fullscreen_layout() -> void:
@@ -558,8 +712,9 @@ func _apply_blackjack_fullscreen_layout() -> void:
 	_controls.size = Vector2(796, 24)
 	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls.add_theme_font_size_override("font_size", 16)
-	_stake_selector.position = Vector2(78, 456)
-	_stake_selector.size = Vector2(334, 58)
+	_stake_selector.position = Vector2(190, 466)
+	_stake_selector.size = Vector2(278, 60)
+	_stake_selector.z_index = 6
 
 
 func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], hide_hole: bool) -> void:
@@ -568,10 +723,12 @@ func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], 
 		_blackjack_dealt = true
 	var deal_index: int = 0
 	for index: int in range(dealer_cards.size()):
-		_sync_playing_card(dealer_cards[index], index, true, hide_hole and index == 1, deal_index)
+		_sync_playing_card(
+			dealer_cards[index], index, dealer_cards.size(), true, hide_hole and index == 1, deal_index
+		)
 		deal_index += 1
 	for index: int in range(player_cards.size()):
-		_sync_playing_card(player_cards[index], index, false, false, deal_index)
+		_sync_playing_card(player_cards[index], index, player_cards.size(), false, false, deal_index)
 		deal_index += 1
 
 
@@ -592,27 +749,31 @@ func _clear_blackjack_cards() -> void:
 
 
 func _sync_playing_card(
-	rank: int, hand_index: int, dealer_hand: bool, hidden: bool, deal_index: int
+	rank: int, hand_index: int, hand_size: int, dealer_hand: bool, hidden: bool, deal_index: int
 ) -> void:
 	var card_name := ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
 	for card: PlayingCard in _blackjack_cards:
 		if card.name == card_name:
 			card.set_face_down(hidden, card.face_down and not hidden)
 			return
-	_add_playing_card(rank, hand_index, dealer_hand, hidden, deal_index)
+	_add_playing_card(rank, hand_index, hand_size, dealer_hand, hidden, deal_index)
 	_blackjack_input_locked_until = maxi(
 		_blackjack_input_locked_until, Time.get_ticks_msec() + 360
 	)
 
 
 func _add_playing_card(
-	rank: int, hand_index: int, dealer_hand: bool, hidden: bool, deal_index: int
+	rank: int, hand_index: int, hand_size: int, dealer_hand: bool, hidden: bool, deal_index: int
 ) -> void:
 	var card := PlayingCard.new()
 	card.name = ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
 	card.size = Vector2(88, 124)
 	card.configure(rank, rank + hand_index + (0 if dealer_hand else 2), hidden)
-	var destination := Vector2(286 + hand_index * 76, 132 if dealer_hand else 301)
+	var hand_width := 88.0 + maxi(hand_size - 1, 0) * 70.0
+	var destination := Vector2(
+		480.0 - hand_width * 0.5 + hand_index * 70.0,
+		154.0 if dealer_hand else 306.0
+	)
 	card.position = Vector2(804, 144)
 	card.rotation = 0.08
 	card.modulate.a = 0.0
@@ -663,6 +824,7 @@ func _build_vault_art() -> void:
 		_vault_cursor.add_child(edge)
 	_art_root.add_child(_vault_cursor)
 	_vault_cursor.position = VAULT_GRID_ORIGIN - Vector2(4, 4)
+	_build_vault_deck()
 
 
 func _apply_vault_fullscreen_layout() -> void:
@@ -679,11 +841,13 @@ func _apply_vault_fullscreen_layout() -> void:
 	_stake.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status.position = Vector2(65, 98)
 	_status.size = Vector2(250, 88)
+	_status.z_index = 6
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_status.add_theme_color_override("font_color", Color("f1e8d8"))
-	_detail.position = Vector2(646, 434)
-	_detail.size = Vector2(250, 58)
+	_detail.position = Vector2(676, 356)
+	_detail.size = Vector2(220, 58)
+	_detail.z_index = 6
 	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_controls_backdrop.position = Vector2(72, 501)
@@ -692,14 +856,36 @@ func _apply_vault_fullscreen_layout() -> void:
 	_controls.size = Vector2(796, 24)
 	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls.add_theme_font_size_override("font_size", 16)
-	_stake_selector.position = Vector2(44, 430)
-	_stake_selector.size = Vector2(300, 58)
+	_stake_selector.position = Vector2(186, 438)
+	_stake_selector.size = Vector2(280, 64)
+	_stake_selector.z_index = 6
 
 
 func _refresh_slot() -> void:
-	_detail.text = (
-		tr("SLOT_LAST_WIN") % _result.payout if _result != null else tr("SLOT_CENTER_PAYLINE")
+	if _slot_credit_value == null:
+		return
+	var displayed_credit: int = cabinet.context.balance
+	if cabinet.is_round_active:
+		displayed_credit = maxi(0, displayed_credit - cabinet.current_stake)
+	_slot_credit_value.text = str(displayed_credit)
+	if _result != null:
+		var multiplier: int = _result.payout / maxi(_result.stake, 1)
+		_slot_result_value.text = tr("SLOT_RETURNED") % _result.payout
+		_slot_result_formula.text = (
+			tr("SLOT_RESULT_FORMULA") % [_result.stake, multiplier, _result.payout]
+		)
+	elif cabinet.is_round_active:
+		_slot_result_value.text = tr("ROUND_SPINNING")
+		_slot_result_formula.text = tr("SLOT_BET_IN_PLAY") % cabinet.current_stake
+	else:
+		_slot_result_value.text = tr("SLOT_RETURNED") % 0
+		_slot_result_formula.text = tr("SLOT_IDLE_FORMULA") % cabinet.selected_stake
+	_slot_spin_label.disabled = (
+		cabinet.is_round_active
+		or help_open
+		or cabinet.selected_stake > cabinet.context.balance
 	)
+	_slot_spin_label.queue_redraw()
 
 
 func has_active_motion() -> bool:
@@ -854,12 +1040,26 @@ func _pulse_slot_win() -> void:
 	_slot_payline.color = Color("fff0a0")
 	_slot_payline.scale = Vector2(1.0, 2.5)
 	var pulse := create_tween().set_parallel(true)
-	pulse.tween_property(_slot_payline, "scale", Vector2.ONE, 0.48).set_trans(Tween.TRANS_BACK)
-	pulse.tween_property(_slot_payline, "color", Color("d9b44a"), 0.48)
+	pulse.set_loops(3)
+	pulse.tween_property(_slot_payline, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK)
+	pulse.tween_property(_slot_payline, "color", Color("d9b44a"), 0.22)
 	for symbol: Control in _slot_symbols:
 		symbol.pivot_offset = symbol.size * 0.5
 		symbol.scale = Vector2(1.08, 1.08)
-		pulse.tween_property(symbol, "scale", Vector2.ONE, 0.48).set_trans(Tween.TRANS_BACK)
+		pulse.tween_property(symbol, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK)
+
+
+func _animate_slot_result(payout: int) -> void:
+	if _slot_result_value == null:
+		return
+	_slot_result_value.text = tr("SLOT_RETURNED") % 0
+	create_tween().tween_method(
+		func(value: float) -> void:
+			_slot_result_value.text = tr("SLOT_RETURNED") % int(round(value)),
+		0.0,
+		float(payout),
+		clampf(0.35 + payout * 0.002, 0.35, 0.8)
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _card_names(cards: Array[int]) -> String:

@@ -31,9 +31,13 @@ func burst(origin: Vector2, count: int = 12) -> void:
 		token.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(token)
 		var direction := -1.0 if index % 2 == 0 else 1.0
+		var vertical_exit := (
+			_rng.randf_range(260.0, 420.0)
+			if index % 3 == 0
+			else -_rng.randf_range(180.0, 450.0)
+		)
 		var destination := origin + Vector2(
-			direction * _rng.randf_range(170.0, 520.0),
-			-_rng.randf_range(180.0, 450.0)
+			direction * _rng.randf_range(170.0, 520.0), vertical_exit
 		)
 		var duration := _rng.randf_range(0.72, 1.05)
 		var motion := create_tween().set_parallel(true)

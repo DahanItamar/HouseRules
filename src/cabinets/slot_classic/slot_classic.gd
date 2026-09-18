@@ -26,6 +26,10 @@ func resolve_pending() -> void:
 	_finish(result)
 
 
+func request_spin() -> bool:
+	return start_round(selected_stake)
+
+
 func abandon() -> void:
 	_pending = null
 	super.abandon()
@@ -35,7 +39,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if handle_common_input(event):
 		return
 	if event.is_action_pressed("interact"):
-		start_round(selected_stake)
+		request_spin()
 		get_viewport().set_input_as_handled()
 	else:
 		super._unhandled_input(event)

@@ -21,17 +21,36 @@ func abandon() -> void:
 		_finish(math.abandon())
 
 
+func request_open() -> bool:
+	var result: RoundResult
+	if is_round_active:
+		result = math.reveal(snap_cursor.index)
+	else:
+		return start_round(selected_stake)
+	if result != null:
+		_finish(result)
+	panel.refresh()
+	return true
+
+
+func request_cash_out() -> bool:
+	if not is_round_active:
+		return false
+	var result := math.cash_out()
+	if result != null:
+		_finish(result)
+	panel.refresh()
+	return true
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if handle_common_input(event):
 		return
 	var result: RoundResult
 	if event.is_action_pressed("interact"):
-		if is_round_active:
-			result = math.reveal(snap_cursor.index)
-		else:
-			start_round(selected_stake)
+		request_open()
 	elif is_round_active and event.is_action_pressed("secondary"):
-		result = math.cash_out()
+		request_cash_out()
 	elif is_round_active and InputRouter.move_snap_cursor(snap_cursor, event):
 		pass
 	elif not is_round_active and event.is_action_pressed("move_up"):
