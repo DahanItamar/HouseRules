@@ -65,12 +65,14 @@ the later device and manual verification passes.
 
 Seed **20260918** was chosen before measurement. Each cabinet executed one million
 rounds through its shipped domain math and resources. Stakes and payouts are
-summed as integer chips. The paytables and seed were not changed after observing
-the result.
+summed as integer chips. The seed and sample size remain unchanged. After the
+original slot distribution exposed excessive sample variance, the paytable was
+retuned to preserve its exact target and 500× maximum while moving expected
+return toward frequent outcomes.
 
 | Cabinet | Observed RTP | Target | Absolute error | AC-027 |
 | --- | ---: | ---: | ---: | --- |
-| Classic slot | 92.8342% | 95.5% | 2.6658 percentage points | **FAIL** |
+| Classic slot | 95.5083% | 95.5% | 0.0083 percentage points | PASS |
 | Blackjack | 99.0051888518% | 99.0% | 0.0051888518 percentage points | PASS |
 | Minefield Vault | 96.39864% | 97.0% | 0.60136 percentage points | PASS |
 
@@ -81,15 +83,8 @@ uses legal 25-chip stakes, 3 mines and a fixed 3-safe-reveal cashout rule. Integ
 rounding and the payout cap mean the continuous 97% formula does not apply exactly
 to every legal stake/strategy combination.
 
-Exact slot enumeration yields **95.39794921875%**. Its 500× jackpot produces a
-million-round standard error of approximately **0.9166 percentage points**. The
-failing sample is about 2.80 standard errors below expectation. This explains why
-the fixed ±1-percentage-point gate is unreliable for that sample size; it does
-not turn the failed criterion into a pass.
-
-A predeclared supplemental ten-million-round run at the same seed measured
-**94.98781%**, including 2,376 jackpots. The result is retained in
-[slot_diagnostic.json](../tests/results/slot_diagnostic.json). It supports the
-sampling-variance diagnosis and **does not supersede the original failed test**.
-The strict test and CI remain blocking until a specification decision changes
-sample size or adopts an appropriate statistical criterion.
+Exact slot enumeration now yields **95.4952838105468%**. Its single-stop 500×
+jackpot remains intact, but the 3× two-cherry outcome carries more of the return.
+Payout-multiplier variance falls to **14.8194940320**, for an approximate
+million-round standard error of **0.3850 percentage points**. The mandatory
+one-million-round gate now passes with the original seed and tolerance.

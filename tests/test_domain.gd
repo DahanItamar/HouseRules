@@ -30,7 +30,7 @@ func test_slot_shipped_paytable_exhaustive_symbol_combinations() -> void:
 					* math.paytable.weights[center]
 					* math.paytable.weights[right]
 				)
-	assert_almost_eq(float(weighted_return) / (stops * stops * stops), 0.9539794921875, 0.000001)
+	assert_almost_eq(float(weighted_return) / (stops * stops * stops), 0.954952838105468, 0.000001)
 
 
 func test_ac014_seed_and_inputs_reproduce_all_three_cabinets() -> void:

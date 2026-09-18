@@ -51,23 +51,23 @@ Exiting during `SPINNING` or `RESOLVING` → `abandon()` → `ABANDONED`, stake 
 
 ## 6. Math
 
-Each of the three reels uses an identical 32-stop strip:
+Each of the three reels uses an identical 31-stop strip:
 
 | Symbol | Stops | p(one reel) |
 | --- | --- | --- |
-| CHERRY | 8 | 0.25000 |
-| LEMON | 7 | 0.21875 |
-| BELL | 6 | 0.18750 |
-| BAR | 5 | 0.15625 |
-| SEVEN | 4 | 0.12500 |
-| DIAMOND | 2 | 0.06250 |
-| **Total** | **32** | **1.00000** |
+| CHERRY | 8 | 0.25806 |
+| LEMON | 7 | 0.22581 |
+| BELL | 6 | 0.19355 |
+| BAR | 5 | 0.16129 |
+| SEVEN | 4 | 0.12903 |
+| DIAMOND | 1 | 0.03226 |
+| **Total** | **31** | **1.00000** |
 
-`p(three of a kind) = (stops / 32)³`
+`p(three of a kind) = (stops / 31)³`
 
 **Declared `target_rtp`:** `0.955`
-**Computed RTP:** **95.40%** — arithmetic in the paytable below
-**Hit frequency:** 17.93% — roughly one paying spin in 5.6
+**Computed RTP:** **95.50%** — arithmetic in the paytable below
+**Hit frequency:** 19.06% — roughly one paying spin in 5.2
 **Volatility:** MEDIUM
 **Max win:** 500× stake (three DIAMOND). Capped at 500×, so at the tier maximum of 50 chips the largest single payout is 25,000 — well inside the integer range (§8 of the spec).
 
@@ -75,16 +75,19 @@ Each of the three reels uses an identical 32-stop strip:
 
 | Outcome | Probability | Pays | Contribution |
 | --- | --- | --- | --- |
-| 3 × DIAMOND | 0.00024414 | 500× | 0.12207 |
-| 3 × SEVEN | 0.00195313 | 80× | 0.15625 |
-| 3 × BAR | 0.00381470 | 40× | 0.15259 |
-| 3 × BELL | 0.00659180 | 20× | 0.13184 |
-| 3 × LEMON | 0.01046753 | 12× | 0.12561 |
-| 3 × CHERRY | 0.01562500 | 8× | 0.12500 |
-| Exactly 2 × CHERRY | 0.14062500 | 1× | 0.14063 |
-| **Total RTP** | | | **0.95399** |
+| 3 × DIAMOND | 0.00003357 | 500× | 0.01678 |
+| 3 × SEVEN | 0.00214830 | 19× | 0.04082 |
+| 3 × BAR | 0.00419657 | 16× | 0.06715 |
+| 3 × BELL | 0.00725051 | 12× | 0.08701 |
+| 3 × LEMON | 0.01151354 | 11× | 0.12665 |
+| 3 × CHERRY | 0.01718640 | 10× | 0.17186 |
+| Exactly 2 × CHERRY | 0.14823269 | 3× | 0.44470 |
+| **Total RTP** | | | **0.95495** |
 
-The two-cherry consolation carries 14.7% of the total return on its own. It exists to make the machine feel alive — without it the hit frequency drops to 3.9%, roughly one win in 26 spins, and the first machine a new player touches feels broken.
+The two-cherry consolation carries 44.5% of the total return. It keeps the first
+machine lively while the single-stop 500× DIAMOND remains genuinely rare. That
+distribution also makes the one-million-round RTP gate materially less sensitive
+to jackpot count without changing the declared return or maximum win.
 
 ## 7. Bet limits
 

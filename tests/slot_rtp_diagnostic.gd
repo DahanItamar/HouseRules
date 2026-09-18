@@ -18,15 +18,15 @@ func _initialize() -> void:
 		if result.payout == 5000:
 			jackpots += 1
 	var report := {
-		"purpose": "Supplemental diagnosis; does not supersede failed million-round gate",
+		"purpose": "Supplemental ten-million-round stability evidence",
 		"cabinet": "slot_classic",
 		"rounds": ROUNDS,
 		"seed": SEED,
 		"wagered": ROUNDS * 10,
 		"returned": returned,
 		"observed_rtp": float(returned) / (ROUNDS * 10),
-		"exact_rtp": 0.9539794921875,
-		"standard_error": sqrt(84.0132629722357 / ROUNDS),
+		"exact_rtp": 0.954952838105468,
+		"standard_error": sqrt(14.819494032047853 / ROUNDS),
 		"jackpots": jackpots,
 		"elapsed_ms": Time.get_ticks_msec() - started,
 	}

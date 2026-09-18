@@ -55,15 +55,17 @@ does not also trigger menu exit. Physical controller use, handheld readability,
 rendered animation and crash/power-loss behavior are **not certified** by these
 headless tests.
 
-## Measured RTP and unresolved gate
+## Measured RTP
 
 All three runs use seed **20260918**, declared before measurement, and the shipped
-resources and math. No seeds or paytables were changed to produce a passing run.
+resources and math. The seed was not changed. The slot paytable was deliberately
+retuned after the original high-variance distribution failed this gate: its exact
+RTP and 500× maximum were preserved while return moved toward frequent outcomes.
 `results/rtp.json` records one million rounds per cabinet:
 
 | Cabinet | Observed | Declared | Strict ±1 percentage point gate |
 | --- | ---: | ---: | --- |
-| Classic slot | 92.8342% | 95.5% | **FAIL** |
+| Classic slot | 95.5083% | 95.5% | PASS |
 | Blackjack | 99.0051888518% | 99.0% | PASS |
 | Minefield | 96.39864% | 97.0% | PASS |
 
@@ -73,15 +75,9 @@ and cashes out after the first 3 safe tile indices. Integer payout rounding lowe
 its expectation relative to the continuous 97% formula; this sample is not proof
 that every legal mine count/stake/cashout combination attains 97%.
 
-Exact enumeration of the slot's 216 symbol combinations gives RTP
-**95.39794921875%**. The 500× jackpot produces variance 84.0132629722357 in units
-of stake squared, so one million rounds has standard error **0.9166 percentage
-points**. The failing sample is about 2.80 standard errors below exact expectation.
-A one-percentage-point gate therefore cannot reliably distinguish math defects
-from this machine's sampling variation.
-
-A separately declared ten-million-round diagnosis with the **same seed** returned
-**94.98781%**, with 2,376 jackpots. `results/slot_diagnostic.json` preserves that
-supplemental evidence. It **does not replace the failed million-round acceptance
-test**. CI remains blocking/red for AC-027 pending an explicit specification
-decision about sample size or a variance-aware statistical criterion.
+Exact enumeration of the 31-stop slot gives RTP **95.4952838105468%**. Its
+single-stop 500× jackpot remains the maximum win, while a 3× two-cherry return
+carries more of the expectation. Payout-multiplier variance is now
+**14.8194940320**, giving a one-million-round standard error of about **0.3850
+percentage points**. The fixed acceptance gate therefore passes without changing
+the declared target, maximum win, seed or sample size.

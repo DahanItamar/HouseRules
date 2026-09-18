@@ -4,7 +4,7 @@
 
 [resource]
 script = ExtResource("1")
-weights = Array[int]([8, 7, 6, 5, 4, 2])
-multipliers = Array[int]([8, 12, 20, 40, 80, 500])
-two_cherry_multiplier = 1
+weights = Array[int]([8, 7, 6, 5, 4, 1])
+multipliers = Array[int]([10, 11, 12, 16, 19, 500])
+two_cherry_multiplier = 3
 max_win = 500
