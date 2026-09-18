@@ -43,6 +43,7 @@ func apply_result(result: RoundResult) -> bool:
 		SaveService.state.cabinet_stats[id] = stats
 	Economy.record_round(context.definition.id, result)
 	context.balance = Wallet.balance
+	cabinet.normalize_selected_stake()
 	round_applied.emit(result)
 	return true
 

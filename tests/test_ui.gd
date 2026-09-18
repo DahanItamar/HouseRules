@@ -76,6 +76,67 @@ func test_stakes_move_between_casino_denominations() -> void:
 	assert_eq(game.selected_stake, 5)
 
 
+func test_shared_bet_console_applies_exact_add_and_multiplier_operations() -> void:
+	var slot_session := CabinetSession.new()
+	add_child_autofree(slot_session)
+	slot_session.begin(SLOT_DEFINITION)
+	var slot: MiniGame = slot_session.cabinet
+	assert_eq(slot.selected_stake, 1)
+	assert_true(slot.apply_bet(MiniGame.BetOperation.ADD_10))
+	assert_eq(slot.selected_stake, 11)
+	assert_true(slot.apply_bet(MiniGame.BetOperation.ADD_25))
+	assert_eq(slot.selected_stake, 36)
+	assert_false(slot.apply_bet(MiniGame.BetOperation.MULTIPLY_2), "72 exceeds the exact 50 cap")
+	assert_eq(slot.selected_stake, 36, "Rejected operations never silently clamp the wager")
+	assert_true(slot.apply_bet(MiniGame.BetOperation.MAX))
+	assert_eq(slot.selected_stake, 50)
+	assert_true(slot.apply_bet(MiniGame.BetOperation.MIN))
+	assert_eq(slot.selected_stake, 1)
+
+	var blackjack_session := CabinetSession.new()
+	add_child_autofree(blackjack_session)
+	blackjack_session.begin(BLACKJACK_DEFINITION)
+	var blackjack: MiniGame = blackjack_session.cabinet
+	assert_eq(blackjack.selected_stake, 5)
+	assert_true(blackjack.apply_bet(MiniGame.BetOperation.ADD_10))
+	assert_true(blackjack.apply_bet(MiniGame.BetOperation.ADD_25))
+	assert_true(blackjack.apply_bet(MiniGame.BetOperation.MULTIPLY_2))
+	assert_eq(blackjack.selected_stake, 80)
+	assert_false(blackjack.apply_bet(MiniGame.BetOperation.MULTIPLY_5))
+
+
+func test_shared_bet_console_respects_balance_and_locks_during_rounds() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(VAULT_DEFINITION)
+	var game: MiniGame = session.cabinet
+	game.context.balance = 18
+	game.normalize_selected_stake()
+	assert_true(game.apply_bet(MiniGame.BetOperation.ADD_10))
+	assert_eq(game.selected_stake, 11)
+	assert_false(game.apply_bet(MiniGame.BetOperation.ADD_10))
+	assert_true(game.apply_bet(MiniGame.BetOperation.MAX))
+	assert_eq(game.selected_stake, 18)
+	assert_true(game.start_round(18))
+	for operation: int in MiniGame.BetOperation.values():
+		assert_false(game.can_apply_bet(operation))
+	assert_eq(game.selected_stake, 18)
+
+
+func test_every_game_exposes_six_semantic_bet_buttons_and_total_readout() -> void:
+	for definition: CabinetDefinition in [SLOT_DEFINITION, BLACKJACK_DEFINITION, VAULT_DEFINITION]:
+		var session := CabinetSession.new()
+		add_child_autofree(session)
+		session.begin(definition)
+		var selector: StakeSelector = session.cabinet.panel._stake_selector
+		assert_eq(selector._buttons.size(), 6)
+		assert_eq(selector._buttons.map(func(button: Button) -> String: return button.text), ["MIN", "+10", "+25", "×2", "×5", "MAX"])
+		var selector_bounds := Rect2(Vector2.ZERO, selector.size)
+		for button_rect: Rect2 in selector.button_rects():
+			assert_true(selector_bounds.encloses(button_rect), "Every bet action remains in its console")
+		assert_gte(Typography.PROMINENT, Typography.CRITICAL)
+
+
 func test_m5_each_cabinet_integrates_its_generated_art() -> void:
 	var expected := {
 		&"slot_classic": "SlotCabinetArt",
@@ -240,8 +301,8 @@ func test_slot_uses_a_full_screen_sharp_higgsfield_stage() -> void:
 	for chip_rect: Rect2 in selector.chip_rects():
 		assert_true(selector_bounds.encloses(chip_rect), "Every bet chip remains inside its tray")
 	assert_true(panel._slot_spin_label is Button, "SPIN is an interactive button")
-	assert_eq(panel._slot_spin_label.position, Vector2(522, 430))
-	assert_eq(panel._slot_spin_label.size, Vector2(140, 88))
+	assert_eq(panel._slot_spin_label.position, Vector2(530, 416))
+	assert_eq(panel._slot_spin_label.size, Vector2(140, 110))
 	assert_not_null(panel.find_child("SlotCreditsMeter", true, false))
 	assert_not_null(panel.find_child("SlotResultMeter", true, false))
 

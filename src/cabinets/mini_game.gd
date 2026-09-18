@@ -11,10 +11,12 @@ var current_stake: int = 0
 var selected_stake: int = 1
 var panel: CabinetPanel
 
+enum BetOperation { MIN, ADD_10, ADD_25, MULTIPLY_2, MULTIPLY_5, MAX }
+
 
 func begin(game_context: MiniGameContext) -> void:
 	context = game_context
-	selected_stake = context.definition.min_bet
+	normalize_selected_stake()
 	if panel != null:
 		panel.refresh()
 
@@ -47,6 +49,65 @@ func stake_options() -> Array[int]:
 	return options
 
 
+func bet_cap() -> int:
+	if context == null:
+		return 0
+	return mini(context.definition.max_bet, context.balance)
+
+
+func bet_candidate(operation: int) -> int:
+	if context == null:
+		return 0
+	match operation:
+		BetOperation.MIN:
+			return context.definition.min_bet
+		BetOperation.ADD_10:
+			return selected_stake + 10
+		BetOperation.ADD_25:
+			return selected_stake + 25
+		BetOperation.MULTIPLY_2:
+			return selected_stake * 2
+		BetOperation.MULTIPLY_5:
+			return selected_stake * 5
+		BetOperation.MAX:
+			return bet_cap()
+	return selected_stake
+
+
+func can_apply_bet(operation: int) -> bool:
+	if is_round_active or context == null:
+		return false
+	var candidate := bet_candidate(operation)
+	return (
+		candidate >= context.definition.min_bet
+		and candidate <= bet_cap()
+		and candidate != selected_stake
+	)
+
+
+func apply_bet(operation: int) -> bool:
+	if not can_apply_bet(operation):
+		AudioService.play(&"loss")
+		return false
+	selected_stake = bet_candidate(operation)
+	AudioService.play(&"confirm")
+	if panel != null:
+		panel.refresh()
+	return true
+
+
+func normalize_selected_stake() -> void:
+	if context == null:
+		return
+	var cap := bet_cap()
+	if cap < context.definition.min_bet:
+		selected_stake = 0
+	elif selected_stake < context.definition.min_bet:
+		selected_stake = context.definition.min_bet
+	elif selected_stake > cap:
+		selected_stake = cap
+
+
 func adjust_stake(direction: int) -> bool:
 	if is_round_active or context == null or direction == 0:
 		return false
@@ -65,9 +126,9 @@ func adjust_stake(direction: int) -> bool:
 
 
 func select_stake(amount: int) -> bool:
-	if is_round_active or amount == selected_stake or amount not in stake_options():
+	if is_round_active or amount == selected_stake:
 		return false
-	if context == null or amount > context.balance:
+	if context == null or amount < context.definition.min_bet or amount > bet_cap():
 		return false
 	selected_stake = amount
 	if panel != null:
