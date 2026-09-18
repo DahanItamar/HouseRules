@@ -25,8 +25,14 @@ func _capture() -> void:
 	main._refresh_hud()
 	await _snapshot("01_menu")
 	main._start_playing()
+	await create_timer(0.55).timeout
 	await _snapshot("02_floor")
+	main._floor.avatar_position = main._floor.cabinet_positions[&"slot_classic"]
+	main._floor._avatar_visual.position = main._floor.avatar_position
+	main._floor.refresh_proximity()
+	await _snapshot("02_floor_join")
 	router.enter_cabinet(load("res://data/cabinets/slot_classic.tres"))
+	await create_timer(0.55).timeout
 	router.session.cabinet.selected_stake = 10
 	router.session.cabinet.panel.refresh()
 	await _snapshot("03_slot_idle")
@@ -36,13 +42,17 @@ func _capture() -> void:
 	router.session.cabinet.resolve_pending()
 	await _snapshot("04_slot_result")
 	router.return_to_floor()
+	await create_timer(0.55).timeout
 	router.enter_cabinet(load("res://data/cabinets/blackjack.tres"))
+	await create_timer(0.55).timeout
 	router.session.cabinet.selected_stake = 10
 	router.session.cabinet.start_round(10)
 	await create_timer(0.7).timeout
 	await _snapshot("05_blackjack")
 	router.return_to_floor()
+	await create_timer(0.55).timeout
 	router.enter_cabinet(load("res://data/cabinets/minefield_vault.tres"))
+	await create_timer(0.55).timeout
 	router.session.cabinet.selected_stake = 10
 	router.session.cabinet.start_round(10)
 	await _snapshot("06_vault")

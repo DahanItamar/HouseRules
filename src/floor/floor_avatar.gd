@@ -2,11 +2,12 @@ class_name FloorAvatar
 extends Node2D
 ## Resolution-independent casino guest animated from real movement distance.
 
-const GUEST_TEXTURE := preload("res://assets/production/characters/casino_guest_eight_direction.png")
-const GUEST_CELL_SIZE := Vector2(336, 376)
-const GUEST_SCALE: float = 0.170
-const WALK_CYCLE_DISTANCE: float = 58.0
-const MIRRORED_POSE: Array[int] = [0, 7, 6, 5, 4, 3, 2, 1]
+const GUEST_TEXTURE := preload("res://assets/production/characters/casino_guest_walk_32.png")
+const GUEST_CELL_SIZE := Vector2(221.75, 221.75)
+const GUEST_SCALE: float = 0.270
+const WALK_CYCLE_DISTANCE: float = 64.0
+# Generated atlas columns run counter-clockwise from north.
+const DIRECTION_COLUMNS: Array[int] = [0, 7, 6, 5, 4, 3, 2, 1]
 var facing := Vector2.DOWN
 var walk_phase: float = 0.0
 var walk_frame: int = 0
@@ -40,7 +41,7 @@ func set_motion(displacement: Vector2) -> void:
 			walk_phase + displacement.length() / WALK_CYCLE_DISTANCE * TAU,
 			TAU
 		)
-		walk_frame = int(walk_phase >= PI)
+		walk_frame = int(floor(walk_phase / (TAU / 4.0))) % 4
 		idle_time = 0.0
 		_update_facing_texture()
 	queue_redraw()
@@ -61,11 +62,8 @@ func _process(delta: float) -> void:
 func _update_facing_texture() -> void:
 	var clockwise_from_north := atan2(facing.x, -facing.y)
 	facing_index = posmod(int(round(clockwise_from_north / (PI / 4.0))), 8)
-	var pose_index := facing_index
-	_sprite.flip_h = walk_frame == 1
-	if walk_frame == 1:
-		pose_index = MIRRORED_POSE[facing_index]
-	var cell := Vector2i(pose_index % 4, pose_index / 4)
+	_sprite.flip_h = false
+	var cell := Vector2i(DIRECTION_COLUMNS[facing_index], walk_frame)
 	_atlas.region = Rect2(Vector2(cell) * GUEST_CELL_SIZE, GUEST_CELL_SIZE)
 
 

@@ -1,0 +1,50 @@
+class_name CasinoLighting
+extends Control
+## Shared, low-contrast architectural light and edge shadow treatment.
+
+enum Mode { MENU, SLOT, BLACKJACK, VAULT }
+
+var mode: Mode = Mode.MENU
+var elapsed: float = 0.0
+
+
+func _ready() -> void:
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	elapsed += delta
+	queue_redraw()
+
+
+func _draw() -> void:
+	var warm := Color("d9b44a")
+	var accent := warm
+	if mode == Mode.BLACKJACK:
+		accent = Color("4a9d7c")
+	elif mode == Mode.VAULT:
+		accent = Color("5574b8")
+	elif mode == Mode.SLOT:
+		accent = Color("a92c3f")
+	var drift := sin(elapsed * 0.22) * 34.0
+	draw_colored_polygon(
+		PackedVector2Array([
+			Vector2(145 + drift, 0), Vector2(225 + drift, 0),
+			Vector2(430 + drift, size.y), Vector2(300 + drift, size.y),
+		]),
+		Color(warm, 0.025)
+	)
+	draw_colored_polygon(
+		PackedVector2Array([
+			Vector2(size.x - 205 - drift, 0), Vector2(size.x - 130 - drift, 0),
+			Vector2(size.x - 275 - drift, size.y), Vector2(size.x - 420 - drift, size.y),
+		]),
+		Color(accent, 0.022)
+	)
+	# Flat nested edge shadows provide depth without a decorative glow.
+	draw_rect(Rect2(0, 0, size.x, 12), Color("09070a52"))
+	draw_rect(Rect2(0, size.y - 18, size.x, 18), Color("09070a66"))
+	draw_rect(Rect2(0, 0, 14, size.y), Color("09070a47"))
+	draw_rect(Rect2(size.x - 14, 0, 14, size.y), Color("09070a47"))
+	draw_rect(Rect2(14, 12, size.x - 28, size.y - 30), Color("c8a34b30"), false, 1.0)

@@ -1,5 +1,13 @@
 # M1 asset generation report
 
+## 2026-09-19 character motion correction
+
+The runtime floor guest now uses `assets/production/characters/casino_guest_walk_32.png`,
+a transparent 8-direction by 4-phase walk atlas derived from the approved burgundy-tuxedo
+guest. The built-in image editing workflow was used after external Higgsfield reference
+upload was denied by the environment's data-export guard. Runtime tests verify the native
+1774×887 2:1 grid, transparent background, all four leg phases, and direction mapping.
+
 Eight Higgsfield images generated successfully on 2026-09-18 using `recraft_v4_1`, utility variant, 1k source resolution. Initial balance 746 credits; final balance 736 credits: 10 credits consumed, matching the preflight estimate of 1.25 per image. No retries or subscriptions were purchased.
 
 The Image Prompt Engineer persona from `tools/agency-agents/design-image-prompt-engineer.md` supplied structured subject, environment, lighting, style and technical constraints, adapted from photography to flat game sprites. The linked repository definition is a working method, not evidence of asset acceptance.

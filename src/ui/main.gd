@@ -14,6 +14,7 @@ var _contracts: Label
 var _contracts_panel: Panel
 var _is_playing: bool = false
 var _message_serial: int = 0
+var _menu_transitioning: bool = false
 
 
 func _ready() -> void:
@@ -106,6 +107,11 @@ func _build_menu() -> void:
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	background.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_menu.add_child(background)
+	var lighting := CasinoLighting.new()
+	lighting.name = "MenuLighting"
+	lighting.size = Vector2(960, 540)
+	lighting.mode = CasinoLighting.Mode.MENU
+	_menu.add_child(lighting)
 	var menu_ambient := CasinoAmbient.new()
 	menu_ambient.name = "MenuAmbient"
 	menu_ambient.position = Vector2(548, 18)
@@ -169,6 +175,9 @@ func _panel(at: Vector2, dimensions: Vector2, fill: Color, border: Color) -> Pan
 	style.border_color = border
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(6)
+	style.shadow_color = Color("05040570")
+	style.shadow_size = 8
+	style.shadow_offset = Vector2(0, 4)
 	panel.add_theme_stylebox_override("panel", style)
 	return panel
 
@@ -198,8 +207,23 @@ func _refresh_hud() -> void:
 
 
 func _start_playing() -> void:
-	if SaveService.is_write_blocked:
+	if SaveService.is_write_blocked or _menu_transitioning:
 		return
+	if DisplayServer.get_name() == "headless":
+		_show_floor_now()
+		return
+	_menu_transitioning = true
+	_start_playing_animated()
+
+
+func _start_playing_animated() -> void:
+	await ScreenTransition.cover()
+	_show_floor_now()
+	await ScreenTransition.reveal()
+	_menu_transitioning = false
+
+
+func _show_floor_now() -> void:
 	if _floor == null:
 		_floor = preload("res://src/floor/floor.tscn").instantiate() as FloorController
 		add_child(_floor)
@@ -213,6 +237,26 @@ func _start_playing() -> void:
 
 
 func _show_menu() -> void:
+	if _menu_transitioning:
+		return
+	if _floor != null:
+		_floor.set_physics_process(false)
+		_floor.set_process_unhandled_input(false)
+	if DisplayServer.get_name() == "headless":
+		_show_menu_now()
+		return
+	_menu_transitioning = true
+	_show_menu_animated()
+
+
+func _show_menu_animated() -> void:
+	await ScreenTransition.cover()
+	_show_menu_now()
+	await ScreenTransition.reveal()
+	_menu_transitioning = false
+
+
+func _show_menu_now() -> void:
 	_is_playing = false
 	if _floor != null:
 		_floor.hide()

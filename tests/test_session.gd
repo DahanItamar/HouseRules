@@ -79,24 +79,37 @@ func test_floor_avatar_animates_from_real_movement_and_keeps_facing() -> void:
 		)
 
 
-func test_floor_avatar_uses_alternating_leg_poses_at_a_walking_pace() -> void:
+func test_floor_avatar_uses_four_real_leg_phases_at_a_walking_pace() -> void:
 	var avatar: FloorAvatar = _floor._avatar_visual
-	avatar.set_motion(Vector2.RIGHT * 5.0)
-	var first_region: Rect2 = avatar._atlas.region
-	assert_false(avatar._sprite.flip_h)
-	avatar.set_motion(Vector2.RIGHT * 25.0)
-	assert_true(avatar._sprite.flip_h, "Second step mirrors the opposite leg pose")
-	assert_ne(avatar._atlas.region, first_region, "Side walk alternates two actual leg silhouettes")
+	var regions: Dictionary = {}
+	avatar.set_motion(Vector2.RIGHT * 4.0)
+	for _phase: int in range(4):
+		regions[avatar._atlas.region] = true
+		avatar.set_motion(Vector2.RIGHT * 16.0)
+	assert_eq(regions.size(), 4, "Walk cycle uses four distinct contact and passing poses")
+	assert_false(avatar._sprite.flip_h, "Generated directional frames do not fake steps by mirroring")
+	assert_eq(
+		avatar._atlas.region.position.x,
+		6 * FloorAvatar.GUEST_CELL_SIZE.x,
+		"Right movement uses the east atlas column"
+	)
 	assert_lte(FloorController.SPEED, 120.0, "Floor traversal stays at a natural walking pace")
 
 
-func test_floor_machine_pads_have_explicit_unique_labels() -> void:
-	assert_eq(_floor._machine_pad_title(&"slot_classic"), "FLOOR_PAD_SLOT")
-	assert_eq(_floor._machine_pad_title(&"blackjack"), "FLOOR_PAD_BLACKJACK")
-	assert_eq(_floor._machine_pad_title(&"minefield_vault"), "FLOOR_PAD_VAULT")
-	assert_eq(_floor._machine_icon(&"slot_classic"), "777")
-	assert_eq(_floor._machine_icon(&"blackjack"), "21")
-	assert_eq(_floor._machine_icon(&"minefield_vault"), "V")
+func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
+	var definition := _approach_slot()
+	assert_string_contains(_floor._prompt.text, tr(definition.name_key))
+	assert_string_contains(_floor._prompt.text, "JOIN")
+	assert_string_contains(_floor._prompt.text, "CLOSE")
+	var back := InputEventAction.new()
+	back.action = "back"
+	back.pressed = true
+	_floor._unhandled_input(back)
+	assert_eq(_floor._dismissed_game, definition.id)
+	assert_false(_floor._prompt.text.contains("JOIN"))
+	_floor.avatar_position += Vector2(0, FloorController.INTERACTION_RADIUS + 20.0)
+	_floor.refresh_proximity()
+	assert_eq(_floor._dismissed_game, &"", "Leaving the machine resets the dismissed card")
 
 
 func test_cashier_opens_a_real_focusable_menu() -> void:

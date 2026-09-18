@@ -305,6 +305,27 @@ func test_redesigned_shell_uses_high_resolution_production_environments() -> voi
 	assert_gte(floor_art.get_width(), 1280)
 
 
+func test_walk_atlas_has_four_phases_per_eight_directions_and_transparency() -> void:
+	var atlas: Texture2D = load(
+		"res://assets/production/characters/casino_guest_walk_32.png"
+	)
+	assert_not_null(atlas)
+	assert_eq(atlas.get_size(), Vector2(1774, 887))
+	assert_eq(atlas.get_width(), atlas.get_height() * 2, "Atlas retains eight square columns by four rows")
+	assert_eq(atlas.get_image().get_pixel(0, 0).a, 0.0)
+
+
+func test_shared_scene_transition_and_lighting_layers_exist() -> void:
+	assert_not_null(ScreenTransition.get_node_or_null("Fade"))
+	assert_not_null(ScreenTransition.get_node_or_null("UpperShutter"))
+	assert_not_null(ScreenTransition.get_node_or_null("LowerShutter"))
+	assert_false(ScreenTransition.visible)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	assert_not_null(session.cabinet.panel.find_child("CabinetLighting", true, false))
+
+
 func test_m5_cabinet_motion_runs_in_engine() -> void:
 	var slot_session := CabinetSession.new()
 	add_child_autofree(slot_session)

@@ -6,6 +6,7 @@ signal session_changed
 var floor: FloorController
 var session: CabinetSession
 var _return_position: Vector2
+var _transitioning: bool = false
 
 
 func register_floor(controller: FloorController) -> void:
@@ -13,8 +14,26 @@ func register_floor(controller: FloorController) -> void:
 
 
 func enter_cabinet(definition: CabinetDefinition) -> void:
-	if session != null or definition == null or Wallet.balance < definition.min_bet:
+	if _transitioning or session != null or definition == null or Wallet.balance < definition.min_bet:
 		return
+	if DisplayServer.get_name() == "headless":
+		_enter_cabinet_now(definition)
+		return
+	_transitioning = true
+	if floor != null:
+		floor.set_physics_process(false)
+		floor.set_process_unhandled_input(false)
+	_enter_cabinet_animated(definition)
+
+
+func _enter_cabinet_animated(definition: CabinetDefinition) -> void:
+	await ScreenTransition.cover()
+	_enter_cabinet_now(definition)
+	await ScreenTransition.reveal()
+	_transitioning = false
+
+
+func _enter_cabinet_now(definition: CabinetDefinition) -> void:
 	if floor != null:
 		_return_position = floor.avatar_position
 		floor.set_physics_process(false)
@@ -28,8 +47,25 @@ func enter_cabinet(definition: CabinetDefinition) -> void:
 
 
 func return_to_floor() -> void:
-	if session == null:
+	if _transitioning or session == null:
 		return
+	if DisplayServer.get_name() == "headless":
+		_return_to_floor_now()
+		return
+	_transitioning = true
+	if session.cabinet != null:
+		session.cabinet.set_process_unhandled_input(false)
+	_return_to_floor_animated()
+
+
+func _return_to_floor_animated() -> void:
+	await ScreenTransition.cover()
+	_return_to_floor_now()
+	await ScreenTransition.reveal()
+	_transitioning = false
+
+
+func _return_to_floor_now() -> void:
 	session.close()
 	SaveService.save()
 	remove_child(session)
@@ -41,6 +77,7 @@ func return_to_floor() -> void:
 		floor.set_process_unhandled_input(true)
 		floor.set_prompt_visible(true)
 		floor.refresh_proximity()
+		floor.dismiss_game_prompt()
 	session_changed.emit()
 
 

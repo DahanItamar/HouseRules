@@ -12,6 +12,7 @@ const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
 const AVATAR_RADIUS: float = 15.0
+const MACHINE_ZONE_RADIUS: float = 38.0
 static var NAV_OBSTACLES: Array[PackedVector2Array] = [
 	PackedVector2Array([Vector2(0, 0), Vector2(208, 0), Vector2(236, 72), Vector2(258, 194), Vector2(226, 244), Vector2(0, 250)]),
 	PackedVector2Array([Vector2(265, 48), Vector2(406, 46), Vector2(427, 112), Vector2(420, 187), Vector2(390, 219), Vector2(278, 219), Vector2(250, 184), Vector2(250, 94)]),
@@ -38,6 +39,8 @@ var _cashier_panel: Panel
 var _cashier_balance: Label
 var _cashier_debt: Label
 var _ambient_time: float = 0.0
+var _dismissed_game: StringName = &""
+var _last_nearby_game: StringName = &""
 
 
 func _ready() -> void:
@@ -57,6 +60,7 @@ func _ready() -> void:
 	_prompt = Label.new()
 	_prompt.size = Vector2(260, 72)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_prompt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_prompt.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_prompt.add_theme_color_override("font_color", IVORY)
 	add_child(_prompt)
@@ -129,6 +133,10 @@ func refresh_proximity() -> void:
 			nearest = distance
 			nearby_definition = null
 			nearby_wing = id
+	var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
+	if current_game != _last_nearby_game:
+		_dismissed_game = &""
+	_last_nearby_game = current_game
 	if _prompt != null:
 		_update_prompt()
 	queue_redraw()
@@ -158,6 +166,13 @@ func set_prompt_visible(is_visible: bool) -> void:
 	queue_redraw()
 
 
+func dismiss_game_prompt() -> void:
+	if nearby_definition != null:
+		_dismissed_game = nearby_definition.id
+		_last_nearby_game = nearby_definition.id
+		_update_prompt()
+
+
 func _physics_process(delta: float) -> void:
 	_ambient_time += delta
 	queue_redraw()
@@ -175,6 +190,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("back"):
 		if _cashier_open:
 			_close_cashier()
+		elif nearby_definition != null and _dismissed_game != nearby_definition.id:
+			_dismissed_game = nearby_definition.id
+			_update_prompt()
 		else:
 			SceneRouter.return_to_menu()
 	elif event.is_action_pressed("interact"):
@@ -203,21 +221,28 @@ func _update_prompt() -> void:
 			]
 		)
 	elif nearby_definition != null:
-		_prompt.position = cabinet_positions[nearby_definition.id] + Vector2(-130, 64)
-		_prompt.size = Vector2(260, 74)
-		if Wallet.balance < nearby_definition.min_bet:
+		if _dismissed_game == nearby_definition.id:
+			_prompt.position = Vector2(330, 486)
+			_prompt.size = Vector2(300, 34)
+			_prompt.text = tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")]
+		elif Wallet.balance < nearby_definition.min_bet:
+			_prompt.position = Vector2(260, 354)
+			_prompt.size = Vector2(440, 92)
 			_prompt.text = (
 				tr("FLOOR_UNAVAILABLE")
 				% [tr(nearby_definition.name_key), nearby_definition.min_bet]
 			)
 		else:
+			_prompt.position = Vector2(260, 342)
+			_prompt.size = Vector2(440, 108)
 			_prompt.text = (
-				tr("FLOOR_PROMPT")
+				tr("FLOOR_JOIN_DIALOG")
 				% [
 					tr(nearby_definition.name_key),
 					nearby_definition.min_bet,
 					nearby_definition.max_bet,
-					InputRouter.glyph("interact")
+					InputRouter.glyph("interact"),
+					InputRouter.glyph("back")
 				]
 			)
 	elif nearby_wing != &"":
@@ -241,6 +266,7 @@ func _update_prompt() -> void:
 func _draw() -> void:
 	draw_texture_rect(FLOOR_ART, Rect2(0, 0, 960, 540), false)
 	draw_rect(Rect2(0, 0, 960, 540), Color("0c0b0d24"))
+	_draw_floor_lighting()
 	draw_rect(Rect2(0, 0, 960, 88), Color("0c0b0d9c"))
 	draw_rect(Rect2(32, 92, 896, 352), Color("0c0b0d18"), false, 2.0)
 	for id: StringName in cabinet_positions:
@@ -248,7 +274,7 @@ func _draw() -> void:
 		var is_near: bool = nearby_definition != null and nearby_definition.id == id
 		var phase := _ambient_time * 1.8 + float(cabinet_positions.keys().find(id)) * 1.9
 		var pulse := (sin(phase) + 1.0) * 0.5
-		_draw_machine_pad(id, at, is_near, pulse)
+		_draw_machine_zone(id, at, is_near, pulse)
 	draw_string(
 		ThemeDB.fallback_font,
 		CASHIER_POSITION + Vector2(-46, -45),
@@ -267,73 +293,54 @@ func _draw() -> void:
 		draw_rect(Rect2(wing_at + Vector2(-6, -3), Vector2(12, 10)), Color("6e5225"))
 	if _prompt != null and _prompt.visible:
 		var prompt_rect := Rect2(_prompt.position - Vector2(12, 8), _prompt.size + Vector2(24, 16))
-		draw_rect(prompt_rect, Color("17161af0"))
-		draw_rect(prompt_rect, CYAN if nearby_definition != null else Color("6e5225"), false, 2.0)
+		var join_dialog := nearby_definition != null and _dismissed_game != nearby_definition.id
+		if join_dialog:
+			draw_rect(Rect2(prompt_rect.position + Vector2(6, 7), prompt_rect.size), Color("05040570"))
+		draw_rect(prompt_rect, Color("17161ad4") if join_dialog else Color("17161af0"))
+		draw_rect(prompt_rect, CYAN if join_dialog else Color("6e5225"), false, 2.0)
 
 
-func _draw_machine_pad(id: StringName, at: Vector2, is_near: bool, pulse: float) -> void:
+func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float) -> void:
 	var accent := _machine_accent(id)
-	var pad := PackedVector2Array([
-		at + Vector2(-72, -28), at + Vector2(64, -28), at + Vector2(72, -20),
-		at + Vector2(72, 24), at + Vector2(64, 32), at + Vector2(-64, 32),
-		at + Vector2(-72, 24), at + Vector2(-72, -20),
-	])
-	draw_colored_polygon(pad, Color("100e12e8"))
-	draw_polyline(PackedVector2Array(Array(pad) + [pad[0]]), CYAN if is_near else accent, 3.0, true)
-	draw_circle(at + Vector2(-47, 1), 18.0 + (pulse * 1.5 if is_near else 0.0), accent)
-	draw_circle(at + Vector2(-47, 1), 13.0, Color("17161a"))
-	draw_string(
-		ThemeDB.fallback_font,
-		at + Vector2(-64, 8),
-		_machine_icon(id),
-		HORIZONTAL_ALIGNMENT_CENTER,
-		34,
-		Typography.SUPPORTING,
-		IVORY
+	var ring_color := Color(accent, 0.42)
+	var ring_width := 2.0
+	if is_near and _dismissed_game != id:
+		ring_color = Color(CYAN, 0.72 + pulse * 0.22)
+		ring_width = 3.0
+	draw_set_transform(at, 0.0, Vector2(1.65, 0.62))
+	draw_arc(Vector2.ZERO, MACHINE_ZONE_RADIUS, 0.0, TAU, 64, ring_color, ring_width, true)
+	if is_near and _dismissed_game != id:
+		draw_arc(
+			Vector2.ZERO,
+			MACHINE_ZONE_RADIUS + 5.0 + pulse * 2.0,
+			0.0,
+			TAU,
+			64,
+			Color(CYAN, 0.24),
+			1.5,
+			true
+		)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+
+func _draw_floor_lighting() -> void:
+	var drift := sin(_ambient_time * 0.18) * 24.0
+	draw_colored_polygon(
+		PackedVector2Array([
+			Vector2(278 + drift, 88), Vector2(354 + drift, 88),
+			Vector2(438 + drift, 444), Vector2(314 + drift, 444),
+		]),
+		Color("d9b44a0a")
 	)
-	draw_string(
-		Typography.DISPLAY_FONT,
-		at + Vector2(-24, -2),
-		tr(_machine_pad_title(id)),
-		HORIZONTAL_ALIGNMENT_CENTER,
-		88,
-		Typography.SUPPORTING,
-		IVORY
+	draw_colored_polygon(
+		PackedVector2Array([
+			Vector2(610 - drift, 88), Vector2(680 - drift, 88),
+			Vector2(648 - drift, 444), Vector2(526 - drift, 444),
+		]),
+		Color("8fb8c70a")
 	)
-	var action := tr("FLOOR_PAD_APPROACH")
-	if is_near:
-		action = tr("FLOOR_PAD_PLAY").replace("%s", InputRouter.glyph("interact"))
-	draw_string(
-		Typography.UI_FONT,
-		at + Vector2(-24, 18),
-		action,
-		HORIZONTAL_ALIGNMENT_CENTER,
-		88,
-		Typography.BODY_MIN,
-		CYAN if is_near else Color("b8ad9c")
-	)
-	if is_near:
-		draw_arc(at, 79.0 + pulse * 2.0, 0.0, TAU, 48, Color(CYAN, 0.28), 2.0)
-
-
-func _machine_pad_title(id: StringName) -> String:
-	match id:
-		&"slot_classic":
-			return "FLOOR_PAD_SLOT"
-		&"blackjack":
-			return "FLOOR_PAD_BLACKJACK"
-		_:
-			return "FLOOR_PAD_VAULT"
-
-
-func _machine_icon(id: StringName) -> String:
-	match id:
-		&"slot_classic":
-			return "777"
-		&"blackjack":
-			return "21"
-		_:
-			return "V"
+	draw_rect(Rect2(0, 88, 960, 10), Color("09070a42"))
+	draw_rect(Rect2(0, 436, 960, 16), Color("09070a4d"))
 
 
 func _machine_accent(id: StringName) -> Color:

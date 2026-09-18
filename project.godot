@@ -22,6 +22,7 @@ Economy="*res://src/autoload/economy.gd"
 SaveService="*res://src/autoload/save_service.gd"
 AudioService="*res://src/autoload/audio_service.gd"
 InputRouter="*res://src/autoload/input_router.gd"
+ScreenTransition="*res://src/autoload/screen_transition.gd"
 SceneRouter="*res://src/autoload/scene_router.gd"
 
 [debug]

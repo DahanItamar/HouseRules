@@ -61,6 +61,7 @@ var _vault_open: Button
 var _vault_cash_out: Button
 var _vault_revealed: Dictionary = {}
 var _ambient: CasinoAmbient
+var _lighting: CasinoLighting
 var _blackjack_fx_tween: Tween
 var _vault_fx_tween: Tween
 
@@ -96,6 +97,11 @@ func _ready() -> void:
 	_art_root = Node2D.new()
 	_art_root.name = "CabinetArt"
 	add_child(_art_root)
+	_lighting = CasinoLighting.new()
+	_lighting.name = "CabinetLighting"
+	_lighting.size = Vector2(960, 540)
+	_lighting.z_index = 3
+	add_child(_lighting)
 	_controls_backdrop = ColorRect.new()
 	_controls_backdrop.position = Vector2(64, 400)
 	_controls_backdrop.size = Vector2(832, 56)
@@ -450,6 +456,11 @@ func _ensure_art() -> void:
 	if id == _art_id:
 		return
 	_art_id = id
+	_lighting.mode = {
+		&"slot_classic": CasinoLighting.Mode.SLOT,
+		&"blackjack": CasinoLighting.Mode.BLACKJACK,
+		&"minefield_vault": CasinoLighting.Mode.VAULT,
+	}.get(id, CasinoLighting.Mode.MENU)
 	if id == &"slot_classic":
 		_build_slot_art()
 		_apply_slot_fullscreen_layout()
@@ -1082,6 +1093,9 @@ func _panel_style(
 	style.border_color = border
 	style.set_border_width_all(border_width)
 	style.set_corner_radius_all(radius)
+	style.shadow_color = Color("05040566")
+	style.shadow_size = 6
+	style.shadow_offset = Vector2(0, 3)
 	return style
 
 
