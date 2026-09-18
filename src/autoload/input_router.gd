@@ -1,12 +1,17 @@
 extends Node
 
 signal active_device_changed(device: Device)
+signal gamepad_connection_changed(connected: bool)
 
 enum Device { KEYBOARD, GAMEPAD }
 var active_device: Device = Device.KEYBOARD
+var active_gamepad_device: int = -1
+var is_gamepad_disconnected: bool = false
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
 	_bind("move_left", KEY_A, JOY_BUTTON_DPAD_LEFT)
 	_bind("move_right", KEY_D, JOY_BUTTON_DPAD_RIGHT)
 	_bind("move_up", KEY_W, JOY_BUTTON_DPAD_UP)
@@ -54,11 +59,28 @@ func _input(event: InputEvent) -> void:
 		next = Device.KEYBOARD
 	elif event is InputEventJoypadButton and event.pressed:
 		next = Device.GAMEPAD
+		active_gamepad_device = event.device
 	elif event is InputEventJoypadMotion and absf(event.axis_value) > 0.3:
 		next = Device.GAMEPAD
+		active_gamepad_device = event.device
 	if next != active_device:
 		active_device = next
 		active_device_changed.emit(next)
+
+
+func _on_joy_connection_changed(device: int, connected: bool) -> void:
+	if connected and is_gamepad_disconnected:
+		active_gamepad_device = device
+		is_gamepad_disconnected = false
+		gamepad_connection_changed.emit(true)
+	elif (
+		not connected
+		and active_device == Device.GAMEPAD
+		and device == active_gamepad_device
+		and not is_gamepad_disconnected
+	):
+		is_gamepad_disconnected = true
+		gamepad_connection_changed.emit(false)
 
 
 func _bind(action: String, key: Key, button: JoyButton) -> void:

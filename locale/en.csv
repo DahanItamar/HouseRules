@@ -67,3 +67,4 @@ SAVE_INCOMPATIBLE,This save is from a newer version. It has not been changed.
 SAVE_CORRUPT,Unreadable save preserved. A new game has started.
 SAVE_PRESERVE_FAILED,Could not preserve the unreadable save. Saving is disabled.
 SAVE_FAILED,Could not save. Check available storage and try again.
+GAMEPAD_RECONNECT,Controller disconnected. Reconnect a controller to continue.

@@ -24,7 +24,10 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+	get_tree().paused = false
 	InputRouter.active_device = _original_device
+	InputRouter.active_gamepad_device = -1
+	InputRouter.is_gamepad_disconnected = false
 	InputRouter.active_device_changed.emit(_original_device)
 
 
@@ -69,6 +72,27 @@ func test_ac038_device_change_swaps_glyphs_and_live_floor_prompt() -> void:
 	InputRouter._input(key)
 	assert_eq(InputRouter.active_device, InputRouter.Device.KEYBOARD)
 	assert_string_contains(floor._prompt.text, tr("INPUT_WASD"))
+
+
+func test_ac037_active_gamepad_disconnect_pauses_until_reconnect() -> void:
+	var overlay := DisconnectPauseOverlay.new()
+	add_child_autofree(overlay)
+	var button := InputEventJoypadButton.new()
+	button.device = 7
+	button.button_index = JOY_BUTTON_A
+	button.pressed = true
+	InputRouter._input(button)
+
+	InputRouter._on_joy_connection_changed(7, false)
+	assert_true(InputRouter.is_gamepad_disconnected)
+	assert_true(overlay.visible)
+	assert_true(get_tree().paused)
+
+	InputRouter._on_joy_connection_changed(9, true)
+	assert_false(InputRouter.is_gamepad_disconnected)
+	assert_eq(InputRouter.active_gamepad_device, 9)
+	assert_false(overlay.visible)
+	assert_false(get_tree().paused)
 
 
 func _has_button(action: StringName, button: JoyButton) -> bool:

@@ -19,6 +19,7 @@ func _ready() -> void:
 	SaveService.save_failed.connect(func(_error: Error) -> void: _show_message("SAVE_FAILED"))
 	SceneRouter.menu_requested.connect(_show_menu)
 	_build_hud()
+	add_child(DisconnectPauseOverlay.new())
 	var error: Error = SaveService.load_game()
 	_build_menu()
 	if error != OK:

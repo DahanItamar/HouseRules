@@ -41,6 +41,7 @@ directories; they do not overwrite the player's normal save.
 | AC-028–036 | Exhaustive slot paytable, blackjack naturals/soft 17/double, fixed unique mines, cashout, bust and cap. |
 | AC-037 | Every gameplay action has its documented gamepad button; movement also has D-pad and left-stick bindings. |
 | AC-038 | Raw device changes swap glyphs and synchronously refresh a live floor prompt in both directions. |
+| AC-037 disconnect | Losing the active gamepad pauses behind a blocking overlay; reconnecting resumes it. |
 | AC-051 | Both v1 wing transition points show their lifetime-wagered thresholds and refuse entry while locked. |
 
 The input regression injects a real `InputEventAction` and verifies cabinet back
