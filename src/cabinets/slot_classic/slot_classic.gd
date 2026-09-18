@@ -2,16 +2,10 @@ extends MiniGame
 
 var math := SlotMachineMath.new()
 var _pending: RoundResult
-var _spin_timer: Timer
 
 
 func _ready() -> void:
 	super._ready()
-	_spin_timer = Timer.new()
-	_spin_timer.one_shot = true
-	_spin_timer.wait_time = 1.2
-	_spin_timer.timeout.connect(resolve_pending)
-	add_child(_spin_timer)
 
 
 func start_round(amount: int) -> bool:
@@ -20,8 +14,7 @@ func start_round(amount: int) -> bool:
 	current_stake = amount
 	is_round_active = true
 	_pending = math.spin(amount, context.rng)
-	_spin_timer.start()
-	panel.set_status("ROUND_SPINNING")
+	panel.begin_slot_spin(_pending.detail.get("symbols", [0, 1, 2]), resolve_pending)
 	return true
 
 
@@ -35,8 +28,6 @@ func resolve_pending() -> void:
 
 func abandon() -> void:
 	_pending = null
-	if _spin_timer != null:
-		_spin_timer.stop()
 	super.abandon()
 
 

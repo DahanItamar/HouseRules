@@ -122,3 +122,27 @@ func test_m5_cabinet_motion_runs_in_engine() -> void:
 	add_child_autofree(vault_session)
 	vault_session.begin(VAULT_DEFINITION)
 	assert_true(vault_session.cabinet.panel.has_active_motion(), "Vault cursor pulse is active")
+
+
+func test_slot_reels_spin_independently_and_gate_settlement() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	var game: MiniGame = session.cabinet
+	assert_true(game.start_round(10))
+	assert_true(game.is_round_active, "Wager remains active during the reel sequence")
+	assert_eq(game.panel._slot_reels.size(), 3, "Physical presenter has three reel columns")
+	game.panel._process(1.3)
+	assert_false(game.is_round_active, "Settlement occurs after all three reels stop")
+	assert_eq(game.panel._slot_stopped, [true, true, true])
+
+
+func test_higgsfield_slot_symbols_are_high_resolution_and_transparent() -> void:
+	for symbol_name: String in ["cherry", "lemon", "bell", "bar", "seven", "diamond"]:
+		var path := "res://assets/production/slot/symbols/%s.png" % symbol_name
+		var texture: Texture2D = load(path)
+		assert_not_null(texture, "%s runtime symbol is imported" % symbol_name)
+		assert_eq(texture.get_size(), Vector2(1024, 1024), "%s retains its sharp master" % symbol_name)
+		var image := texture.get_image()
+		assert_eq(image.get_pixel(0, 0).a, 0.0, "%s magenta corner is transparent" % symbol_name)
+		assert_gt(image.get_used_rect().size.x, 400, "%s retains a substantial opaque subject" % symbol_name)

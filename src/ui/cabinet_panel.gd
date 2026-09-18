@@ -12,7 +12,17 @@ var _controls: Label
 var _status_key: String = "ROUND_READY"
 var _result: RoundResult
 var _art_root: Node2D
-var _slot_symbols: Array[Sprite2D] = []
+var _slot_symbols: Array[Control] = []
+var _slot_reels: Array[Control] = []
+var _slot_reel_cells: Array = []
+var _slot_offsets: Array[float] = [0.0, 0.0, 0.0]
+var _slot_spin_targets: Array[int] = [0, 1, 2]
+var _slot_stop_times: Array[float] = [0.78, 0.98, 1.18]
+var _slot_stopped: Array[bool] = [true, true, true]
+var _slot_spin_elapsed: float = 0.0
+var _slot_spinning: bool = false
+var _slot_finish_callback: Callable
+var _slot_lever: Node2D
 var _vault_tiles: Array[Sprite2D] = []
 var _vault_cursor: Node2D
 var _art_id: StringName = &""
@@ -22,15 +32,8 @@ var _cursor_tween: Tween
 var _blackjack_dealt: bool = false
 var _vault_revealed: Dictionary = {}
 
-const SLOT_BODY := preload("res://assets/drafts/slot_classic_body.png")
-const SLOT_SYMBOLS: Array[Texture2D] = [
-	preload("res://assets/drafts/sym_cherry.png"),
-	preload("res://assets/drafts/sym_lemon.png"),
-	preload("res://assets/drafts/sym_bell.png"),
-	preload("res://assets/drafts/sym_bar.png"),
-	preload("res://assets/drafts/sym_seven.png"),
-	preload("res://assets/drafts/sym_diamond.png"),
-]
+const SLOT_BODY := preload("res://assets/production/slot/slot_classic_body.png")
+const SLOT_SYMBOL_COUNT: int = 6
 const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const BLACKJACK_DEALER := preload("res://assets/drafts/m2/dealer.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
@@ -47,7 +50,7 @@ func _ready() -> void:
 	shade.size = Vector2(960, 540)
 	add_child(shade)
 	_frame = ColorRect.new()
-	_frame.color = Color("2d2a3e")
+	_frame.color = Color("17161af2")
 	_frame.position = Vector2(48, 76)
 	_frame.size = Vector2(864, 396)
 	add_child(_frame)
@@ -63,6 +66,8 @@ func _ready() -> void:
 	_stake = _label(Vector2(80, 138), Typography.PROMINENT)
 	_status = _label(Vector2(80, 184), 18)
 	_detail = _label(Vector2(80, 230), Typography.PROMINENT)
+	_detail.size = Vector2(250, 130)
+	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_controls = _label(Vector2(80, 412), Typography.CRITICAL)
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh())
 	refresh()
@@ -100,20 +105,47 @@ func show_result(result: RoundResult) -> void:
 	refresh()
 	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
 	AudioService.play(&"win" if result.payout > result.stake else &"loss")
-	_frame.color = Color("ffd23f")
-	create_tween().tween_property(_frame, "color", Color("2d2a3e"), 0.3)
+	_status.add_theme_color_override(
+		"font_color", Color("3fc276") if result.payout > result.stake else Color("d55353")
+	)
 
 
+func _process(delta: float) -> void:
+	if not _slot_spinning:
+		return
+	_slot_spin_elapsed += delta
+	for reel_index: int in range(_slot_reels.size()):
+		if _slot_stopped[reel_index]:
+			continue
+		_slot_offsets[reel_index] += delta * (380.0 + reel_index * 55.0)
+		_update_spinning_reel(reel_index)
+		if _slot_spin_elapsed >= _slot_stop_times[reel_index]:
+			_stop_reel(reel_index)
+	if _slot_stopped.all(func(stopped: bool) -> bool: return stopped):
+		_slot_spinning = false
+		if _slot_finish_callback.is_valid():
+			var callback := _slot_finish_callback
+			_slot_finish_callback = Callable()
+			callback.call()
 func set_status(key: String) -> void:
 	_status_key = key
 	_result = null
 	_detail.text = ""
+	_status.add_theme_color_override("font_color", Color("b8ad9c"))
 	if key == "VAULT_REVEAL":
 		_vault_revealed.clear()
 	refresh()
 	if key == "ROUND_SPINNING":
 		AudioService.play(&"spin")
 		_start_slot_motion()
+
+
+func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
+	_slot_spin_targets.clear()
+	for index: int in range(3):
+		_slot_spin_targets.append(int(symbols[index]))
+	_slot_finish_callback = on_finished
+	set_status("ROUND_SPINNING")
 
 
 func _refresh_blackjack() -> void:
@@ -189,16 +221,48 @@ func _ensure_art() -> void:
 
 
 func _build_slot_art() -> void:
-	_art_root.add_child(_texture("SlotCabinetArt", SLOT_BODY, Vector2(600, 92), Vector2(288, 360)))
+	var body := _texture("SlotCabinetArt", SLOT_BODY, Vector2(300, 34), Vector2(350, 450))
+	body.material = _chroma_material(Color("2d2638"), 0.14)
+	_art_root.add_child(body)
+	var reel_back := ColorRect.new()
+	reel_back.position = Vector2(374, 214)
+	reel_back.size = Vector2(205, 158)
+	reel_back.color = Color("f1e8d8")
+	_art_root.add_child(reel_back)
 	for index: int in range(3):
-		var symbol := _texture(
-			"ReelSymbol%d" % index,
-			SLOT_SYMBOLS[index],
-			Vector2(676 + index * 47, 222),
-			Vector2(48, 48)
-		)
-		_slot_symbols.append(symbol)
-		_art_root.add_child(symbol)
+		var reel := Control.new()
+		reel.name = "ReelColumn%d" % index
+		reel.position = Vector2(381 + index * 65, 219)
+		reel.size = Vector2(58, 148)
+		reel.clip_contents = true
+		var cells: Array[SlotSymbol] = []
+		for cell_index: int in range(5):
+			var cell := SlotSymbol.new()
+			cell.name = "Reel%dCell%d" % [index, cell_index]
+			cell.position = Vector2(3, (cell_index - 1) * 48)
+			cell.size = Vector2(52, 44)
+			cell.symbol_index = (cell_index + index) % SLOT_SYMBOL_COUNT
+			reel.add_child(cell)
+			cells.append(cell)
+		_slot_reels.append(reel)
+		_slot_reel_cells.append(cells)
+		_slot_symbols.append(cells[2])
+		_art_root.add_child(reel)
+		_stop_reel(index)
+	_slot_lever = Node2D.new()
+	_slot_lever.name = "LeverArt"
+	_slot_lever.position = Vector2(651, 218)
+	var arm := ColorRect.new()
+	arm.position = Vector2(-3, 0)
+	arm.size = Vector2(7, 92)
+	arm.color = Color("b8ad9c")
+	_slot_lever.add_child(arm)
+	var knob := ColorRect.new()
+	knob.position = Vector2(-12, -10)
+	knob.size = Vector2(24, 24)
+	knob.color = Color("a53243")
+	_slot_lever.add_child(knob)
+	_art_root.add_child(_slot_lever)
 
 
 func _build_blackjack_art() -> void:
@@ -248,16 +312,19 @@ func _refresh_slot() -> void:
 	if _result != null:
 		symbols = _result.detail.get("symbols", symbols)
 	var names: PackedStringArray = []
-	for index: int in range(mini(symbols.size(), _slot_symbols.size())):
+	for index: int in range(mini(symbols.size(), 3)):
 		var symbol: int = symbols[index]
-		_slot_symbols[index].texture = SLOT_SYMBOLS[symbol]
+		if not _slot_spinning and index < _slot_reels.size():
+			_slot_spin_targets[index] = symbol
+			_stop_reel(index)
 		names.append(tr("SYMBOL_" + str(symbol)))
-	_detail.text = "   |   ".join(names)
+	_detail.text = "  •  ".join(names)
 
 
 func has_active_motion() -> bool:
 	return (
-		(_motion_tween != null and _motion_tween.is_running())
+		_slot_spinning
+		or (_motion_tween != null and _motion_tween.is_running())
 		or (_entrance_tween != null and _entrance_tween.is_running())
 		or (_cursor_tween != null and _cursor_tween.is_running())
 	)
@@ -273,23 +340,71 @@ func _play_art_entrance() -> void:
 
 func _start_slot_motion() -> void:
 	_stop_motion()
-	if _slot_symbols.is_empty():
+	if _slot_reels.is_empty():
 		return
-	_motion_tween = create_tween().set_loops()
-	_motion_tween.tween_property(_slot_symbols[0], "position:y", 230.0, 0.08)
-	for index: int in range(1, _slot_symbols.size()):
-		_motion_tween.parallel().tween_property(_slot_symbols[index], "position:y", 230.0, 0.08)
-	_motion_tween.tween_property(_slot_symbols[0], "position:y", 214.0, 0.08)
-	for index: int in range(1, _slot_symbols.size()):
-		_motion_tween.parallel().tween_property(_slot_symbols[index], "position:y", 214.0, 0.08)
+	_slot_spin_elapsed = 0.0
+	_slot_offsets = [0.0, 0.0, 0.0]
+	_slot_stopped = [false, false, false]
+	_slot_spinning = true
+	if _slot_lever != null:
+		_slot_lever.rotation = 0.0
+		_motion_tween = create_tween()
+		_motion_tween.tween_property(_slot_lever, "rotation", 0.42, 0.16)
+		_motion_tween.tween_property(_slot_lever, "rotation", 0.0, 0.18)
 
 
 func _stop_motion() -> void:
+	_slot_spinning = false
 	if _motion_tween != null:
 		_motion_tween.kill()
 		_motion_tween = null
-	for symbol: Sprite2D in _slot_symbols:
-		symbol.position.y = 222.0
+
+
+func _update_spinning_reel(reel_index: int) -> void:
+	var cells: Array = _slot_reel_cells[reel_index]
+	var step: int = int(_slot_offsets[reel_index] / 48.0)
+	var remainder: float = fmod(_slot_offsets[reel_index], 48.0)
+	for cell_index: int in range(cells.size()):
+		var cell: SlotSymbol = cells[cell_index]
+		cell.position.y = (cell_index - 1) * 48.0 + remainder
+		if cell.position.y >= 192.0:
+			cell.position.y -= 240.0
+		cell.symbol_index = (cell_index - step + reel_index) % SLOT_SYMBOL_COUNT
+
+
+func _stop_reel(reel_index: int) -> void:
+	if reel_index >= _slot_reel_cells.size():
+		return
+	_slot_stopped[reel_index] = true
+	var target: int = _slot_spin_targets[reel_index]
+	var cells: Array = _slot_reel_cells[reel_index]
+	for cell_index: int in range(cells.size()):
+		var cell: SlotSymbol = cells[cell_index]
+		cell.position.y = (cell_index - 1) * 48.0
+		cell.symbol_index = posmod(target + cell_index - 2, SLOT_SYMBOL_COUNT)
+	var reel: Control = _slot_reels[reel_index]
+	reel.position.y = 214.0
+	create_tween().tween_property(reel, "position:y", 219.0, 0.09).set_trans(Tween.TRANS_BACK)
+
+
+func _chroma_material(key_color: Color, threshold: float) -> ShaderMaterial:
+	var shader := Shader.new()
+	shader.code = (
+		"shader_type canvas_item;\n"
+		+ "uniform vec4 key_color : source_color;\n"
+		+ "uniform float threshold = 0.12;\n"
+		+ "void fragment() {\n"
+		+ "  vec4 sample_color = texture(TEXTURE, UV);\n"
+		+ "  float distance_from_key = distance(sample_color.rgb, key_color.rgb);\n"
+		+ "  sample_color.a *= smoothstep(threshold * 0.55, threshold, distance_from_key);\n"
+		+ "  COLOR = sample_color;\n"
+		+ "}\n"
+	)
+	var material := ShaderMaterial.new()
+	material.shader = shader
+	material.set_shader_parameter("key_color", key_color)
+	material.set_shader_parameter("threshold", threshold)
+	return material
 
 
 func _texture(node_name: String, texture: Texture2D, at: Vector2, dimensions: Vector2) -> Sprite2D:
@@ -299,7 +414,7 @@ func _texture(node_name: String, texture: Texture2D, at: Vector2, dimensions: Ve
 	sprite.centered = false
 	sprite.position = at
 	sprite.scale = dimensions / Vector2(texture.get_width(), texture.get_height())
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	return sprite
 
 
