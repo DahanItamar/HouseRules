@@ -145,11 +145,45 @@ func test_every_game_exposes_six_semantic_bet_buttons_and_total_readout() -> voi
 		session.begin(definition)
 		var selector: StakeSelector = session.cabinet.panel._stake_selector
 		assert_eq(selector._buttons.size(), 6)
-		assert_eq(selector._buttons.map(func(button: Button) -> String: return button.text), ["MIN", "+10", "+25", "×2", "×5", "MAX"])
+		assert_eq(selector._buttons.map(func(button: Button) -> String: return button.text), ["MIN", "+10", "+25", "X2", "X5", "MAX"])
 		var selector_bounds := Rect2(Vector2.ZERO, selector.size)
 		for button_rect: Rect2 in selector.button_rects():
 			assert_true(selector_bounds.encloses(button_rect), "Every bet action remains in its console")
 		assert_gte(Typography.PROMINENT, Typography.CRITICAL)
+
+
+func test_bet_buttons_apply_their_operation_and_show_active_feedback() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	var selector: StakeSelector = session.cabinet.panel._stake_selector
+	selector._buttons[1].pressed.emit()
+	assert_eq(session.cabinet.selected_stake, 11)
+	assert_eq(selector._active_operation, MiniGame.BetOperation.ADD_10)
+	assert_gt(selector._bet_flash, 0.0)
+
+
+func test_each_machine_has_distinct_ambient_motion() -> void:
+	var cases: Array = [
+		[SLOT_DEFINITION, CasinoAmbient.Mode.SLOT],
+		[BLACKJACK_DEFINITION, CasinoAmbient.Mode.BLACKJACK],
+		[VAULT_DEFINITION, CasinoAmbient.Mode.VAULT],
+	]
+	for entry: Array in cases:
+		var session := CabinetSession.new()
+		add_child_autofree(session)
+		session.begin(entry[0])
+		assert_eq(session.cabinet.panel._ambient.mode, entry[1])
+
+
+func test_slot_anticipation_only_extends_a_genuine_matching_setup() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	session.cabinet.panel.begin_slot_spin([1, 1, 3], func() -> void: pass)
+	assert_eq(session.cabinet.panel._slot_stop_times[2], 2.05)
+	session.cabinet.panel.begin_slot_spin([1, 2, 3], func() -> void: pass)
+	assert_eq(session.cabinet.panel._slot_stop_times[2], 1.59)
 
 
 func test_cabinet_controls_stay_inside_horizontal_tv_safe_area() -> void:
@@ -377,7 +411,10 @@ func test_slot_deck_exposes_bet_multiplier_and_return() -> void:
 	)
 	game.panel._result = result
 	game.panel.refresh()
-	assert_eq(game.panel._slot_credit_value.text, str(game.context.balance))
+	assert_eq(
+		game.panel._slot_credit_value.text,
+		"∞" if Wallet.test_mode_enabled else str(game.context.balance)
+	)
 	assert_eq(game.panel._slot_result_value.text, tr("SLOT_RETURNED") % 190)
 	assert_eq(game.panel._slot_result_formula.text, tr("SLOT_RESULT_FORMULA") % [10, 19, 190])
 

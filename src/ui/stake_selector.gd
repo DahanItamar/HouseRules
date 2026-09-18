@@ -6,13 +6,15 @@ const ACTIONS: Array[Dictionary] = [
 	{"name": "BetMin", "label": "MIN", "operation": MiniGame.BetOperation.MIN},
 	{"name": "BetAdd10", "label": "+10", "operation": MiniGame.BetOperation.ADD_10},
 	{"name": "BetAdd25", "label": "+25", "operation": MiniGame.BetOperation.ADD_25},
-	{"name": "BetTimes2", "label": "×2", "operation": MiniGame.BetOperation.MULTIPLY_2},
-	{"name": "BetTimes5", "label": "×5", "operation": MiniGame.BetOperation.MULTIPLY_5},
+	{"name": "BetTimes2", "label": "X2", "operation": MiniGame.BetOperation.MULTIPLY_2},
+	{"name": "BetTimes5", "label": "X5", "operation": MiniGame.BetOperation.MULTIPLY_5},
 	{"name": "BetMax", "label": "MAX", "operation": MiniGame.BetOperation.MAX},
 ]
 
 var cabinet: MiniGame
 var _buttons: Array[Button] = []
+var _active_operation: int = -1
+var _bet_flash: float = 0.0
 
 
 func _ready() -> void:
@@ -22,18 +24,19 @@ func _ready() -> void:
 		button.name = action.name
 		button.text = action.label
 		button.focus_mode = Control.FOCUS_ALL
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		button.add_theme_font_override("font", Typography.UI_FONT)
 		button.add_theme_font_size_override("font_size", Typography.CONTROL)
 		button.add_theme_color_override("font_color", Color("f2e6cf"))
 		button.add_theme_color_override("font_disabled_color", Color("746a60"))
 		button.add_theme_stylebox_override(
-			"normal", _button_style(Color("301318"), Color("8a682f"), 1)
+			"normal", _button_style(Color("24171a"), Color("8a682f"), 2)
 		)
 		button.add_theme_stylebox_override(
-			"hover", _button_style(Color("671321"), Color("c6a04a"), 2)
+			"hover", _button_style(Color("671321"), Color("f2c84b"), 3)
 		)
 		button.add_theme_stylebox_override(
-			"pressed", _button_style(Color("451019"), Color("f2d47a"), 2)
+			"pressed", _button_style(Color("3b0c14"), Color("fff0a0"), 4)
 		)
 		button.add_theme_stylebox_override(
 			"focus", _button_style(Color("301318"), Color("4cc9d7"), 2)
@@ -46,6 +49,13 @@ func _ready() -> void:
 		_buttons.append(button)
 	_layout_buttons()
 	refresh_controls()
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	if _bet_flash > 0.0:
+		_bet_flash = maxf(0.0, _bet_flash - delta * 2.8)
+		queue_redraw()
 
 
 func button_rects() -> Array[Rect2]:
@@ -66,7 +76,17 @@ func refresh_controls() -> void:
 	if cabinet == null:
 		return
 	for index: int in range(_buttons.size()):
-		_buttons[index].disabled = not cabinet.can_apply_bet(int(ACTIONS[index].operation))
+		var operation := int(ACTIONS[index].operation)
+		var button := _buttons[index]
+		button.disabled = not cabinet.can_apply_bet(operation)
+		button.add_theme_stylebox_override(
+			"normal",
+			_button_style(
+				Color("6b1725") if operation == _active_operation else Color("24171a"),
+				Color("48c5d5") if operation == _active_operation else Color("8a682f"),
+				3 if operation == _active_operation else 2
+			)
+		)
 	queue_redraw()
 
 
@@ -91,8 +111,18 @@ func _layout_buttons() -> void:
 
 
 func _apply_operation(operation: int) -> void:
-	if cabinet != null:
-		cabinet.apply_bet(operation)
+	if cabinet != null and cabinet.apply_bet(operation):
+		_active_operation = operation
+		_bet_flash = 1.0
+		var button_index := _operation_index(operation)
+		if button_index >= 0:
+			var button := _buttons[button_index]
+			button.pivot_offset = button.size * 0.5
+			button.scale = Vector2(0.88, 0.88)
+			create_tween().tween_property(button, "scale", Vector2.ONE, 0.18).set_trans(
+				Tween.TRANS_BACK
+			)
+		refresh_controls()
 
 
 func _draw() -> void:
@@ -101,29 +131,35 @@ func _draw() -> void:
 	var displayed_stake := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
 	draw_string(
 		Typography.UI_FONT,
-		Vector2(8, 17),
+		Vector2(8, 18),
 		tr("BET_IN_PLAY") if cabinet.is_round_active else tr("BET_TOTAL"),
 		HORIZONTAL_ALIGNMENT_LEFT,
-		112,
+		96,
 		Typography.CAPTION,
 		Color("b8aa97")
 	)
+	var chip_center := Vector2(size.x - 54.0, 20.0)
+	var glow_alpha := 0.18 + _bet_flash * 0.42
+	draw_circle(chip_center, 24.0 + _bet_flash * 3.0, Color("48c5d5", glow_alpha))
+	draw_circle(chip_center, 21.0, Color("601521"))
+	draw_arc(chip_center, 19.0, 0.0, TAU, 48, Color("f2c84b"), 2.0)
 	draw_string(
 		Typography.DISPLAY_FONT,
-		Vector2(120, 29),
+		chip_center + Vector2(-34.0, 7.0),
 		str(displayed_stake),
-		HORIZONTAL_ALIGNMENT_RIGHT,
-		size.x - 128,
-		Typography.PROMINENT,
-		Color("f2c84b")
+		HORIZONTAL_ALIGNMENT_CENTER,
+		68.0,
+		Typography.CONTROL,
+		Color("fff0d4")
 	)
 	var after_bet := maxi(0, cabinet.context.balance - displayed_stake)
+	var after_bet_text := "AFTER BET  ∞" if Wallet.test_mode_enabled else tr("BET_AFTER") % after_bet
 	draw_string(
 		Typography.UI_FONT,
-		Vector2(8, 35),
-		tr("BET_AFTER") % after_bet,
+		Vector2(104, 24),
+		after_bet_text,
 		HORIZONTAL_ALIGNMENT_LEFT,
-		size.x - 16,
+		size.x - 168,
 		Typography.MICRO,
 		Color("b8aa97")
 	)
@@ -134,5 +170,14 @@ func _button_style(fill: Color, border: Color, border_width: int) -> StyleBoxFla
 	style.bg_color = fill
 	style.border_color = border
 	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(5)
+	style.set_corner_radius_all(24)
+	style.shadow_color = Color("08060799")
+	style.shadow_size = 3
 	return style
+
+
+func _operation_index(operation: int) -> int:
+	for index: int in range(ACTIONS.size()):
+		if int(ACTIONS[index].operation) == operation:
+			return index
+	return -1

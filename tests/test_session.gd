@@ -51,6 +51,44 @@ func test_ac001_constant_speed_in_eight_directions() -> void:
 		assert_almost_eq(moved, distance, 0.001)
 
 
+func test_floor_avatar_animates_from_real_movement_and_keeps_facing() -> void:
+	var avatar: Node2D = _floor._avatar_visual
+	var starting_phase: float = avatar.get("walk_phase")
+	_floor.avatar_position = Vector2(480, 300)
+	_floor.move_avatar(Vector2.RIGHT, 0.05)
+	assert_gt(float(avatar.get("walk_phase")), starting_phase)
+	assert_gt((avatar.get("facing") as Vector2).x, 0.9)
+	_floor.move_avatar(Vector2.ZERO, 0.05)
+	assert_gt((avatar.get("facing") as Vector2).x, 0.9)
+	var eight_directions: Array[Vector2] = [
+		Vector2.UP,
+		Vector2(1, -1),
+		Vector2.RIGHT,
+		Vector2(1, 1),
+		Vector2.DOWN,
+		Vector2(-1, 1),
+		Vector2.LEFT,
+		Vector2(-1, -1),
+	]
+	for expected_index: int in range(eight_directions.size()):
+		avatar.call("set_motion", eight_directions[expected_index] * 5.0)
+		assert_eq(
+			int(avatar.get("facing_index")),
+			expected_index,
+			"Every cardinal and diagonal movement has a dedicated facing"
+		)
+
+
+func test_cashier_opens_a_real_focusable_menu() -> void:
+	_floor.avatar_position = _floor.CASHIER_POSITION
+	_floor.refresh_proximity()
+	assert_true(_floor.interact())
+	assert_true(_floor._cashier_panel.visible)
+	assert_not_null(_floor._cashier_panel.get_node("TakeMarker"))
+	assert_not_null(_floor._cashier_panel.get_node("RepayDebt"))
+	assert_not_null(_floor._cashier_panel.get_node("CloseCashier"))
+
+
 func test_floor_collision_blocks_furniture_and_prevents_tunneling() -> void:
 	for blocked_point: Vector2 in [
 		Vector2(100, 170),

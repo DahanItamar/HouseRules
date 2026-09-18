@@ -60,6 +60,9 @@ var _vault_credit_value: Label
 var _vault_open: Button
 var _vault_cash_out: Button
 var _vault_revealed: Dictionary = {}
+var _ambient: CasinoAmbient
+var _blackjack_fx_tween: Tween
+var _vault_fx_tween: Tween
 
 const SLOT_BODY := preload("res://assets/production/slot/symbols/slot_fullscreen_bezel.png")
 const SLOT_SYMBOL_COUNT: int = 6
@@ -165,6 +168,12 @@ func show_result(result: RoundResult) -> void:
 		_pulse_slot_win()
 	if cabinet.context.definition.id == &"slot_classic":
 		_animate_slot_result(result.payout)
+	elif cabinet.context.definition.id == &"blackjack":
+		_animate_blackjack_result(result)
+	else:
+		_animate_vault_result(result)
+	if _ambient != null:
+		_ambient.trigger_event(1.0 if result.payout > result.stake else 0.55)
 	_status.add_theme_color_override(
 		"font_color", Color("3fc276") if result.payout > result.stake else Color("d55353")
 	)
@@ -205,6 +214,7 @@ func set_status(key: String) -> void:
 
 func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 	_slot_spin_targets.clear()
+	_slot_stop_times = [1.05, 1.32, 1.59]
 	for index: int in range(3):
 		_slot_spin_targets.append(int(symbols[index]))
 		var center: SlotSymbol = _slot_reel_cells[index][2]
@@ -213,6 +223,9 @@ func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 			_slot_start_symbols[index] - _slot_spin_targets[index], SLOT_SYMBOL_COUNT
 		)
 		_slot_total_offsets[index] = target_steps * SLOT_CELL_HEIGHT
+	if int(symbols[0]) == int(symbols[1]):
+		# A real outcome-driven anticipation beat, never a fabricated near miss.
+		_slot_stop_times[2] = 2.05
 	_slot_finish_callback = on_finished
 	if _slot_payline != null:
 		_slot_payline.color = Color("8a682f80")
@@ -362,6 +375,8 @@ func _refresh_blackjack() -> void:
 		_blackjack_credit_value.text = str(
 			maxi(0, cabinet.context.balance - (cabinet.current_stake if cabinet.is_round_active else 0))
 		)
+		if Wallet.test_mode_enabled:
+			_blackjack_credit_value.text = "∞"
 		_blackjack_primary.text = tr("ACTION_HIT") if cabinet.is_round_active else tr("ACTION_DEAL")
 		_blackjack_double.text = (
 			tr("ACTION_DOUBLE_TO") % (cabinet.current_stake * 2)
@@ -380,6 +395,7 @@ func _refresh_vault() -> void:
 	var cursor: int = (cabinet.get("snap_cursor") as SnapCursor).index
 	for index: int in range(25):
 		if index < _vault_tiles.size():
+			_vault_tiles[index].set_selected(index == cursor)
 			var next_face := VaultTile.Face.HIDDEN
 			if index in math.revealed:
 				next_face = VaultTile.Face.MINE if index in math.mines else VaultTile.Face.SAFE
@@ -420,6 +436,8 @@ func _refresh_vault() -> void:
 		_vault_credit_value.text = str(
 			maxi(0, cabinet.context.balance - (cabinet.current_stake if cabinet.is_round_active else 0))
 		)
+		if Wallet.test_mode_enabled:
+			_vault_credit_value.text = "∞"
 		_vault_open.text = tr("ACTION_OPEN") if cabinet.is_round_active else tr("ACTION_ENTER")
 		_vault_open.disabled = (
 			not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance
@@ -548,7 +566,7 @@ func _build_slot_deck() -> void:
 	var credit_caption := _help_label(
 		credits_panel, Vector2(10, 14), Vector2(110, 18), 14, Color("b8ad9c")
 	)
-	credit_caption.text = tr("HUD_CREDITS")
+	credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	credit_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_slot_credit_value = _help_label(
 		credits_panel, Vector2(10, 38), Vector2(110, 38), 30, Color("f2c84b")
@@ -664,7 +682,7 @@ func _add_credit_meter(parent: Control, at: Vector2, dimensions: Vector2) -> Lab
 	)
 	parent.add_child(panel)
 	var caption := _help_label(panel, Vector2(8, 4), Vector2(dimensions.x - 16, 18), 14, Color("b8ad9c"))
-	caption.text = tr("HUD_CREDITS")
+	caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var value := _help_label(panel, Vector2(8, 30), Vector2(dimensions.x - 16, 38), 28, Color("f2c84b"))
 	value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -904,6 +922,8 @@ func _refresh_slot() -> void:
 	if cabinet.is_round_active:
 		displayed_credit = maxi(0, displayed_credit - cabinet.current_stake)
 	_slot_credit_value.text = str(displayed_credit)
+	if Wallet.test_mode_enabled:
+		_slot_credit_value.text = "∞"
 	if _result != null:
 		var multiplier: int = _result.payout / maxi(_result.stake, 1)
 		_slot_result_value.text = tr("SLOT_RETURNED") % _result.payout
@@ -930,6 +950,8 @@ func has_active_motion() -> bool:
 		or (_motion_tween != null and _motion_tween.is_running())
 		or (_entrance_tween != null and _entrance_tween.is_running())
 		or (_cursor_tween != null and _cursor_tween.is_running())
+		or (_blackjack_fx_tween != null and _blackjack_fx_tween.is_running())
+		or (_vault_fx_tween != null and _vault_fx_tween.is_running())
 	)
 
 
@@ -1064,12 +1086,48 @@ func _panel_style(
 
 
 func _add_ambient(color: Color) -> void:
-	var ambient := CasinoAmbient.new()
-	ambient.name = "CasinoAmbient"
-	ambient.size = Vector2(960, 110)
-	ambient.accent = color
-	ambient.z_index = 10
-	_art_root.add_child(ambient)
+	_ambient = CasinoAmbient.new()
+	_ambient.name = "CasinoAmbient"
+	_ambient.size = Vector2(960, 110)
+	_ambient.accent = color
+	_ambient.mode = {
+		&"slot_classic": CasinoAmbient.Mode.SLOT,
+		&"blackjack": CasinoAmbient.Mode.BLACKJACK,
+		&"minefield_vault": CasinoAmbient.Mode.VAULT,
+	}.get(cabinet.context.definition.id, CasinoAmbient.Mode.LOBBY)
+	_ambient.z_index = 10
+	_art_root.add_child(_ambient)
+
+
+func _animate_blackjack_result(result: RoundResult) -> void:
+	var color := Color("3fc276") if result.payout > result.stake else Color("d55353")
+	if result.payout == result.stake:
+		color = Color("f2c84b")
+	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
+		label.pivot_offset = label.size * 0.5
+		label.scale = Vector2(1.18, 1.18)
+		label.add_theme_color_override("font_color", color)
+	_blackjack_fx_tween = create_tween().set_parallel(true)
+	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
+		_blackjack_fx_tween.tween_property(label, "scale", Vector2.ONE, 0.34).set_trans(Tween.TRANS_BACK)
+	for index: int in range(_blackjack_cards.size()):
+		var card := _blackjack_cards[index]
+		_blackjack_fx_tween.tween_property(card, "rotation", (index - 1) * 0.045, 0.28).set_trans(Tween.TRANS_BACK)
+
+
+func _animate_vault_result(result: RoundResult) -> void:
+	if _vault_cursor == null:
+		return
+	var color := Color("3fc276") if result.payout > 0 else Color("d55353")
+	for edge: ColorRect in _vault_cursor.get_children():
+		edge.color = color
+	_vault_cursor.scale = Vector2(1.14, 1.14)
+	_vault_fx_tween = create_tween().set_parallel(true)
+	_vault_fx_tween.tween_property(_vault_cursor, "scale", Vector2.ONE, 0.32).set_trans(Tween.TRANS_BACK)
+	if result.payout == 0:
+		var start := _art_root.position
+		_vault_fx_tween.tween_property(_art_root, "position", start + Vector2(4, 0), 0.06)
+		_vault_fx_tween.chain().tween_property(_art_root, "position", start, 0.12).set_trans(Tween.TRANS_BOUNCE)
 
 
 func _pulse_slot_win() -> void:

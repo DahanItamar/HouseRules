@@ -7,6 +7,7 @@ const CASHIER_POSITION := Vector2(660, 410)
 const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(250, 265), &"vip": Vector2(790, 242)}
 const WING_THRESHOLDS: Dictionary = {&"high_roller": 5000, &"vip": 100_000}
 const FLOOR_ART := preload("res://assets/production/environments/casino_floor.png")
+const FLOOR_AVATAR_SCRIPT := preload("res://src/floor/floor_avatar.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
@@ -32,6 +33,11 @@ var cabinet_positions: Dictionary = {
 var definitions: Dictionary = {}
 var _prompt: Label
 var _cashier_open: bool = false
+var _avatar_visual: Node2D
+var _cashier_panel: Panel
+var _cashier_balance: Label
+var _cashier_debt: Label
+var _ambient_time: float = 0.0
 
 
 func _ready() -> void:
@@ -44,12 +50,17 @@ func _ready() -> void:
 		assert(definition.id == id, "Cabinet resource ID must match its registry key: %s" % id)
 		assert(not definitions.has(definition.id), "Duplicate cabinet ID: %s" % definition.id)
 		definitions[id] = definition
+	_avatar_visual = FLOOR_AVATAR_SCRIPT.new()
+	_avatar_visual.name = "FloorAvatar"
+	_avatar_visual.position = avatar_position
+	add_child(_avatar_visual)
 	_prompt = Label.new()
 	_prompt.size = Vector2(260, 72)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_prompt.add_theme_color_override("font_color", IVORY)
 	add_child(_prompt)
+	_build_cashier_menu()
 	SceneRouter.register_floor(self)
 	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: refresh_proximity())
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh_proximity())
@@ -57,6 +68,7 @@ func _ready() -> void:
 
 
 func move_avatar(direction: Vector2, delta: float) -> void:
+	var origin := avatar_position
 	if not direction.is_zero_approx():
 		var motion := direction.normalized() * SPEED * delta
 		var steps: int = maxi(1, ceili(motion.length() / 4.0))
@@ -68,6 +80,9 @@ func move_avatar(direction: Vector2, delta: float) -> void:
 			var vertical := avatar_position + Vector2(0.0, step.y)
 			if _is_walkable(vertical):
 				avatar_position = vertical
+	if _avatar_visual != null:
+		_avatar_visual.position = avatar_position
+		_avatar_visual.call("set_motion", avatar_position - origin)
 	refresh_proximity()
 	queue_redraw()
 
@@ -144,6 +159,8 @@ func set_prompt_visible(is_visible: bool) -> void:
 
 
 func _physics_process(delta: float) -> void:
+	_ambient_time += delta
+	queue_redraw()
 	if not _cashier_open:
 		move_avatar(Input.get_vector("move_left", "move_right", "move_up", "move_down"), delta)
 
@@ -157,8 +174,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 	if event.is_action_pressed("back"):
 		if _cashier_open:
-			_cashier_open = false
-			refresh_proximity()
+			_close_cashier()
 		else:
 			SceneRouter.return_to_menu()
 	elif event.is_action_pressed("interact"):
@@ -177,6 +193,7 @@ func _update_prompt() -> void:
 	_prompt.size = Vector2(848, 54)
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _cashier_open:
+		_refresh_cashier_menu()
 		_prompt.text = (
 			tr("CASHIER_ACTIONS")
 			% [
@@ -211,8 +228,12 @@ func _update_prompt() -> void:
 			% [tr("WING_" + String(nearby_wing).to_upper()), WING_THRESHOLDS[nearby_wing]]
 		)
 	elif avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
+		_prompt.position = Vector2(350, 472)
+		_prompt.size = Vector2(260, 44)
 		_prompt.text = tr("CASHIER_PROMPT") % InputRouter.glyph("interact")
 	else:
+		_prompt.position = Vector2(330, 486)
+		_prompt.size = Vector2(300, 34)
 		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
 	queue_redraw()
 
@@ -225,8 +246,12 @@ func _draw() -> void:
 	for id: StringName in cabinet_positions:
 		var at: Vector2 = cabinet_positions[id]
 		var is_near: bool = nearby_definition != null and nearby_definition.id == id
-		draw_circle(at, 34.0, Color("0c0b0d99"))
-		draw_arc(at, 38.0, 0.0, TAU, 48, CYAN if is_near else BRASS, 3.0)
+		var phase := _ambient_time * 1.8 + float(cabinet_positions.keys().find(id)) * 1.9
+		var pulse := (sin(phase) + 1.0) * 0.5
+		draw_arc(at, 34.0 + pulse * 2.0, 0.12, PI - 0.12, 32, Color(BRASS, 0.20 + pulse * 0.24), 3.0)
+		draw_line(at + Vector2(-28, 22), at + Vector2(28, 22), CYAN if is_near else BRASS, 3.0)
+		if is_near:
+			draw_arc(at, 40.0 + pulse * 2.0, 0.0, TAU, 48, Color(CYAN, 0.45), 2.0)
 		draw_string(
 			ThemeDB.fallback_font,
 			at + Vector2(-66, -48),
@@ -247,24 +272,98 @@ func _draw() -> void:
 	)
 	for wing: StringName in WING_POSITIONS:
 		var wing_at: Vector2 = WING_POSITIONS[wing]
-		draw_arc(wing_at, 30.0, 0.0, TAU, 36, Color("6e5225"), 2.0)
-	# A tailored, high-contrast floor avatar with a grounded shadow.
-	draw_circle(avatar_position + Vector2(0, 11), 15.0, Color("0c0b0d99"))
-	draw_polygon(
-		PackedVector2Array(
-			[
-				avatar_position + Vector2(-9, 13),
-				avatar_position + Vector2(-7, -5),
-				avatar_position + Vector2(0, -11),
-				avatar_position + Vector2(7, -5),
-				avatar_position + Vector2(9, 13),
-			]
-		),
-		PackedColorArray([Color("5a111c")])
-	)
-	draw_circle(avatar_position + Vector2(0, -13), 6.0, IVORY)
-	draw_line(avatar_position + Vector2(-7, 2), avatar_position + Vector2(7, 2), BRASS, 2.0)
+		var plaque := Rect2(wing_at - Vector2(34, 14), Vector2(68, 28))
+		draw_rect(plaque, Color("17161acc"))
+		draw_rect(plaque, Color("6e5225"), false, 2.0)
+		draw_arc(wing_at + Vector2(0, -3), 5.0, PI, TAU, 16, BRASS, 2.0)
+		draw_rect(Rect2(wing_at + Vector2(-6, -3), Vector2(12, 10)), Color("6e5225"))
 	if _prompt != null and _prompt.visible:
 		var prompt_rect := Rect2(_prompt.position - Vector2(12, 8), _prompt.size + Vector2(24, 16))
 		draw_rect(prompt_rect, Color("17161af0"))
 		draw_rect(prompt_rect, CYAN if nearby_definition != null else Color("6e5225"), false, 2.0)
+
+
+func _build_cashier_menu() -> void:
+	_cashier_panel = Panel.new()
+	_cashier_panel.name = "CashierMenu"
+	_cashier_panel.position = Vector2(270, 112)
+	_cashier_panel.size = Vector2(420, 316)
+	_cashier_panel.z_index = 30
+	_cashier_panel.visible = false
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("120d10fa")
+	panel_style.border_color = BRASS
+	panel_style.set_border_width_all(3)
+	panel_style.set_corner_radius_all(12)
+	panel_style.shadow_color = Color("000000aa")
+	panel_style.shadow_size = 14
+	_cashier_panel.add_theme_stylebox_override("panel", panel_style)
+	add_child(_cashier_panel)
+	var title := _cashier_label("CASHIER", Vector2(24, 18), Vector2(372, 42), 32, Color("f1e8d8"))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var rule := ColorRect.new()
+	rule.position = Vector2(54, 68)
+	rule.size = Vector2(312, 2)
+	rule.color = BRASS
+	_cashier_panel.add_child(rule)
+	_cashier_balance = _cashier_label("", Vector2(32, 86), Vector2(356, 42), 24, Color("f2c84b"))
+	_cashier_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cashier_debt = _cashier_label("", Vector2(32, 128), Vector2(356, 28), 16, Color("b8ad9c"))
+	_cashier_debt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var marker := _cashier_button("TAKE 100 MARKER", Vector2(28, 180), Vector2(176, 62))
+	marker.name = "TakeMarker"
+	marker.pressed.connect(func() -> void: Economy.take_marker(); _refresh_cashier_menu())
+	var repay := _cashier_button("REPAY DEBT", Vector2(216, 180), Vector2(176, 62))
+	repay.name = "RepayDebt"
+	repay.pressed.connect(func() -> void: Economy.repay_debt(Economy.debt); _refresh_cashier_menu())
+	var close := _cashier_button("CLOSE", Vector2(122, 254), Vector2(176, 42))
+	close.name = "CloseCashier"
+	close.pressed.connect(_close_cashier)
+
+
+func _cashier_label(
+	text_value: String, at: Vector2, dimensions: Vector2, font_size: int, color: Color
+) -> Label:
+	var label := Label.new()
+	label.text = text_value
+	label.position = at
+	label.size = dimensions
+	label.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	_cashier_panel.add_child(label)
+	return label
+
+
+func _cashier_button(text_value: String, at: Vector2, dimensions: Vector2) -> Button:
+	var button := Button.new()
+	button.text = text_value
+	button.position = at
+	button.size = dimensions
+	button.add_theme_font_override("font", Typography.UI_FONT)
+	button.add_theme_font_size_override("font_size", Typography.CONTROL)
+	for state: String in ["normal", "hover", "pressed", "focus"]:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("5a111c") if state != "pressed" else Color("351016")
+		style.border_color = CYAN if state == "focus" else BRASS
+		style.set_border_width_all(2)
+		style.set_corner_radius_all(8)
+		button.add_theme_stylebox_override(state, style)
+	_cashier_panel.add_child(button)
+	return button
+
+
+func _refresh_cashier_menu() -> void:
+	if _cashier_panel == null:
+		return
+	_cashier_panel.visible = _cashier_open
+	_cashier_balance.text = "TEST BANK  ∞" if Wallet.test_mode_enabled else "CHIPS  %d" % Wallet.balance
+	_cashier_debt.text = "NO OUTSTANDING MARKER" if Economy.debt == 0 else "MARKER DEBT  %d" % Economy.debt
+	(_cashier_panel.get_node("TakeMarker") as Button).disabled = not Economy.is_below_solvency_floor()
+	(_cashier_panel.get_node("RepayDebt") as Button).disabled = Economy.debt <= 0
+
+
+func _close_cashier() -> void:
+	_cashier_open = false
+	_refresh_cashier_menu()
+	refresh_proximity()

@@ -4,9 +4,11 @@ extends SceneTree
 const SOURCE_DIR := "res://assets/source/redesign/slot_symbols"
 const OUTPUT_DIR := "res://assets/production/slot/symbols"
 const NAMES: Array[String] = ["cherry", "lemon", "bell", "bar", "seven", "diamond"]
-const FRAMES: Array[String] = ["slot_fullscreen_bezel"]
+const FRAMES: Array[String] = []
 const EFFECT_SOURCE := "res://assets/source/redesign/effects/casino_win_burst_mask.png"
 const EFFECT_OUTPUT := "res://assets/production/effects/casino_win_burst.png"
+const AVATAR_EIGHT_SOURCE := "res://assets/source/redesign/floor_avatar_eight_direction_magenta.png"
+const AVATAR_EIGHT_OUTPUT := "res://assets/production/characters/casino_guest_eight_direction.png"
 
 
 func _initialize() -> void:
@@ -28,6 +30,13 @@ func _initialize() -> void:
 	var effect_error := effect.save_png(EFFECT_OUTPUT)
 	assert(effect_error == OK, "Could not save keyed win effect")
 	print("KEYED casino_win_burst ", effect.get_size())
+	DirAccess.make_dir_recursive_absolute(
+		ProjectSettings.globalize_path(AVATAR_EIGHT_OUTPUT.get_base_dir())
+	)
+	var eight_directions := _key_path(AVATAR_EIGHT_SOURCE)
+	var eight_error := eight_directions.save_png(AVATAR_EIGHT_OUTPUT)
+	assert(eight_error == OK, "Could not save keyed eight-direction avatar")
+	print("KEYED casino_guest_eight_direction ", eight_directions.get_size())
 	quit()
 
 

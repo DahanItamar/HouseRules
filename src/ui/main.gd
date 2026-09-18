@@ -47,7 +47,7 @@ func _build_hud() -> void:
 	_hud_layer = CanvasLayer.new()
 	_hud_layer.layer = 10
 	add_child(_hud_layer)
-	_bank_panel = _panel(Vector2(18, 16), Vector2(196, 56), Color("17161af2"), Color("c8a34b"))
+	_bank_panel = _panel(Vector2(18, 16), Vector2(168, 52), Color("17161af2"), Color("c8a34b"))
 	_hud_layer.add_child(_bank_panel)
 	_chip_icon = CreditChipIcon.new()
 	_chip_icon.position = Vector2(28, 25)
@@ -81,15 +81,15 @@ func _build_hud() -> void:
 	_message.add_theme_color_override("font_color", Color("f1e8d8"))
 	_hud_layer.add_child(_message)
 	_contracts_panel = _panel(
-		Vector2(638, 18), Vector2(300, 108), Color("17161ae8"), Color("6e5225")
+		Vector2(594, 16), Vector2(348, 80), Color("17161ae8"), Color("6e5225")
 	)
 	_hud_layer.add_child(_contracts_panel)
 	_contracts = Label.new()
 	_contracts.add_theme_font_override("font", Typography.UI_FONT)
-	_contracts.position = Vector2(654, 27)
-	_contracts.size = Vector2(268, 92)
+	_contracts.position = Vector2(610, 22)
+	_contracts.size = Vector2(316, 68)
 	_contracts.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_contracts.add_theme_font_size_override("font_size", 12)
+	_contracts.add_theme_font_size_override("font_size", Typography.BODY_MIN)
 	_contracts.add_theme_color_override("font_color", Color("b8ad9c"))
 	_hud_layer.add_child(_contracts)
 
@@ -106,6 +106,13 @@ func _build_menu() -> void:
 	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	background.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_menu.add_child(background)
+	var menu_ambient := CasinoAmbient.new()
+	menu_ambient.name = "MenuAmbient"
+	menu_ambient.position = Vector2(548, 18)
+	menu_ambient.size = Vector2(392, 86)
+	menu_ambient.mode = CasinoAmbient.Mode.LOBBY
+	menu_ambient.accent = Color("f2c84b")
+	_menu.add_child(menu_ambient)
 	var readability := ColorRect.new()
 	readability.size = Vector2(548, 540)
 	readability.color = Color("0c0b0dcc")
@@ -174,12 +181,13 @@ func _refresh_menu() -> void:
 
 func _refresh_hud() -> void:
 	_hud.text = "∞" if Wallet.test_mode_enabled else str(Wallet.balance)
+	_credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	if Economy.debt > 0:
 		_hud.text += "  /  " + str(Economy.debt)
 	if Economy.is_below_solvency_floor():
 		_show_message("HUD_CASHIER")
 	if _contracts != null:
-		var on_floor: bool = SceneRouter.session == null
+		var on_floor: bool = _is_playing and SceneRouter.session == null
 		_bank_panel.visible = on_floor
 		_chip_icon.visible = on_floor
 		_credit_caption.visible = on_floor
@@ -200,6 +208,7 @@ func _start_playing() -> void:
 	_floor.set_process_unhandled_input(true)
 	_menu.hide()
 	_is_playing = true
+	_refresh_hud()
 	AudioService.play(&"confirm")
 
 
@@ -210,6 +219,7 @@ func _show_menu() -> void:
 		_floor.set_physics_process(false)
 		_floor.set_process_unhandled_input(false)
 	_menu.show()
+	_refresh_hud()
 
 
 func _show_message(key: String) -> void:

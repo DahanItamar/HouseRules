@@ -5,6 +5,21 @@ extends Control
 enum Face { HIDDEN, SAFE, MINE }
 var face: Face = Face.HIDDEN
 var is_flipping: bool = false
+var is_selected: bool = false
+var _pulse_time: float = 0.0
+
+
+func _process(delta: float) -> void:
+	if is_selected:
+		_pulse_time += delta
+		queue_redraw()
+
+
+func set_selected(selected: bool) -> void:
+	is_selected = selected
+	if not selected:
+		_pulse_time = 0.0
+	queue_redraw()
 
 
 func reveal(next_face: Face) -> void:
@@ -33,10 +48,13 @@ func set_face_immediate(next_face: Face) -> void:
 func _draw() -> void:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("252126")
-	style.border_color = Color("c8a34b")
-	style.set_border_width_all(2)
+	style.border_color = Color("48c5d5") if is_selected else Color("c8a34b")
+	style.set_border_width_all(3 if is_selected else 2)
 	style.set_corner_radius_all(4)
 	draw_style_box(style, Rect2(Vector2.ZERO, size))
+	if is_selected:
+		var pulse := (sin(_pulse_time * 4.5) + 1.0) * 0.5
+		draw_arc(size * 0.5, 20.0 + pulse * 2.0, 0, TAU, 32, Color("48c5d5", 0.28 + pulse * 0.22), 2.0)
 	if face == Face.HIDDEN:
 		draw_circle(size * 0.5, 5.0, Color("6e5225"), true, -1.0, true)
 		draw_line(size * 0.5 + Vector2(-8, 0), size * 0.5 + Vector2(8, 0), Color("b8ad9c"), 2.0)
