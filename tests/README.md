@@ -6,6 +6,7 @@ Use Godot **4.7.2 standard** and Python with `tools/requirements-dev.txt` instal
 gdformat --check src tests
 gdlint src tests
 godot --headless --editor --path . --quit
+python tools/check_localization.py
 godot --headless --path . -s addons/gut/gut_cmdln.gd -gexit
 godot --headless --path . -s tests/slot_rtp_diagnostic.gd
 ```
@@ -43,6 +44,7 @@ directories; they do not overwrite the player's normal save.
 | AC-038 | Raw device changes swap glyphs and synchronously refresh a live floor prompt in both directions. |
 | AC-039 | Physical D-pad and left-stick events move the reusable wrapping snap cursor. |
 | AC-042 | Runtime labels meet the 8px body floor; chips, stake and multiplier meet the 16px critical floor. |
+| AC-043 | CI validates every translation reference and rejects literal text assigned to UI or scene text sinks. |
 | AC-037 disconnect | Losing the active gamepad pauses behind a blocking overlay; reconnecting resumes it. |
 | AC-051 | Both v1 wing transition points show their lifetime-wagered thresholds and refuse entry while locked. |
 

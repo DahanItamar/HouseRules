@@ -10,6 +10,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: pip install -r tools/requirements-dev.txt
+      - run: python tools/check_localization.py
       - run: gdformat --check src tests
       - run: gdlint src tests
       - name: Install pinned Godot
