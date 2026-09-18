@@ -3,6 +3,7 @@ extends Node
 var _guard := InstanceGuard.new()
 var _floor: FloorController
 var _menu: CanvasLayer
+var _hud_layer: CanvasLayer
 var _hud: Label
 var _message: Label
 var _contracts: Label
@@ -36,47 +37,102 @@ func _ready() -> void:
 
 
 func _build_hud() -> void:
-	var hud_layer := CanvasLayer.new()
-	hud_layer.layer = 10
-	add_child(hud_layer)
+	_hud_layer = CanvasLayer.new()
+	_hud_layer.layer = 10
+	add_child(_hud_layer)
+	var bank_panel := _panel(Vector2(22, 18), Vector2(286, 54), Color("17161ae8"), Color("c8a34b"))
+	_hud_layer.add_child(bank_panel)
 	_hud = Label.new()
-	_hud.position = Vector2(32, 24)
+	_hud.position = Vector2(38, 29)
 	_hud.add_theme_font_size_override("font_size", Typography.PROMINENT)
-	_hud.add_theme_color_override("font_color", Color("ffd23f"))
-	hud_layer.add_child(_hud)
+	_hud.add_theme_color_override("font_color", Color("f2c84b"))
+	_hud_layer.add_child(_hud)
 	_message = Label.new()
-	_message.position = Vector2(32, 508)
+	_message.position = Vector2(344, 500)
+	_message.size = Vector2(572, 28)
+	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_message.add_theme_font_size_override("font_size", Typography.CRITICAL)
-	_message.add_theme_color_override("font_color", Color("ff8a3d"))
-	hud_layer.add_child(_message)
+	_message.add_theme_color_override("font_color", Color("f1e8d8"))
+	_hud_layer.add_child(_message)
+	var contracts_panel := _panel(
+		Vector2(638, 18), Vector2(300, 108), Color("17161ae8"), Color("6e5225")
+	)
+	_hud_layer.add_child(contracts_panel)
 	_contracts = Label.new()
-	_contracts.position = Vector2(610, 20)
-	_contracts.size = Vector2(318, 90)
+	_contracts.position = Vector2(654, 27)
+	_contracts.size = Vector2(268, 92)
 	_contracts.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_contracts.add_theme_font_size_override("font_size", Typography.SUPPORTING)
-	_contracts.add_theme_color_override("font_color", Color("e8e6f0"))
-	hud_layer.add_child(_contracts)
+	_contracts.add_theme_font_size_override("font_size", 12)
+	_contracts.add_theme_color_override("font_color", Color("b8ad9c"))
+	_hud_layer.add_child(_contracts)
 
 
 func _build_menu() -> void:
 	_menu = CanvasLayer.new()
 	_menu.layer = 6
 	add_child(_menu)
-	var background := ColorRect.new()
+	var background := TextureRect.new()
+	background.name = "CasinoHallArt"
+	background.texture = preload("res://assets/production/environments/casino_menu_hall.png")
 	background.size = Vector2(960, 540)
-	background.color = Color("0b0a12")
+	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	background.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_menu.add_child(background)
+	var readability := ColorRect.new()
+	readability.size = Vector2(548, 540)
+	readability.color = Color("0c0b0dcc")
+	_menu.add_child(readability)
+	var brass_rule := ColorRect.new()
+	brass_rule.position = Vector2(70, 116)
+	brass_rule.size = Vector2(72, 3)
+	brass_rule.color = Color("c8a34b")
+	_menu.add_child(brass_rule)
+	var kicker := Label.new()
+	kicker.position = Vector2(70, 82)
+	kicker.text = tr("MENU_KICKER")
+	kicker.add_theme_font_size_override("font_size", Typography.SUPPORTING)
+	kicker.add_theme_color_override("font_color", Color("c8a34b"))
+	_menu.add_child(kicker)
 	var title := Label.new()
 	title.name = "Title"
-	title.position = Vector2(120, 180)
-	title.add_theme_font_size_override("font_size", Typography.TITLE)
+	title.position = Vector2(66, 140)
+	title.add_theme_font_size_override("font_size", 58)
+	title.add_theme_color_override("font_color", Color("f1e8d8"))
 	title.text = tr("GAME_TITLE")
 	_menu.add_child(title)
+	var subtitle := Label.new()
+	subtitle.position = Vector2(72, 222)
+	subtitle.size = Vector2(380, 60)
+	subtitle.text = tr("MENU_SUBTITLE")
+	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	subtitle.add_theme_font_size_override("font_size", 18)
+	subtitle.add_theme_color_override("font_color", Color("b8ad9c"))
+	_menu.add_child(subtitle)
+	var prompt_panel := _panel(
+		Vector2(70, 320), Vector2(360, 104), Color("17161af2"), Color("c8a34b")
+	)
+	_menu.add_child(prompt_panel)
 	var prompt := Label.new()
 	prompt.name = "Prompt"
-	prompt.position = Vector2(124, 282)
+	prompt.position = Vector2(92, 339)
+	prompt.size = Vector2(316, 70)
 	prompt.add_theme_font_size_override("font_size", Typography.PROMINENT)
+	prompt.add_theme_color_override("font_color", Color("f1e8d8"))
 	_menu.add_child(prompt)
+
+
+func _panel(at: Vector2, dimensions: Vector2, fill: Color, border: Color) -> Panel:
+	var panel := Panel.new()
+	panel.position = at
+	panel.size = dimensions
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	panel.add_theme_stylebox_override("panel", style)
+	return panel
 
 
 func _refresh_menu() -> void:

@@ -6,15 +6,11 @@ const INTERACTION_RADIUS: float = 76.0
 const CASHIER_POSITION := Vector2(780, 350)
 const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(90, 180), &"vip": Vector2(870, 180)}
 const WING_THRESHOLDS: Dictionary = {&"high_roller": 5000, &"vip": 100_000}
-const FLOOR_TEXTURES: Dictionary = {
-	&"slot_classic": preload("res://assets/drafts/m2/slot_classic_floor.png"),
-	&"blackjack": preload("res://assets/drafts/m2/blackjack_table_floor.png"),
-	&"minefield_vault": preload("res://assets/drafts/m2/vault_door_floor.png"),
-	&"cashier": preload("res://assets/drafts/m2/cashier_cage.png"),
-	&"high_roller": preload("res://assets/drafts/m2/staircase_up.png"),
-	&"vip": preload("res://assets/drafts/m2/elevator_doors.png"),
-}
-var avatar_position := Vector2(200, 330)
+const FLOOR_ART := preload("res://assets/production/environments/casino_floor.png")
+const IVORY := Color("f1e8d8")
+const BRASS := Color("c8a34b")
+const CYAN := Color("48c5d5")
+var avatar_position := Vector2(480, 408)
 var nearby_definition: CabinetDefinition
 var nearby_wing: StringName = &""
 var cabinet_positions: Dictionary = {
@@ -38,8 +34,10 @@ func _ready() -> void:
 		assert(not definitions.has(definition.id), "Duplicate cabinet ID: %s" % definition.id)
 		definitions[id] = definition
 	_prompt = Label.new()
+	_prompt.size = Vector2(260, 72)
+	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt.add_theme_font_size_override("font_size", Typography.CRITICAL)
-	_prompt.add_theme_color_override("font_color", Color("e8e6f0"))
+	_prompt.add_theme_color_override("font_color", IVORY)
 	add_child(_prompt)
 	SceneRouter.register_floor(self)
 	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: refresh_proximity())
@@ -96,6 +94,7 @@ func interact() -> bool:
 func set_prompt_visible(is_visible: bool) -> void:
 	if _prompt != null:
 		_prompt.visible = is_visible
+	queue_redraw()
 
 
 func _physics_process(delta: float) -> void:
@@ -128,7 +127,9 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _update_prompt() -> void:
-	_prompt.position = Vector2(70, 455)
+	_prompt.position = Vector2(56, 454)
+	_prompt.size = Vector2(848, 54)
+	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _cashier_open:
 		_prompt.text = (
 			tr("CASHIER_ACTIONS")
@@ -139,7 +140,8 @@ func _update_prompt() -> void:
 			]
 		)
 	elif nearby_definition != null:
-		_prompt.position = cabinet_positions[nearby_definition.id] + Vector2(-95, -85)
+		_prompt.position = cabinet_positions[nearby_definition.id] + Vector2(-130, 64)
+		_prompt.size = Vector2(260, 74)
 		if Wallet.balance < nearby_definition.min_bet:
 			_prompt.text = (
 				tr("FLOOR_UNAVAILABLE")
@@ -156,7 +158,8 @@ func _update_prompt() -> void:
 				]
 			)
 	elif nearby_wing != &"":
-		_prompt.position = WING_POSITIONS[nearby_wing] + Vector2(-80, 74)
+		_prompt.position = WING_POSITIONS[nearby_wing] + Vector2(-115, 64)
+		_prompt.size = Vector2(230, 72)
 		_prompt.text = (
 			tr("WING_LOCKED")
 			% [tr("WING_" + String(nearby_wing).to_upper()), WING_THRESHOLDS[nearby_wing]]
@@ -165,34 +168,57 @@ func _update_prompt() -> void:
 		_prompt.text = tr("CASHIER_PROMPT") % InputRouter.glyph("interact")
 	else:
 		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
+	queue_redraw()
 
 
 func _draw() -> void:
-	draw_rect(Rect2(40, 94, 880, 358), Color("1a1826"))
-	for x: int in range(56, 920, 32):
-		draw_line(Vector2(x, 94), Vector2(x, 452), Color("2d2a3e"))
+	draw_texture_rect(FLOOR_ART, Rect2(0, 0, 960, 540), false)
+	draw_rect(Rect2(0, 0, 960, 540), Color("0c0b0d24"))
+	draw_rect(Rect2(0, 0, 960, 88), Color("0c0b0d9c"))
+	draw_rect(Rect2(32, 92, 896, 352), Color("0c0b0d18"), false, 2.0)
 	for id: StringName in cabinet_positions:
 		var at: Vector2 = cabinet_positions[id]
-		draw_texture_rect(FLOOR_TEXTURES[id], Rect2(at - Vector2(32, 24), Vector2(64, 48)), false)
-	draw_texture_rect(
-		FLOOR_TEXTURES.cashier, Rect2(CASHIER_POSITION - Vector2(50, 38), Vector2(100, 76)), false
-	)
+		var is_near: bool = nearby_definition != null and nearby_definition.id == id
+		draw_circle(at, 34.0, Color("0c0b0d99"))
+		draw_arc(at, 38.0, 0.0, TAU, 48, CYAN if is_near else BRASS, 3.0)
+		draw_string(
+			ThemeDB.fallback_font,
+			at + Vector2(-66, -48),
+			tr((definitions[id] as CabinetDefinition).name_key),
+			HORIZONTAL_ALIGNMENT_CENTER,
+			132,
+			Typography.SUPPORTING,
+			IVORY
+		)
 	draw_string(
 		ThemeDB.fallback_font,
-		CASHIER_POSITION + Vector2(-42, 4),
+		CASHIER_POSITION + Vector2(-46, -45),
 		tr("CASHIER_NAME"),
-		HORIZONTAL_ALIGNMENT_LEFT,
-		-1,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		92,
 		Typography.CRITICAL,
-		Color("e8e6f0")
+		IVORY
 	)
-	draw_texture_rect(
-		FLOOR_TEXTURES.high_roller,
-		Rect2(WING_POSITIONS.high_roller - Vector2(36, 48), Vector2(72, 96)),
-		false
+	for wing: StringName in WING_POSITIONS:
+		var wing_at: Vector2 = WING_POSITIONS[wing]
+		draw_arc(wing_at, 30.0, 0.0, TAU, 36, Color("6e5225"), 2.0)
+	# A tailored, high-contrast floor avatar with a grounded shadow.
+	draw_circle(avatar_position + Vector2(0, 11), 15.0, Color("0c0b0d99"))
+	draw_polygon(
+		PackedVector2Array(
+			[
+				avatar_position + Vector2(-9, 13),
+				avatar_position + Vector2(-7, -5),
+				avatar_position + Vector2(0, -11),
+				avatar_position + Vector2(7, -5),
+				avatar_position + Vector2(9, 13),
+			]
+		),
+		PackedColorArray([Color("5a111c")])
 	)
-	draw_texture_rect(
-		FLOOR_TEXTURES.vip, Rect2(WING_POSITIONS.vip - Vector2(30, 42), Vector2(60, 84)), false
-	)
-	draw_circle(avatar_position, 12, Color("e8e6f0"))
-	draw_circle(avatar_position + Vector2(0, -5), 5, Color("ff3d7f"))
+	draw_circle(avatar_position + Vector2(0, -13), 6.0, IVORY)
+	draw_line(avatar_position + Vector2(-7, 2), avatar_position + Vector2(7, 2), BRASS, 2.0)
+	if _prompt != null and _prompt.visible:
+		var prompt_rect := Rect2(_prompt.position - Vector2(12, 8), _prompt.size + Vector2(24, 16))
+		draw_rect(prompt_rect, Color("17161af0"))
+		draw_rect(prompt_rect, CYAN if nearby_definition != null else Color("6e5225"), false, 2.0)

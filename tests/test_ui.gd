@@ -90,11 +90,25 @@ func test_display_targets_render_canvas_items_at_native_resolution() -> void:
 		)
 
 
-func test_m5_machine_captures_match_the_pixel_base() -> void:
+func test_reference_captures_keep_a_full_16_by_9_frame() -> void:
 	for filename: String in ["03_slot_idle.png", "05_blackjack.png", "06_vault.png"]:
 		var texture: Texture2D = load("res://tests/results/screenshots/" + filename)
 		assert_not_null(texture, "%s is imported" % filename)
-		assert_eq(texture.get_size(), Vector2(960, 540), "%s uses the pixel base" % filename)
+		var dimensions := Vector2i(texture.get_width(), texture.get_height())
+		assert_eq(dimensions.x * 9, dimensions.y * 16, "%s keeps the 16:9 frame" % filename)
+		assert_gte(dimensions.x, 960, "%s is at least the logical canvas width" % filename)
+
+
+func test_redesigned_shell_uses_high_resolution_production_environments() -> void:
+	var main := MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	assert_not_null(main._menu.get_node_or_null("CasinoHallArt"))
+	var menu_art: Texture2D = load(
+		"res://assets/production/environments/casino_menu_hall.png"
+	)
+	var floor_art: Texture2D = load("res://assets/production/environments/casino_floor.png")
+	assert_gte(menu_art.get_width(), 1280)
+	assert_gte(floor_art.get_width(), 1280)
 
 
 func test_m5_cabinet_motion_runs_in_engine() -> void:

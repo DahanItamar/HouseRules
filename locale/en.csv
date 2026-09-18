@@ -1,5 +1,7 @@
 keys,en
 GAME_TITLE,HOUSE RULES
+MENU_KICKER,VELVET DECO CASINO
+MENU_SUBTITLE,"Three games. One bankroll. The house remembers."
 MENU_CONTROLS,"[%s] Enter the casino\n[%s] Save and quit"
 HUD_CHIPS,CHIPS  %d
 HUD_DEBT,DEBT  %d
