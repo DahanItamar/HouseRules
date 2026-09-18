@@ -1,0 +1,13 @@
+{
+	"cabinet": "slot_classic",
+	"elapsed_ms": 31107,
+	"exact_rtp": 0.9539794921875,
+	"jackpots": 2376,
+	"observed_rtp": 0.9498781,
+	"purpose": "Supplemental diagnosis; does not supersede failed million-round gate",
+	"returned": 94987810,
+	"rounds": 10000000,
+	"seed": 20260918,
+	"standard_error": 0.00289850414821569,
+	"wagered": 100000000
+}

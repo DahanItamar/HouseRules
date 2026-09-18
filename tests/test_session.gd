@@ -1,0 +1,134 @@
+extends GutTest
+
+var _original_platform: PlatformServices
+var _floor: FloorController
+
+
+func before_each() -> void:
+	_original_platform = SaveService.platform
+	SaveService.platform = LocalPlatform.new("user://tests/session_%s" % Time.get_ticks_usec())
+	SaveService.new_game(1234)
+	_floor = FloorController.new()
+	add_child_autofree(_floor)
+	_floor.set_physics_process(false)
+	SceneRouter.register_floor(_floor)
+
+
+func after_each() -> void:
+	SceneRouter.return_to_floor()
+	await get_tree().process_frame
+	SceneRouter.floor = null
+	SaveService.platform = _original_platform
+	SaveService.new_game(1234)
+
+
+func _approach_slot() -> CabinetDefinition:
+	var definition: CabinetDefinition = load("res://data/cabinets/slot_classic.tres")
+	_floor.avatar_position = _floor.cabinet_positions[definition.id]
+	_floor.refresh_proximity()
+	return definition
+
+
+func test_ac001_constant_speed_in_eight_directions() -> void:
+	var origin := Vector2(480, 300)
+	var distance := -1.0
+	for direction in [
+		Vector2.UP,
+		Vector2.DOWN,
+		Vector2.LEFT,
+		Vector2.RIGHT,
+		Vector2(-1, -1),
+		Vector2(1, -1),
+		Vector2(-1, 1),
+		Vector2(1, 1)
+	]:
+		_floor.avatar_position = origin
+		_floor.move_avatar(direction, 0.1)
+		var moved := _floor.avatar_position.distance_to(origin)
+		assert_gt(moved, 0.0)
+		if distance < 0:
+			distance = moved
+		assert_almost_eq(moved, distance, 0.001)
+
+
+func test_ac002_through_ac008_floor_context_result_transaction_and_return() -> void:
+	var definition := _approach_slot()
+	assert_same(_floor.nearby_definition, definition)
+	assert_true(_floor._prompt.visible)
+	assert_string_contains(_floor._prompt.text, tr(definition.name_key))
+	var return_position := _floor.avatar_position
+	assert_true(_floor.interact())
+	assert_not_null(SceneRouter.session)
+	var session := SceneRouter.session
+	assert_eq(session.context.balance, Wallet.balance)
+	assert_same(session.context.definition, definition)
+	assert_same(session.context.rng, RNGService.stream(definition.id))
+	watch_signals(session.cabinet)
+	watch_signals(Wallet)
+	assert_true(session.cabinet.start_round(10))
+	assert_false(session.cabinet.start_round(10), "Repeated input cannot double-stake")
+	assert_eq(Wallet.balance, 200, "Cabinet does not directly modify wallet")
+	session.cabinet.resolve_pending()
+	assert_signal_emit_count(session.cabinet, "round_resolved", 1)
+	var result: RoundResult = get_signal_parameters(session.cabinet, "round_resolved")[0]
+	assert_eq(Wallet.balance, 200 - result.stake + result.payout)
+	assert_false(session.apply_result(result), "Same round cannot settle twice")
+	assert_signal_emit_count(Wallet, "balance_changed", 1)
+	var settled_balance := Wallet.balance
+	SceneRouter.return_to_floor()
+	assert_null(SceneRouter.session)
+	assert_eq(_floor.avatar_position, return_position)
+	Wallet.reset(0)
+	assert_eq(SaveService.load_game(), OK)
+	assert_eq(Wallet.balance, settled_balance, "AC-015 leaving persists state")
+
+
+func test_ac004_unaffordable_cabinet_refuses_entry() -> void:
+	var definition := _approach_slot()
+	Wallet.reset(definition.min_bet - 1)
+	_floor.refresh_proximity()
+	assert_eq(
+		_floor._prompt.text, tr("FLOOR_UNAVAILABLE") % [tr(definition.name_key), definition.min_bet]
+	)
+	assert_false(_floor.interact())
+	assert_null(SceneRouter.session)
+
+
+func test_ac009_abandon_forfeits_once_and_saves() -> void:
+	_approach_slot()
+	assert_true(_floor.interact())
+	var cabinet := SceneRouter.session.cabinet
+	watch_signals(cabinet)
+	assert_true(cabinet.start_round(10))
+	SceneRouter.return_to_floor()
+	assert_eq(Wallet.balance, 190)
+	assert_signal_emit_count(cabinet, "round_resolved", 1)
+	var result: RoundResult = get_signal_parameters(cabinet, "round_resolved")[0]
+	assert_eq(result.outcome, RoundResult.Outcome.ABANDONED)
+	assert_eq(result.payout, 0)
+	cabinet.resolve_pending()
+	assert_eq(Wallet.balance, 190)
+	Wallet.reset(0)
+	assert_eq(SaveService.load_game(), OK)
+	assert_eq(Wallet.balance, 190)
+
+
+func test_ac015_return_to_menu_saves() -> void:
+	Wallet.reset(433)
+	SceneRouter.return_to_menu()
+	Wallet.reset(0)
+	assert_eq(SaveService.load_game(), OK)
+	assert_eq(Wallet.balance, 433)
+
+
+func test_back_input_exits_cabinet_without_also_leaving_floor() -> void:
+	_approach_slot()
+	assert_true(_floor.interact())
+	watch_signals(SceneRouter)
+	var event := InputEventAction.new()
+	event.action = &"back"
+	event.pressed = true
+	Input.parse_input_event(event)
+	await get_tree().process_frame
+	assert_null(SceneRouter.session)
+	assert_signal_not_emitted(SceneRouter, "menu_requested")

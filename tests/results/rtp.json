@@ -1,0 +1,51 @@
+{
+	"engine": {
+		"build": "official",
+		"hash": "ed1daf0bf001b61586d9930840f2f1394092c079",
+		"hex": 263938,
+		"major": 4,
+		"minor": 7,
+		"patch": 2,
+		"status": "stable",
+		"string": "4.7.2-stable (official)",
+		"timestamp": 0
+	},
+	"results": [
+		{
+			"absolute_error": 0.026658,
+			"cabinet": "slot_classic",
+			"elapsed_ms": 3220,
+			"observed_rtp": 0.928342,
+			"returned": 9283420,
+			"rounds": 1000000,
+			"seed": 20260918,
+			"strategy": "spin",
+			"target_rtp": 0.955,
+			"wagered": 10000000
+		},
+		{
+			"absolute_error": 0.0000518885176702399,
+			"cabinet": "blackjack",
+			"elapsed_ms": 7444,
+			"observed_rtp": 0.99005188851767,
+			"returned": 10854820,
+			"rounds": 1000000,
+			"seed": 20260918,
+			"strategy": "basic strategy",
+			"target_rtp": 0.99,
+			"wagered": 10963890
+		},
+		{
+			"absolute_error": 0.00601359999999995,
+			"cabinet": "minefield_vault",
+			"elapsed_ms": 5896,
+			"observed_rtp": 0.9639864,
+			"returned": 24099660,
+			"rounds": 1000000,
+			"seed": 20260918,
+			"strategy": "fixed 3 reveals / 3 mines",
+			"target_rtp": 0.97,
+			"wagered": 25000000
+		}
+	]
+}
