@@ -26,9 +26,18 @@ current balance, preserving the future unlock seam without exposing empty rooms.
 
 ## Classic slot
 
-The specified strip and paytable give an exact expected return of `31,260 / 32,768 = 0.9539794921875` (95.39794921875%). The cabinet document's `0.95399` is a small arithmetic/rounding discrepancy. The declared `0.955` target remains unchanged and lies within the specified one-percentage-point simulation tolerance. The implementation uses all specified weights and multipliers without retuning.
+The original 32-stop distribution had the correct expectation but a rare-event
+variance of approximately `84.0132629722` squared stake units. It failed the
+locked fixed-seed million-round gate despite exact enumeration being within the
+declared target tolerance.
 
-The per-round payout variance is approximately `84.0132629722` squared stake units. At one million independent spins the standard error of measured RTP is approximately `0.009165875`, or 0.9166 percentage points. A fixed one-percentage-point tolerance is therefore a noisy statistical gate for this paytable, with roughly a 28% false-failure probability even under correct math. Exact enumeration verifies the payout expectation without sampling noise. A failing seeded simulation must remain reported as failing; changing seeds to obtain a passing result is not verification.
+The shipped 31-stop distribution keeps the `0.955` target and 500× maximum while
+moving more return into the frequent two-cherry outcome. Exact return is
+`0.954952838105468` (95.4952838105468%), with payout-multiplier variance
+`14.8194940320`. The one-million-round standard error falls to approximately
+0.3850 percentage points. Seed `20260918` was not changed; the mandatory sample
+now measures 95.5083% and passes AC-027. Exhaustive evaluation still covers all
+216 symbol triples and verifies the resource-driven payouts.
 
 ## Minefield Vault
 

@@ -1,7 +1,8 @@
 # House Rules
 
-Offline Godot casino prototype: a walkable floor, three cabinets on one session
-contract, integer chip wallet, cashier recovery, and versioned local saves.
+Offline Godot casino MVP: a walkable floor, three playable cabinets on one
+session contract, integer chip wallet, contracts, cashier recovery, versioned
+local saves, controller-first UI, generated pixel art, native motion and audio.
 
 **Engine:** Godot **4.7.2 standard**, GDScript (installed Windows engine reports
 `4.7.2.stable.official.ed1daf0bf`). No .NET or runtime networking.
@@ -28,6 +29,7 @@ a 100-chip marker. Saves live in Godot's `user://` directory, normally
 ## Verify
 
 ```powershell
+python tools/check_localization.py
 godot --headless --editor --path . --import --quit
 godot --headless --path . -s addons/gut/gut_cmdln.gd -gexit
 godot --headless --path . -s tests/slot_rtp_diagnostic.gd
@@ -38,38 +40,36 @@ GUT 9.5.0 is vendored and pinned to commit
 `8255c6305761754748f9fd641da5fd8f51c1708a`.
 Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 `gdlint src tests`. CI runs formatting, lint, GUT and one million production-math
-rounds per cabinet, and uploads JSON evidence even on failure.
-
-**Known acceptance failure:** the fixed-seed million-round slot run falls outside
-AC-027's ±1 percentage-point threshold. Its exact weighted-strip return matches
-the locked paytable. The failing gate remains enabled; a separate ten-million
-round diagnostic does not substitute for acceptance. See
-`docs/IMPLEMENTATION-NOTES.md` and `tests/results/` for evidence.
+rounds per cabinet, and uploads JSON evidence even on failure. The current release
+gate passes **35/35 tests and 1,057 assertions**. All three fixed-seed million-round
+RTP measurements pass AC-027; see `tests/results/rtp.json`.
 
 ## Structure
 
 - `src/domain/`: cabinet math and contracts; no Nodes, SceneTree, signals or autoload access.
-- `src/autoload/`: the six specified singletons.
+- `src/autoload/`: runtime services for wallet, saves, economy, RNG, scenes, input and audio.
 - `src/cabinets/`: scenes and controllers; all wallet settlement goes through `CabinetSession`.
 - `src/platform/`: atomic local storage and the platform interface.
 - `data/`: editable cabinet definitions and paytables.
 - `tests/`: GUT behavioral tests, deterministic replay and real RTP simulations.
-- `assets/drafts/`: generated, palette-quantized art awaiting cleanup.
+- `assets/drafts/`: palette-quantized runtime art; Higgsfield masters remain under `assets/source/`.
 
 The upstream agency prompts and license are pinned under `tools/agency-agents/`;
 `docs/AGENT-PIPELINE.md` records their roles and Godot-specific adaptations.
 
 ## Scope and limitations
 
-This implementation brings the first three domain models and RTP harness forward
-into M1, as requested. All three have functional controller-operated prototype
-screens. Final pixel art, audio, staged visual transitions, physical handheld
-validation, and later wing content remain later milestone work. Three persistent
-contracts rotate from the ten-objective Main Floor pool and pay flat rewards
-independently of cabinet outcomes. The remaining still masters and five motion
-references have now been generated through Higgsfield. Generated drafts are not
-final accepted assets; see
-`docs/art/GENERATION-REPORT.md`.
+All three cabinets have controller-operated, art-backed screens with native
+motion and deterministic PCM cues. Three persistent contracts rotate from the
+ten-objective Main Floor pool and pay flat rewards independently of cabinet
+outcomes. Higgsfield still and motion masters, processing manifests and provenance
+are retained under `assets/source/`, `assets/drafts/` and `tools/art/`.
+
+The 960×540 pixel base scales exactly to FHD/ROG Ally X and 4K. QHD stays sharp
+with intentional integer-scale letterboxing; see `docs/DISPLAY-VALIDATION.md`.
+Automated tests cannot replace the final physical-device pass for OS DPI,
+sunlight readability, controller firmware and display safe margins. High-Roller
+and VIP wings remain visibly locked because their rooms are v2 scope.
 
 Fractional payouts round down once to whole chips. This affects low-stake vault
 and odd-stake blackjack RTP; the simulation records its actual stake and strategy.
