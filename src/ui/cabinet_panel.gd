@@ -23,7 +23,7 @@ var _slot_spin_elapsed: float = 0.0
 var _slot_spinning: bool = false
 var _slot_finish_callback: Callable
 var _slot_lever: Node2D
-var _vault_tiles: Array[Sprite2D] = []
+var _vault_tiles: Array[VaultTile] = []
 var _vault_cursor: Node2D
 var _art_id: StringName = &""
 var _motion_tween: Tween
@@ -38,7 +38,7 @@ const SLOT_SYMBOL_COUNT: int = 6
 const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const BLACKJACK_DEALER := preload("res://assets/drafts/m2/dealer.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
-const VAULT_BACKDROP := preload("res://assets/drafts/vault_backdrop.png")
+const VAULT_BACKDROP := preload("res://assets/production/vault/vault_backdrop.png")
 const VAULT_TILE_HIDDEN := preload("res://assets/drafts/m2/tile_unrevealed.png")
 const VAULT_TILE_SAFE := preload("res://assets/drafts/m2/tile_safe_revealed.png")
 const VAULT_TILE_MINE := preload("res://assets/drafts/m2/tile_mine_revealed.png")
@@ -66,6 +66,8 @@ func _ready() -> void:
 	_title = _label(Vector2(80, 90), 24)
 	_stake = _label(Vector2(80, 138), Typography.PROMINENT)
 	_status = _label(Vector2(80, 184), 18)
+	_status.size = Vector2(250, 54)
+	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_detail = _label(Vector2(80, 230), Typography.PROMINENT)
 	_detail.size = Vector2(250, 130)
 	_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -170,18 +172,21 @@ func _refresh_vault() -> void:
 	var cursor: int = (cabinet.get("snap_cursor") as SnapCursor).index
 	for index: int in range(25):
 		if index < _vault_tiles.size():
-			_vault_tiles[index].texture = (
-				VAULT_TILE_MINE
-				if index in math.revealed and index in math.mines
-				else VAULT_TILE_SAFE if index in math.revealed else VAULT_TILE_HIDDEN
-			)
+			var next_face := VaultTile.Face.HIDDEN
+			if index in math.revealed:
+				next_face = VaultTile.Face.MINE if index in math.mines else VaultTile.Face.SAFE
 			if index in math.revealed and not _vault_revealed.has(index):
 				_vault_revealed[index] = true
 				AudioService.play(&"reveal")
-				_vault_tiles[index].modulate.a = 0.0
-				create_tween().tween_property(_vault_tiles[index], "modulate:a", 1.0, 0.18)
+				_vault_tiles[index].reveal(next_face)
+			elif not _vault_tiles[index].is_flipping:
+				_vault_tiles[index].set_face_immediate(next_face)
 	if _vault_cursor != null:
-		_vault_cursor.position = Vector2(583 + (cursor % 5) * 49, 138 + (cursor / 5) * 49)
+		var cursor_target := Vector2(516 + (cursor % 5) * 52, 124 + (cursor / 5) * 52)
+		if _cursor_tween != null:
+			_cursor_tween.kill()
+		_cursor_tween = create_tween()
+		_cursor_tween.tween_property(_vault_cursor, "position", cursor_target, 0.09)
 	_detail.text = tr("VAULT_GRID") % [cabinet.get("mine_count"), math.multiplier(), ""]
 	_detail.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_controls.text = (
@@ -331,24 +336,22 @@ func _add_playing_card(
 
 func _build_vault_art() -> void:
 	_art_root.add_child(
-		_texture("VaultBackdropArt", VAULT_BACKDROP, Vector2(470, 96), Vector2(428, 241))
+		_texture("VaultBackdropArt", VAULT_BACKDROP, Vector2(382, 94), Vector2(506, 290))
 	)
 	for index: int in range(25):
-		var tile := _texture(
-			"VaultTile%02d" % index,
-			VAULT_TILE_HIDDEN,
-			Vector2(587 + (index % 5) * 49, 142 + (index / 5) * 49),
-			Vector2(42, 42)
-		)
+		var tile := VaultTile.new()
+		tile.name = "VaultTile%02d" % index
+		tile.position = Vector2(520 + (index % 5) * 52, 128 + (index / 5) * 52)
+		tile.size = Vector2(44, 44)
 		_vault_tiles.append(tile)
 		_art_root.add_child(tile)
 	_vault_cursor = Node2D.new()
 	_vault_cursor.name = "SnapCursorArt"
 	for border: Rect2 in [
-		Rect2(0, 0, 50, 4),
-		Rect2(0, 46, 50, 4),
-		Rect2(0, 0, 4, 50),
-		Rect2(46, 0, 4, 50),
+		Rect2(0, 0, 52, 3),
+		Rect2(0, 49, 52, 3),
+		Rect2(0, 0, 3, 52),
+		Rect2(49, 0, 3, 52),
 	]:
 		var edge := ColorRect.new()
 		edge.position = border.position
@@ -356,9 +359,7 @@ func _build_vault_art() -> void:
 		edge.color = Color("00e5ff")
 		_vault_cursor.add_child(edge)
 	_art_root.add_child(_vault_cursor)
-	_cursor_tween = create_tween().set_loops()
-	_cursor_tween.tween_property(_vault_cursor, "modulate:a", 0.45, 0.35)
-	_cursor_tween.tween_property(_vault_cursor, "modulate:a", 1.0, 0.35)
+	_vault_cursor.position = Vector2(516, 124)
 
 
 func _refresh_slot() -> void:

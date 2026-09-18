@@ -42,6 +42,15 @@ func _capture() -> void:
 	router.session.cabinet.selected_stake = 10
 	router.session.cabinet.start_round(10)
 	await _snapshot("06_vault")
+	var vault_game: Node = router.session.cabinet
+	var vault_math: RefCounted = vault_game.get("math")
+	var safe_index: int = 0
+	while safe_index in (vault_math.get("mines") as Array):
+		safe_index += 1
+	vault_math.call("reveal", safe_index)
+	(vault_game.get("panel") as CanvasLayer).call("refresh")
+	await create_timer(0.3).timeout
+	await _snapshot("06_vault_reveal")
 	router.return_to_floor()
 	main._quit_game()
 

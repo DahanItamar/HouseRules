@@ -161,3 +161,16 @@ func test_blackjack_uses_dealt_cards_and_a_revealing_hole_card() -> void:
 	game.call("_resolve", result)
 	for card: PlayingCard in game.panel._blackjack_cards:
 		assert_false(card.face_down, "Resolved dealer hand is face-up")
+
+
+func test_vault_uses_physical_tiles_with_flip_reveals() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(VAULT_DEFINITION)
+	var game: MiniGame = session.cabinet
+	assert_true(game.start_round(10))
+	assert_eq(game.panel._vault_tiles.size(), 25)
+	game.get("math").reveal(0)
+	game.panel.refresh()
+	assert_true(game.panel._vault_tiles[0].is_flipping, "Newly revealed box starts its flip")
+	assert_true(game.panel._vault_revealed.has(0))
