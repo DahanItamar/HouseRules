@@ -51,8 +51,8 @@ var _blackjack_dealt: bool = false
 var _blackjack_pending_motions: int = 0
 var _blackjack_preparing: bool = false
 var _blackjack_cards: Array[PlayingCard] = []
-var _blackjack_dealer_total: Label
-var _blackjack_player_total: Label
+var _blackjack_dealer_total: AnimatedNumberLabel
+var _blackjack_player_total: AnimatedNumberLabel
 var _blackjack_credit_value: AnimatedNumberLabel
 var _blackjack_primary: Button
 var _blackjack_stand: Button
@@ -385,12 +385,17 @@ func _refresh_blackjack() -> void:
 	)
 	_render_blackjack_hand(math.player, math.dealer, cabinet.is_round_active)
 	if _blackjack_player_total != null:
-		_blackjack_player_total.text = tr("BLACKJACK_TOTAL") % BlackjackMath.hand_value(math.player)
-		_blackjack_dealer_total.text = (
-			tr("BLACKJACK_SHOWING") % BlackjackMath.hand_value([math.dealer[0]])
-			if cabinet.is_round_active and not math.dealer.is_empty()
-			else tr("BLACKJACK_TOTAL") % BlackjackMath.hand_value(math.dealer)
+		_blackjack_player_total.set_number(
+			BlackjackMath.hand_value(math.player), tr("BLACKJACK_TOTAL")
 		)
+		if cabinet.is_round_active and not math.dealer.is_empty():
+			_blackjack_dealer_total.set_number(
+				BlackjackMath.hand_value([math.dealer[0]]), tr("BLACKJACK_SHOWING")
+			)
+		else:
+			_blackjack_dealer_total.set_number(
+				BlackjackMath.hand_value(math.dealer), tr("BLACKJACK_TOTAL")
+			)
 	if _blackjack_credit_value != null:
 		if Wallet.test_mode_enabled:
 			_blackjack_credit_value.set_infinity()
@@ -780,11 +785,11 @@ func _build_blackjack_art() -> void:
 		hand_label.add_theme_font_size_override("font_size", Typography.SUPPORTING)
 		hand_label.add_theme_color_override("font_color", Color("c8a34b"))
 		_art_root.add_child(hand_label)
-	_blackjack_dealer_total = _label(Vector2(104, 190), 16)
+	_blackjack_dealer_total = _number_label(Vector2(104, 190), 16)
 	_blackjack_dealer_total.size = Vector2(150, 26)
 	_blackjack_dealer_total.add_theme_color_override("font_color", Color("f1e8d8"))
 	_blackjack_dealer_total.z_index = 6
-	_blackjack_player_total = _label(Vector2(104, 354), 16)
+	_blackjack_player_total = _number_label(Vector2(104, 354), 16)
 	_blackjack_player_total.size = Vector2(150, 26)
 	_blackjack_player_total.add_theme_color_override("font_color", Color("f1e8d8"))
 	_blackjack_player_total.z_index = 6
@@ -1142,6 +1147,16 @@ func _texture(node_name: String, texture: Texture2D, at: Vector2, dimensions: Ve
 
 func _label(at: Vector2, font_size: int) -> Label:
 	var label := Label.new()
+	label.position = at
+	label.add_theme_font_override("font", Typography.UI_FONT)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color("e8e6f0"))
+	add_child(label)
+	return label
+
+
+func _number_label(at: Vector2, font_size: int) -> AnimatedNumberLabel:
+	var label := AnimatedNumberLabel.new()
 	label.position = at
 	label.add_theme_font_override("font", Typography.UI_FONT)
 	label.add_theme_font_size_override("font_size", font_size)

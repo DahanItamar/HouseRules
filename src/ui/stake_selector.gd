@@ -16,10 +16,19 @@ var _buttons: Array[Button] = []
 var _active_operation: int = -1
 var _bet_flash: float = 0.0
 var _selection_time: float = 0.0
+var _stake_value: AnimatedNumberLabel
 
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_PASS
+	_stake_value = AnimatedNumberLabel.new()
+	_stake_value.name = "AnimatedStakeValue"
+	_stake_value.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_stake_value.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_stake_value.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_stake_value.add_theme_font_size_override("font_size", Typography.CONTROL)
+	_stake_value.add_theme_color_override("font_color", Color("fff0d4"))
+	add_child(_stake_value)
 	for action: Dictionary in ACTIONS:
 		var button := Button.new()
 		button.name = action.name
@@ -97,6 +106,8 @@ func refresh_controls() -> void:
 		)
 		if operation != _active_operation:
 			button.modulate = Color.WHITE
+	var displayed_stake := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
+	_stake_value.set_number(displayed_stake)
 	queue_redraw()
 
 
@@ -118,6 +129,9 @@ func _layout_buttons() -> void:
 	for index: int in range(mini(rects.size(), _buttons.size())):
 		_buttons[index].position = rects[index].position
 		_buttons[index].size = rects[index].size
+	if _stake_value != null:
+		_stake_value.position = Vector2(size.x - 88.0, 4.0)
+		_stake_value.size = Vector2(68.0, 30.0)
 
 
 func _apply_operation(operation: int) -> void:
@@ -145,15 +159,6 @@ func _draw() -> void:
 	draw_circle(chip_center, 24.0 + _bet_flash * 3.0, Color("48c5d5", glow_alpha))
 	draw_circle(chip_center, 21.0, Color("601521"))
 	draw_arc(chip_center, 19.0, 0.0, TAU, 48, Color("f2c84b"), 2.0)
-	draw_string(
-		Typography.DISPLAY_FONT,
-		chip_center + Vector2(-34.0, 7.0),
-		str(displayed_stake),
-		HORIZONTAL_ALIGNMENT_CENTER,
-		68.0,
-		Typography.CONTROL,
-		Color("fff0d4")
-	)
 	var after_bet := maxi(0, cabinet.context.balance - displayed_stake)
 	var after_bet_text := "AFTER BET  ∞" if Wallet.test_mode_enabled else tr("BET_AFTER") % after_bet
 	draw_string(

@@ -10,6 +10,8 @@ var _initialized: bool = false
 
 
 func set_number(value: int, format_text: String = "%d", animate: bool = true) -> void:
+	if _initialized and target_value == value and _format == format_text:
+		return
 	_format = format_text
 	target_value = value
 	if not _initialized or not animate or not is_inside_tree():

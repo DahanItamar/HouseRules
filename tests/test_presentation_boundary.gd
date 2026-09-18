@@ -36,7 +36,10 @@ func test_each_slot_reel_emits_a_stop_impact_without_changing_its_symbol() -> vo
 		before.append(panel._slot_reel_cells[reel_index][2].symbol_index)
 	panel.set_status("ROUND_SPINNING")
 	panel._process(2.2)
-	var bursts := panel.find_children("*", "CPUParticles2D", true, false)
+	var bursts: Array[Node] = []
+	for child: Node in panel._art_root.get_children():
+		if child is ImpactBurst:
+			bursts.append(child)
 	assert_eq(bursts.size(), 3, "Every stopped reel emits one bounded presentation burst")
 	var after: Array[int] = []
 	for reel_index: int in range(3):

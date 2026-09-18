@@ -159,6 +159,7 @@ func test_bet_buttons_apply_their_operation_and_show_active_feedback() -> void:
 	var selector: StakeSelector = session.cabinet.panel._stake_selector
 	selector._buttons[1].pressed.emit()
 	assert_eq(session.cabinet.selected_stake, 11)
+	assert_eq(selector._stake_value.target_value, 11)
 	assert_eq(selector._active_operation, MiniGame.BetOperation.ADD_10)
 	assert_gt(selector._bet_flash, 0.0)
 

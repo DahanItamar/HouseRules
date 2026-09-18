@@ -49,11 +49,15 @@ func _release() -> void:
 		_animate_to(Vector2.ONE, 0.1, Tween.TRANS_QUAD, Tween.EASE_OUT)
 		return
 	_animate_to(Vector2(1.02, 1.02), 0.08, Tween.TRANS_BACK, Tween.EASE_OUT)
-	_motion.chain().tween_property(_button, "scale", Vector2.ONE, 0.08).set_trans(Tween.TRANS_QUAD)
+	_motion.chain().tween_property(
+		_button, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.08)
+	).set_trans(Tween.TRANS_QUAD)
 
 
 func _animate_to(target: Vector2, duration: float, transition: Tween.TransitionType, ease: Tween.EaseType) -> void:
 	if _motion != null:
 		_motion.kill()
 	_motion = create_tween()
-	_motion.tween_property(_button, "scale", target, duration).set_trans(transition).set_ease(ease)
+	_motion.tween_property(
+		_button, "scale", target, MotionPolicy.finite_duration(duration)
+	).set_trans(transition).set_ease(ease)

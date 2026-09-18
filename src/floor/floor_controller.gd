@@ -57,6 +57,7 @@ var _patrons: Array[Node2D] = []
 var _floor_camera: Camera2D
 var _camera_tween: Tween
 var _camera_focus_id: StringName = &""
+var _dust: CPUParticles2D
 
 
 func _ready() -> void:
@@ -72,6 +73,8 @@ func _ready() -> void:
 	_build_camera()
 	_build_dust()
 	_build_patrons()
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 	_avatar_visual = FLOOR_AVATAR_SCRIPT.new()
 	_avatar_visual.name = "FloorAvatar"
 	_avatar_visual.position = avatar_position
@@ -194,7 +197,8 @@ func dismiss_game_prompt() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	_ambient_time += delta
+	if MotionPolicy.allows_continuous_motion():
+		_ambient_time += delta
 	queue_redraw()
 	if not _cashier_open:
 		move_avatar(Input.get_vector("move_left", "move_right", "move_up", "move_down"), delta)
@@ -295,29 +299,30 @@ func _animate_prompt_change() -> void:
 	_prompt.pivot_offset = _prompt.size * 0.5
 	_prompt.scale = Vector2(0.98, 0.98)
 	_prompt_tween = create_tween().set_parallel(true)
-	_prompt_tween.tween_property(_prompt, "modulate:a", 1.0, 0.16).set_trans(Tween.TRANS_QUAD)
-	_prompt_tween.tween_property(_prompt, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK)
+	var duration := MotionPolicy.finite_duration(0.16)
+	_prompt_tween.tween_property(_prompt, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_QUAD)
+	_prompt_tween.tween_property(_prompt, "scale", Vector2.ONE, duration).set_trans(Tween.TRANS_BACK)
 
 
 func _build_dust() -> void:
-	var dust := CPUParticles2D.new()
-	dust.name = "CasinoDust"
-	dust.position = Vector2(480, 270)
-	dust.amount = 32
-	dust.lifetime = 6.5
-	dust.preprocess = 6.5
-	dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	dust.emission_rect_extents = Vector2(440, 220)
-	dust.direction = Vector2.UP
-	dust.spread = 35.0
-	dust.initial_velocity_min = 3.0
-	dust.initial_velocity_max = 8.0
-	dust.gravity = Vector2.ZERO
-	dust.scale_amount_min = 0.8
-	dust.scale_amount_max = 2.2
-	dust.color = Color("f2d58d24")
-	dust.z_index = 1
-	add_child(dust)
+	_dust = CPUParticles2D.new()
+	_dust.name = "CasinoDust"
+	_dust.position = Vector2(480, 270)
+	_dust.amount = 32
+	_dust.lifetime = 6.5
+	_dust.preprocess = 6.5
+	_dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	_dust.emission_rect_extents = Vector2(440, 220)
+	_dust.direction = Vector2.UP
+	_dust.spread = 35.0
+	_dust.initial_velocity_min = 3.0
+	_dust.initial_velocity_max = 8.0
+	_dust.gravity = Vector2.ZERO
+	_dust.scale_amount_min = 0.8
+	_dust.scale_amount_max = 2.2
+	_dust.color = Color("f2d58d24")
+	_dust.z_index = 1
+	add_child(_dust)
 
 
 func _build_camera() -> void:
@@ -347,6 +352,10 @@ func _update_camera_focus(game_id: StringName) -> void:
 	_camera_focus_id = game_id
 	if _camera_tween != null:
 		_camera_tween.kill()
+	if not MotionPolicy.allows_camera_emphasis():
+		_floor_camera.position = CAMERA_CENTER
+		_floor_camera.zoom = Vector2.ONE
+		return
 	var target_position := CAMERA_CENTER
 	var target_zoom := Vector2.ONE
 	if game_id != &"" and cabinet_positions.has(game_id):
@@ -355,12 +364,31 @@ func _update_camera_focus(game_id: StringName) -> void:
 			target_position += toward_machine.normalized() * CAMERA_FOCUS_OFFSET
 		target_zoom = CAMERA_FOCUS_ZOOM
 	_camera_tween = create_tween().set_parallel(true)
+	var duration := MotionPolicy.finite_duration(0.24)
 	_camera_tween.tween_property(
-		_floor_camera, "position", target_position, 0.24
+		_floor_camera, "position", target_position, duration
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_camera_tween.tween_property(
-		_floor_camera, "zoom", target_zoom, 0.24
+		_floor_camera, "zoom", target_zoom, duration
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if _dust != null:
+		_dust.emitting = not reduced
+		_dust.visible = not reduced
+	if reduced:
+		_ambient_time = 0.0
+		if _camera_tween != null:
+			_camera_tween.kill()
+		if _floor_camera != null:
+			_floor_camera.position = CAMERA_CENTER
+			_floor_camera.zoom = Vector2.ONE
+	else:
+		_camera_focus_id = &""
+		var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
+		_update_camera_focus(current_game)
+	queue_redraw()
 
 
 func _draw() -> void:
@@ -373,7 +401,7 @@ func _draw() -> void:
 		var at: Vector2 = cabinet_positions[id]
 		var is_near: bool = nearby_definition != null and nearby_definition.id == id
 		var phase := _ambient_time * 1.8 + float(cabinet_positions.keys().find(id)) * 1.9
-		var pulse := (sin(phase) + 1.0) * 0.5
+		var pulse := (sin(phase) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
 		_draw_machine_zone(id, at, is_near, pulse)
 	draw_string(
 		ThemeDB.fallback_font,
@@ -424,7 +452,7 @@ func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float
 
 
 func _draw_floor_lighting() -> void:
-	var drift := sin(_ambient_time * 0.18) * 24.0
+	var drift := sin(_ambient_time * 0.18) * 24.0 if MotionPolicy.allows_continuous_motion() else 0.0
 	draw_colored_polygon(
 		PackedVector2Array([
 			Vector2(278 + drift, 88), Vector2(354 + drift, 88),
@@ -536,9 +564,10 @@ func _refresh_cashier_menu() -> void:
 		if _cashier_tween != null:
 			_cashier_tween.kill()
 		_cashier_tween = create_tween().set_parallel(true)
-		_cashier_tween.tween_property(_cashier_panel, "modulate:a", 1.0, 0.18)
+		var duration := MotionPolicy.finite_duration(0.18)
+		_cashier_tween.tween_property(_cashier_panel, "modulate:a", 1.0, duration)
 		_cashier_tween.tween_property(
-			_cashier_panel, "scale", Vector2.ONE, 0.18
+			_cashier_panel, "scale", Vector2.ONE, duration
 		).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_cashier_balance.text = "TEST BANK  ∞" if Wallet.test_mode_enabled else "CHIPS  %d" % Wallet.balance
 	_cashier_debt.text = "NO OUTSTANDING MARKER" if Economy.debt == 0 else "MARKER DEBT  %d" % Economy.debt

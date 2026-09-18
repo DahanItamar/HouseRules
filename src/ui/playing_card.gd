@@ -14,14 +14,21 @@ var _sheen_remaining: float = 0.0
 var _flip_tween: Tween
 var _idle_time: float = 0.0
 var _idle_phase: float = 0.0
+var _active_sheen_duration: float = SHEEN_DURATION
+
+
+func _ready() -> void:
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 
 
 func _process(delta: float) -> void:
-	_idle_time = fmod(_idle_time + delta, 12.0)
+	if MotionPolicy.allows_continuous_motion():
+		_idle_time = fmod(_idle_time + delta, 12.0)
 	if _sheen_remaining > 0.0:
 		_sheen_remaining = maxf(_sheen_remaining - delta, 0.0)
 	var idle_pass := fmod(_idle_time + _idle_phase, 4.6)
-	if _sheen_remaining > 0.0 or idle_pass < 0.56:
+	if _sheen_remaining > 0.0 or (MotionPolicy.allows_continuous_motion() and idle_pass < 0.56):
 		queue_redraw()
 
 
@@ -54,11 +61,13 @@ func set_face_down(hidden: bool, animated: bool = false) -> void:
 	var resting_rotation := rotation
 	_flip_tween = create_tween()
 	_flip_tween.set_parallel(true)
-	_flip_tween.tween_property(self, "scale:x", 0.04, 0.11).set_trans(
+	var close_duration := MotionPolicy.finite_duration(0.11)
+	var open_duration := MotionPolicy.finite_duration(0.15)
+	_flip_tween.tween_property(self, "scale:x", 0.04, close_duration).set_trans(
 		Tween.TRANS_QUAD
 	).set_ease(Tween.EASE_IN)
-	_flip_tween.tween_property(self, "scale:y", 1.06, 0.11).set_trans(Tween.TRANS_QUAD)
-	_flip_tween.tween_property(self, "rotation", resting_rotation + 0.025, 0.11)
+	_flip_tween.tween_property(self, "scale:y", 1.06, close_duration).set_trans(Tween.TRANS_QUAD)
+	_flip_tween.tween_property(self, "rotation", resting_rotation + 0.025, close_duration)
 	_flip_tween.chain().tween_callback(
 		func() -> void:
 			_visual_face_down = hidden
@@ -66,16 +75,23 @@ func set_face_down(hidden: bool, animated: bool = false) -> void:
 			queue_redraw()
 	)
 	_flip_tween.set_parallel(true)
-	_flip_tween.tween_property(self, "scale:x", 1.0, 0.15).set_trans(
+	_flip_tween.tween_property(self, "scale:x", 1.0, open_duration).set_trans(
 		Tween.TRANS_BACK
 	).set_ease(Tween.EASE_OUT)
-	_flip_tween.tween_property(self, "scale:y", 1.0, 0.15).set_trans(Tween.TRANS_QUAD)
-	_flip_tween.tween_property(self, "rotation", resting_rotation, 0.15).set_trans(Tween.TRANS_QUAD)
+	_flip_tween.tween_property(self, "scale:y", 1.0, open_duration).set_trans(Tween.TRANS_QUAD)
+	_flip_tween.tween_property(self, "rotation", resting_rotation, open_duration).set_trans(Tween.TRANS_QUAD)
 
 
 func _trigger_sheen() -> void:
-	_sheen_remaining = SHEEN_DURATION
+	_active_sheen_duration = MotionPolicy.finite_duration(SHEEN_DURATION)
+	_sheen_remaining = _active_sheen_duration
 	set_process(true)
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if reduced:
+		_idle_time = 1.0
+	queue_redraw()
 
 
 func _draw() -> void:
@@ -86,7 +102,7 @@ func _draw() -> void:
 	card_style.set_corner_radius_all(7)
 	draw_style_box(card_style, Rect2(Vector2.ZERO, size))
 	if _sheen_remaining > 0.0:
-		var normalized := _sheen_remaining / SHEEN_DURATION
+		var normalized := _sheen_remaining / _active_sheen_duration
 		var flash_alpha := sin(normalized * PI) * 0.68
 		draw_rect(
 			Rect2(Vector2.ONE, size - Vector2(2, 2)),
@@ -94,7 +110,7 @@ func _draw() -> void:
 			false,
 			2.0
 		)
-	elif not _visual_face_down:
+	elif not _visual_face_down and MotionPolicy.allows_continuous_motion():
 		var idle_pass := fmod(_idle_time + _idle_phase, 4.6)
 		if idle_pass < 0.56:
 			var idle_alpha := sin(idle_pass / 0.56 * PI) * 0.28

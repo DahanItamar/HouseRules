@@ -55,11 +55,15 @@ func _ready() -> void:
 	_sprite.position = _rest_position
 	add_child(_sprite)
 	_apply_profile()
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 	set_process(true)
 	queue_redraw()
 
 
 func _process(delta: float) -> void:
+	if not MotionPolicy.allows_continuous_motion():
+		return
 	elapsed += delta
 	var cycle_time := fmod(elapsed + phase_offset, gesture_interval)
 	# A brief ease-shaped gesture followed by a long, calm resting beat.
@@ -77,6 +81,17 @@ func _process(delta: float) -> void:
 			_sprite.position = _rest_position + Vector2(0, gesture_strength * 1.5)
 			_sprite.rotation = sin(cycle_time / gesture_duration * TAU) * 0.012 if cycle_time < gesture_duration else 0.0
 	_sprite.scale = Vector2(0.285 * (1.0 - breath), 0.285 * (1.0 + breath))
+	queue_redraw()
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if not reduced or _sprite == null:
+		return
+	elapsed = 0.0
+	gesture_strength = 0.0
+	_sprite.position = _rest_position
+	_sprite.rotation = 0.0
+	_sprite.scale = Vector2.ONE * 0.285
 	queue_redraw()
 
 

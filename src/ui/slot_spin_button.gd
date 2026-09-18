@@ -17,11 +17,13 @@ func _ready() -> void:
 	mouse_exited.connect(queue_redraw)
 	focus_entered.connect(queue_redraw)
 	focus_exited.connect(queue_redraw)
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 	set_process(true)
 
 
 func _process(delta: float) -> void:
-	if disabled:
+	if disabled or not MotionPolicy.allows_continuous_motion():
 		return
 	idle_time = fmod(idle_time + delta, 8.0)
 	queue_redraw()
@@ -29,7 +31,7 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var center := size * 0.5
-	var idle_breath := (sin(idle_time * TAU / 1.8) + 1.0) * 0.5 if not disabled else 0.0
+	var idle_breath := (sin(idle_time * TAU / 1.8) + 1.0) * 0.5 if not disabled and MotionPolicy.allows_continuous_motion() else 0.0
 	var active_radius := 36.0 if button_pressed else 38.5 + idle_breath * 0.8
 	var brass := (
 		Color("f0c45e")
@@ -63,3 +65,10 @@ func _draw() -> void:
 		21,
 		Color("8d8272") if disabled else Color("f8ecd0")
 	)
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if reduced:
+		idle_time = 0.0
+	set_process(not reduced)
+	queue_redraw()
