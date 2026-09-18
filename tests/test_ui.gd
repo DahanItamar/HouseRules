@@ -1,6 +1,8 @@
 extends GutTest
 
 const MAIN_SCENE := preload("res://src/ui/main.tscn")
+const SLOT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/slot_classic.tres")
+const VAULT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/minefield_vault.tres")
 var _original_platform: PlatformServices
 
 
@@ -33,7 +35,7 @@ func test_ac042_chips_stake_and_multiplier_use_critical_text() -> void:
 	add_child_autofree(main)
 	assert_gte(main._hud.get_theme_font_size("font_size"), Typography.CRITICAL)
 
-	var definition: CabinetDefinition = load("res://data/cabinets/minefield_vault.tres")
+	var definition: CabinetDefinition = VAULT_DEFINITION
 	var session := CabinetSession.new()
 	add_child_autofree(session)
 	session.begin(definition)
@@ -87,3 +89,16 @@ func test_m5_machine_captures_match_the_pixel_base() -> void:
 		var texture: Texture2D = load("res://tests/results/screenshots/" + filename)
 		assert_not_null(texture, "%s is imported" % filename)
 		assert_eq(texture.get_size(), Vector2(960, 540), "%s uses the pixel base" % filename)
+
+
+func test_m5_cabinet_motion_runs_in_engine() -> void:
+	var slot_session := CabinetSession.new()
+	add_child_autofree(slot_session)
+	slot_session.begin(SLOT_DEFINITION)
+	slot_session.cabinet.panel.set_status("ROUND_SPINNING")
+	assert_true(slot_session.cabinet.panel.has_active_motion(), "Slot reel motion is active")
+
+	var vault_session := CabinetSession.new()
+	add_child_autofree(vault_session)
+	vault_session.begin(VAULT_DEFINITION)
+	assert_true(vault_session.cabinet.panel.has_active_motion(), "Vault cursor pulse is active")

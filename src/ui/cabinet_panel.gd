@@ -4,6 +4,7 @@ extends CanvasLayer
 
 var cabinet: MiniGame
 var _title: Label
+var _frame: ColorRect
 var _stake: Label
 var _status: Label
 var _detail: Label
@@ -15,6 +16,11 @@ var _slot_symbols: Array[Sprite2D] = []
 var _vault_tiles: Array[Sprite2D] = []
 var _vault_cursor: Node2D
 var _art_id: StringName = &""
+var _motion_tween: Tween
+var _entrance_tween: Tween
+var _cursor_tween: Tween
+var _blackjack_dealt: bool = false
+var _vault_revealed: Dictionary = {}
 
 const SLOT_BODY := preload("res://assets/drafts/slot_classic_body.png")
 const SLOT_SYMBOLS: Array[Texture2D] = [
@@ -40,11 +46,11 @@ func _ready() -> void:
 	shade.color = Color("0b0a12e8")
 	shade.size = Vector2(960, 540)
 	add_child(shade)
-	var frame := ColorRect.new()
-	frame.color = Color("2d2a3e")
-	frame.position = Vector2(48, 76)
-	frame.size = Vector2(864, 396)
-	add_child(frame)
+	_frame = ColorRect.new()
+	_frame.color = Color("2d2a3e")
+	_frame.position = Vector2(48, 76)
+	_frame.size = Vector2(864, 396)
+	add_child(_frame)
 	_art_root = Node2D.new()
 	_art_root.name = "CabinetArt"
 	add_child(_art_root)
@@ -87,17 +93,25 @@ func refresh() -> void:
 
 
 func show_result(result: RoundResult) -> void:
+	_stop_motion()
+	_blackjack_dealt = false
 	_result = result
 	_status_key = "ROUND_READY"
 	refresh()
 	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
+	_frame.color = Color("ffd23f")
+	create_tween().tween_property(_frame, "color", Color("2d2a3e"), 0.3)
 
 
 func set_status(key: String) -> void:
 	_status_key = key
 	_result = null
 	_detail.text = ""
+	if key == "VAULT_REVEAL":
+		_vault_revealed.clear()
 	refresh()
+	if key == "ROUND_SPINNING":
+		_start_slot_motion()
 
 
 func _refresh_blackjack() -> void:
@@ -116,6 +130,15 @@ func _refresh_blackjack() -> void:
 			InputRouter.glyph("back")
 		]
 	)
+	if cabinet.is_round_active and not _blackjack_dealt:
+		_blackjack_dealt = true
+		var card := _art_root.get_node_or_null("CardBackArt") as Sprite2D
+		if card != null:
+			card.position.y = 154
+			card.modulate.a = 0.0
+			var deal := create_tween().set_parallel(true)
+			deal.tween_property(card, "position:y", 194.0, 0.24)
+			deal.tween_property(card, "modulate:a", 1.0, 0.18)
 
 
 func _refresh_vault() -> void:
@@ -128,6 +151,10 @@ func _refresh_vault() -> void:
 				if index in math.revealed and index in math.mines
 				else VAULT_TILE_SAFE if index in math.revealed else VAULT_TILE_HIDDEN
 			)
+			if index in math.revealed and not _vault_revealed.has(index):
+				_vault_revealed[index] = true
+				_vault_tiles[index].modulate.a = 0.0
+				create_tween().tween_property(_vault_tiles[index], "modulate:a", 1.0, 0.18)
 	if _vault_cursor != null:
 		_vault_cursor.position = Vector2(583 + (cursor % 5) * 49, 138 + (cursor / 5) * 49)
 	_detail.text = tr("VAULT_GRID") % [cabinet.get("mine_count"), math.multiplier(), ""]
@@ -155,6 +182,7 @@ func _ensure_art() -> void:
 		_build_blackjack_art()
 	elif id == &"minefield_vault":
 		_build_vault_art()
+	_play_art_entrance()
 
 
 func _build_slot_art() -> void:
@@ -207,6 +235,9 @@ func _build_vault_art() -> void:
 		edge.color = Color("00e5ff")
 		_vault_cursor.add_child(edge)
 	_art_root.add_child(_vault_cursor)
+	_cursor_tween = create_tween().set_loops()
+	_cursor_tween.tween_property(_vault_cursor, "modulate:a", 0.45, 0.35)
+	_cursor_tween.tween_property(_vault_cursor, "modulate:a", 1.0, 0.35)
 
 
 func _refresh_slot() -> void:
@@ -219,6 +250,43 @@ func _refresh_slot() -> void:
 		_slot_symbols[index].texture = SLOT_SYMBOLS[symbol]
 		names.append(tr("SYMBOL_" + str(symbol)))
 	_detail.text = "   |   ".join(names)
+
+
+func has_active_motion() -> bool:
+	return (
+		(_motion_tween != null and _motion_tween.is_running())
+		or (_entrance_tween != null and _entrance_tween.is_running())
+		or (_cursor_tween != null and _cursor_tween.is_running())
+	)
+
+
+func _play_art_entrance() -> void:
+	_art_root.modulate.a = 0.0
+	_art_root.position.y = 8.0
+	_entrance_tween = create_tween().set_parallel(true)
+	_entrance_tween.tween_property(_art_root, "modulate:a", 1.0, 0.2)
+	_entrance_tween.tween_property(_art_root, "position:y", 0.0, 0.2)
+
+
+func _start_slot_motion() -> void:
+	_stop_motion()
+	if _slot_symbols.is_empty():
+		return
+	_motion_tween = create_tween().set_loops()
+	_motion_tween.tween_property(_slot_symbols[0], "position:y", 230.0, 0.08)
+	for index: int in range(1, _slot_symbols.size()):
+		_motion_tween.parallel().tween_property(_slot_symbols[index], "position:y", 230.0, 0.08)
+	_motion_tween.tween_property(_slot_symbols[0], "position:y", 214.0, 0.08)
+	for index: int in range(1, _slot_symbols.size()):
+		_motion_tween.parallel().tween_property(_slot_symbols[index], "position:y", 214.0, 0.08)
+
+
+func _stop_motion() -> void:
+	if _motion_tween != null:
+		_motion_tween.kill()
+		_motion_tween = null
+	for symbol: Sprite2D in _slot_symbols:
+		symbol.position.y = 222.0
 
 
 func _texture(node_name: String, texture: Texture2D, at: Vector2, dimensions: Vector2) -> Sprite2D:
