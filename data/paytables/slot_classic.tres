@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="SlotPaytable" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/slot_paytable.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+weights = Array[int]([8, 7, 6, 5, 4, 2])
+multipliers = Array[int]([8, 12, 20, 40, 80, 500])
+two_cherry_multiplier = 1
+max_win = 500

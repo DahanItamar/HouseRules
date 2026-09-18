@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="MinefieldPaytable" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/minefield_paytable.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+tile_count = 25
+return_numerator = 97
+return_denominator = 100
+max_win = 5000

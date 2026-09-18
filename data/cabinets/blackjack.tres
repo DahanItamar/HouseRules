@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CabinetDefinition" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/domain/cabinet_definition.gd" id="1"]
+[ext_resource type="PackedScene" path="res://src/cabinets/blackjack/blackjack.tscn" id="2"]
+
+[resource]
+script = ExtResource("1")
+id = &"blackjack"
+name_key = "CABINET_BLACKJACK_NAME"
+scene = ExtResource("2")
+min_bet = 5
+max_bet = 100
+target_rtp = 0.990
+volatility = 0
