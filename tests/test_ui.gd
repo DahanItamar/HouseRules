@@ -183,6 +183,25 @@ func test_slot_uses_a_full_screen_sharp_higgsfield_stage() -> void:
 	)
 
 
+func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
+	var blackjack_session := CabinetSession.new()
+	add_child_autofree(blackjack_session)
+	blackjack_session.begin(BLACKJACK_DEFINITION)
+	var blackjack_panel: CabinetPanel = blackjack_session.cabinet.panel
+	assert_eq(blackjack_panel._frame.size, Vector2(960, 540))
+	var table := blackjack_panel.find_child("BlackjackTableArt", true, false) as ColorRect
+	assert_not_null(table)
+	assert_gte(table.size.x, 800.0, "Blackjack felt owns the full game stage")
+
+	var vault_session := CabinetSession.new()
+	add_child_autofree(vault_session)
+	vault_session.begin(VAULT_DEFINITION)
+	var vault_panel: CabinetPanel = vault_session.cabinet.panel
+	assert_eq(vault_panel._frame.size, Vector2(960, 540))
+	assert_eq(vault_panel._vault_tiles.size(), 25)
+	assert_eq(vault_panel._vault_tiles[0].size, Vector2(48, 48))
+
+
 func test_blackjack_uses_dealt_cards_and_a_revealing_hole_card() -> void:
 	var session := CabinetSession.new()
 	add_child_autofree(session)

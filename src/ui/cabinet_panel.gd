@@ -42,6 +42,8 @@ const SLOT_REEL_TOP: float = 151.0
 const SLOT_REEL_BOUNCE_Y: float = 144.0
 const SLOT_CELL_HEIGHT: float = 78.0
 const SLOT_STRIP_HEIGHT: float = SLOT_CELL_HEIGHT * 5.0
+const VAULT_GRID_ORIGIN := Vector2(354, 134)
+const VAULT_GRID_PITCH: float = 56.0
 const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const BLACKJACK_DEALER := preload("res://assets/drafts/m2/dealer.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
@@ -189,7 +191,11 @@ func _refresh_vault() -> void:
 			elif not _vault_tiles[index].is_flipping:
 				_vault_tiles[index].set_face_immediate(next_face)
 	if _vault_cursor != null:
-		var cursor_target := Vector2(516 + (cursor % 5) * 52, 124 + (cursor / 5) * 52)
+		var cursor_target := (
+			VAULT_GRID_ORIGIN
+			- Vector2(4, 4)
+			+ Vector2((cursor % 5) * VAULT_GRID_PITCH, (cursor / 5) * VAULT_GRID_PITCH)
+		)
 		if _cursor_tween != null:
 			_cursor_tween.kill()
 		_cursor_tween = create_tween()
@@ -218,8 +224,10 @@ func _ensure_art() -> void:
 		_apply_slot_fullscreen_layout()
 	elif id == &"blackjack":
 		_build_blackjack_art()
+		_apply_blackjack_fullscreen_layout()
 	elif id == &"minefield_vault":
 		_build_vault_art()
+		_apply_vault_fullscreen_layout()
 	_play_art_entrance()
 
 
@@ -326,20 +334,35 @@ func _slot_deck_label(at: Vector2, dimensions: Vector2, font_size: int) -> Label
 
 
 func _build_blackjack_art() -> void:
+	var room := ColorRect.new()
+	room.position = Vector2.ZERO
+	room.size = Vector2(960, 540)
+	room.color = Color("160b0b")
+	_art_root.add_child(room)
+	var wood_header := ColorRect.new()
+	wood_header.position = Vector2(0, 0)
+	wood_header.size = Vector2(960, 92)
+	wood_header.color = Color("351914")
+	_art_root.add_child(wood_header)
 	var felt := ColorRect.new()
 	felt.name = "BlackjackTableArt"
-	felt.position = Vector2(342, 126)
-	felt.size = Vector2(542, 270)
-	felt.color = Color("073b31")
+	felt.position = Vector2(64, 94)
+	felt.size = Vector2(832, 372)
+	felt.color = Color("06483a")
 	_art_root.add_child(felt)
 	var rail := ColorRect.new()
-	rail.position = Vector2(342, 126)
-	rail.size = Vector2(542, 8)
+	rail.position = Vector2(64, 94)
+	rail.size = Vector2(832, 9)
 	rail.color = Color("c8a34b")
 	_art_root.add_child(rail)
+	var lower_rail := ColorRect.new()
+	lower_rail.position = Vector2(64, 457)
+	lower_rail.size = Vector2(832, 9)
+	lower_rail.color = Color("c8a34b")
+	_art_root.add_child(lower_rail)
 	for label_data: Array in [
-		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(360, 154)],
-		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(360, 282)],
+		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(104, 141)],
+		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(104, 310)],
 	]:
 		var hand_label := Label.new()
 		hand_label.name = label_data[0]
@@ -350,15 +373,43 @@ func _build_blackjack_art() -> void:
 		_art_root.add_child(hand_label)
 	var shoe := ColorRect.new()
 	shoe.name = "CardShoeArt"
-	shoe.position = Vector2(796, 154)
-	shoe.size = Vector2(54, 82)
+	shoe.position = Vector2(792, 137)
+	shoe.size = Vector2(64, 96)
 	shoe.color = Color("252126")
 	_art_root.add_child(shoe)
 	var shoe_trim := ColorRect.new()
-	shoe_trim.position = Vector2(801, 160)
-	shoe_trim.size = Vector2(44, 5)
+	shoe_trim.position = Vector2(798, 144)
+	shoe_trim.size = Vector2(52, 6)
 	shoe_trim.color = Color("c8a34b")
 	_art_root.add_child(shoe_trim)
+
+
+func _apply_blackjack_fullscreen_layout() -> void:
+	_frame.position = Vector2.ZERO
+	_frame.size = Vector2(960, 540)
+	_frame.color = Color("160b0b")
+	_title.position = Vector2(310, 24)
+	_title.size = Vector2(340, 52)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.add_theme_font_size_override("font_size", 34)
+	_title.add_theme_color_override("font_color", Color("f5e6bd"))
+	_stake.position = Vector2(82, 469)
+	_stake.size = Vector2(210, 44)
+	_stake.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status.position = Vector2(330, 103)
+	_status.size = Vector2(300, 30)
+	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_detail.position = Vector2(328, 469)
+	_detail.size = Vector2(304, 32)
+	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_detail.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_controls_backdrop.position = Vector2(72, 501)
+	_controls_backdrop.size = Vector2(816, 32)
+	_controls.position = Vector2(82, 505)
+	_controls.size = Vector2(796, 24)
+	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_controls.add_theme_font_size_override("font_size", 16)
 
 
 func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], hide_hole: bool) -> void:
@@ -380,10 +431,10 @@ func _add_playing_card(
 ) -> void:
 	var card := PlayingCard.new()
 	card.name = ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
-	card.size = Vector2(68, 96)
+	card.size = Vector2(88, 124)
 	card.configure(rank, rank + hand_index + (0 if dealer_hand else 2), hidden)
-	var destination := Vector2(408 + hand_index * 58, 150 if dealer_hand else 278)
-	card.position = Vector2(800, 164)
+	var destination := Vector2(286 + hand_index * 76, 132 if dealer_hand else 301)
+	card.position = Vector2(804, 144)
 	card.rotation = 0.08
 	card.modulate.a = 0.0
 	_art_root.add_child(card)
@@ -401,13 +452,20 @@ func _add_playing_card(
 
 func _build_vault_art() -> void:
 	_art_root.add_child(
-		_texture("VaultBackdropArt", VAULT_BACKDROP, Vector2(382, 94), Vector2(506, 290))
+		_texture("VaultBackdropArt", VAULT_BACKDROP, Vector2.ZERO, Vector2(960, 540))
 	)
+	var veil := ColorRect.new()
+	veil.position = Vector2.ZERO
+	veil.size = Vector2(960, 540)
+	veil.color = Color("09051555")
+	_art_root.add_child(veil)
 	for index: int in range(25):
 		var tile := VaultTile.new()
 		tile.name = "VaultTile%02d" % index
-		tile.position = Vector2(520 + (index % 5) * 52, 128 + (index / 5) * 52)
-		tile.size = Vector2(44, 44)
+		tile.position = VAULT_GRID_ORIGIN + Vector2(
+			(index % 5) * VAULT_GRID_PITCH, (index / 5) * VAULT_GRID_PITCH
+		)
+		tile.size = Vector2(48, 48)
 		_vault_tiles.append(tile)
 		_art_root.add_child(tile)
 	_vault_cursor = Node2D.new()
@@ -424,7 +482,36 @@ func _build_vault_art() -> void:
 		edge.color = Color("00e5ff")
 		_vault_cursor.add_child(edge)
 	_art_root.add_child(_vault_cursor)
-	_vault_cursor.position = Vector2(516, 124)
+	_vault_cursor.position = VAULT_GRID_ORIGIN - Vector2(4, 4)
+
+
+func _apply_vault_fullscreen_layout() -> void:
+	_frame.position = Vector2.ZERO
+	_frame.size = Vector2(960, 540)
+	_frame.color = Color("090515")
+	_title.position = Vector2(300, 22)
+	_title.size = Vector2(360, 54)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_title.add_theme_font_size_override("font_size", 32)
+	_title.add_theme_color_override("font_color", Color("f1e8d8"))
+	_stake.position = Vector2(64, 444)
+	_stake.size = Vector2(250, 44)
+	_stake.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status.position = Vector2(65, 98)
+	_status.size = Vector2(250, 88)
+	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_status.add_theme_color_override("font_color", Color("f1e8d8"))
+	_detail.position = Vector2(646, 434)
+	_detail.size = Vector2(250, 58)
+	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_controls_backdrop.position = Vector2(72, 501)
+	_controls_backdrop.size = Vector2(816, 32)
+	_controls.position = Vector2(82, 505)
+	_controls.size = Vector2(796, 24)
+	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_controls.add_theme_font_size_override("font_size", 16)
 
 
 func _refresh_slot() -> void:

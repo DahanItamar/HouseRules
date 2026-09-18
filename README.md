@@ -49,7 +49,7 @@ GUT 9.5.0 is vendored and pinned to commit
 Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 `gdlint src tests`. CI runs formatting, lint, GUT and one million production-math
 rounds per cabinet, and uploads JSON evidence even on failure. The current release
-gate passes **42/42 tests and 1,115 assertions**. All three fixed-seed million-round
+gate passes **43/43 tests and 1,121 assertions**. All three fixed-seed million-round
 RTP measurements pass AC-027; see `tests/results/rtp.json`.
 
 ## Windows build
