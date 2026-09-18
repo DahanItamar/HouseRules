@@ -1,5 +1,6 @@
 {
-  "scope": "Remaining v1 generation candidates; no jobs submitted, no credits spent for these items.",
+  "scope": "Historical pre-submission backlog. Generated job state is recorded in tools/art/m2-generation-manifest.json; the chip stack remains manual work.",
+  "superseded_by": "tools/art/m2-generation-manifest.json",
   "source_documents": [
     "docs/art/ASSET-SPECS.md",
     "docs/cabinets/slot-classic.md",

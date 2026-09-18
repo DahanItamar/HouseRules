@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-09-18",
+  "provider": "Higgsfield",
+  "image_model": "recraft_v4_1",
+  "video_model": "seedance_2_5",
+  "image_params": {
+    "model_type": "utility",
+    "resolution": "1k",
+    "background_color": "#0B0A12",
+    "credits_each": 1.25
+  },
+  "video_params": {
+    "mode": "omni_reference",
+    "duration": 4,
+    "resolution": "720p",
+    "generate_audio": false,
+    "credits_each": 28
+  },
+  "assets": [
+    {
+      "index": 0,
+      "asset": "casino_floor_tileset",
+      "type": "image",
+      "target_width": 96,
+      "target_height": 64,
+      "prompt_summary": "Exactly 24 top-down casino floor tiles arranged in a 6x4 grid.",
+      "job_id": "0caed7e1-9fff-4e53-b54c-2dbcb47e5330",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_170753_0caed7e1-9fff-4e53-b54c-2dbcb47e5330.png",
+      "path": "assets/source/m2/casino_floor_tileset.png"
+    },
+    {
+      "index": 1,
+      "asset": "felt_table",
+      "type": "image",
+      "target_width": 960,
+      "target_height": 280,
+      "prompt_summary": "Wide top-down empty dark-green blackjack felt surface.",
+      "job_id": "41459c53-2021-450c-b474-c79dc5aeb775",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165753_41459c53-2021-450c-b474-c79dc5aeb775.png",
+      "path": "assets/source/m2/felt_table.png"
+    },
+    {
+      "index": 2,
+      "asset": "blackjack_table_floor",
+      "type": "image",
+      "target_width": 64,
+      "target_height": 48,
+      "prompt_summary": "Top-down semicircular felt blackjack table with chrome rail.",
+      "job_id": "03162ce7-7eaa-4015-9c88-edea3b7173cb",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165752_03162ce7-7eaa-4015-9c88-edea3b7173cb.png",
+      "path": "assets/source/m2/blackjack_table_floor.png"
+    },
+    {
+      "index": 3,
+      "asset": "vault_door_floor",
+      "type": "image",
+      "target_width": 48,
+      "target_height": 48,
+      "prompt_summary": "Top-down closed circular steel vault door with cyan indicator.",
+      "job_id": "d1f0fab4-d949-4b30-90f6-62517a3c4e4f",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165711_d1f0fab4-d949-4b30-90f6-62517a3c4e4f.png",
+      "path": "assets/source/m2/vault_door_floor.png"
+    },
+    {
+      "index": 4,
+      "asset": "cashier_cage",
+      "type": "image",
+      "target_width": 128,
+      "target_height": 96,
+      "prompt_summary": "Top-down chrome cashier cage and marble counter with orange light.",
+      "job_id": "331880b6-2246-4504-87a5-fd59993fd86d",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165753_331880b6-2246-4504-87a5-fd59993fd86d.png",
+      "path": "assets/source/m2/cashier_cage.png"
+    },
+    {
+      "index": 5,
+      "asset": "cashier_panel_frame",
+      "type": "image",
+      "target_width": 400,
+      "target_height": 220,
+      "prompt_summary": "Front-facing chrome and dark-wood art-deco cashier UI frame.",
+      "job_id": "57cec555-e2c8-4ced-95e1-8ccc261625b7",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165753_57cec555-e2c8-4ced-95e1-8ccc261625b7.png",
+      "path": "assets/source/m2/cashier_panel_frame.png"
+    },
+    {
+      "index": 6,
+      "asset": "staircase_up",
+      "type": "image",
+      "target_width": 96,
+      "target_height": 128,
+      "prompt_summary": "Top-down casino staircase with access rope and neon step edges.",
+      "job_id": "1b03fcac-938a-4f31-bf3d-081bd38be211",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165846_1b03fcac-938a-4f31-bf3d-081bd38be211.png",
+      "path": "assets/source/m2/staircase_up.png"
+    },
+    {
+      "index": 7,
+      "asset": "elevator_doors",
+      "type": "image",
+      "target_width": 80,
+      "target_height": 112,
+      "prompt_summary": "Front-facing closed chrome art-deco elevator doors.",
+      "job_id": "2e4b8c1d-cb80-4eac-95c6-857ddeb5cdc2",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165716_2e4b8c1d-cb80-4eac-95c6-857ddeb5cdc2.png",
+      "path": "assets/source/m2/elevator_doors.png"
+    },
+    {
+      "index": 8,
+      "asset": "dealer",
+      "type": "image",
+      "target_width": 128,
+      "target_height": 160,
+      "prompt_summary": "Front-facing waist-up casino dealer with complete visible face.",
+      "job_id": "c8bd063d-13d1-4e29-85e2-6a48562a0fa7",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_170753_c8bd063d-13d1-4e29-85e2-6a48562a0fa7.png",
+      "path": "assets/source/m2/dealer.png"
+    },
+    {
+      "index": 9,
+      "asset": "slot_classic_floor",
+      "type": "image",
+      "target_width": 48,
+      "target_height": 48,
+      "prompt_summary": "Top-down compact chrome slot cabinet with pull arm.",
+      "job_id": "9d554ee1-ea2a-4db8-82e1-858c4ffd732f",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165717_9d554ee1-ea2a-4db8-82e1-858c4ffd732f.png",
+      "path": "assets/source/m2/slot_classic_floor.png"
+    },
+    {
+      "index": 10,
+      "asset": "card_back",
+      "type": "image",
+      "target_width": 56,
+      "target_height": 80,
+      "prompt_summary": "Single geometric neon art-deco playing-card back.",
+      "job_id": "e4e7d4ea-70de-47bb-968d-4306eac4818d",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165716_e4e7d4ea-70de-47bb-968d-4306eac4818d.png",
+      "path": "assets/source/m2/card_back.png"
+    },
+    {
+      "index": 11,
+      "asset": "shoe_penetration_bar",
+      "type": "image",
+      "target_width": 96,
+      "target_height": 48,
+      "prompt_summary": "Top-down chrome blackjack card shoe with empty gauge slot.",
+      "job_id": "34dfefc2-0b07-4e69-b8b0-842e2f46edac",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165717_34dfefc2-0b07-4e69-b8b0-842e2f46edac.png",
+      "path": "assets/source/m2/shoe_penetration_bar.png"
+    },
+    {
+      "index": 12,
+      "asset": "tile_unrevealed",
+      "type": "image",
+      "target_width": 56,
+      "target_height": 56,
+      "prompt_summary": "Closed steel vault deposit-box tile with cyan status light.",
+      "job_id": "c0028e57-7999-4038-950e-3523862faff9",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165722_c0028e57-7999-4038-950e-3523862faff9.png",
+      "path": "assets/source/m2/tile_unrevealed.png"
+    },
+    {
+      "index": 13,
+      "asset": "tile_safe_revealed",
+      "type": "image",
+      "target_width": 56,
+      "target_height": 56,
+      "prompt_summary": "Open deposit-box tile with safe indicator and gold currency chips.",
+      "job_id": "99a29055-122c-4331-934e-10f0a52c2bd9",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165752_99a29055-122c-4331-934e-10f0a52c2bd9.png",
+      "path": "assets/source/m2/tile_safe_revealed.png"
+    },
+    {
+      "index": 14,
+      "asset": "tile_mine_revealed",
+      "type": "image",
+      "target_width": 56,
+      "target_height": 56,
+      "prompt_summary": "Open deposit-box tile with compact wired mine and warning light.",
+      "job_id": "cdb31f0b-93af-403e-96a9-fe29f39aa52f",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165758_cdb31f0b-93af-403e-96a9-fe29f39aa52f.png",
+      "path": "assets/source/m2/tile_mine_revealed.png"
+    },
+    {
+      "index": 100,
+      "asset": "slot_attract",
+      "type": "video",
+      "source_asset": "slot_classic_floor",
+      "prompt_summary": "Fixed-camera trim blink and one pull-arm cycle returning to start.",
+      "job_id": "e7728ecd-1bb8-480b-b581-b36e5dbfb2ab",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165939_e7728ecd-1bb8-480b-b581-b36e5dbfb2ab.mp4",
+      "path": "assets/source/animations/slot_attract.mp4"
+    },
+    {
+      "index": 101,
+      "asset": "vault_indicator",
+      "type": "video",
+      "source_asset": "vault_door_floor",
+      "prompt_summary": "Fixed-camera indicator pulse and small wheel motion returning to start.",
+      "job_id": "486e597c-3a29-4331-ae8d-ba9b7e7588ff",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165939_486e597c-3a29-4331-ae8d-ba9b7e7588ff.mp4",
+      "path": "assets/source/animations/vault_indicator.mp4"
+    },
+    {
+      "index": 102,
+      "asset": "elevator_open",
+      "type": "video",
+      "source_asset": "elevator_doors",
+      "prompt_summary": "Fixed-camera call light and elevator open-close cycle.",
+      "job_id": "e1bc3805-790c-43ce-91fc-8a0210180954",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165939_e1bc3805-790c-43ce-91fc-8a0210180954.mp4",
+      "path": "assets/source/animations/elevator_open.mp4"
+    },
+    {
+      "index": 103,
+      "asset": "dealer_deal",
+      "type": "video",
+      "source_asset": "dealer",
+      "prompt_summary": "Fixed-camera restrained dealing gesture returning to neutral.",
+      "job_id": "c1da7286-e83d-4f65-b685-02c8e5baeb59",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165939_c1da7286-e83d-4f65-b685-02c8e5baeb59.mp4",
+      "path": "assets/source/animations/dealer_deal.mp4"
+    },
+    {
+      "index": 104,
+      "asset": "mine_detonation",
+      "type": "video",
+      "source_asset": "tile_mine_revealed",
+      "prompt_summary": "Fixed-camera warning blink, contained detonation, and smoke puff.",
+      "job_id": "4dfc89ba-5774-4207-94c8-ae7afa23dcf5",
+      "url": "https://d8j0ntlcm91z4.cloudfront.net/user_3JKRiakFOZT2kJIIqhjiOrf5aam/hf_20260918_165939_4dfc89ba-5774-4207-94c8-ae7afa23dcf5.mp4",
+      "path": "assets/source/animations/mine_detonation.mp4"
+    }
+  ]
+}

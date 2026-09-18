@@ -46,3 +46,33 @@ The generation gallery was displayed once with all eight exact job IDs. No furth
 Palette rules explicitly outrank aesthetics. Lemon, bell and BAR prompts ask for yellow/gold, but gold is currency-only: this batch substitutes orange/chrome. BAR uses an ingot silhouette without letters, consistent with the global no-text instruction. SEVEN requires a single numeral 7, so its specific requirement overrides the generic no-numbers negative. Transparent backgrounds are a cleanup deliverable; requesting transparency from a model without an alpha control would not establish compliance.
 
 `tools/art/backlog.json` prepares remaining generation candidates from the master brief and all three cabinet asset lists without submitting them. The blackjack cabinet calls 24 x 32 chips GENERATE while the master brief says chips that small should be hand-pixelled; this discrepancy is recorded. Multiframe floor indicators and elevator states require aligned manual derivation, not independent animation-frame generation. The original specifications were not edited.
+
+## M2 completion batch — 2026-09-18
+
+The remaining generation backlog was submitted through the Higgsfield MCP after
+model and cost preflight. The batch used 161.25 credits (736 to 574.75): seventeen
+Recraft V4.1 images including two review-driven replacements, plus five Seedance
+videos. Recraft V4.1 utility produced fifteen accepted still masters;
+Seedance 2.5 produced five four-second, silent motion masters using the related
+still job as its start-image reference. The disputed 24×32 chip stack was not
+generated because the master brief correctly assigns work at that size to manual
+pixel art.
+
+The source set is stored under `assets/source/m2/` and
+`assets/source/animations/`. Exact job IDs, result URLs, prompt summaries,
+generation parameters, target dimensions and local paths are recorded in
+`tools/art/m2-generation-manifest.json`. The download helper can reproduce the
+local source set without submitting new jobs.
+
+The palette pipeline generated exact-size drafts under `assets/drafts/m2/` and
+recorded dimensions, palette counts and hashes in
+`tools/art/m2-validation.json`. All fifteen still drafts pass automated dimension
+and HOUSE-RULES-16 palette checks. These checks do not imply visual acceptance.
+
+Visual review rejected the first dealer (blank face) and first floor sheet
+(incorrect grid); both were regenerated once. The corrected dealer has a readable
+face and shared neutral pose. The corrected floor source still needs manual tile
+extraction and seam correction before it can become an accepted 24-tile set.
+Generated motion is retained as animation source footage; frame extraction,
+shared-origin alignment, palette quantization and in-game timing remain required
+before any MP4 can be called a production sprite animation.

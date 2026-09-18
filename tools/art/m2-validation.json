@@ -1,0 +1,107 @@
+﻿[
+    {
+        "asset":  "casino_floor_tileset",
+        "source_dimensions":  "1280x832",
+        "validation":  "96x64, 11 palette colors",
+        "sha256":  "55AF6469DFE2EEBCB2E1B518A16DB4491BF298E3FFA515DEA3193BCD507F8755",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "felt_table",
+        "source_dimensions":  "1344x768",
+        "validation":  "960x280, 13 palette colors",
+        "sha256":  "C56AE107740B48958EA02AD5F922BFA534CF274CA1E01E89FC31426F1C6673AA",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "blackjack_table_floor",
+        "source_dimensions":  "1216x896",
+        "validation":  "64x48, 11 palette colors",
+        "sha256":  "BE4C6C704C24A9DDFABD9919B7DB4191DEB261D8C8994B2FB987555A3C87F12C",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "vault_door_floor",
+        "source_dimensions":  "1024x1024",
+        "validation":  "48x48, 12 palette colors",
+        "sha256":  "CE1EADF6968C298475A9ED832E8C62A49FECCD46484DC72F129C9FC42554676E",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "cashier_cage",
+        "source_dimensions":  "1216x896",
+        "validation":  "128x96, 13 palette colors",
+        "sha256":  "F7071B2BC611F0D2216D976EFF7DD0E51388C8D3366F40E9FBDF72E16F501C36",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "cashier_panel_frame",
+        "source_dimensions":  "1344x768",
+        "validation":  "400x220, 13 palette colors",
+        "sha256":  "4DC745F82654327A2D3ACAA5A9E4C742E5C27DDD389B70A14DD8B9872EBBC8D0",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "staircase_up",
+        "source_dimensions":  "896x1216",
+        "validation":  "96x128, 12 palette colors",
+        "sha256":  "F4432A992D1CDE6C53E152E3ED4D2A90B1C5E925CD45B39A306F0958DE589184",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "elevator_doors",
+        "source_dimensions":  "896x1216",
+        "validation":  "80x112, 11 palette colors",
+        "sha256":  "25427C9133CA4110C50892DCF66D572C978B712F1DD3E984364C4160AA1351C1",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "dealer",
+        "source_dimensions":  "896x1152",
+        "validation":  "128x160, 11 palette colors",
+        "sha256":  "773FBA4C54AA9CC916D66CF3CA6ADD3C5D28EA18B5E7874794368C1DE2833644",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "slot_classic_floor",
+        "source_dimensions":  "1024x1024",
+        "validation":  "48x48, 10 palette colors",
+        "sha256":  "168AEF8B6017A7F0B21AA3B516CFDFA4C04563A0B0B9B3291BA5DC6AFD195B89",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "card_back",
+        "source_dimensions":  "896x1216",
+        "validation":  "56x80, 11 palette colors",
+        "sha256":  "A5A4F595D34FCEA6E21B24D9C73EB59B29E04D5B9231D23F4740DAA352CA41AB",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "shoe_penetration_bar",
+        "source_dimensions":  "1344x768",
+        "validation":  "96x48, 10 palette colors",
+        "sha256":  "DD5AB9D0D3A2AA6C491CA5F555B69990E699449567540C49D050892CE6F06398",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "tile_unrevealed",
+        "source_dimensions":  "1024x1024",
+        "validation":  "56x56, 12 palette colors",
+        "sha256":  "5CC7604E661515A50D0595CC1CC1630A79D03FA7FAE415728ADBF132CC8AB473",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "tile_safe_revealed",
+        "source_dimensions":  "1024x1024",
+        "validation":  "56x56, 13 palette colors",
+        "sha256":  "595D1FDE61D17D6BB0BD8F0A3B8301F4B84B0B0F65EFE60DEA3D9F4171C9AB21",
+        "acceptance_status":  "visual_cleanup_pending"
+    },
+    {
+        "asset":  "tile_mine_revealed",
+        "source_dimensions":  "1024x1024",
+        "validation":  "56x56, 10 palette colors",
+        "sha256":  "60DB0738778B4B93D8B6D7AEE228CE208E1EB8CA6DCF2B5C71F92C1E1A531705",
+        "acceptance_status":  "visual_cleanup_pending"
+    }
+]
