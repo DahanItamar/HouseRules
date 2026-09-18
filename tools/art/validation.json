@@ -1,0 +1,50 @@
+﻿[
+    {
+        "asset":  "slot_classic_body",
+        "validation":  "320x400, 13 palette colors, 0 transparent pixels",
+        "sha256":  "8173B9F6C585DD8B92873790F423678D67854184BDAABD86A1BCAC7831F7FCA4",
+        "manual_cleanup_accepted":  false
+    },
+    {
+        "asset":  "sym_cherry",
+        "validation":  "64x64, 9 palette colors, 0 transparent pixels",
+        "sha256":  "2CFE660F4E09FA21DE497E9635DE32014BF3EC6F222665CEBAF02374D90EBF66",
+        "manual_cleanup_accepted":  false
+    },
+    {
+        "asset":  "sym_lemon",
+        "validation":  "64x64, 13 palette colors, 0 transparent pixels",
+        "sha256":  "1FFE0833EC1E4EDAAAB56974AB025BC09D52E37044746FAA7EB07E9E9DF99430",
+        "manual_cleanup_accepted":  false
+    },
+    {
+        "asset":  "sym_bell",
+        "validation":  "64x64, 13 palette colors, 0 transparent pixels",
+        "sha256":  "D0C47274371E32FA4B900A0F5506AA5A1C931ED503F2BDBFAF1156ECA5F66AB0",
+        "manual_cleanup_accepted":  false
+    },
+    {
+        "asset":  "sym_bar",
+        "validation":  "64x64, 11 palette colors, 0 transparent pixels",
+        "sha256":  "1E9B76CE197AC1EFF559BDE93AECA785CA930E0FD8E22E1ABB6743418502F5D9",
+        "manual_cleanup_accepted":  false
+    },
+    {
+        "asset":  "sym_seven",
+        "validation":  "64x64, 10 palette colors, 0 transparent pixels",
+        "sha256":  "92364810B89B8203BB5A6167EC0CCE7B42CBBA016BD64D4FEC57AA9D193B4603",
+        "manual_cleanup_accepted":  false
+    },
+    {
+        "asset":  "sym_diamond",
+        "validation":  "64x64, 13 palette colors, 0 transparent pixels",
+        "sha256":  "456398CAB5CF0BC0354648B31EEB9EA5692B9AC2BF0C80FCB360E3E31F3CC4DE",
+        "manual_cleanup_accepted":  false
+    },
+    {
+        "asset":  "vault_backdrop",
+        "validation":  "960x540, 12 palette colors, 0 transparent pixels",
+        "sha256":  "8833AC26E27002ABFA7C6CBD76D27DA45236D666A6C9EFC82E1E979EFA6FEC14",
+        "manual_cleanup_accepted":  false
+    }
+]

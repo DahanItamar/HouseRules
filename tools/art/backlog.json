@@ -1,0 +1,155 @@
+{
+  "scope": "Remaining v1 generation candidates; no jobs submitted, no credits spent for these items.",
+  "source_documents": [
+    "docs/art/ASSET-SPECS.md",
+    "docs/cabinets/slot-classic.md",
+    "docs/cabinets/blackjack.md",
+    "docs/cabinets/minefield-vault.md"
+  ],
+  "assets": [
+    {
+      "asset": "casino_floor_tileset",
+      "width": 16,
+      "height": 16,
+      "frames": 24,
+      "method": "GENERATE",
+      "prompt": "Top-down deep-purple/magenta casino carpet, marble walkway and wall edge variants. Seamless edges require hand correction.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "felt_table",
+      "width": 960,
+      "height": 280,
+      "frames": 1,
+      "method": "GENERATE",
+      "prompt": "Top-down dark #123A2E green felt surface, faint betting arc, worn edges; no cards, chips or text.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "blackjack_table_floor",
+      "width": 64,
+      "height": 48,
+      "frames": 1,
+      "method": "GENERATE",
+      "prompt": "Top-down semicircular dark-green blackjack table, chrome rail, flat dealer edge and small neon underglow.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "vault_door_floor",
+      "width": 48,
+      "height": 48,
+      "frames": 2,
+      "method": "GENERATE + cleanup",
+      "prompt": "Top-down circular brushed-steel vault door, cyan indicator. Derive indicator-off second frame by hand for alignment.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "cashier_cage",
+      "width": 128,
+      "height": 96,
+      "frames": 1,
+      "method": "GENERATE",
+      "prompt": "Top-down cashier cage, chrome window bars and marble counter, orange interior light, no people. Replace gold/brass decorations with chrome/orange.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "cashier_panel_frame",
+      "width": 400,
+      "height": 220,
+      "frames": 1,
+      "method": "GENERATE",
+      "prompt": "Ornate chrome and dark-wood cashier panel frame, art-deco corners, empty centre, magenta edge lighting.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "staircase_up",
+      "width": 96,
+      "height": 128,
+      "frames": 1,
+      "method": "GENERATE",
+      "prompt": "Top-down carpeted staircase, red velvet rope, chrome stanchions, magenta step edges.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "elevator_doors",
+      "width": 80,
+      "height": 112,
+      "frames": 3,
+      "method": "GENERATE + cleanup",
+      "prompt": "Top-down chrome elevator doors, art-deco chevron, call panel; closed, lit, open derived/aligned by hand.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "dealer",
+      "width": 128,
+      "height": 160,
+      "frames": 4,
+      "method": "GENERATE + heavy cleanup",
+      "prompt": "Waist-up casino dealer, black waistcoat, off-white shirt, bow tie, neutral expression; idle, dealing, revealing, reacting. Hand-align skeleton.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "slot_classic_floor",
+      "width": 48,
+      "height": 48,
+      "frames": 2,
+      "method": "GENERATE + cleanup",
+      "prompt": "Top-down chrome slot cabinet with magenta/cyan trim; derive attract blink by hand. Cabinet doc specifies this but master brief has no prompt.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "card_back",
+      "width": 56,
+      "height": 80,
+      "frames": 1,
+      "method": "GENERATE",
+      "prompt": "Single neon geometric card back, consistent centered border. Cabinet doc specifies this but master brief has no prompt.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "chip_stack",
+      "width": 24,
+      "height": 32,
+      "frames": 5,
+      "method": "HAND-PIXEL preferred; conflict unresolved",
+      "prompt": "Cabinet doc says GENERATE; master brief explicitly warns generated 24x32 chips fail. Gold reserved for chip/currency art.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "shoe_penetration_bar",
+      "width": 96,
+      "height": 48,
+      "frames": 1,
+      "method": "GENERATE",
+      "prompt": "Top-down chrome card shoe; separate penetration indicator should be rendered by UI, not baked text.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "tile_unrevealed",
+      "width": 56,
+      "height": 56,
+      "frames": 1,
+      "method": "GENERATE + cleanup",
+      "prompt": "Front-facing brushed-metal deposit-box door. Cabinet brief only; below recommended 64x64 generator size.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "tile_safe_revealed",
+      "width": 56,
+      "height": 56,
+      "frames": 1,
+      "method": "GENERATE + cleanup",
+      "prompt": "Open deposit box with gold chips inside. Currency gold allowed only here on chips.",
+      "status": "prepared_not_submitted"
+    },
+    {
+      "asset": "tile_mine_revealed",
+      "width": 56,
+      "height": 56,
+      "frames": 1,
+      "method": "GENERATE + cleanup",
+      "prompt": "Open deposit box with wired charge, red danger details; no text.",
+      "status": "prepared_not_submitted"
+    }
+  ]
+}
