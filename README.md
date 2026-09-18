@@ -44,6 +44,19 @@ rounds per cabinet, and uploads JSON evidence even on failure. The current relea
 gate passes **35/35 tests and 1,057 assertions**. All three fixed-seed million-round
 RTP measurements pass AC-027; see `tests/results/rtp.json`.
 
+## Windows build
+
+Install the Godot 4.7.2 export templates, then use **Project → Export → Windows
+Desktop**, or run:
+
+```powershell
+godot --headless --path . --export-release "Windows Desktop" export/HouseRules.exe
+```
+
+The preset embeds the PCK and excludes tests, documentation, tooling, and
+Higgsfield source masters from the player build. The executable supports
+resizable/high-DPI Windows displays and Xbox-compatible controllers.
+
 ## Structure
 
 - `src/domain/`: cabinet math and contracts; no Nodes, SceneTree, signals or autoload access.
