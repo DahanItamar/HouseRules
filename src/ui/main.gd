@@ -39,19 +39,19 @@ func _build_hud() -> void:
 	add_child(hud_layer)
 	_hud = Label.new()
 	_hud.position = Vector2(32, 24)
-	_hud.add_theme_font_size_override("font_size", 20)
+	_hud.add_theme_font_size_override("font_size", Typography.PROMINENT)
 	_hud.add_theme_color_override("font_color", Color("ffd23f"))
 	hud_layer.add_child(_hud)
 	_message = Label.new()
 	_message.position = Vector2(32, 508)
-	_message.add_theme_font_size_override("font_size", 16)
+	_message.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_message.add_theme_color_override("font_color", Color("ff8a3d"))
 	hud_layer.add_child(_message)
 	_contracts = Label.new()
 	_contracts.position = Vector2(610, 20)
 	_contracts.size = Vector2(318, 90)
 	_contracts.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_contracts.add_theme_font_size_override("font_size", 14)
+	_contracts.add_theme_font_size_override("font_size", Typography.SUPPORTING)
 	_contracts.add_theme_color_override("font_color", Color("e8e6f0"))
 	hud_layer.add_child(_contracts)
 
@@ -67,13 +67,13 @@ func _build_menu() -> void:
 	var title := Label.new()
 	title.name = "Title"
 	title.position = Vector2(120, 180)
-	title.add_theme_font_size_override("font_size", 48)
+	title.add_theme_font_size_override("font_size", Typography.TITLE)
 	title.text = tr("GAME_TITLE")
 	_menu.add_child(title)
 	var prompt := Label.new()
 	prompt.name = "Prompt"
 	prompt.position = Vector2(124, 282)
-	prompt.add_theme_font_size_override("font_size", 20)
+	prompt.add_theme_font_size_override("font_size", Typography.PROMINENT)
 	_menu.add_child(prompt)
 
 

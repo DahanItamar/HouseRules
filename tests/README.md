@@ -42,6 +42,7 @@ directories; they do not overwrite the player's normal save.
 | AC-037 | Every gameplay action has its documented gamepad button; movement also has D-pad and left-stick bindings. |
 | AC-038 | Raw device changes swap glyphs and synchronously refresh a live floor prompt in both directions. |
 | AC-039 | Physical D-pad and left-stick events move the reusable wrapping snap cursor. |
+| AC-042 | Runtime labels meet the 8px body floor; chips, stake and multiplier meet the 16px critical floor. |
 | AC-037 disconnect | Losing the active gamepad pauses behind a blocking overlay; reconnecting resumes it. |
 | AC-051 | Both v1 wing transition points show their lifetime-wagered thresholds and refuse entry while locked. |
 

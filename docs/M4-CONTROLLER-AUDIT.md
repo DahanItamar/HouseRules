@@ -36,3 +36,10 @@ hardware pass with the keyboard and mouse disconnected:
 
 Gamepad disconnect recovery is tracked as its own M4 task because it changes
 pause behavior rather than the action coverage audited here.
+
+## Handheld readability checklist
+
+Automated UI tests enforce the base-viewport minimums: 8px for body text and
+16px for chips, stake and multiplier. Before release, review the 960×540 build
+at native size on the target 7-inch display and confirm that the vault cursor,
+cabinet prompts and gold-on-dark chip totals remain distinct at arm's length.

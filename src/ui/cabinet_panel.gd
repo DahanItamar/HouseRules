@@ -24,10 +24,10 @@ func _ready() -> void:
 	frame.size = Vector2(864, 396)
 	add_child(frame)
 	_title = _label(Vector2(80, 90), 24)
-	_stake = _label(Vector2(80, 138), 20)
+	_stake = _label(Vector2(80, 138), Typography.PROMINENT)
 	_status = _label(Vector2(80, 184), 18)
-	_detail = _label(Vector2(80, 230), 20)
-	_controls = _label(Vector2(80, 412), 16)
+	_detail = _label(Vector2(80, 230), Typography.PROMINENT)
+	_controls = _label(Vector2(80, 412), Typography.CRITICAL)
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh())
 	refresh()
 
@@ -103,7 +103,7 @@ func _refresh_vault() -> void:
 		if index % 5 == 4:
 			grid += "\n"
 	_detail.text = tr("VAULT_GRID") % [cabinet.get("mine_count"), math.multiplier(), grid]
-	_detail.add_theme_font_size_override("font_size", 16)
+	_detail.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_controls.text = (
 		tr("VAULT_CONTROLS")
 		% [

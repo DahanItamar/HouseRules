@@ -15,7 +15,7 @@ func _ready() -> void:
 	message.position = Vector2(180, 245)
 	message.size = Vector2(600, 50)
 	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	message.add_theme_font_size_override("font_size", 20)
+	message.add_theme_font_size_override("font_size", Typography.PROMINENT)
 	message.add_theme_color_override("font_color", Color("ffd23f"))
 	message.text = tr("GAMEPAD_RECONNECT")
 	add_child(message)

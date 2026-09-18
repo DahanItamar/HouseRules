@@ -38,7 +38,7 @@ func _ready() -> void:
 		assert(not definitions.has(definition.id), "Duplicate cabinet ID: %s" % definition.id)
 		definitions[id] = definition
 	_prompt = Label.new()
-	_prompt.add_theme_font_size_override("font_size", 16)
+	_prompt.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_prompt.add_theme_color_override("font_color", Color("e8e6f0"))
 	add_child(_prompt)
 	SceneRouter.register_floor(self)
@@ -181,7 +181,7 @@ func _draw() -> void:
 		tr("CASHIER_NAME"),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1,
-		16,
+		Typography.CRITICAL,
 		Color("e8e6f0")
 	)
 	draw_texture_rect(
