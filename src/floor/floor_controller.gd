@@ -1,7 +1,7 @@
 class_name FloorController
 extends Node2D
 
-const SPEED: float = 180.0
+const SPEED: float = 112.0
 const INTERACTION_RADIUS: float = 76.0
 const CASHIER_POSITION := Vector2(660, 410)
 const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(250, 265), &"vip": Vector2(790, 242)}
@@ -248,19 +248,7 @@ func _draw() -> void:
 		var is_near: bool = nearby_definition != null and nearby_definition.id == id
 		var phase := _ambient_time * 1.8 + float(cabinet_positions.keys().find(id)) * 1.9
 		var pulse := (sin(phase) + 1.0) * 0.5
-		draw_arc(at, 34.0 + pulse * 2.0, 0.12, PI - 0.12, 32, Color(BRASS, 0.20 + pulse * 0.24), 3.0)
-		draw_line(at + Vector2(-28, 22), at + Vector2(28, 22), CYAN if is_near else BRASS, 3.0)
-		if is_near:
-			draw_arc(at, 40.0 + pulse * 2.0, 0.0, TAU, 48, Color(CYAN, 0.45), 2.0)
-		draw_string(
-			ThemeDB.fallback_font,
-			at + Vector2(-66, -48),
-			tr((definitions[id] as CabinetDefinition).name_key),
-			HORIZONTAL_ALIGNMENT_CENTER,
-			132,
-			Typography.SUPPORTING,
-			IVORY
-		)
+		_draw_machine_pad(id, at, is_near, pulse)
 	draw_string(
 		ThemeDB.fallback_font,
 		CASHIER_POSITION + Vector2(-46, -45),
@@ -281,6 +269,81 @@ func _draw() -> void:
 		var prompt_rect := Rect2(_prompt.position - Vector2(12, 8), _prompt.size + Vector2(24, 16))
 		draw_rect(prompt_rect, Color("17161af0"))
 		draw_rect(prompt_rect, CYAN if nearby_definition != null else Color("6e5225"), false, 2.0)
+
+
+func _draw_machine_pad(id: StringName, at: Vector2, is_near: bool, pulse: float) -> void:
+	var accent := _machine_accent(id)
+	var pad := PackedVector2Array([
+		at + Vector2(-72, -28), at + Vector2(64, -28), at + Vector2(72, -20),
+		at + Vector2(72, 24), at + Vector2(64, 32), at + Vector2(-64, 32),
+		at + Vector2(-72, 24), at + Vector2(-72, -20),
+	])
+	draw_colored_polygon(pad, Color("100e12e8"))
+	draw_polyline(PackedVector2Array(Array(pad) + [pad[0]]), CYAN if is_near else accent, 3.0, true)
+	draw_circle(at + Vector2(-47, 1), 18.0 + (pulse * 1.5 if is_near else 0.0), accent)
+	draw_circle(at + Vector2(-47, 1), 13.0, Color("17161a"))
+	draw_string(
+		ThemeDB.fallback_font,
+		at + Vector2(-64, 8),
+		_machine_icon(id),
+		HORIZONTAL_ALIGNMENT_CENTER,
+		34,
+		Typography.SUPPORTING,
+		IVORY
+	)
+	draw_string(
+		Typography.DISPLAY_FONT,
+		at + Vector2(-24, -2),
+		tr(_machine_pad_title(id)),
+		HORIZONTAL_ALIGNMENT_CENTER,
+		88,
+		Typography.SUPPORTING,
+		IVORY
+	)
+	var action := tr("FLOOR_PAD_APPROACH")
+	if is_near:
+		action = tr("FLOOR_PAD_PLAY").replace("%s", InputRouter.glyph("interact"))
+	draw_string(
+		Typography.UI_FONT,
+		at + Vector2(-24, 18),
+		action,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		88,
+		Typography.BODY_MIN,
+		CYAN if is_near else Color("b8ad9c")
+	)
+	if is_near:
+		draw_arc(at, 79.0 + pulse * 2.0, 0.0, TAU, 48, Color(CYAN, 0.28), 2.0)
+
+
+func _machine_pad_title(id: StringName) -> String:
+	match id:
+		&"slot_classic":
+			return "FLOOR_PAD_SLOT"
+		&"blackjack":
+			return "FLOOR_PAD_BLACKJACK"
+		_:
+			return "FLOOR_PAD_VAULT"
+
+
+func _machine_icon(id: StringName) -> String:
+	match id:
+		&"slot_classic":
+			return "777"
+		&"blackjack":
+			return "21"
+		_:
+			return "V"
+
+
+func _machine_accent(id: StringName) -> Color:
+	match id:
+		&"slot_classic":
+			return Color("a91f3a")
+		&"blackjack":
+			return Color("16856f")
+		_:
+			return Color("3157a8")
 
 
 func _build_cashier_menu() -> void:

@@ -79,6 +79,26 @@ func test_floor_avatar_animates_from_real_movement_and_keeps_facing() -> void:
 		)
 
 
+func test_floor_avatar_uses_alternating_leg_poses_at_a_walking_pace() -> void:
+	var avatar: FloorAvatar = _floor._avatar_visual
+	avatar.set_motion(Vector2.RIGHT * 5.0)
+	var first_region: Rect2 = avatar._atlas.region
+	assert_false(avatar._sprite.flip_h)
+	avatar.set_motion(Vector2.RIGHT * 25.0)
+	assert_true(avatar._sprite.flip_h, "Second step mirrors the opposite leg pose")
+	assert_ne(avatar._atlas.region, first_region, "Side walk alternates two actual leg silhouettes")
+	assert_lte(FloorController.SPEED, 120.0, "Floor traversal stays at a natural walking pace")
+
+
+func test_floor_machine_pads_have_explicit_unique_labels() -> void:
+	assert_eq(_floor._machine_pad_title(&"slot_classic"), "FLOOR_PAD_SLOT")
+	assert_eq(_floor._machine_pad_title(&"blackjack"), "FLOOR_PAD_BLACKJACK")
+	assert_eq(_floor._machine_pad_title(&"minefield_vault"), "FLOOR_PAD_VAULT")
+	assert_eq(_floor._machine_icon(&"slot_classic"), "777")
+	assert_eq(_floor._machine_icon(&"blackjack"), "21")
+	assert_eq(_floor._machine_icon(&"minefield_vault"), "V")
+
+
 func test_cashier_opens_a_real_focusable_menu() -> void:
 	_floor.avatar_position = _floor.CASHIER_POSITION
 	_floor.refresh_proximity()

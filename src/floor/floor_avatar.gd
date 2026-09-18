@@ -5,8 +5,11 @@ extends Node2D
 const GUEST_TEXTURE := preload("res://assets/production/characters/casino_guest_eight_direction.png")
 const GUEST_CELL_SIZE := Vector2(336, 376)
 const GUEST_SCALE: float = 0.170
+const WALK_CYCLE_DISTANCE: float = 58.0
+const MIRRORED_POSE: Array[int] = [0, 7, 6, 5, 4, 3, 2, 1]
 var facing := Vector2.DOWN
 var walk_phase: float = 0.0
+var walk_frame: int = 0
 var idle_time: float = 0.0
 var is_walking: bool = false
 var _sprite: Sprite2D
@@ -33,7 +36,11 @@ func set_motion(displacement: Vector2) -> void:
 	is_walking = displacement.length_squared() > 0.01
 	if is_walking:
 		facing = displacement.normalized()
-		walk_phase += displacement.length() / 7.0 * PI
+		walk_phase = fmod(
+			walk_phase + displacement.length() / WALK_CYCLE_DISTANCE * TAU,
+			TAU
+		)
+		walk_frame = int(walk_phase >= PI)
 		idle_time = 0.0
 		_update_facing_texture()
 	queue_redraw()
@@ -45,16 +52,20 @@ func _process(delta: float) -> void:
 		queue_redraw()
 	var stride := sin(walk_phase) if is_walking else 0.0
 	var breathe := sin(idle_time * 2.6) * 0.008 if not is_walking else 0.0
-	_sprite.rotation = stride * 0.025
+	_sprite.rotation = stride * 0.006
 	_sprite.scale = Vector2(GUEST_SCALE, GUEST_SCALE * (1.0 + breathe))
-	_sprite.position = Vector2(stride * 0.7, -19.0 - absf(stride) * 1.1)
+	_sprite.position = Vector2(stride * 0.25, -19.0 - absf(stride) * 0.45)
 	is_walking = false
 
 
 func _update_facing_texture() -> void:
 	var clockwise_from_north := atan2(facing.x, -facing.y)
 	facing_index = posmod(int(round(clockwise_from_north / (PI / 4.0))), 8)
-	var cell := Vector2i(facing_index % 4, facing_index / 4)
+	var pose_index := facing_index
+	_sprite.flip_h = walk_frame == 1
+	if walk_frame == 1:
+		pose_index = MIRRORED_POSE[facing_index]
+	var cell := Vector2i(pose_index % 4, pose_index / 4)
 	_atlas.region = Rect2(Vector2(cell) * GUEST_CELL_SIZE, GUEST_CELL_SIZE)
 
 
