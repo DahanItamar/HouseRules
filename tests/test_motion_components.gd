@@ -25,6 +25,10 @@ func test_playing_card_uses_real_suit_glyphs_and_logical_state_updates_immediate
 	card.reveal()
 	assert_false(card.face_down, "Input and rules can observe reveal before presentation settles")
 	assert_gt(card._sheen_remaining, 0.0)
+	var second_card := PlayingCard.new()
+	add_child_autofree(second_card)
+	second_card.configure(7, 3, false)
+	assert_ne(card._idle_phase, second_card._idle_phase, "Card glints are deliberately staggered")
 
 
 func test_vault_reveal_exposes_a_presentation_effect_hook() -> void:
@@ -65,6 +69,19 @@ func test_number_ticker_reaches_exact_target_and_handles_infinity() -> void:
 	assert_eq(int(ticker.displayed_value), 110)
 	ticker.set_infinity()
 	assert_eq(ticker.text, "∞")
+
+
+func test_primary_spin_button_has_a_restrained_idle_breath() -> void:
+	var spin := SlotSpinButton.new()
+	spin.size = Vector2(140, 110)
+	add_child_autofree(spin)
+	var before := spin.idle_time
+	spin._process(0.2)
+	assert_gt(spin.idle_time, before)
+	spin.disabled = true
+	before = spin.idle_time
+	spin._process(0.2)
+	assert_eq(spin.idle_time, before, "Disabled primary actions do not pulse")
 
 
 func test_blackjack_input_unlocks_from_completed_deal_motion() -> void:

@@ -60,6 +60,7 @@ var _blackjack_double: Button
 var _vault_credit_value: AnimatedNumberLabel
 var _vault_open: Button
 var _vault_cash_out: Button
+var _vault_cashout_meter: VaultCashoutMeter
 var _vault_revealed: Dictionary = {}
 var _ambient: CasinoAmbient
 var _lighting: CasinoLighting
@@ -425,7 +426,6 @@ func _refresh_vault() -> void:
 				next_face = VaultTile.Face.MINE if index in math.mines else VaultTile.Face.SAFE
 			if index in math.revealed and not _vault_revealed.has(index):
 				_vault_revealed[index] = true
-				AudioService.play(&"reveal")
 				_vault_tiles[index].reveal(next_face)
 			elif not _vault_tiles[index].is_flipping:
 				_vault_tiles[index].set_face_immediate(next_face)
@@ -445,6 +445,16 @@ func _refresh_vault() -> void:
 		else 0
 	)
 	_detail.text = tr("VAULT_GRID") % [cabinet.get("mine_count"), math.multiplier(), cash_out]
+	if _vault_cashout_meter != null:
+		var can_cash_out := cabinet.is_round_active and math.safe_reveals > 0
+		var safe_target := maxi(1, 25 - cabinet.get("mine_count"))
+		_vault_cashout_meter.set_ready(can_cash_out)
+		_vault_cashout_meter.set_values(
+			cash_out,
+			math.multiplier(),
+			float(math.safe_reveals) / float(safe_target),
+			true
+		)
 	_detail.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_controls.text = (
 		tr("VAULT_CONTROLS")
@@ -552,7 +562,7 @@ func _build_slot_art() -> void:
 		_slot_reel_cells.append(cells)
 		_slot_symbols.append(cells[2])
 		_art_root.add_child(reel)
-		_stop_reel(index)
+		_stop_reel(index, false)
 	for separator_x: float in [372.0, 579.0]:
 		var separator := ColorRect.new()
 		separator.position = Vector2(separator_x, SLOT_REEL_TOP)
@@ -688,15 +698,12 @@ func _build_vault_deck() -> void:
 		"panel", _panel_style(Color("0d0a1cdd"), Color("6d4fb3"), 7, 1)
 	)
 	add_child(status_panel)
-	var risk_panel := Panel.new()
-	risk_panel.name = "VaultRiskMeter"
-	risk_panel.position = Vector2(668, 350)
-	risk_panel.size = Vector2(244, 64)
-	risk_panel.z_index = 4
-	risk_panel.add_theme_stylebox_override(
-		"panel", _panel_style(Color("0d0a1cdd"), Color("6d4fb3"), 7, 1)
-	)
-	add_child(risk_panel)
+	_vault_cashout_meter = VaultCashoutMeter.new()
+	_vault_cashout_meter.name = "VaultCashoutMeter"
+	_vault_cashout_meter.position = Vector2(668, 350)
+	_vault_cashout_meter.size = Vector2(244, 64)
+	_vault_cashout_meter.z_index = 4
+	add_child(_vault_cashout_meter)
 	var deck := Panel.new()
 	deck.name = "VaultControlDeck"
 	deck.position = Vector2(48, 426)
@@ -936,6 +943,7 @@ func _build_vault_art() -> void:
 
 func _on_vault_reveal_effect(face_value: int, local_origin: Vector2, tile: VaultTile) -> void:
 	var mine_hit := face_value == VaultTile.Face.MINE
+	AudioService.play(&"loss" if mine_hit else &"reveal")
 	ImpactBurst.spawn(
 		_art_root,
 		tile.position + local_origin,
@@ -969,6 +977,7 @@ func _apply_vault_fullscreen_layout() -> void:
 	_detail.z_index = 6
 	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_detail.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_detail.hide()
 	_controls_backdrop.position = Vector2(72, 501)
 	_controls_backdrop.size = Vector2(816, 32)
 	_controls.position = Vector2(82, 505)
@@ -1076,7 +1085,7 @@ func _update_spinning_reel(reel_index: int) -> void:
 		)
 
 
-func _stop_reel(reel_index: int) -> void:
+func _stop_reel(reel_index: int, emit_impact: bool = true) -> void:
 	if reel_index >= _slot_reel_cells.size():
 		return
 	_slot_offsets[reel_index] = _slot_total_offsets[reel_index]
@@ -1087,6 +1096,13 @@ func _stop_reel(reel_index: int) -> void:
 			cell.set_spin_strength, cell.spin_strength, 0.0, 0.18
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	var reel: Control = _slot_reels[reel_index]
+	if emit_impact:
+		ImpactBurst.spawn(
+			_art_root,
+			reel.position + Vector2(reel.size.x * 0.5, reel.size.y * 0.5),
+			Color("f2c84b"),
+			false
+		)
 	reel.position.y = SLOT_REEL_BOUNCE_Y
 	create_tween().tween_property(reel, "position:y", SLOT_REEL_TOP, 0.11).set_trans(
 		Tween.TRANS_BACK

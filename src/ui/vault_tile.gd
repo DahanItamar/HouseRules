@@ -13,10 +13,13 @@ var _pulse_time: float = 0.0
 var _warning_remaining: float = 0.0
 var _flash_remaining: float = 0.0
 var _reveal_tween: Tween
+var _idle_time: float = 0.0
+var _idle_phase: float = 0.0
 
 
 func _process(delta: float) -> void:
 	var needs_redraw := false
+	_idle_time = fmod(_idle_time + delta, 12.0)
 	if is_selected:
 		_pulse_time += delta
 		needs_redraw = true
@@ -25,6 +28,8 @@ func _process(delta: float) -> void:
 		needs_redraw = true
 	if _flash_remaining > 0.0:
 		_flash_remaining = maxf(_flash_remaining - delta, 0.0)
+		needs_redraw = true
+	if face == Face.SAFE and fmod(_idle_time + _idle_phase, 3.8) < 0.48:
 		needs_redraw = true
 	if needs_redraw:
 		queue_redraw()
@@ -41,6 +46,7 @@ func reveal(next_face: Face) -> void:
 	if face == next_face and not is_flipping:
 		return
 	is_flipping = true
+	_idle_phase = fmod(float(get_index() * 13) * 0.17, 3.8)
 	pivot_offset = size * 0.5
 	if _reveal_tween and _reveal_tween.is_valid():
 		_reveal_tween.kill()
@@ -117,6 +123,14 @@ func _draw() -> void:
 			18,
 			Color("f1e8d8")
 		)
+		var idle_pass := fmod(_idle_time + _idle_phase, 3.8)
+		if idle_pass < 0.48:
+			var glint_alpha := sin(idle_pass / 0.48 * PI) * 0.55
+			draw_circle(
+				size * 0.5 + Vector2(-5.0 + idle_pass * 20.0, -7.0),
+				2.2,
+				Color(0.95, 0.92, 0.62, glint_alpha)
+			)
 	else:
 		var center := size * 0.5
 		draw_circle(center, 10.0, Color("d55353"), true, -1.0, true)

@@ -2,6 +2,8 @@ class_name SlotSpinButton
 extends Button
 ## Physical primary action for the classic slot control deck.
 
+var idle_time: float = 0.0
+
 
 func _ready() -> void:
 	text = ""
@@ -15,12 +17,25 @@ func _ready() -> void:
 	mouse_exited.connect(queue_redraw)
 	focus_entered.connect(queue_redraw)
 	focus_exited.connect(queue_redraw)
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	if disabled:
+		return
+	idle_time = fmod(idle_time + delta, 8.0)
+	queue_redraw()
 
 
 func _draw() -> void:
 	var center := size * 0.5
-	var active_radius := 36.0 if button_pressed else 39.0
-	var brass := Color("f0c45e") if is_hovered() or has_focus() else Color("c8a34b")
+	var idle_breath := (sin(idle_time * TAU / 1.8) + 1.0) * 0.5 if not disabled else 0.0
+	var active_radius := 36.0 if button_pressed else 38.5 + idle_breath * 0.8
+	var brass := (
+		Color("f0c45e")
+		if is_hovered() or has_focus()
+		else Color("c8a34b").lerp(Color("dfb75b"), idle_breath * 0.35)
+	)
 	var face := Color("3a0d14") if disabled else Color("781827")
 	for side: float in [-1.0, 1.0]:
 		var from := center + Vector2(side * 42.0, -14.0)

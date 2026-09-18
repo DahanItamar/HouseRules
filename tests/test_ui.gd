@@ -470,6 +470,7 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 	assert_gte(vault_backdrop.get_width(), 3840, "Vault backdrop retains a native 4K master")
 	assert_not_null(vault_panel.find_child("VaultControlDeck", true, false))
 	assert_not_null(vault_panel.find_child("VaultStatusPanel", true, false))
+	assert_true(vault_panel._vault_cashout_meter is VaultCashoutMeter)
 	assert_true(vault_panel._vault_open is Button)
 	assert_true(vault_panel._vault_cash_out is Button)
 

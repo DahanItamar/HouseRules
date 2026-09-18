@@ -8,11 +8,20 @@ const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(250, 265), &"vip": V
 const WING_THRESHOLDS: Dictionary = {&"high_roller": 5000, &"vip": 100_000}
 const FLOOR_ART := preload("res://assets/production/environments/casino_floor.png")
 const FLOOR_AVATAR_SCRIPT := preload("res://src/floor/floor_avatar.gd")
+const CASINO_PATRON_SCRIPT := preload("res://src/floor/casino_patron.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
 const AVATAR_RADIUS: float = 15.0
 const MACHINE_ZONE_RADIUS: float = 38.0
+const CAMERA_CENTER := Vector2(480, 270)
+const CAMERA_FOCUS_ZOOM := Vector2(1.015, 1.015)
+const CAMERA_FOCUS_OFFSET: float = 4.0
+const PATRON_LAYOUT: Array[Dictionary] = [
+	{"position": Vector2(102, 151), "profile": 0, "phase": 0.0},
+	{"position": Vector2(856, 152), "profile": 1, "phase": 1.15},
+	{"position": Vector2(111, 392), "profile": 2, "phase": 2.35},
+]
 static var NAV_OBSTACLES: Array[PackedVector2Array] = [
 	PackedVector2Array([Vector2(0, 0), Vector2(208, 0), Vector2(236, 72), Vector2(258, 194), Vector2(226, 244), Vector2(0, 250)]),
 	PackedVector2Array([Vector2(265, 48), Vector2(406, 46), Vector2(427, 112), Vector2(420, 187), Vector2(390, 219), Vector2(278, 219), Vector2(250, 184), Vector2(250, 94)]),
@@ -44,6 +53,10 @@ var _last_nearby_game: StringName = &""
 var _prompt_signature: String = ""
 var _prompt_tween: Tween
 var _cashier_tween: Tween
+var _patrons: Array[Node2D] = []
+var _floor_camera: Camera2D
+var _camera_tween: Tween
+var _camera_focus_id: StringName = &""
 
 
 func _ready() -> void:
@@ -56,7 +69,9 @@ func _ready() -> void:
 		assert(definition.id == id, "Cabinet resource ID must match its registry key: %s" % id)
 		assert(not definitions.has(definition.id), "Duplicate cabinet ID: %s" % definition.id)
 		definitions[id] = definition
+	_build_camera()
 	_build_dust()
+	_build_patrons()
 	_avatar_visual = FLOOR_AVATAR_SCRIPT.new()
 	_avatar_visual.name = "FloorAvatar"
 	_avatar_visual.position = avatar_position
@@ -138,6 +153,7 @@ func refresh_proximity() -> void:
 			nearby_definition = null
 			nearby_wing = id
 	var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
+	_update_camera_focus(current_game)
 	if current_game != _last_nearby_game:
 		_dismissed_game = &""
 	_last_nearby_game = current_game
@@ -302,6 +318,49 @@ func _build_dust() -> void:
 	dust.color = Color("f2d58d24")
 	dust.z_index = 1
 	add_child(dust)
+
+
+func _build_camera() -> void:
+	_floor_camera = Camera2D.new()
+	_floor_camera.name = "FloorCamera"
+	_floor_camera.position = CAMERA_CENTER
+	_floor_camera.position_smoothing_enabled = false
+	_floor_camera.enabled = true
+	add_child(_floor_camera)
+
+
+func _build_patrons() -> void:
+	for index: int in range(PATRON_LAYOUT.size()):
+		var layout: Dictionary = PATRON_LAYOUT[index]
+		var patron := CASINO_PATRON_SCRIPT.new() as Node2D
+		patron.name = "CasinoPatron%d" % (index + 1)
+		patron.position = layout["position"] as Vector2
+		patron.z_index = 2
+		patron.call("configure", int(layout["profile"]), float(layout["phase"]))
+		add_child(patron)
+		_patrons.append(patron)
+
+
+func _update_camera_focus(game_id: StringName) -> void:
+	if _floor_camera == null or game_id == _camera_focus_id:
+		return
+	_camera_focus_id = game_id
+	if _camera_tween != null:
+		_camera_tween.kill()
+	var target_position := CAMERA_CENTER
+	var target_zoom := Vector2.ONE
+	if game_id != &"" and cabinet_positions.has(game_id):
+		var toward_machine: Vector2 = cabinet_positions[game_id] - CAMERA_CENTER
+		if not toward_machine.is_zero_approx():
+			target_position += toward_machine.normalized() * CAMERA_FOCUS_OFFSET
+		target_zoom = CAMERA_FOCUS_ZOOM
+	_camera_tween = create_tween().set_parallel(true)
+	_camera_tween.tween_property(
+		_floor_camera, "position", target_position, 0.24
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_camera_tween.tween_property(
+		_floor_camera, "zoom", target_zoom, 0.24
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _draw() -> void:

@@ -12,18 +12,23 @@ var face_down: bool = false
 var _visual_face_down: bool = false
 var _sheen_remaining: float = 0.0
 var _flip_tween: Tween
+var _idle_time: float = 0.0
+var _idle_phase: float = 0.0
 
 
 func _process(delta: float) -> void:
-	if _sheen_remaining <= 0.0:
-		return
-	_sheen_remaining = maxf(_sheen_remaining - delta, 0.0)
-	queue_redraw()
+	_idle_time = fmod(_idle_time + delta, 12.0)
+	if _sheen_remaining > 0.0:
+		_sheen_remaining = maxf(_sheen_remaining - delta, 0.0)
+	var idle_pass := fmod(_idle_time + _idle_phase, 4.6)
+	if _sheen_remaining > 0.0 or idle_pass < 0.56:
+		queue_redraw()
 
 
 func configure(card_rank: int, card_suit: int, hidden: bool) -> void:
 	rank = card_rank
 	suit = posmod(card_suit, SUITS.size())
+	_idle_phase = fmod(float(rank * 7 + suit * 11) * 0.19, 4.6)
 	face_down = hidden
 	_visual_face_down = hidden
 	_trigger_sheen()
@@ -89,6 +94,18 @@ func _draw() -> void:
 			false,
 			2.0
 		)
+	elif not _visual_face_down:
+		var idle_pass := fmod(_idle_time + _idle_phase, 4.6)
+		if idle_pass < 0.56:
+			var idle_alpha := sin(idle_pass / 0.56 * PI) * 0.28
+			var edge_x := lerpf(8.0, size.x - 8.0, idle_pass / 0.56)
+			draw_line(
+				Vector2(edge_x, 4.0),
+				Vector2(minf(edge_x + 18.0, size.x - 4.0), 4.0),
+				Color(0.95, 0.78, 0.36, idle_alpha),
+				2.0,
+				true
+			)
 	if _visual_face_down:
 		for inset: int in [8, 14, 20]:
 			draw_rect(

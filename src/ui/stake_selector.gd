@@ -15,6 +15,7 @@ var cabinet: MiniGame
 var _buttons: Array[Button] = []
 var _active_operation: int = -1
 var _bet_flash: float = 0.0
+var _selection_time: float = 0.0
 
 
 func _ready() -> void:
@@ -57,6 +58,12 @@ func _process(delta: float) -> void:
 	if _bet_flash > 0.0:
 		_bet_flash = maxf(0.0, _bet_flash - delta * 2.8)
 		queue_redraw()
+	if _active_operation >= 0:
+		_selection_time = fmod(_selection_time + delta, 2.4)
+		var active_index := _operation_index(_active_operation)
+		if active_index >= 0:
+			var emphasis := (sin(_selection_time * TAU / 2.4) + 1.0) * 0.5
+			_buttons[active_index].modulate = Color(1.0, 0.90 + emphasis * 0.10, 0.88 + emphasis * 0.12)
 
 
 func button_rects() -> Array[Rect2]:
@@ -88,6 +95,8 @@ func refresh_controls() -> void:
 				3 if operation == _active_operation else 2
 			)
 		)
+		if operation != _active_operation:
+			button.modulate = Color.WHITE
 	queue_redraw()
 
 
