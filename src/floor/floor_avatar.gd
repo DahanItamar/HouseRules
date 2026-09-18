@@ -4,7 +4,7 @@ extends Node2D
 
 const GUEST_TEXTURE := preload("res://assets/production/characters/casino_guest_walk_32.png")
 const GUEST_CELL_SIZE := Vector2(221.75, 221.75)
-const GUEST_SCALE: float = 0.270
+const GUEST_SCALE: float = 0.34
 const WALK_CYCLE_DISTANCE: float = 64.0
 # Generated atlas columns run counter-clockwise from north.
 const DIRECTION_COLUMNS: Array[int] = [0, 7, 6, 5, 4, 3, 2, 1]
@@ -16,6 +16,7 @@ var is_walking: bool = false
 var _sprite: Sprite2D
 var _atlas: AtlasTexture
 var facing_index: int = 0
+var _walk_hold: float = 0.0
 
 
 func _ready() -> void:
@@ -34,8 +35,10 @@ func _ready() -> void:
 
 
 func set_motion(displacement: Vector2) -> void:
-	is_walking = displacement.length_squared() > 0.01
-	if is_walking:
+	var moved := displacement.length_squared() > 0.01
+	if moved:
+		is_walking = true
+		_walk_hold = 0.09
 		facing = displacement.normalized()
 		walk_phase = fmod(
 			walk_phase + displacement.length() / WALK_CYCLE_DISTANCE * TAU,
@@ -48,15 +51,20 @@ func set_motion(displacement: Vector2) -> void:
 
 
 func _process(delta: float) -> void:
+	_walk_hold = maxf(0.0, _walk_hold - delta)
+	is_walking = _walk_hold > 0.0
 	if not is_walking:
 		idle_time += delta
 		queue_redraw()
 	var stride := sin(walk_phase) if is_walking else 0.0
 	var breathe := sin(idle_time * 2.6) * 0.008 if not is_walking else 0.0
 	_sprite.rotation = stride * 0.006
-	_sprite.scale = Vector2(GUEST_SCALE, GUEST_SCALE * (1.0 + breathe))
-	_sprite.position = Vector2(stride * 0.25, -19.0 - absf(stride) * 0.45)
-	is_walking = false
+	var contact_compression := 0.97 if is_walking and walk_frame % 2 == 0 else 1.0
+	_sprite.scale = Vector2(
+		GUEST_SCALE * (2.0 - contact_compression),
+		GUEST_SCALE * contact_compression * (1.0 + breathe)
+	)
+	_sprite.position = Vector2(stride * 0.35, -23.0 - absf(stride) * 0.65)
 
 
 func _update_facing_texture() -> void:

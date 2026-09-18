@@ -2,18 +2,31 @@ class_name PlayingCard
 extends Control
 ## Sharp resolution-independent blackjack card with a real face/back state.
 
-const SUITS: Array[String] = ["♠", "♥", "♦", "♣"]
+const SUITS: Array[String] = ["\u2660", "\u2665", "\u2666", "\u2663"]
 const RED := Color("a53243")
 const BLACK := Color("17161a")
+const SHEEN_DURATION := 0.46
 var rank: int = 1
 var suit: int = 0
 var face_down: bool = false
+var _visual_face_down: bool = false
+var _sheen_remaining: float = 0.0
+var _flip_tween: Tween
+
+
+func _process(delta: float) -> void:
+	if _sheen_remaining <= 0.0:
+		return
+	_sheen_remaining = maxf(_sheen_remaining - delta, 0.0)
+	queue_redraw()
 
 
 func configure(card_rank: int, card_suit: int, hidden: bool) -> void:
 	rank = card_rank
 	suit = posmod(card_suit, SUITS.size())
 	face_down = hidden
+	_visual_face_down = hidden
+	_trigger_sheen()
 	queue_redraw()
 
 
@@ -25,20 +38,58 @@ func set_face_down(hidden: bool, animated: bool = false) -> void:
 	if face_down == hidden:
 		return
 	face_down = hidden
-	queue_redraw()
-	if animated:
-		scale.x = 0.05
-		create_tween().tween_property(self, "scale:x", 1.0, 0.16).set_trans(Tween.TRANS_BACK)
+	if not animated or not is_inside_tree():
+		_visual_face_down = hidden
+		_trigger_sheen()
+		queue_redraw()
+		return
+	if _flip_tween and _flip_tween.is_valid():
+		_flip_tween.kill()
+	pivot_offset = size * 0.5
+	var resting_rotation := rotation
+	_flip_tween = create_tween()
+	_flip_tween.set_parallel(true)
+	_flip_tween.tween_property(self, "scale:x", 0.04, 0.11).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN)
+	_flip_tween.tween_property(self, "scale:y", 1.06, 0.11).set_trans(Tween.TRANS_QUAD)
+	_flip_tween.tween_property(self, "rotation", resting_rotation + 0.025, 0.11)
+	_flip_tween.chain().tween_callback(
+		func() -> void:
+			_visual_face_down = hidden
+			_trigger_sheen()
+			queue_redraw()
+	)
+	_flip_tween.set_parallel(true)
+	_flip_tween.tween_property(self, "scale:x", 1.0, 0.15).set_trans(
+		Tween.TRANS_BACK
+	).set_ease(Tween.EASE_OUT)
+	_flip_tween.tween_property(self, "scale:y", 1.0, 0.15).set_trans(Tween.TRANS_QUAD)
+	_flip_tween.tween_property(self, "rotation", resting_rotation, 0.15).set_trans(Tween.TRANS_QUAD)
+
+
+func _trigger_sheen() -> void:
+	_sheen_remaining = SHEEN_DURATION
+	set_process(true)
 
 
 func _draw() -> void:
 	var card_style := StyleBoxFlat.new()
-	card_style.bg_color = Color("5a111c") if face_down else Color("f1e8d8")
-	card_style.border_color = Color("c8a34b") if face_down else Color("b8ad9c")
+	card_style.bg_color = Color("5a111c") if _visual_face_down else Color("f1e8d8")
+	card_style.border_color = Color("c8a34b") if _visual_face_down else Color("b8ad9c")
 	card_style.set_border_width_all(2)
 	card_style.set_corner_radius_all(7)
 	draw_style_box(card_style, Rect2(Vector2.ZERO, size))
-	if face_down:
+	if _sheen_remaining > 0.0:
+		var normalized := _sheen_remaining / SHEEN_DURATION
+		var flash_alpha := sin(normalized * PI) * 0.68
+		draw_rect(
+			Rect2(Vector2.ONE, size - Vector2(2, 2)),
+			Color(1.0, 0.89, 0.56, flash_alpha),
+			false,
+			2.0
+		)
+	if _visual_face_down:
 		for inset: int in [8, 14, 20]:
 			draw_rect(
 				Rect2(Vector2(inset, inset), size - Vector2(inset * 2, inset * 2)),

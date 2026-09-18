@@ -46,6 +46,7 @@ func _ready() -> void:
 		)
 		button.pressed.connect(_apply_operation.bind(int(action.operation)))
 		add_child(button)
+		ButtonFeedback.attach(button)
 		_buttons.append(button)
 	_layout_buttons()
 	refresh_controls()
@@ -114,14 +115,6 @@ func _apply_operation(operation: int) -> void:
 	if cabinet != null and cabinet.apply_bet(operation):
 		_active_operation = operation
 		_bet_flash = 1.0
-		var button_index := _operation_index(operation)
-		if button_index >= 0:
-			var button := _buttons[button_index]
-			button.pivot_offset = button.size * 0.5
-			button.scale = Vector2(0.88, 0.88)
-			create_tween().tween_property(button, "scale", Vector2.ONE, 0.18).set_trans(
-				Tween.TRANS_BACK
-			)
 		refresh_controls()
 
 

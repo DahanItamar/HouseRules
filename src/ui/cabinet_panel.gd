@@ -170,8 +170,11 @@ func show_result(result: RoundResult) -> void:
 	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
 	AudioService.play(&"win" if result.payout > result.stake else &"loss")
 	if result.payout > result.stake:
-		_celebration.burst(Vector2(480, 300), 20)
+		var win_multiple := float(result.payout) / maxf(result.stake, 1.0)
+		_celebration.burst(Vector2(480, 300), 32 if win_multiple >= 10.0 else (20 if win_multiple >= 5.0 else 12))
 		_pulse_slot_win()
+		if win_multiple >= 5.0:
+			_shake_stage(6.0 if win_multiple >= 10.0 else 3.0, 0.28 if win_multiple >= 10.0 else 0.18)
 	if cabinet.context.definition.id == &"slot_classic":
 		_animate_slot_result(result.payout)
 	elif cabinet.context.definition.id == &"blackjack":
@@ -249,6 +252,13 @@ func set_help_open(open: bool) -> void:
 	if _help_overlay != null:
 		_help_overlay.visible = open
 	if open and _help_overlay != null:
+		_help_overlay.modulate.a = 0.0
+		var modal := _help_overlay.get_child(1) as Control
+		modal.pivot_offset = modal.size * 0.5
+		modal.scale = Vector2(0.96, 0.96)
+		var reveal := create_tween().set_parallel(true)
+		reveal.tween_property(_help_overlay, "modulate:a", 1.0, 0.15)
+		reveal.tween_property(modal, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
 		var close_button := _help_overlay.find_child("HelpClose", true, false) as Button
 		if close_button != null:
 			close_button.grab_focus()
@@ -272,6 +282,7 @@ func _build_help_ui() -> void:
 	_help_button.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
 	_help_button.pressed.connect(toggle_help)
 	add_child(_help_button)
+	ButtonFeedback.attach(_help_button)
 
 	_help_overlay = Control.new()
 	_help_overlay.name = "HelpOverlay"
@@ -314,6 +325,7 @@ func _build_help_ui() -> void:
 	close.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
 	close.pressed.connect(func() -> void: set_help_open(false))
 	modal.add_child(close)
+	ButtonFeedback.attach(close)
 
 
 func _refresh_help() -> void:
@@ -439,6 +451,7 @@ func _refresh_vault() -> void:
 		]
 	)
 	if _vault_credit_value != null:
+		var cash_out_was_disabled := _vault_cash_out.disabled
 		_vault_credit_value.text = str(
 			maxi(0, cabinet.context.balance - (cabinet.current_stake if cabinet.is_round_active else 0))
 		)
@@ -449,6 +462,12 @@ func _refresh_vault() -> void:
 			not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance
 		)
 		_vault_cash_out.disabled = not cabinet.is_round_active or math.revealed.is_empty()
+		if cash_out_was_disabled and not _vault_cash_out.disabled:
+			_vault_cash_out.pivot_offset = _vault_cash_out.size * 0.5
+			_vault_cash_out.scale = Vector2(1.045, 1.045)
+			create_tween().tween_property(
+				_vault_cash_out, "scale", Vector2.ONE, 0.3
+			).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _ensure_art() -> void:
@@ -605,6 +624,7 @@ func _build_slot_deck() -> void:
 				cabinet.call("request_spin")
 	)
 	add_child(_slot_spin_label)
+	ButtonFeedback.attach(_slot_spin_label)
 
 	var result_panel := Panel.new()
 	result_panel.name = "SlotResultMeter"
@@ -719,6 +739,7 @@ func _action_button(label: String, at: Vector2, dimensions: Vector2, action: Cal
 	button.add_theme_stylebox_override("disabled", _panel_style(Color("252126"), Color("4b443c"), 7, 1))
 	button.pressed.connect(func() -> void: action.call())
 	add_child(button)
+	ButtonFeedback.attach(button)
 	return button
 
 
@@ -872,6 +893,7 @@ func _build_vault_art() -> void:
 			(index % 5) * VAULT_GRID_PITCH, (index / 5) * VAULT_GRID_PITCH
 		)
 		tile.size = Vector2(48, 48)
+		tile.reveal_effect_requested.connect(_on_vault_reveal_effect.bind(tile))
 		_vault_tiles.append(tile)
 		_art_root.add_child(tile)
 	_vault_cursor = Node2D.new()
@@ -890,6 +912,18 @@ func _build_vault_art() -> void:
 	_art_root.add_child(_vault_cursor)
 	_vault_cursor.position = VAULT_GRID_ORIGIN - Vector2(4, 4)
 	_build_vault_deck()
+
+
+func _on_vault_reveal_effect(face_value: int, local_origin: Vector2, tile: VaultTile) -> void:
+	var mine_hit := face_value == VaultTile.Face.MINE
+	ImpactBurst.spawn(
+		_art_root,
+		tile.position + local_origin,
+		Color("ef5350") if mine_hit else Color("5de4d2"),
+		mine_hit
+	)
+	if mine_hit:
+		_shake_stage(5.0, 0.22)
 
 
 func _apply_vault_fullscreen_layout() -> void:
@@ -982,6 +1016,9 @@ func _start_slot_motion() -> void:
 	_slot_offsets = [0.0, 0.0, 0.0]
 	_slot_stopped = [false, false, false]
 	_slot_spinning = true
+	for reel_cells: Array in _slot_reel_cells:
+		for cell: SlotSymbol in reel_cells:
+			cell.set_spin_strength(1.0)
 	if _slot_lever != null:
 		_slot_lever.rotation = 0.0
 		_motion_tween = create_tween()
@@ -1024,6 +1061,10 @@ func _stop_reel(reel_index: int) -> void:
 	_slot_offsets[reel_index] = _slot_total_offsets[reel_index]
 	_update_spinning_reel(reel_index)
 	_slot_stopped[reel_index] = true
+	for cell: SlotSymbol in _slot_reel_cells[reel_index]:
+		create_tween().tween_method(
+			cell.set_spin_strength, cell.spin_strength, 0.0, 0.18
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	var reel: Control = _slot_reels[reel_index]
 	reel.position.y = SLOT_REEL_BOUNCE_Y
 	create_tween().tween_property(reel, "position:y", SLOT_REEL_TOP, 0.11).set_trans(
@@ -1138,10 +1179,24 @@ func _animate_vault_result(result: RoundResult) -> void:
 	_vault_cursor.scale = Vector2(1.14, 1.14)
 	_vault_fx_tween = create_tween().set_parallel(true)
 	_vault_fx_tween.tween_property(_vault_cursor, "scale", Vector2.ONE, 0.32).set_trans(Tween.TRANS_BACK)
-	if result.payout == 0:
-		var start := _art_root.position
-		_vault_fx_tween.tween_property(_art_root, "position", start + Vector2(4, 0), 0.06)
-		_vault_fx_tween.chain().tween_property(_art_root, "position", start, 0.12).set_trans(Tween.TRANS_BOUNCE)
+
+
+func _shake_stage(intensity: float, duration: float) -> void:
+	if _art_root == null:
+		return
+	var origin := Vector2.ZERO
+	var shake := create_tween()
+	var beats := maxi(2, int(duration / 0.045))
+	for index: int in range(beats):
+		var falloff := 1.0 - float(index) / float(beats)
+		var direction := -1.0 if index % 2 == 0 else 1.0
+		shake.tween_property(
+			_art_root,
+			"position",
+			origin + Vector2(direction * intensity * falloff, 0),
+			duration / float(beats)
+		)
+	shake.tween_property(_art_root, "position", origin, 0.05).set_trans(Tween.TRANS_QUAD)
 
 
 func _pulse_slot_win() -> void:

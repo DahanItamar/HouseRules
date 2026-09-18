@@ -1,7 +1,7 @@
 class_name FloorController
 extends Node2D
 
-const SPEED: float = 112.0
+const SPEED: float = 88.0
 const INTERACTION_RADIUS: float = 76.0
 const CASHIER_POSITION := Vector2(660, 410)
 const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(250, 265), &"vip": Vector2(790, 242)}
@@ -41,6 +41,9 @@ var _cashier_debt: Label
 var _ambient_time: float = 0.0
 var _dismissed_game: StringName = &""
 var _last_nearby_game: StringName = &""
+var _prompt_signature: String = ""
+var _prompt_tween: Tween
+var _cashier_tween: Tween
 
 
 func _ready() -> void:
@@ -53,6 +56,7 @@ func _ready() -> void:
 		assert(definition.id == id, "Cabinet resource ID must match its registry key: %s" % id)
 		assert(not definitions.has(definition.id), "Duplicate cabinet ID: %s" % definition.id)
 		definitions[id] = definition
+	_build_dust()
 	_avatar_visual = FLOOR_AVATAR_SCRIPT.new()
 	_avatar_visual.name = "FloorAvatar"
 	_avatar_visual.position = avatar_position
@@ -260,7 +264,44 @@ func _update_prompt() -> void:
 		_prompt.position = Vector2(330, 486)
 		_prompt.size = Vector2(300, 34)
 		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
+	_animate_prompt_change()
 	queue_redraw()
+
+
+func _animate_prompt_change() -> void:
+	var signature := "%s|%s" % [_prompt.text, _prompt.position]
+	if signature == _prompt_signature:
+		return
+	_prompt_signature = signature
+	if _prompt_tween != null:
+		_prompt_tween.kill()
+	_prompt.modulate.a = 0.25
+	_prompt.pivot_offset = _prompt.size * 0.5
+	_prompt.scale = Vector2(0.98, 0.98)
+	_prompt_tween = create_tween().set_parallel(true)
+	_prompt_tween.tween_property(_prompt, "modulate:a", 1.0, 0.16).set_trans(Tween.TRANS_QUAD)
+	_prompt_tween.tween_property(_prompt, "scale", Vector2.ONE, 0.16).set_trans(Tween.TRANS_BACK)
+
+
+func _build_dust() -> void:
+	var dust := CPUParticles2D.new()
+	dust.name = "CasinoDust"
+	dust.position = Vector2(480, 270)
+	dust.amount = 32
+	dust.lifetime = 6.5
+	dust.preprocess = 6.5
+	dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	dust.emission_rect_extents = Vector2(440, 220)
+	dust.direction = Vector2.UP
+	dust.spread = 35.0
+	dust.initial_velocity_min = 3.0
+	dust.initial_velocity_max = 8.0
+	dust.gravity = Vector2.ZERO
+	dust.scale_amount_min = 0.8
+	dust.scale_amount_max = 2.2
+	dust.color = Color("f2d58d24")
+	dust.z_index = 1
+	add_child(dust)
 
 
 func _draw() -> void:
@@ -420,13 +461,26 @@ func _cashier_button(text_value: String, at: Vector2, dimensions: Vector2) -> Bu
 		style.set_corner_radius_all(8)
 		button.add_theme_stylebox_override(state, style)
 	_cashier_panel.add_child(button)
+	ButtonFeedback.attach(button)
 	return button
 
 
 func _refresh_cashier_menu() -> void:
 	if _cashier_panel == null:
 		return
+	var opening := _cashier_open and not _cashier_panel.visible
 	_cashier_panel.visible = _cashier_open
+	if opening:
+		_cashier_panel.pivot_offset = _cashier_panel.size * 0.5
+		_cashier_panel.modulate.a = 0.0
+		_cashier_panel.scale = Vector2(0.96, 0.96)
+		if _cashier_tween != null:
+			_cashier_tween.kill()
+		_cashier_tween = create_tween().set_parallel(true)
+		_cashier_tween.tween_property(_cashier_panel, "modulate:a", 1.0, 0.18)
+		_cashier_tween.tween_property(
+			_cashier_panel, "scale", Vector2.ONE, 0.18
+		).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_cashier_balance.text = "TEST BANK  ∞" if Wallet.test_mode_enabled else "CHIPS  %d" % Wallet.balance
 	_cashier_debt.text = "NO OUTSTANDING MARKER" if Economy.debt == 0 else "MARKER DEBT  %d" % Economy.debt
 	(_cashier_panel.get_node("TakeMarker") as Button).disabled = not Economy.is_below_solvency_floor()
