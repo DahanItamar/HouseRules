@@ -57,3 +57,33 @@ func test_m5_each_cabinet_integrates_its_generated_art() -> void:
 			session.cabinet.panel.find_child(expected[id], true, false),
 			"%s screen includes its generated cabinet art" % id
 		)
+
+
+func test_ac040_target_displays_use_sharp_integer_scaling() -> void:
+	var base := Vector2i(
+		ProjectSettings.get_setting("display/window/size/viewport_width"),
+		ProjectSettings.get_setting("display/window/size/viewport_height")
+	)
+	assert_eq(base, Vector2i(960, 540))
+	assert_eq(ProjectSettings.get_setting("display/window/stretch/mode"), "viewport")
+	assert_eq(ProjectSettings.get_setting("display/window/stretch/aspect"), "keep")
+	assert_eq(ProjectSettings.get_setting("display/window/stretch/scale_mode"), "integer")
+	var targets := {
+		"FHD / ROG Ally X": [Vector2i(1920, 1080), 2],
+		"DCI 2K": [Vector2i(2048, 1080), 2],
+		"1440p": [Vector2i(2560, 1440), 2],
+		"4K UHD": [Vector2i(3840, 2160), 4],
+	}
+	for target: String in targets:
+		var dimensions: Vector2i = targets[target][0]
+		var scale: int = mini(dimensions.x / base.x, dimensions.y / base.y)
+		assert_eq(scale, targets[target][1], "%s uses the reviewed integer scale" % target)
+		assert_lte(base.x * scale, dimensions.x)
+		assert_lte(base.y * scale, dimensions.y)
+
+
+func test_m5_machine_captures_match_the_pixel_base() -> void:
+	for filename: String in ["03_slot_idle.png", "05_blackjack.png", "06_vault.png"]:
+		var texture: Texture2D = load("res://tests/results/screenshots/" + filename)
+		assert_not_null(texture, "%s is imported" % filename)
+		assert_eq(texture.get_size(), Vector2(960, 540), "%s uses the pixel base" % filename)

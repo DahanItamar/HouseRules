@@ -43,6 +43,7 @@ directories; they do not overwrite the player's normal save.
 | AC-037 | Every gameplay action has its documented gamepad button; movement also has D-pad and left-stick bindings. |
 | AC-038 | Raw device changes swap glyphs and synchronously refresh a live floor prompt in both directions. |
 | AC-039 | Physical D-pad and left-stick events move the reusable wrapping snap cursor. |
+| AC-040 | FHD, DCI 2K, QHD and 4K targets retain the reviewed integer scale; cabinet captures remain 960×540. |
 | AC-042 | Runtime labels meet the 8px body floor; chips, stake and multiplier meet the 16px critical floor. |
 | AC-043 | CI validates every translation reference and rejects literal text assigned to UI or scene text sinks. |
 | AC-037 disconnect | Losing the active gamepad pauses behind a blocking overlay; reconnecting resumes it. |
