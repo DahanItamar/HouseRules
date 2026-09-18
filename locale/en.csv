@@ -1,0 +1,40 @@
+keys,en
+GAME_TITLE,HOUSE RULES
+MENU_CONTROLS,"[%s] Enter the casino\n[%s] Save and quit"
+HUD_CHIPS,CHIPS  %d
+HUD_DEBT,DEBT  %d
+HUD_CASHIER,Cashier → lower right
+CABINET_SLOT_CLASSIC_NAME,CLASSIC 3-REEL
+CABINET_BLACKJACK_NAME,BLACKJACK 21
+CABINET_MINEFIELD_VAULT_NAME,MINEFIELD VAULT
+FLOOR_PROMPT,"%s\n%d–%d chips  [%s] Play"
+FLOOR_UNAVAILABLE,"%s\nNeeds %d chips"
+FLOOR_HELP,Move with WASD / left stick / D-pad.  [%s] Menu
+CASHIER_NAME,CASHIER
+CASHIER_PROMPT,[%s] Visit cashier
+CASHIER_ACTIONS,[%s] Take 100-chip marker (below 20 chips)   [%s] Repay debt   [%s] Leave
+CABINET_STAKE,STAKE  %d
+CABINET_CONTROLS,[%s] Play   Left / Right: Stake   [%s] Leave
+ROUND_READY,Choose your stake.
+ROUND_SPINNING,Reels spinning…
+ROUND_RESULT,Stake %d · Returned %d
+BLACKJACK_DECIDE,Hit / Stand / Double
+BLACKJACK_HANDS,"PLAYER  %s\n\nDEALER  %s\n\nAce = 1 (or 11) · J / Q / K = 10"
+BLACKJACK_CONTROLS,[%s] Deal / Hit   [%s] Stand   [%s] Double   [%s] Leave
+VAULT_REVEAL,Reveal a box or cash out after a safe reveal.
+VAULT_GRID,"MINES %d   MULTIPLIER %.2f×\n%s"
+VAULT_CONTROLS,[%s] Open   [%s] Cash out   [%s] Leave · Up/down: Mines before betting
+SYMBOL_0,CHERRY
+SYMBOL_1,LEMON
+SYMBOL_2,BELL
+SYMBOL_3,BAR
+SYMBOL_4,SEVEN
+SYMBOL_5,DIAMOND
+CARD_1,A
+CARD_11,J
+CARD_12,Q
+CARD_13,K
+SAVE_INCOMPATIBLE,This save is from a newer version. It has not been changed.
+SAVE_CORRUPT,Unreadable save preserved. A new game has started.
+SAVE_PRESERVE_FAILED,Could not preserve the unreadable save. Saving is disabled.
+SAVE_FAILED,Could not save. Check available storage and try again.
