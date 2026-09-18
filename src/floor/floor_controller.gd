@@ -162,7 +162,7 @@ func _update_prompt() -> void:
 	elif avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_prompt.text = tr("CASHIER_PROMPT") % InputRouter.glyph("interact")
 	else:
-		_prompt.text = tr("FLOOR_HELP") % InputRouter.glyph("back")
+		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
 
 
 func _draw() -> void:

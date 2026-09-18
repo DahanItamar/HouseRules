@@ -39,7 +39,12 @@ func refresh() -> void:
 	_stake.text = tr("CABINET_STAKE") % cabinet.selected_stake
 	_status.text = tr(_status_key)
 	_controls.text = (
-		tr("CABINET_CONTROLS") % [InputRouter.glyph("interact"), InputRouter.glyph("back")]
+		tr("CABINET_CONTROLS")
+		% [
+			InputRouter.glyph("interact"),
+			InputRouter.glyph("move_horizontal"),
+			InputRouter.glyph("back")
+		]
 	)
 	var id: StringName = cabinet.context.definition.id
 	if id == &"blackjack":
@@ -80,6 +85,7 @@ func _refresh_blackjack() -> void:
 			InputRouter.glyph("interact"),
 			InputRouter.glyph("secondary"),
 			InputRouter.glyph("tertiary"),
+			InputRouter.glyph("move_horizontal"),
 			InputRouter.glyph("back")
 		]
 	)
@@ -100,7 +106,13 @@ func _refresh_vault() -> void:
 	_detail.add_theme_font_size_override("font_size", 16)
 	_controls.text = (
 		tr("VAULT_CONTROLS")
-		% [InputRouter.glyph("interact"), InputRouter.glyph("secondary"), InputRouter.glyph("back")]
+		% [
+			InputRouter.glyph("interact"),
+			InputRouter.glyph("secondary"),
+			InputRouter.glyph("move_horizontal"),
+			InputRouter.glyph("move_vertical"),
+			InputRouter.glyph("back")
+		]
 	)
 
 

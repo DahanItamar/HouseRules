@@ -16,6 +16,16 @@ const AXIS_ACTIONS := {
 	&"move_up": [JOY_AXIS_LEFT_Y, -1.0],
 	&"move_down": [JOY_AXIS_LEFT_Y, 1.0],
 }
+var _original_device: InputRouter.Device
+
+
+func before_each() -> void:
+	_original_device = InputRouter.active_device
+
+
+func after_each() -> void:
+	InputRouter.active_device = _original_device
+	InputRouter.active_device_changed.emit(_original_device)
 
 
 func test_ac037_every_gameplay_action_has_a_gamepad_button() -> void:
@@ -34,6 +44,31 @@ func test_ac037_movement_supports_the_left_stick_and_dpad() -> void:
 			_has_axis(action, expected[0], expected[1]),
 			"%s has its documented left-stick direction" % action
 		)
+
+
+func test_ac038_device_change_swaps_glyphs_and_live_floor_prompt() -> void:
+	InputRouter.active_device = InputRouter.Device.KEYBOARD
+	var floor := FloorController.new()
+	add_child_autofree(floor)
+	floor.avatar_position = Vector2(480, 400)
+	floor.refresh_proximity()
+	assert_string_contains(floor._prompt.text, tr("INPUT_WASD"))
+	assert_string_contains(floor._prompt.text, tr("INPUT_ESCAPE"))
+
+	var button := InputEventJoypadButton.new()
+	button.button_index = JOY_BUTTON_A
+	button.pressed = true
+	InputRouter._input(button)
+	assert_eq(InputRouter.active_device, InputRouter.Device.GAMEPAD)
+	assert_string_contains(floor._prompt.text, tr("INPUT_STICK_DPAD"))
+	assert_string_contains(floor._prompt.text, tr("INPUT_B"))
+
+	var key := InputEventKey.new()
+	key.physical_keycode = KEY_ENTER
+	key.pressed = true
+	InputRouter._input(key)
+	assert_eq(InputRouter.active_device, InputRouter.Device.KEYBOARD)
+	assert_string_contains(floor._prompt.text, tr("INPUT_WASD"))
 
 
 func _has_button(action: StringName, button: JoyButton) -> bool:

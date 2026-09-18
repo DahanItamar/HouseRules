@@ -22,13 +22,30 @@ func _ready() -> void:
 
 
 func glyph(action: String) -> String:
-	var keys: Dictionary = {"interact": "Enter", "back": "Esc", "secondary": "X", "tertiary": "Y"}
-	var buttons: Dictionary = {"interact": "A", "back": "B", "secondary": "X", "tertiary": "Y"}
-	return (
-		buttons.get(action, "D-pad")
+	var keys: Dictionary = {
+		"interact": "INPUT_ENTER",
+		"back": "INPUT_ESCAPE",
+		"secondary": "INPUT_X",
+		"tertiary": "INPUT_Y",
+		"move_horizontal": "INPUT_AD",
+		"move_vertical": "INPUT_WS",
+		"move": "INPUT_WASD",
+	}
+	var buttons: Dictionary = {
+		"interact": "INPUT_A",
+		"back": "INPUT_B",
+		"secondary": "INPUT_X",
+		"tertiary": "INPUT_Y",
+		"move_horizontal": "INPUT_STICK_HORIZONTAL",
+		"move_vertical": "INPUT_STICK_VERTICAL",
+		"move": "INPUT_STICK_DPAD",
+	}
+	var key: String = (
+		buttons.get(action, "INPUT_DPAD")
 		if active_device == Device.GAMEPAD
-		else keys.get(action, "WASD")
+		else keys.get(action, "INPUT_WASD")
 	)
+	return tr(key)
 
 
 func _input(event: InputEvent) -> void:

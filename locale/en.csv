@@ -22,7 +22,7 @@ CABINET_BLACKJACK_NAME,BLACKJACK 21
 CABINET_MINEFIELD_VAULT_NAME,MINEFIELD VAULT
 FLOOR_PROMPT,"%s\n%d–%d chips  [%s] Play"
 FLOOR_UNAVAILABLE,"%s\nNeeds %d chips"
-FLOOR_HELP,Move with WASD / left stick / D-pad.  [%s] Menu
+FLOOR_HELP,Move with %s.  [%s] Menu
 CASHIER_NAME,CASHIER
 CASHIER_PROMPT,[%s] Visit cashier
 CASHIER_ACTIONS,[%s] Take 100-chip marker (below 20 chips)   [%s] Repay debt   [%s] Leave
@@ -30,16 +30,29 @@ WING_HIGH_ROLLER,HIGH-ROLLER STAIRCASE
 WING_VIP,VIP ELEVATOR
 WING_LOCKED,%s LOCKED\nRequires %d lifetime wagered
 CABINET_STAKE,STAKE  %d
-CABINET_CONTROLS,[%s] Play   Left / Right: Stake   [%s] Leave
+CABINET_CONTROLS,[%s] Play   %s: Stake   [%s] Leave
 ROUND_READY,Choose your stake.
 ROUND_SPINNING,Reels spinning…
 ROUND_RESULT,Stake %d · Returned %d
 BLACKJACK_DECIDE,Hit / Stand / Double
 BLACKJACK_HANDS,"PLAYER  %s\n\nDEALER  %s\n\nAce = 1 (or 11) · J / Q / K = 10"
-BLACKJACK_CONTROLS,[%s] Deal / Hit   [%s] Stand   [%s] Double   [%s] Leave
+BLACKJACK_CONTROLS,[%s] Deal / Hit   [%s] Stand   [%s] Double   %s: Stake   [%s] Leave
 VAULT_REVEAL,Reveal a box or cash out after a safe reveal.
 VAULT_GRID,"MINES %d   MULTIPLIER %.2f×\n%s"
-VAULT_CONTROLS,[%s] Open   [%s] Cash out   [%s] Leave · Up/down: Mines before betting
+VAULT_CONTROLS,[%s] Open   [%s] Cash out   %s: Stake   %s: Mines   [%s] Leave
+INPUT_ENTER,Enter
+INPUT_ESCAPE,Esc
+INPUT_A,A
+INPUT_B,B
+INPUT_X,X
+INPUT_Y,Y
+INPUT_AD,A / D
+INPUT_WS,W / S
+INPUT_WASD,WASD
+INPUT_DPAD,D-pad
+INPUT_STICK_HORIZONTAL,Left stick / D-pad left-right
+INPUT_STICK_VERTICAL,Left stick / D-pad up-down
+INPUT_STICK_DPAD,Left stick / D-pad
 SYMBOL_0,CHERRY
 SYMBOL_1,LEMON
 SYMBOL_2,BELL
