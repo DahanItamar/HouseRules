@@ -39,6 +39,9 @@ func _capture() -> void:
 	router.session.cabinet.start_round(10)
 	await create_timer(0.35).timeout
 	await _snapshot("04_slot_spinning")
+	router.session.cabinet.exit_confirmation.present(10)
+	await _snapshot("04_exit_confirmation")
+	router.session.cabinet.exit_confirmation.cancel()
 	router.session.cabinet.resolve_pending()
 	await _snapshot("04_slot_result")
 	router.return_to_floor()

@@ -10,6 +10,7 @@ var is_round_active: bool = false
 var current_stake: int = 0
 var selected_stake: int = 1
 var panel: CabinetPanel
+var exit_confirmation: CabinetExitConfirmation
 
 enum BetOperation { MIN, ADD_10, ADD_25, MULTIPLY_2, MULTIPLY_5, MAX }
 
@@ -138,6 +139,8 @@ func select_stake(amount: int) -> bool:
 
 
 func handle_common_input(event: InputEvent) -> bool:
+	if exit_confirmation != null and exit_confirmation.handle_input(event):
+		return true
 	if event.is_action_pressed("help"):
 		panel.toggle_help()
 		get_viewport().set_input_as_handled()
@@ -154,11 +157,17 @@ func _ready() -> void:
 	panel = CabinetPanel.new()
 	panel.cabinet = self
 	add_child(panel)
+	exit_confirmation = CabinetExitConfirmation.new()
+	exit_confirmation.name = "CabinetExitConfirmation"
+	exit_confirmation.leave_confirmed.connect(func() -> void: exit_requested.emit())
+	add_child(exit_confirmation)
 
 
 func _finish(result: RoundResult) -> void:
 	if not is_round_active:
 		return
+	if exit_confirmation != null:
+		exit_confirmation.dismiss()
 	is_round_active = false
 	round_resolved.emit(result)
 	if panel != null:
@@ -170,7 +179,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("back"):
 		get_viewport().set_input_as_handled()
-		exit_requested.emit()
+		if is_round_active:
+			exit_confirmation.present(current_stake)
+		else:
+			exit_requested.emit()
 	elif not is_round_active and context != null:
 		var changed := false
 		if event.is_action_pressed("move_left"):

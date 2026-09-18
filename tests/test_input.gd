@@ -66,13 +66,47 @@ func test_ac038_device_change_swaps_glyphs_and_live_floor_prompt() -> void:
 	assert_eq(InputRouter.active_device, InputRouter.Device.GAMEPAD)
 	assert_string_contains(floor._prompt.text, tr("INPUT_STICK_DPAD"))
 	assert_string_contains(floor._prompt.text, tr("INPUT_B"))
+	floor.avatar_position = floor.cabinet_positions[&"slot_classic"]
+	floor.refresh_proximity()
+	assert_string_contains(floor._prompt.text, "[%s] JOIN" % tr("INPUT_A"))
+	assert_string_contains(floor._prompt.text, "[%s] CLOSE" % tr("INPUT_B"))
 
 	var key := InputEventKey.new()
 	key.physical_keycode = KEY_ENTER
 	key.pressed = true
 	InputRouter._input(key)
 	assert_eq(InputRouter.active_device, InputRouter.Device.KEYBOARD)
-	assert_string_contains(floor._prompt.text, tr("INPUT_WASD"))
+	assert_string_contains(floor._prompt.text, "[%s] JOIN" % tr("INPUT_ENTER"))
+	assert_string_contains(floor._prompt.text, "[%s] CLOSE" % tr("INPUT_ESCAPE"))
+
+
+func test_gamepad_b_dismisses_join_and_a_stays_blocked_until_reentry() -> void:
+	var floor := FloorController.new()
+	add_child_autofree(floor)
+	floor.set_physics_process(false)
+	floor.avatar_position = floor.cabinet_positions[&"slot_classic"]
+	floor.refresh_proximity()
+
+	var back := InputEventJoypadButton.new()
+	back.button_index = JOY_BUTTON_B
+	back.pressed = true
+	floor._unhandled_input(back)
+	assert_eq(floor._dismissed_game, &"slot_classic")
+
+	var accept := InputEventJoypadButton.new()
+	accept.button_index = JOY_BUTTON_A
+	accept.pressed = true
+	floor._unhandled_input(accept)
+	assert_null(SceneRouter.session, "A cannot trigger the hidden join action after B dismisses it")
+
+	floor.avatar_position += Vector2(0, FloorController.INTERACTION_RADIUS + 20.0)
+	floor.refresh_proximity()
+	floor.avatar_position = floor.cabinet_positions[&"slot_classic"]
+	floor.refresh_proximity()
+	floor._unhandled_input(accept)
+	assert_not_null(SceneRouter.session, "Leaving and re-entering restores gamepad join")
+	SceneRouter.return_to_floor()
+	await get_tree().process_frame
 
 
 func test_ac037_active_gamepad_disconnect_pauses_until_reconnect() -> void:

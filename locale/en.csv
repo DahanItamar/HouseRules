@@ -27,7 +27,7 @@ CABINET_MINEFIELD_VAULT_NAME,MINEFIELD VAULT
 FLOOR_PROMPT,"%s\n%d–%d chips  [%s] Play"
 FLOOR_UNAVAILABLE,"%s\nNeeds %d chips"
 FLOOR_HELP,Move with %s.  [%s] Menu
-FLOOR_JOIN_DIALOG,"%s\nBET %d–%d CHIPS\n[%s] JOIN    [%s] CLOSE"
+FLOOR_JOIN_DIALOG,"%s  ·  BET %d–%d CHIPS\n[%s] JOIN    [%s] CLOSE"
 CASHIER_NAME,CASHIER
 CASHIER_PROMPT,[%s] Visit cashier
 CASHIER_ACTIONS,[%s] Take 100-chip marker (below 20 chips)   [%s] Repay debt   [%s] Leave
@@ -46,6 +46,10 @@ HELP_TITLE,HOW TO PLAY — %s
 HELP_RULES,RULES
 HELP_CONTROLS,CONTROLS
 HELP_CLOSE_HINT,%s or Back closes this guide
+EXIT_CONFIRM_TITLE,LEAVE THIS GAME?
+EXIT_CONFIRM_MESSAGE,Leave now and forfeit %d chips?
+EXIT_CONFIRM_CANCEL,KEEP PLAYING
+EXIT_CONFIRM_LEAVE,LEAVE & FORFEIT
 HELP_SLOT_CLASSIC_RULES,"The center payline decides the round.
 
 Match three symbols to win. Two cherries also pay.

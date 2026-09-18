@@ -26,6 +26,8 @@ var _slot_stopped: Array[bool] = [true, true, true]
 var _slot_spin_elapsed: float = 0.0
 var _slot_spinning: bool = false
 var _slot_finish_callback: Callable
+var _slot_win_tween: Tween
+var _slot_last_win_indices: Array[int] = []
 var _slot_lever: Node2D
 var _slot_spin_label: SlotSpinButton
 var _slot_payline: ColorRect
@@ -174,7 +176,7 @@ func show_result(result: RoundResult) -> void:
 	if result.payout > result.stake:
 		var win_multiple := float(result.payout) / maxf(result.stake, 1.0)
 		_celebration.burst(Vector2(480, 300), 32 if win_multiple >= 10.0 else (20 if win_multiple >= 5.0 else 12))
-		_pulse_slot_win()
+		_pulse_slot_win(result)
 		if win_multiple >= 5.0:
 			_shake_stage(6.0 if win_multiple >= 10.0 else 3.0, 0.28 if win_multiple >= 10.0 else 0.18)
 	if cabinet.context.definition.id == &"slot_classic":
@@ -224,6 +226,7 @@ func set_status(key: String) -> void:
 
 
 func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
+	_reset_slot_win_feedback()
 	_slot_spin_targets.clear()
 	_slot_stop_times = [1.05, 1.32, 1.59]
 	for index: int in range(3):
@@ -1264,19 +1267,81 @@ func _shake_stage(intensity: float, duration: float) -> void:
 	shake.tween_property(_art_root, "position", origin, 0.05).set_trans(Tween.TRANS_QUAD)
 
 
-func _pulse_slot_win() -> void:
+func _pulse_slot_win(result: RoundResult) -> void:
 	if cabinet.context.definition.id != &"slot_classic" or _slot_payline == null:
 		return
+	_reset_slot_win_feedback()
+	_slot_last_win_indices = _slot_win_indices(result)
+	if _slot_last_win_indices.is_empty():
+		return
 	_slot_payline.color = Color("fff0a0")
-	_slot_payline.scale = Vector2(1.0, 2.5)
-	var pulse := create_tween().set_parallel(true)
-	pulse.set_loops(3)
-	pulse.tween_property(_slot_payline, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK)
-	pulse.tween_property(_slot_payline, "color", Color("d9b44a"), 0.22)
-	for symbol: Control in _slot_symbols:
+	_slot_payline.pivot_offset = _slot_payline.size * 0.5
+	_slot_payline.scale = Vector2(1.0, 2.0 if MotionPolicy.is_reduced() else 2.5)
+	_slot_win_tween = create_tween().set_parallel(true)
+	var payline_duration := MotionPolicy.finite_duration(0.22)
+	_slot_win_tween.tween_property(
+		_slot_payline, "scale", Vector2.ONE, payline_duration
+	).set_trans(Tween.TRANS_BACK)
+	_slot_win_tween.tween_property(
+		_slot_payline, "color", Color("d9b44a"), payline_duration
+	)
+	var beat_delay := MotionPolicy.finite_duration(0.09)
+	var rise_duration := MotionPolicy.finite_duration(0.10)
+	var settle_duration := MotionPolicy.finite_duration(0.16)
+	var peak_scale := Vector2(1.04, 1.04) if MotionPolicy.is_reduced() else Vector2(1.13, 1.13)
+	for sequence_index: int in range(_slot_last_win_indices.size()):
+		var reel_index: int = _slot_last_win_indices[sequence_index]
+		var symbol: Control = _slot_symbols[reel_index]
 		symbol.pivot_offset = symbol.size * 0.5
-		symbol.scale = Vector2(1.08, 1.08)
-		pulse.tween_property(symbol, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK)
+		var delay := beat_delay * sequence_index
+		_slot_win_tween.tween_property(
+			symbol, "scale", peak_scale, rise_duration
+		).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_slot_win_tween.tween_property(
+			symbol, "scale", Vector2.ONE, settle_duration
+		).set_delay(delay + rise_duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		if not MotionPolicy.is_reduced():
+			_slot_win_tween.tween_callback(
+				func() -> void: _emit_slot_win_impact(reel_index)
+			).set_delay(delay + rise_duration * 0.65)
+
+
+func _slot_win_indices(result: RoundResult) -> Array[int]:
+	var indices: Array[int] = []
+	var symbols: Variant = result.detail.get("symbols", [])
+	if not symbols is Array or symbols.size() != 3:
+		return indices
+	if int(symbols[0]) == int(symbols[1]) and int(symbols[1]) == int(symbols[2]):
+		return [0, 1, 2]
+	for index: int in range(symbols.size()):
+		if int(symbols[index]) == SlotMachineMath.Symbol.CHERRY:
+			indices.append(index)
+	return indices if indices.size() == 2 else []
+
+
+func _emit_slot_win_impact(reel_index: int) -> void:
+	if reel_index < 0 or reel_index >= _slot_reels.size():
+		return
+	var reel: Control = _slot_reels[reel_index]
+	var symbol: Control = _slot_symbols[reel_index]
+	ImpactBurst.spawn(
+		_art_root,
+		reel.position + symbol.position + symbol.size * 0.5,
+		Color("f2c84b"),
+		false
+	)
+
+
+func _reset_slot_win_feedback() -> void:
+	if _slot_win_tween != null and _slot_win_tween.is_valid():
+		_slot_win_tween.kill()
+	_slot_win_tween = null
+	_slot_last_win_indices.clear()
+	if _slot_payline != null:
+		_slot_payline.scale = Vector2.ONE
+		_slot_payline.color = Color("d9b44a")
+	for symbol: Control in _slot_symbols:
+		symbol.scale = Vector2.ONE
 
 
 func _animate_slot_result(payout: int) -> void:

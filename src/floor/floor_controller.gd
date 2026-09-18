@@ -14,6 +14,9 @@ const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
 const AVATAR_RADIUS: float = 15.0
 const MACHINE_ZONE_RADIUS: float = 38.0
+const MACHINE_LABEL_SIZE := Vector2(164, 24)
+const JOIN_DIALOG_SIZE := Vector2(360, 64)
+const JOIN_DIALOG_OFFSET := Vector2(-180, 34)
 const CAMERA_CENTER := Vector2(480, 270)
 const CAMERA_FOCUS_ZOOM := Vector2(1.015, 1.015)
 const CAMERA_FOCUS_OFFSET: float = 4.0
@@ -53,6 +56,7 @@ var _last_nearby_game: StringName = &""
 var _prompt_signature: String = ""
 var _prompt_tween: Tween
 var _cashier_tween: Tween
+var _machine_labels: Dictionary = {}
 var _patrons: Array[Node2D] = []
 var _floor_camera: Camera2D
 var _camera_tween: Tween
@@ -73,6 +77,7 @@ func _ready() -> void:
 	_build_camera()
 	_build_dust()
 	_build_patrons()
+	_build_machine_labels()
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 	_apply_motion_preference(MotionPolicy.is_reduced())
 	_avatar_visual = FLOOR_AVATAR_SCRIPT.new()
@@ -167,6 +172,8 @@ func refresh_proximity() -> void:
 
 func interact() -> bool:
 	if nearby_definition != null:
+		if _dismissed_game == nearby_definition.id:
+			return false
 		if Wallet.balance < nearby_definition.min_bet:
 			return false
 		SceneRouter.enter_cabinet(nearby_definition)
@@ -257,8 +264,8 @@ func _update_prompt() -> void:
 				% [tr(nearby_definition.name_key), nearby_definition.min_bet]
 			)
 		else:
-			_prompt.position = Vector2(260, 342)
-			_prompt.size = Vector2(440, 108)
+			_prompt.position = _join_dialog_position(nearby_definition.id)
+			_prompt.size = JOIN_DIALOG_SIZE
 			_prompt.text = (
 				tr("FLOOR_JOIN_DIALOG")
 				% [
@@ -286,6 +293,12 @@ func _update_prompt() -> void:
 		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
 	_animate_prompt_change()
 	queue_redraw()
+
+
+func _join_dialog_position(game_id: StringName) -> Vector2:
+	var machine_position: Vector2 = cabinet_positions.get(game_id, CAMERA_CENTER)
+	var intended := machine_position + JOIN_DIALOG_OFFSET
+	return Vector2(clampf(intended.x, 24.0, 960.0 - JOIN_DIALOG_SIZE.x - 24.0), intended.y)
 
 
 func _animate_prompt_change() -> void:
@@ -344,6 +357,31 @@ func _build_patrons() -> void:
 		patron.call("configure", int(layout["profile"]), float(layout["phase"]))
 		add_child(patron)
 		_patrons.append(patron)
+
+
+func _build_machine_labels() -> void:
+	for id: StringName in cabinet_positions:
+		var definition: CabinetDefinition = definitions[id]
+		var label := Label.new()
+		label.name = "MachineLabel_%s" % id
+		label.text = tr(definition.name_key)
+		label.position = cabinet_positions[id] + Vector2(-MACHINE_LABEL_SIZE.x * 0.5, -82)
+		label.size = MACHINE_LABEL_SIZE
+		label.z_index = 3
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		label.add_theme_font_override("font", Typography.DISPLAY_FONT)
+		label.add_theme_font_size_override("font_size", Typography.SUPPORTING)
+		label.add_theme_color_override("font_color", IVORY)
+		var plaque := StyleBoxFlat.new()
+		plaque.bg_color = Color("100d11c9")
+		plaque.border_color = Color(_machine_accent(id), 0.7)
+		plaque.set_border_width_all(1)
+		plaque.set_corner_radius_all(5)
+		label.add_theme_stylebox_override("normal", plaque)
+		add_child(label)
+		_machine_labels[id] = label
 
 
 func _update_camera_focus(game_id: StringName) -> void:

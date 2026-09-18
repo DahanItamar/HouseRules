@@ -101,15 +101,38 @@ func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
 	assert_string_contains(_floor._prompt.text, tr(definition.name_key))
 	assert_string_contains(_floor._prompt.text, "JOIN")
 	assert_string_contains(_floor._prompt.text, "CLOSE")
+	assert_eq(_floor._prompt.position, _floor._join_dialog_position(definition.id))
+	assert_eq(_floor._prompt.size, FloorController.JOIN_DIALOG_SIZE)
+	assert_lt(
+		_floor._prompt.position.y + _floor._prompt.size.y,
+		FloorController.CASHIER_POSITION.y - 45.0,
+		"The contextual join card does not cover the cashier identity"
+	)
 	var back := InputEventAction.new()
 	back.action = "back"
 	back.pressed = true
 	_floor._unhandled_input(back)
 	assert_eq(_floor._dismissed_game, definition.id)
 	assert_false(_floor._prompt.text.contains("JOIN"))
+	assert_false(_floor.interact(), "A dismissed join card disables its hidden join action")
+	assert_null(SceneRouter.session)
 	_floor.avatar_position += Vector2(0, FloorController.INTERACTION_RADIUS + 20.0)
 	_floor.refresh_proximity()
 	assert_eq(_floor._dismissed_game, &"", "Leaving the machine resets the dismissed card")
+	_floor.avatar_position = _floor.cabinet_positions[definition.id]
+	_floor.refresh_proximity()
+	assert_true(_floor.interact(), "Re-entering the ring restores the join action")
+
+
+func test_floor_machine_rings_have_concise_persistent_identity_labels() -> void:
+	assert_eq(_floor._machine_labels.size(), _floor.cabinet_positions.size())
+	for id: StringName in _floor.cabinet_positions:
+		var label: Label = _floor._machine_labels[id]
+		var definition: CabinetDefinition = _floor.definitions[id]
+		assert_true(label.visible)
+		assert_eq(label.text, tr(definition.name_key))
+		assert_eq(label.size, FloorController.MACHINE_LABEL_SIZE)
+		assert_gt(label.z_index, 0, "Machine identity stays readable above floor characters")
 
 
 func test_cashier_opens_a_real_focusable_menu() -> void:
@@ -214,6 +237,56 @@ func test_ac009_abandon_forfeits_once_and_saves() -> void:
 	assert_eq(Wallet.balance, 190)
 	Wallet.reset(0)
 	assert_eq(SaveService.load_game(), OK)
+	assert_eq(Wallet.balance, 190)
+
+
+func test_back_during_live_round_requires_confirmation_and_cancel_preserves_round() -> void:
+	_approach_slot()
+	assert_true(_floor.interact())
+	var cabinet := SceneRouter.session.cabinet
+	watch_signals(cabinet)
+	assert_true(cabinet.start_round(10))
+	var back := InputEventAction.new()
+	back.action = &"back"
+	back.pressed = true
+	cabinet._unhandled_input(back)
+	assert_true(cabinet.exit_confirmation.is_open)
+	assert_string_contains(cabinet.exit_confirmation._message.text, "10")
+	assert_eq(
+		get_viewport().gui_get_focus_owner(),
+		cabinet.exit_confirmation._cancel_button,
+		"The safe keep-playing action receives controller focus"
+	)
+	assert_signal_not_emitted(cabinet, "exit_requested")
+	cabinet.exit_confirmation.cancel()
+	assert_false(cabinet.exit_confirmation.is_open)
+	assert_true(cabinet.is_round_active)
+	assert_eq(Wallet.balance, 200)
+	assert_signal_not_emitted(cabinet, "round_resolved")
+
+
+func test_confirming_live_round_exit_forfeits_once_and_returns_to_floor() -> void:
+	_approach_slot()
+	assert_true(_floor.interact())
+	var cabinet := SceneRouter.session.cabinet
+	watch_signals(cabinet)
+	assert_true(cabinet.start_round(10))
+	var back := InputEventAction.new()
+	back.action = &"back"
+	back.pressed = true
+	cabinet._unhandled_input(back)
+	cabinet.exit_confirmation._leave_button.grab_focus()
+	var accept := InputEventAction.new()
+	accept.action = &"interact"
+	accept.pressed = true
+	assert_true(cabinet.exit_confirmation.handle_input(accept))
+	assert_null(SceneRouter.session)
+	assert_eq(Wallet.balance, 190)
+	assert_signal_emit_count(cabinet, "round_resolved", 1)
+	var result: RoundResult = get_signal_parameters(cabinet, "round_resolved")[0]
+	assert_eq(result.outcome, RoundResult.Outcome.ABANDONED)
+	assert_eq(result.payout, 0)
+	cabinet.resolve_pending()
 	assert_eq(Wallet.balance, 190)
 
 
