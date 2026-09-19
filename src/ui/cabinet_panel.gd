@@ -28,6 +28,10 @@ var _slot_spinning: bool = false
 var _slot_finish_callback: Callable
 var _slot_win_tween: Tween
 var _slot_last_win_indices: Array[int] = []
+var _slot_win_band: ColorRect
+var _slot_anticipation_frame: Panel
+var _slot_anticipating_third: bool = false
+var _slot_cascade_clones: Array[Control] = []
 var _slot_lever: Node2D
 var _slot_spin_label: SlotSpinButton
 var _slot_payline: ColorRect
@@ -229,6 +233,11 @@ func _process(delta: float) -> void:
 			continue
 		var duration: float = _slot_stop_times[reel_index]
 		var progress: float = clampf(_slot_spin_elapsed / duration, 0.0, 1.0)
+		if reel_index == 2 and _slot_anticipating_third and _slot_anticipation_frame != null:
+			var anticipation_started := _slot_stopped[0] and _slot_stopped[1]
+			_slot_anticipation_frame.visible = anticipation_started
+			if anticipation_started and not MotionPolicy.is_reduced():
+				_slot_anticipation_frame.modulate.a = 0.72 + sin(_slot_spin_elapsed * 16.0) * 0.20
 		if not MotionPolicy.is_reduced():
 			var eased: float = 1.0 - pow(1.0 - progress, 3.0)
 			_slot_offsets[reel_index] = _slot_total_offsets[reel_index] * eased
@@ -258,6 +267,7 @@ func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 	_reset_slot_win_feedback()
 	_slot_spin_targets.clear()
 	_slot_stop_times = [1.05, 1.32, 1.59]
+	_slot_anticipating_third = false
 	for index: int in range(3):
 		_slot_spin_targets.append(int(symbols[index]))
 		var center: SlotSymbol = _slot_reel_cells[index][2]
@@ -269,6 +279,7 @@ func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 	if int(symbols[0]) == int(symbols[1]):
 		# A real outcome-driven anticipation beat, never a fabricated near miss.
 		_slot_stop_times[2] = 2.05
+		_slot_anticipating_third = true
 	_slot_finish_callback = on_finished
 	if _slot_payline != null:
 		_slot_payline.color = Color("8a682f80")
@@ -637,6 +648,26 @@ func _build_slot_art() -> void:
 	_slot_payline.size = Vector2(658, 4)
 	_slot_payline.color = Color("d9b44a")
 	_art_root.add_child(_slot_payline)
+	_slot_win_band = ColorRect.new()
+	_slot_win_band.name = "WinningRowBand"
+	_slot_win_band.position = Vector2(166, SLOT_REEL_TOP + SLOT_CELL_HEIGHT)
+	_slot_win_band.size = Vector2(628, SLOT_CELL_HEIGHT)
+	_slot_win_band.color = Color("d9b44a24")
+	_slot_win_band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_slot_win_band.visible = false
+	_slot_win_band.z_index = 3
+	_art_root.add_child(_slot_win_band)
+	_slot_anticipation_frame = Panel.new()
+	_slot_anticipation_frame.name = "ThirdReelAnticipationFrame"
+	_slot_anticipation_frame.position = Vector2(581, SLOT_REEL_TOP - 4.0)
+	_slot_anticipation_frame.size = Vector2(206, SLOT_CELL_HEIGHT * 3.0 + 8.0)
+	_slot_anticipation_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_slot_anticipation_frame.add_theme_stylebox_override(
+		"panel", _panel_style(Color("00000000"), Color("f2c84b"), 8, 4)
+	)
+	_slot_anticipation_frame.visible = false
+	_slot_anticipation_frame.z_index = 4
+	_art_root.add_child(_slot_anticipation_frame)
 	_build_slot_deck()
 
 
@@ -1179,6 +1210,9 @@ func _start_slot_motion() -> void:
 
 func _stop_motion() -> void:
 	_slot_spinning = false
+	if _slot_anticipation_frame != null:
+		_slot_anticipation_frame.visible = false
+		_slot_anticipation_frame.modulate.a = 1.0
 	if _motion_tween != null:
 		_motion_tween.kill()
 		_motion_tween = null
@@ -1204,6 +1238,11 @@ func _stop_reel(reel_index: int, emit_impact: bool = true) -> void:
 	_slot_offsets[reel_index] = _slot_total_offsets[reel_index]
 	_update_spinning_reel(reel_index)
 	_slot_stopped[reel_index] = true
+	if reel_index == 2:
+		_slot_anticipating_third = false
+		if _slot_anticipation_frame != null:
+			_slot_anticipation_frame.visible = false
+			_slot_anticipation_frame.modulate.a = 1.0
 	for cell: SlotSymbol in _slot_reel_cells[reel_index]:
 		create_tween().tween_method(
 			cell.set_spin_strength, cell.spin_strength, 0.0, MotionPolicy.finite_duration(0.18)
@@ -1391,6 +1430,9 @@ func _pulse_slot_win(result: RoundResult) -> void:
 	_slot_payline.color = Color("fff0a0")
 	_slot_payline.pivot_offset = _slot_payline.size * 0.5
 	_slot_payline.scale = Vector2(1.0, 2.0 if MotionPolicy.is_reduced() else 2.5)
+	if _slot_win_band != null:
+		_slot_win_band.visible = true
+		_slot_win_band.modulate.a = 0.75 if MotionPolicy.is_reduced() else 1.0
 	_slot_win_tween = create_tween().set_parallel(true)
 	var payline_duration := MotionPolicy.finite_duration(0.22)
 	_slot_win_tween.tween_property(
@@ -1399,6 +1441,10 @@ func _pulse_slot_win(result: RoundResult) -> void:
 	_slot_win_tween.tween_property(
 		_slot_payline, "color", Color("d9b44a"), payline_duration
 	)
+	if _slot_win_band != null and not MotionPolicy.is_reduced():
+		_slot_win_tween.tween_property(
+			_slot_win_band, "modulate:a", 0.30, MotionPolicy.finite_duration(0.44)
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	var beat_delay := MotionPolicy.finite_duration(0.09)
 	var rise_duration := MotionPolicy.finite_duration(0.10)
 	var settle_duration := MotionPolicy.finite_duration(0.16)
@@ -1415,9 +1461,89 @@ func _pulse_slot_win(result: RoundResult) -> void:
 			symbol, "scale", Vector2.ONE, settle_duration
 		).set_delay(delay + rise_duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		if not MotionPolicy.is_reduced():
+			_queue_slot_symbol_tumble(reel_index, delay)
 			_slot_win_tween.tween_callback(
 				func() -> void: _emit_slot_win_impact(reel_index)
 			).set_delay(delay + rise_duration * 0.65)
+	if _slot_win_band != null and not MotionPolicy.is_reduced():
+		_slot_win_tween.tween_callback(
+			func() -> void: _slot_win_band.visible = false
+		).set_delay(MotionPolicy.finite_duration(0.50))
+
+
+func _queue_slot_symbol_tumble(reel_index: int, delay: float) -> void:
+	if reel_index < 0 or reel_index >= _slot_reels.size() or MotionPolicy.is_reduced():
+		return
+	var reel: Control = _slot_reels[reel_index]
+	var source: SlotSymbol = _slot_symbols[reel_index]
+	var outgoing := SlotSymbol.new()
+	outgoing.name = "WinCascadeOut%d" % reel_index
+	outgoing.position = source.position
+	outgoing.size = source.size
+	outgoing.symbol_index = source.symbol_index
+	outgoing.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	outgoing.z_index = 12
+	reel.add_child(outgoing)
+	var incoming := SlotSymbol.new()
+	incoming.name = "WinCascadeIn%d" % reel_index
+	incoming.position = source.position - Vector2(0, SLOT_CELL_HEIGHT * 0.72)
+	incoming.size = source.size
+	incoming.symbol_index = source.symbol_index
+	incoming.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	incoming.modulate.a = 0.18
+	incoming.scale = Vector2(0.94, 0.94)
+	incoming.pivot_offset = incoming.size * 0.5
+	incoming.z_index = 13
+	reel.add_child(incoming)
+	_slot_cascade_clones.append(outgoing)
+	_slot_cascade_clones.append(incoming)
+	var tumble_duration := MotionPolicy.finite_duration(0.20)
+	_slot_win_tween.tween_callback(
+		Callable(self, "_begin_slot_symbol_tumble").bind(source)
+	).set_delay(delay)
+	_slot_win_tween.tween_property(
+		outgoing, "position:y", source.position.y + SLOT_CELL_HEIGHT * 0.78, tumble_duration
+	).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_slot_win_tween.tween_property(
+		outgoing, "rotation", 0.10 if reel_index % 2 == 0 else -0.10, tumble_duration
+	).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_slot_win_tween.tween_property(
+		outgoing, "modulate:a", 0.0, tumble_duration
+	).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_slot_win_tween.tween_property(
+		incoming, "position", source.position, tumble_duration
+	).set_delay(delay + MotionPolicy.finite_duration(0.035)).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+	_slot_win_tween.tween_property(
+		incoming, "modulate:a", 1.0, tumble_duration
+	).set_delay(delay + MotionPolicy.finite_duration(0.035)).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+	_slot_win_tween.tween_property(
+		incoming, "scale", Vector2.ONE, tumble_duration
+	).set_delay(delay + MotionPolicy.finite_duration(0.035)).set_trans(
+		Tween.TRANS_BACK
+	).set_ease(Tween.EASE_OUT)
+	_slot_win_tween.tween_callback(
+		Callable(self, "_finish_slot_symbol_tumble").bind(source, outgoing, incoming)
+	).set_delay(delay + tumble_duration + MotionPolicy.finite_duration(0.05))
+
+
+func _begin_slot_symbol_tumble(source: SlotSymbol) -> void:
+	if is_instance_valid(source):
+		source.modulate.a = 0.0
+
+
+func _finish_slot_symbol_tumble(
+	source: SlotSymbol, outgoing: SlotSymbol, incoming: SlotSymbol
+) -> void:
+	if is_instance_valid(source):
+		source.modulate.a = 1.0
+	for clone: SlotSymbol in [outgoing, incoming]:
+		_slot_cascade_clones.erase(clone)
+		if is_instance_valid(clone):
+			clone.queue_free()
 
 
 func _slot_win_indices(result: RoundResult) -> Array[int]:
@@ -1451,11 +1577,19 @@ func _reset_slot_win_feedback() -> void:
 		_slot_win_tween.kill()
 	_slot_win_tween = null
 	_slot_last_win_indices.clear()
+	for clone: Control in _slot_cascade_clones:
+		if is_instance_valid(clone):
+			clone.queue_free()
+	_slot_cascade_clones.clear()
 	if _slot_payline != null:
 		_slot_payline.scale = Vector2.ONE
 		_slot_payline.color = Color("d9b44a")
+	if _slot_win_band != null:
+		_slot_win_band.visible = false
+		_slot_win_band.modulate.a = 1.0
 	for symbol: Control in _slot_symbols:
 		symbol.scale = Vector2.ONE
+		symbol.modulate.a = 1.0
 
 
 func _animate_slot_result(payout: int) -> void:
