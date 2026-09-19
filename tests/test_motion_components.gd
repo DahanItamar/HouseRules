@@ -46,6 +46,13 @@ func test_vault_reveal_exposes_a_presentation_effect_hook() -> void:
 	assert_gt(tile._flash_remaining, 0.0)
 
 
+func test_vault_tile_uses_authored_faces_for_every_state() -> void:
+	assert_eq(VaultTile.FACE_TEXTURES.size(), 3)
+	for texture: Texture2D in VaultTile.FACE_TEXTURES:
+		assert_not_null(texture)
+		assert_eq(texture.get_size(), Vector2(56, 56))
+
+
 func test_vault_safe_reveal_finishes_with_a_pop_and_restored_scale() -> void:
 	var tile := VaultTile.new()
 	tile.size = Vector2(48, 48)

@@ -6,6 +6,11 @@ signal reveal_effect_requested(face_value: int, local_origin: Vector2)
 signal reveal_completed(face_value: int)
 
 enum Face { HIDDEN, SAFE, MINE }
+const FACE_TEXTURES: Array[Texture2D] = [
+	preload("res://assets/drafts/m2/tile_unrevealed.png"),
+	preload("res://assets/drafts/m2/tile_safe_revealed.png"),
+	preload("res://assets/drafts/m2/tile_mine_revealed.png"),
+]
 var face: Face = Face.HIDDEN
 var is_flipping: bool = false
 var is_selected: bool = false
@@ -137,12 +142,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 
 
 func _draw() -> void:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("252126")
-	style.border_color = Color("48c5d5") if is_selected else Color("c8a34b")
-	style.set_border_width_all(3 if is_selected else 2)
-	style.set_corner_radius_all(4)
-	draw_style_box(style, Rect2(Vector2.ZERO, size))
+	draw_texture_rect(FACE_TEXTURES[face], Rect2(Vector2.ZERO, size), false)
 	if _warning_remaining > 0.0:
 		var warning_alpha := 0.35 + sin(_warning_remaining * 70.0) * 0.22
 		draw_rect(
@@ -176,21 +176,7 @@ func _draw() -> void:
 			Color("48c5d5", 0.28 + pulse * 0.22),
 			2.0
 		)
-	if face == Face.HIDDEN:
-		draw_circle(size * 0.5, 5.0, Color("6e5225"), true, -1.0, true)
-		draw_line(size * 0.5 + Vector2(-8, 0), size * 0.5 + Vector2(8, 0), Color("b8ad9c"), 2.0)
-	elif face == Face.SAFE:
-		draw_circle(size * 0.5, 15.0, Color("073b31"), true, -1.0, true)
-		draw_circle(size * 0.5, 11.0, Color("3fc276"), false, 3.0, true)
-		draw_string(
-			ThemeDB.fallback_font,
-			Vector2(0, size.y * 0.5 + 6),
-			"$",
-			HORIZONTAL_ALIGNMENT_CENTER,
-			size.x,
-			18,
-			Color("f1e8d8")
-		)
+	if face == Face.SAFE:
 		var idle_pass := fmod(_idle_time + _idle_phase, 3.8)
 		if MotionPolicy.allows_continuous_motion() and idle_pass < 0.48:
 			var glint_alpha := sin(idle_pass / 0.48 * PI) * 0.55
@@ -199,8 +185,3 @@ func _draw() -> void:
 				2.2,
 				Color(0.95, 0.92, 0.62, glint_alpha)
 			)
-	else:
-		var center := size * 0.5
-		draw_circle(center, 10.0, Color("d55353"), true, -1.0, true)
-		for direction: Vector2 in [Vector2.UP, Vector2.RIGHT, Vector2.DOWN, Vector2.LEFT]:
-			draw_line(center + direction * 10.0, center + direction * 18.0, Color("d55353"), 3.0, true)
