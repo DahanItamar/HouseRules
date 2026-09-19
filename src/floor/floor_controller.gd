@@ -758,7 +758,7 @@ func _build_dev_floor_tools() -> void:
 	_dev_panel.add_theme_stylebox_override("panel", panel_style)
 	_dev_layer.add_child(_dev_panel)
 	var title := Label.new()
-	title.text = "DEV LOCATIONS  ·  F1 CLOSE"
+	title.text = tr("DEV_LOCATIONS_TITLE")
 	title.position = Vector2(16, 10)
 	title.size = Vector2(388, 28)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -785,7 +785,7 @@ func _build_dev_floor_tools() -> void:
 	close.pressed.connect(_toggle_dev_floor_tools.bind(false))
 	_dev_buttons.append(close)
 	var note := Label.new()
-	note.text = "ROOM BUTTONS SWITCH THE WHOLE ENVIRONMENT · DEBUG BUILDS ONLY"
+	note.text = tr("DEV_LOCATIONS_NOTE")
 	note.position = Vector2(16, 306)
 	note.size = Vector2(388, 36)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
