@@ -21,7 +21,7 @@ const FACES_RIGHT: Dictionary = {&"secretary": true, &"manager": false}
 ## player is stepped onto the station anchor first, so these stay clear.
 const OFFICE_PLACEMENTS: Dictionary = {
 	&"secretary":
-	{"panel": Rect2(196, 250, 520, 144), "cameo_side": &"right", "pointer": Vector2(826, 300)},
+	{"panel": Rect2(196, 250, 520, 144), "cameo_side": &"right", "pointer": Vector2(856, 304)},
 	&"manager":
 	{"panel": Rect2(48, 70, 398, 160), "cameo_side": &"right", "pointer": Vector2(470, 110)},
 }

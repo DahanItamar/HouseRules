@@ -652,3 +652,7 @@ The first stride sheets still read as sliding, so each view was regenerated with
 | Front (toward camera) | `a7dded37-6385-4426-8600-d38f2746626d` | not used: the body came out turned sideways and the "down" frames as crouches |
 
 In every sheet the model drew the "down" phase as a crouching lunge and repeated the first row in the second, so the atlas keeps four beats per direction taken from the contact and passing frames. The straight-on front walk stays synthesised from the earlier front stride (`walk_south_1fda4226.png`) as described above. Raw sheets: `assets/source/layered_v2/walk_v2/gait_*.png`.
+
+## 2026-09-19 Vivienne seated at reception
+
+The executive assistant stood beside an empty chair at the Manager's Office reception, which read as pasted on. One `nano_banana_pro` edit (served as `nano_banana_2`, 1:1, 2k, 2 credits) of the current reception crop (upload `610e9570-d9c5-4d36-99b9-5fbf79d06065`, virtual crop [720,240,240,240]) with her concept `351fbaab-be0f-4dfe-a11f-9cd9806fd049` as the identity reference seats her in the burgundy chair behind the desk, writing in an appointment book beside her tablet and turning toward the entrance. Job `5b3ad23d-d8d3-45c9-a886-7437a27e8b8c`, saved as `assets/source/layered_v2/manager_office/office_secretary_seated_5b3ad23d.png`; it replaces the standing paint-in in `tools/art/bake_manager_office.json` (clip: `Reception` + [798,248,906,294] so the old standing figure is erased above the desk line). The dialogue pointer in `src/floor/office_host.gd` now aims at her seat (856, 304).
