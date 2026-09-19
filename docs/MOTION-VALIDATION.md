@@ -3,7 +3,7 @@
 House Rules captures temporal presentation evidence from the running Godot build,
 not from mocked UI states. The deterministic capture journey uses seed
 `20260918`, a 1920x1080 output, and the real menu, floor practical-light loop,
-cashier idle/transaction, help reveal/dismiss, live-wager exit cancel/confirm,
+cashier idle/transaction, slot-lever pull, help reveal/dismiss, live-wager exit cancel/confirm,
 blackjack deal/live-hand reflow/reveal, and vault safe/hazard reveal paths.
 
 The curated full-motion frames live in
@@ -25,6 +25,8 @@ the new card travels in; this deterministic presentation fixture is restored to
 the authoritative hand before the capture journey performs its real Stand action.
 The cashier ROI proves its ledger rail and chip-tray detail keep a restrained
 idle cadence after the finite content reveal has fully settled.
+The slot ROI isolates the cabinet's right rail, proving an accepted spin moves
+the physical lever rather than relying on reel motion elsewhere in the frame.
 The exit-confirm pair ends on the floor, proving the destructive choice traverses
 the real cabinet-session route rather than only animating a detached dialog.
 The capture runner accepts `--reduced-motion` and resets its test override before

@@ -107,6 +107,7 @@ const BIG_WIN_MULTIPLE: float = 5.0
 enum ResultImpactTier { NONE, WIN, BIG_WIN }
 
 const SLOT_BODY := preload("res://assets/production/slot/symbols/slot_fullscreen_bezel.png")
+const SLOT_LEVER_SCRIPT := preload("res://src/ui/slot_lever.gd")
 const SLOT_SYMBOL_COUNT: int = 6
 const SLOT_REEL_TOP: float = 151.0
 const SLOT_REEL_BOUNCE_Y: float = 144.0
@@ -292,7 +293,7 @@ func _process(delta: float) -> void:
 			if anticipation_started and not MotionPolicy.is_reduced():
 				_slot_anticipation_frame.modulate.a = 0.72 + sin(_slot_spin_elapsed * 16.0) * 0.20
 		if not MotionPolicy.is_reduced():
-			var eased: float = 1.0 - pow(1.0 - progress, 3.0)
+			var eased := _slot_motion_progress(progress)
 			_slot_offsets[reel_index] = _slot_total_offsets[reel_index] * eased
 			_update_spinning_reel(reel_index)
 		if progress >= 1.0:
@@ -399,6 +400,9 @@ func set_help_open(open: bool) -> void:
 	if _slot_spin_label != null:
 		_slot_spin_label.disabled = open or cabinet.is_round_active
 		_slot_spin_label.queue_redraw()
+	if _slot_lever != null:
+		_slot_lever.disabled = open or cabinet.is_round_active
+		_slot_lever.queue_redraw()
 
 
 func _build_help_ui() -> void:
@@ -785,7 +789,21 @@ func _build_slot_art() -> void:
 	_slot_anticipation_frame.visible = false
 	_slot_anticipation_frame.z_index = 4
 	_art_root.add_child(_slot_anticipation_frame)
+	_build_slot_lever()
 	_build_slot_deck()
+
+
+func _build_slot_lever() -> void:
+	_slot_lever = SLOT_LEVER_SCRIPT.new()
+	_slot_lever.name = "SlotLever"
+	_slot_lever.position = Vector2(842, 328)
+	_slot_lever.z_index = 6
+	_slot_lever.pressed.connect(
+		func() -> void:
+			if cabinet.has_method("request_spin"):
+				cabinet.call("request_spin")
+	)
+	_art_root.add_child(_slot_lever)
 
 
 func _apply_slot_fullscreen_layout() -> void:
@@ -1442,6 +1460,9 @@ func _refresh_slot() -> void:
 		or help_open
 		or cabinet.selected_stake > cabinet.context.balance
 	))
+	if _slot_lever != null:
+		_slot_lever.disabled = _slot_spin_label.disabled
+		_slot_lever.queue_redraw()
 	_slot_spin_label.queue_redraw()
 
 
@@ -1547,6 +1568,7 @@ func _apply_live_feedback_motion_preference(reduced: bool) -> void:
 	if not reduced:
 		return
 	_settle_blackjack_card_motions()
+	_settle_slot_lever_motion()
 	for control_id: int in _state_feedback_tweens.keys():
 		_stop_state_feedback(control_id)
 	for control: Control in _state_controls.values():
@@ -1606,8 +1628,15 @@ func _start_slot_motion() -> void:
 	if _slot_lever != null and not MotionPolicy.is_reduced():
 		_slot_lever.rotation = 0.0
 		_motion_tween = create_tween()
-		_motion_tween.tween_property(_slot_lever, "rotation", 0.42, 0.16)
-		_motion_tween.tween_property(_slot_lever, "rotation", 0.0, 0.18)
+		_motion_tween.tween_property(_slot_lever, "rotation", 2.15, 0.14).set_trans(
+			Tween.TRANS_QUAD
+		).set_ease(Tween.EASE_IN)
+		_motion_tween.tween_property(_slot_lever, "rotation", 0.0, 0.22).set_trans(
+			Tween.TRANS_BACK
+		).set_ease(Tween.EASE_OUT)
+		_motion_tween.finished.connect(_settle_slot_lever_motion)
+	elif _slot_lever != null:
+		_settle_slot_lever_motion()
 	elif _slot_spin_label != null and not MotionPolicy.is_reduced():
 		_slot_spin_label.scale = Vector2.ONE
 		_slot_spin_label.pivot_offset = _slot_spin_label.size * 0.5
@@ -1626,6 +1655,15 @@ func _stop_motion() -> void:
 	if _motion_tween != null:
 		_motion_tween.kill()
 		_motion_tween = null
+	_settle_slot_lever_motion()
+
+
+func _settle_slot_lever_motion() -> void:
+	if _motion_tween != null and _motion_tween.is_valid():
+		_motion_tween.kill()
+	_motion_tween = null
+	if _slot_lever != null:
+		_slot_lever.settle()
 
 
 func _update_spinning_reel(reel_index: int) -> void:
@@ -1640,6 +1678,17 @@ func _update_spinning_reel(reel_index: int) -> void:
 		cell.symbol_index = posmod(
 			_slot_start_symbols[reel_index] + cell_index - 2 - step, SLOT_SYMBOL_COUNT
 		)
+
+
+func _slot_motion_progress(linear_progress: float) -> float:
+	var progress := clampf(linear_progress, 0.0, 1.0)
+	if progress < 0.18:
+		var acceleration := progress / 0.18
+		return 0.12 * acceleration * acceleration
+	if progress < 0.72:
+		return 0.12 + (progress - 0.18) * (0.68 / 0.54)
+	var braking := (progress - 0.72) / 0.28
+	return 0.80 + 0.20 * (1.0 - pow(1.0 - braking, 2.0))
 
 
 func _stop_reel(reel_index: int, emit_impact: bool = true) -> void:

@@ -17,6 +17,10 @@
       "motion_full/02_cashier_idle_a.png",
       "motion_full/02_cashier_idle_b.png"
     ],
+    "slot_lever": [
+      "motion_full/03_slot_idle.png",
+      "motion_full/04_slot_spin_start.png"
+    ],
     "help_reveal": [
       "motion_full/03_help_reveal_start.png",
       "motion_full/03_help_reveal_mid.png"
@@ -87,6 +91,15 @@
         "idle": [
           "motion_full/02_cashier_idle_a.png",
           "motion_full/02_cashier_idle_b.png"
+        ]
+      }
+    },
+    "slot_lever_rail": {
+      "rect": [1600, 380, 300, 550],
+      "sequences": {
+        "pull": [
+          "motion_full/03_slot_idle.png",
+          "motion_full/04_slot_spin_start.png"
         ]
       }
     }

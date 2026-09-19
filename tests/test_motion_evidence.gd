@@ -91,10 +91,25 @@ func test_cashier_ledger_and_chip_strip_remains_alive_after_entry_settles() -> v
 	)
 
 
+func test_slot_lever_visibly_pulls_inside_the_right_cabinet_rail() -> void:
+	var evidence: Dictionary = _manifest().regions_of_interest.slot_lever_rail
+	var values: Array = evidence.rect
+	var region := Rect2i(int(values[0]), int(values[1]), int(values[2]), int(values[3]))
+	var frames: Array = evidence.sequences.pull
+	var first := _load_evidence_image(String(frames[0])).get_region(region)
+	var second := _load_evidence_image(String(frames[1])).get_region(region)
+	assert_ne(
+		first.get_data(),
+		second.get_data(),
+		"The accepted spin visibly pulls the mechanical lever inside its own rail"
+	)
+
+
 func test_high_value_alive_flows_have_named_temporal_evidence() -> void:
 	var full: Dictionary = _manifest().full_motion
 	for sequence_key: String in [
-		"floor_practical_lights", "cashier_idle", "help_reveal", "help_dismiss", "exit_reveal",
+		"floor_practical_lights", "cashier_idle", "slot_lever", "help_reveal",
+		"help_dismiss", "exit_reveal",
 		"exit_cancel", "exit_confirm",
 		"blackjack_deal", "blackjack_hit", "blackjack_reveal", "vault_hazard",
 	]:
