@@ -2,6 +2,8 @@ class_name CabinetSession
 extends Node
 ## The only path from a cabinet result to the wallet.
 
+const CABINET_SCENE_REGISTRY := preload("res://src/cabinets/cabinet_scene_registry.gd")
+
 signal exit_requested
 signal round_applied(result: RoundResult)
 
@@ -12,12 +14,13 @@ var _is_closed: bool = false
 
 
 func begin(definition: CabinetDefinition) -> void:
-	assert(definition.scene != null)
+	assert(definition != null)
+	assert(CABINET_SCENE_REGISTRY.has_scene(definition.id))
 	context = MiniGameContext.new()
 	context.definition = definition
 	context.balance = Wallet.balance
 	context.rng = RNGService.stream(definition.id)
-	cabinet = definition.scene.instantiate() as MiniGame
+	cabinet = CABINET_SCENE_REGISTRY.instantiate(definition.id)
 	assert(cabinet != null)
 	cabinet.round_resolved.connect(apply_result)
 	cabinet.exit_requested.connect(func() -> void: exit_requested.emit())
