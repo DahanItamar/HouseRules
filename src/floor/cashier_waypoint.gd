@@ -2,6 +2,7 @@ class_name CashierWaypoint
 extends Panel
 
 ## Screen-space route marker used only when the player can claim a recovery marker.
+## CASHIER_WAYPOINT and OFFICE_WAYPOINT are the captions it can show.
 
 const SAFE_MARGIN: float = 16.0
 const MARKER_SIZE := Vector2(204, 44)
@@ -9,6 +10,8 @@ const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const SURFACE := Color("17161aeb")
 
+## Translation key of the caption; the floor routes recovery to the Manager.
+var caption_key: String = "CASHIER_WAYPOINT"
 var _arrow: Polygon2D
 var _caption: Label
 var _active: bool = false
@@ -38,7 +41,7 @@ func _ready() -> void:
 	_caption.name = "Caption"
 	_caption.position = Vector2(44, 4)
 	_caption.size = Vector2(150, 36)
-	_caption.text = tr("CASHIER_WAYPOINT")
+	_caption.text = tr(caption_key)
 	_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_caption.add_theme_font_override("font", Typography.UI_FONT)
 	_caption.add_theme_font_size_override("font_size", Typography.SUPPORTING)
@@ -49,7 +52,7 @@ func _ready() -> void:
 
 
 func update_route(origin_world: Vector2, target_world: Vector2, should_show: bool) -> void:
-	_caption.text = tr("CASHIER_WAYPOINT")
+	_caption.text = tr(caption_key)
 	var canvas_transform := get_viewport().get_canvas_transform()
 	var origin_screen := canvas_transform * origin_world
 	var target_screen := canvas_transform * target_world

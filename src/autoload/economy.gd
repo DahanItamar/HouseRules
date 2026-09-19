@@ -29,6 +29,8 @@ var _persistent_debt: int = 0
 var lifetime_wagered: int = 0
 var active_contracts: Array[Dictionary] = []
 var contract_completions: int = 0
+## Newest first, capped at SaveGame.CONTRACT_LOG_SIZE: {"title_key", "reward"}.
+var completion_log: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -84,8 +86,10 @@ func contract_snapshot() -> Array[Dictionary]:
 	return active_contracts.duplicate(true)
 
 
-func contract_lines() -> PackedStringArray:
-	var lines := PackedStringArray()
+## One row per active contract with display-ready progress, used by the
+## reception board and by `contract_lines`.
+func contract_rows() -> Array[Dictionary]:
+	var rows: Array[Dictionary] = []
 	for entry: Dictionary in active_contracts:
 		var definition: Dictionary = CONTRACTS[entry.id]
 		var progress: int = int(entry.progress)
@@ -93,13 +97,37 @@ func contract_lines() -> PackedStringArray:
 		if entry.id == &"all_cabinets":
 			progress = _bit_count(progress)
 			target = 3
-		lines.append(
-			(
-				tr("CONTRACT_LINE")
-				% [tr(definition.title_key), mini(progress, target), target, int(definition.reward)]
+		(
+			rows
+			. append(
+				{
+					"id": entry.id,
+					"title_key": String(definition.title_key),
+					"progress": mini(progress, target),
+					"target": target,
+					"reward": int(definition.reward),
+				}
 			)
 		)
+	return rows
+
+
+func contract_lines() -> PackedStringArray:
+	var lines := PackedStringArray()
+	for row: Dictionary in contract_rows():
+		lines.append(
+			tr("CONTRACT_LINE") % [tr(row.title_key), row.progress, row.target, row.reward]
+		)
 	return lines
+
+
+func completion_log_snapshot() -> Array[Dictionary]:
+	return completion_log.duplicate(true)
+
+
+func load_completion_log(saved: Array) -> void:
+	completion_log = SaveGame.sanitize_contract_log(saved)
+	contracts_changed.emit()
 
 
 func record_round(cabinet_id: StringName, result: RoundResult) -> void:
@@ -120,6 +148,9 @@ func record_round(cabinet_id: StringName, result: RoundResult) -> void:
 		if Wallet.try_apply(0, reward):
 			active_contracts.remove_at(index)
 			contract_completions += 1
+			completion_log.push_front({"title_key": String(definition.title_key), "reward": reward})
+			if completion_log.size() > SaveGame.CONTRACT_LOG_SIZE:
+				completion_log.resize(SaveGame.CONTRACT_LOG_SIZE)
 			contract_completed.emit(String(definition.title_key), reward)
 	_fill_contract_slots()
 	contracts_changed.emit()

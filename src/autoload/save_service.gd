@@ -29,6 +29,7 @@ func save() -> Error:
 	state.lifetime_wagered = Economy.lifetime_wagered
 	state.active_contracts = Economy.contract_snapshot()
 	state.contract_completions = Economy.contract_completions
+	state.contract_log = Economy.completion_log_snapshot()
 	state.rng_states = RNGService.snapshot()
 	state.achievements = platform.achievements.duplicate()
 	var error: Error = platform.write_save(slot, JSON.stringify(state.to_dict()).to_utf8_buffer())
@@ -76,6 +77,7 @@ func _apply_state() -> void:
 	RNGService.reset(state.rng_seed)
 	RNGService.restore(state.rng_states)
 	Economy.reset_contracts(state.active_contracts, state.contract_completions)
+	Economy.load_completion_log(state.contract_log)
 	platform.achievements = state.achievements.duplicate()
 
 

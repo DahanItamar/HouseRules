@@ -240,15 +240,25 @@ func test_floor_uses_join_rings_without_floating_machine_icons() -> void:
 
 
 func test_cashier_opens_a_real_focusable_menu() -> void:
+	# The cashier keeps the chip counter; markers moved to the Manager's desk.
 	Economy.debt = 50
 	_floor.avatar_position = _floor.CASHIER_POSITION
 	_floor.refresh_proximity()
 	assert_true(_floor.interact())
 	assert_true(_floor._cashier_panel.visible)
 	assert_true(_floor._cashier_scrim.visible)
-	assert_not_null(_floor._cashier_panel.get_node("TakeMarker"))
-	assert_not_null(_floor._cashier_panel.get_node("RepayDebt"))
-	assert_not_null(_floor._cashier_panel.get_node("CloseCashier"))
+	assert_false(_floor._cashier_panel.get_node("TakeMarker").visible)
+	assert_false(_floor._cashier_panel.get_node("RepayDebt").visible)
+	assert_true(_floor._cashier_panel.get_node("MarkersMovedNote").visible)
+	assert_true(_floor._cashier_panel.get_node("CloseCashier").visible)
+	await get_tree().process_frame
+	assert_eq(get_viewport().gui_get_focus_owner(), _floor._cashier_close)
+	_floor._close_cashier()
+	await wait_seconds(0.2)
+	assert_true(_floor.open_marker_desk())
+	assert_true(_floor._cashier_panel.get_node("TakeMarker").visible)
+	assert_true(_floor._cashier_panel.get_node("RepayDebt").visible)
+	assert_false(_floor._cashier_panel.get_node("MarkersMovedNote").visible)
 	await get_tree().process_frame
 	assert_eq(
 		get_viewport().gui_get_focus_owner(),
@@ -259,9 +269,7 @@ func test_cashier_opens_a_real_focusable_menu() -> void:
 
 func test_cashier_wasd_actions_move_focus_inside_modal() -> void:
 	Economy.debt = 50
-	_floor.avatar_position = _floor.CASHIER_POSITION
-	_floor.refresh_proximity()
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	await wait_process_frames(1)
 	_floor._cashier_marker.grab_focus()
 	var move_right := InputEventAction.new()
@@ -275,9 +283,7 @@ func test_cashier_repayment_picker_clamps_previews_and_confirms_selected_amount(
 	Wallet.set_test_mode(false)
 	Wallet.reset(37)
 	Economy.debt = 25
-	_floor.avatar_position = _floor.CASHIER_POSITION
-	_floor.refresh_proximity()
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	assert_eq(_floor._cashier_repay_amount, 10)
 	assert_string_contains(_floor._cashier_preview.text, "CHIPS 27")
 	assert_string_contains(_floor._cashier_preview.text, "DEBT 15")
@@ -302,9 +308,7 @@ func test_cashier_marker_behavior_and_safe_focus_are_preserved() -> void:
 	Wallet.set_test_mode(false)
 	Wallet.reset(10)
 	Economy.debt = 0
-	_floor.avatar_position = _floor.CASHIER_POSITION
-	_floor.refresh_proximity()
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	await get_tree().process_frame
 	assert_eq(get_viewport().gui_get_focus_owner(), _floor._cashier_marker)
 	_floor._cashier_marker.pressed.emit()
@@ -314,9 +318,7 @@ func test_cashier_marker_behavior_and_safe_focus_are_preserved() -> void:
 
 func test_developer_cashier_enables_marker_and_repayment_with_infinite_funds() -> void:
 	Wallet.set_test_mode(true)
-	_floor.avatar_position = FloorController.CASHIER_POSITION
-	_floor.refresh_proximity()
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	assert_false(_floor._cashier_marker.disabled)
 	assert_eq(_floor._cashier_marker.text, tr("CASHIER_ADD_TEST_MARKER"))
 	_floor._cashier_marker.pressed.emit()
@@ -334,7 +336,7 @@ func test_insolvent_player_gets_a_safe_area_cashier_route_until_arrival() -> voi
 	_floor.refresh_proximity()
 	var waypoint: CashierWaypoint = _floor._cashier_waypoint
 	assert_true(waypoint.visible)
-	assert_eq((waypoint.get_node("Caption") as Label).text, tr("CASHIER_WAYPOINT"))
+	assert_eq((waypoint.get_node("Caption") as Label).text, tr("OFFICE_WAYPOINT"))
 	assert_gte(waypoint.position.x, CashierWaypoint.SAFE_MARGIN)
 	assert_gte(waypoint.position.y, CashierWaypoint.SAFE_MARGIN)
 	assert_lte(
@@ -353,12 +355,13 @@ func test_insolvent_player_gets_a_safe_area_cashier_route_until_arrival() -> voi
 	assert_lte(waypoint.position.x + waypoint.size.x, 960.0 - CashierWaypoint.SAFE_MARGIN)
 	assert_gte(waypoint.position.y, CashierWaypoint.SAFE_MARGIN)
 
-	_floor.avatar_position = FloorController.CASHIER_POSITION
+	# Markers are extended by the Manager: the route leads to his office door.
+	_floor.avatar_position = _floor.room.anchor(FloorController.OFFICE_DOOR_ANCHOR)
 	_floor.refresh_proximity()
 	assert_false(waypoint._active)
 	assert_true(waypoint.visible, "Waypoint keeps its plaque for the bounded exit fade")
 	await wait_seconds(0.14)
-	assert_false(waypoint.visible, "The route yields to the nearby cashier interaction prompt")
+	assert_false(waypoint.visible, "The route yields to the office door prompt")
 	assert_string_contains(_floor._prompt.text, InputRouter.glyph("interact"))
 
 

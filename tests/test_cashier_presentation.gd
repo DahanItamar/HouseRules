@@ -31,7 +31,7 @@ func after_each() -> void:
 func test_cashier_financial_values_tick_and_repayment_launches_chips() -> void:
 	Wallet.reset(80)
 	Economy.debt = 40
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	assert_true(_floor._cashier_balance is AnimatedNumberLabel)
 	assert_true(_floor._cashier_debt is AnimatedNumberLabel)
 	assert_true(_floor._cashier_amount is AnimatedNumberLabel)
@@ -57,7 +57,7 @@ func test_cashier_financial_values_tick_and_repayment_launches_chips() -> void:
 
 func test_cashier_close_animates_then_releases_focus_and_hides() -> void:
 	Economy.debt = 25
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	await get_tree().process_frame
 	assert_true(_floor._cashier_panel.visible)
 	assert_true(_floor._cashier_panel.is_ancestor_of(get_viewport().gui_get_focus_owner()))
@@ -83,7 +83,7 @@ func test_reduced_cashier_feedback_keeps_final_state_without_chip_travel() -> vo
 	MotionPolicy.set_reduced_motion_for_tests(true)
 	Wallet.reset(10)
 	Economy.debt = 0
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	_floor._take_cashier_marker()
 	assert_eq(Wallet.balance, 110)
 	assert_eq(Economy.debt, Economy.MARKER_STIPEND)

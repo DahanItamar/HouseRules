@@ -12,6 +12,10 @@ const INTERACTION_RADIUS: float = 76.0
 const MAIN_FLOOR := &"main_floor"
 const HIGH_ROLLER := &"high_roller"
 const VIP := &"vip"
+const OFFICE := &"manager_office"
+## The Main Floor anchor in front of the Manager's Office door.
+const OFFICE_DOOR_ANCHOR := &"office"
+const OFFICE_DOOR_RADIUS: float = 44.0
 const EXIT_ANCHOR := &"exit"
 const CASHIER_POSITION := Vector2(668, 402)
 const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(150, 274), &"vip": Vector2(862, 216)}
@@ -35,6 +39,8 @@ const MACHINE_ZONE_RADIUS: float = 50.0
 ## The join zone matches the brass diamond inlay painted in front of each island.
 const MACHINE_ZONE_SCALE := Vector2(1.28, 0.62)
 const INLAY_HIGHLIGHT := Color("f2c84b")
+## Doors and office desks have no painted inlay, so their rim is a smaller mark.
+const STATION_ZONE_SCALE: float = 0.55
 const JOIN_DIALOG_SIZE := Vector2(286, 70)
 const JOIN_DIALOG_OFFSET := Vector2(-143, 40)
 const CAMERA_CENTER := Vector2(480, 270)
@@ -52,14 +58,19 @@ const DEV_TARGETS: Array[Dictionary] = [
 	{"id": &"main_floor", "label": "MAIN FLOOR", "position": Vector2(480, 408)},
 	{"id": &"high_roller", "label": "HIGH ROLLER SALON", "position": Vector2(150, 274)},
 	{"id": &"vip", "label": "VIP PENTHOUSE", "position": Vector2(862, 216)},
+	{"id": &"office_door", "label": "OFFICE DOOR", "position": Vector2(870, 266)},
+	{"id": &"manager_office", "label": "MANAGER'S OFFICE", "position": Vector2(480, 522)},
 ]
-const ROOM_IDS: Array[StringName] = [&"main_floor", &"high_roller", &"vip"]
+const ROOM_IDS: Array[StringName] = [&"main_floor", &"high_roller", &"vip", &"manager_office"]
 var room: FloorRoomLayout
 var previous_room_id: StringName = &""
 var avatar_position := Vector2(480, 408)
 var nearby_definition: CabinetDefinition
 var nearby_wing: StringName = &""
 var nearby_exit: bool = false
+var nearby_office_door: bool = false
+## &"reception" or &"manager" while standing at an office station.
+var nearby_station: StringName = &""
 ## Playable cabinets in the current room, by id, at their join anchors.
 var cabinet_positions: Dictionary = {}
 var definitions: Dictionary = {}
@@ -71,6 +82,12 @@ var _cashier_open: bool = false
 var _avatar_visual: Node2D
 var _depth_layer: Node2D
 var _cashier_panel: Panel
+## True when the modal is the Manager's marker desk; false for the cashier's
+## chip counter, which shows the bank and points markers to the office.
+var _cashier_marker_mode: bool = false
+var _cashier_title: Label
+var _cashier_note: Label
+var _cashier_marker_controls: Array[Control] = []
 var _cashier_scrim: ColorRect
 var _cashier_balance: AnimatedNumberLabel
 var _cashier_debt: AnimatedNumberLabel
@@ -110,6 +127,7 @@ var _collision_overlay: Node2D
 var _room_layer: CanvasLayer
 var _room_status: Label
 var _room_back: Button
+var _office: OfficeHost
 
 
 func _ready() -> void:
@@ -151,6 +169,10 @@ func _ready() -> void:
 	_build_cashier_waypoint()
 	_build_cashier_menu()
 	_build_room_hud()
+	_office = OfficeHost.new()
+	add_child(_office)
+	_office.bind(self)
+	_apply_avatar_scale()
 	_dev_tools_enabled = (
 		bool(ProjectSettings.get_setting("house_rules/testing/dev_floor_tools", false))
 		and OS.is_debug_build()
@@ -238,11 +260,14 @@ func enter_room(room_id: StringName) -> void:
 	_floor_foreground.call("configure", room)
 	_load_room_cabinets()
 	if room_id == MAIN_FLOOR:
-		avatar_position = WING_POSITIONS.get(from_id, room.return_point)
+		avatar_position = _main_floor_arrival(from_id)
 	else:
 		avatar_position = room.spawn
 	if _avatar_visual != null:
 		_avatar_visual.position = avatar_position
+	_apply_avatar_scale()
+	if _office != null:
+		_office.on_room_changed()
 	var main := is_main_floor()
 	if _practical_lights != null:
 		_practical_lights.visible = main
@@ -258,10 +283,70 @@ func return_to_main_floor() -> void:
 	enter_room(MAIN_FLOOR)
 
 
+## Returning players arrive where they left: at a wing entrance or the office door.
+func _main_floor_arrival(from_id: StringName) -> Vector2:
+	if from_id == OFFICE:
+		return room.anchor(OFFICE_DOOR_ANCHOR)
+	return WING_POSITIONS.get(from_id, room.return_point)
+
+
+## Closer-camera rooms draw the same avatar larger so it matches their furniture.
+func _apply_avatar_scale() -> void:
+	if _avatar_visual != null and room != null:
+		_avatar_visual.scale = Vector2.ONE * room.avatar_scale
+
+
+## Opens the Manager's marker desk: take and repay markers under Economy's rules.
+func open_marker_desk() -> bool:
+	return _open_cashier_modal(true)
+
+
+func _open_cashier_modal(marker_mode: bool) -> bool:
+	if _cashier_open:
+		return false
+	_cashier_marker_mode = marker_mode
+	_cashier_open = true
+	cashier_visibility_changed.emit(true)
+	_cashier_repay_amount = mini(10, _cashier_repayment_limit())
+	AudioService.play(&"confirm")
+	_update_prompt()
+	return true
+
+
+## Re-evaluates the contextual prompt, e.g. after an office panel opens or closes.
+func refresh_prompt() -> void:
+	if _prompt != null:
+		_update_prompt()
+
+
+func begin_first_run_tutorial() -> bool:
+	return _office != null and _office.begin_first_run_tutorial()
+
+
+func office_host() -> OfficeHost:
+	return _office
+
+
+## Screen rectangle of the visible room Back control, or an empty rect.
+func room_back_button_rect() -> Rect2:
+	if _room_back == null or is_main_floor():
+		return Rect2()
+	return Rect2(_room_back.position, _room_back.size)
+
+
+## The floor prompt plaque's rectangle while it shows text, else empty.
+func prompt_rect() -> Rect2:
+	if _prompt == null or not _prompt.visible or _prompt.text.is_empty():
+		return Rect2()
+	return Rect2(_prompt.position - PLAQUE_PADDING, _prompt.size + PLAQUE_PADDING * 2.0)
+
+
 func refresh_proximity() -> void:
 	nearby_definition = null
 	nearby_wing = &""
 	nearby_exit = false
+	nearby_office_door = false
+	nearby_station = &""
 	var nearest_score: float = INF
 	for id: StringName in cabinet_positions:
 		var score := _machine_proximity_score(avatar_position, cabinet_positions[id])
@@ -269,14 +354,23 @@ func refresh_proximity() -> void:
 			nearest_score = score
 			nearby_definition = definitions.get(id)
 	if is_main_floor() and nearby_definition == null:
+		nearby_office_door = (
+			room.anchors.has(OFFICE_DOOR_ANCHOR)
+			and avatar_position.distance_to(room.anchor(OFFICE_DOOR_ANCHOR)) <= OFFICE_DOOR_RADIUS
+		)
 		var nearest_wing_distance: float = INTERACTION_RADIUS
 		for id: StringName in WING_POSITIONS:
 			var distance: float = avatar_position.distance_to(WING_POSITIONS[id])
-			if distance <= nearest_wing_distance:
+			if not nearby_office_door and distance <= nearest_wing_distance:
 				nearest_wing_distance = distance
 				nearby_wing = id
-	elif not is_main_floor() and nearby_definition == null and room.anchors.has(EXIT_ANCHOR):
-		nearby_exit = avatar_position.distance_to(room.anchor(EXIT_ANCHOR)) <= INTERACTION_RADIUS
+	elif not is_main_floor() and nearby_definition == null:
+		if _office != null:
+			nearby_station = _office.station_near(avatar_position)
+		if nearby_station == &"" and room.anchors.has(EXIT_ANCHOR):
+			nearby_exit = (
+				avatar_position.distance_to(room.anchor(EXIT_ANCHOR)) <= INTERACTION_RADIUS
+			)
 	var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
 	_update_camera_focus(current_game)
 	if current_game != _last_nearby_game:
@@ -285,10 +379,14 @@ func refresh_proximity() -> void:
 	if _prompt != null:
 		_update_prompt()
 	_update_cashier_waypoint()
+	if _office != null:
+		_office.on_floor_update()
 	queue_redraw()
 
 
 func interact() -> bool:
+	if nearby_station != &"":
+		return _office.interact_station(nearby_station)
 	if nearby_exit:
 		return_to_main_floor()
 		return true
@@ -300,6 +398,9 @@ func interact() -> bool:
 		SceneRouter.enter_cabinet(nearby_definition)
 		AudioService.play(&"confirm")
 		return true
+	if nearby_office_door:
+		enter_room(OFFICE)
+		return true
 	if nearby_wing != &"":
 		if is_wing_unlocked(nearby_wing):
 			enter_room(nearby_wing)
@@ -307,12 +408,7 @@ func interact() -> bool:
 		_update_prompt()
 		return false
 	if is_main_floor() and avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
-		_cashier_open = true
-		cashier_visibility_changed.emit(true)
-		_cashier_repay_amount = mini(10, _cashier_repayment_limit())
-		AudioService.play(&"confirm")
-		_update_prompt()
-		return true
+		return _open_cashier_modal(false)
 	return false
 
 
@@ -335,7 +431,7 @@ func _physics_process(delta: float) -> void:
 	if MotionPolicy.allows_continuous_motion():
 		_ambient_time += delta
 	queue_redraw()
-	if not _cashier_open and not _dev_open:
+	if not _cashier_open and not _dev_open and not (_office != null and _office.blocks_movement()):
 		move_avatar(Input.get_vector("move_left", "move_right", "move_up", "move_down"), delta)
 
 
@@ -353,6 +449,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_toggle_dev_floor_tools(false)
 			get_viewport().set_input_as_handled()
 		return
+	if _cashier_open or _cashier_is_closing:
+		_handle_cashier_input(event)
+		return
+	if _office != null and _office.handle_input(event):
+		get_viewport().set_input_as_handled()
+		return
 	if not is_main_floor():
 		if event.is_action_pressed("back"):
 			if nearby_definition != null and _dismissed_game != nearby_definition.id:
@@ -368,21 +470,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		event.is_action_pressed("back")
 		or event.is_action_pressed("interact")
 		or event.is_action_pressed("secondary")
-		or (_cashier_open and _cashier_direction(event) != CASHIER_NO_DIRECTION)
 	):
 		get_viewport().set_input_as_handled()
-	if _cashier_is_closing:
-		return
-	if _cashier_open:
-		if event.is_action_pressed("back"):
-			_close_cashier()
-		elif event.is_action_pressed("interact"):
-			var focused := get_viewport().gui_get_focus_owner()
-			if focused is Button and _cashier_panel.is_ancestor_of(focused):
-				(focused as Button).pressed.emit()
-		else:
-			_move_cashier_focus(_cashier_direction(event))
-		return
 	if event.is_action_pressed("back"):
 		if nearby_definition != null and _dismissed_game != nearby_definition.id:
 			_dismissed_game = nearby_definition.id
@@ -391,6 +480,27 @@ func _unhandled_input(event: InputEvent) -> void:
 			SceneRouter.return_to_menu()
 	elif event.is_action_pressed("interact"):
 		interact()
+
+
+## The cashier counter and the Manager's marker desk share one modal.
+func _handle_cashier_input(event: InputEvent) -> void:
+	if (
+		event.is_action_pressed("back")
+		or event.is_action_pressed("interact")
+		or event.is_action_pressed("secondary")
+		or (_cashier_open and _cashier_direction(event) != CASHIER_NO_DIRECTION)
+	):
+		get_viewport().set_input_as_handled()
+	if _cashier_is_closing:
+		return
+	if event.is_action_pressed("back"):
+		_close_cashier()
+	elif event.is_action_pressed("interact"):
+		var focused := get_viewport().gui_get_focus_owner()
+		if focused is Button and _cashier_panel.is_ancestor_of(focused):
+			(focused as Button).pressed.emit()
+	else:
+		_move_cashier_focus(_cashier_direction(event))
 
 
 static func _is_key_press(event: InputEvent, keycode: Key) -> bool:
@@ -413,13 +523,21 @@ func _update_prompt() -> void:
 			tr("CASHIER_ACTIONS")
 			% [InputRouter.glyph("move"), InputRouter.glyph("interact"), InputRouter.glyph("back")]
 		)
+	elif _office != null and _office.is_modal_open():
+		_prompt.text = ""
 	elif not is_main_floor() and nearby_definition == null:
 		_prompt.position = Vector2(330, 482)
 		_prompt.size = Vector2(300, 34)
-		if nearby_exit:
+		if nearby_station != &"":
+			_prompt.text = (
+				tr("OFFICE_TALK_" + String(nearby_station).to_upper())
+				% InputRouter.glyph("interact")
+			)
+		elif nearby_exit:
 			_prompt.text = tr("ROOM_EXIT_PROMPT") % InputRouter.glyph("interact")
 		else:
 			_prompt.text = ""
+		_keep_prompt_off_player()
 	elif nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
 			_prompt.text = ""
@@ -443,6 +561,16 @@ func _update_prompt() -> void:
 					InputRouter.glyph("back")
 				]
 			)
+	elif nearby_office_door:
+		var door_at := room.anchor(OFFICE_DOOR_ANCHOR)
+		_prompt.position = Vector2(clampf(door_at.x - 115.0, 24.0, 706.0), door_at.y + 40.0)
+		_prompt.size = Vector2(230, 72)
+		var door_key := (
+			"OFFICE_DOOR_INVITATION"
+			if not OfficeState.pending_invitations(self).is_empty()
+			else "OFFICE_DOOR_ENTER"
+		)
+		_prompt.text = tr(door_key) % InputRouter.glyph("interact")
 	elif nearby_wing != &"":
 		var wing_at: Vector2 = WING_POSITIONS[nearby_wing]
 		_prompt.position = Vector2(clampf(wing_at.x - 115.0, 24.0, 706.0), wing_at.y + 40.0)
@@ -461,7 +589,7 @@ func _update_prompt() -> void:
 		_prompt.position = Vector2(350, 472)
 		_prompt.size = Vector2(260, 44)
 		_prompt.text = tr("CASHIER_PROMPT") % InputRouter.glyph("interact")
-	elif not _has_moved:
+	elif not _has_moved and not (_office != null and _office.tutorial.is_active()):
 		_prompt.position = Vector2(330, 486)
 		_prompt.size = Vector2(300, 34)
 		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
@@ -475,6 +603,21 @@ func _update_prompt() -> void:
 		_prompt.text = previous_text
 		_animate_prompt_hide()
 	queue_redraw()
+
+
+## A room prompt at the bottom of the screen moves above the player's head
+## when the player stands where it would cover them (e.g. at a room's spawn).
+func _keep_prompt_off_player() -> void:
+	var scale_factor := room.avatar_scale if room != null else 1.0
+	var body := Rect2(
+		avatar_position.x - 16.0 * scale_factor,
+		avatar_position.y - 72.0 * scale_factor,
+		32.0 * scale_factor,
+		74.0 * scale_factor
+	)
+	var plaque := Rect2(_prompt.position - PLAQUE_PADDING, _prompt.size + PLAQUE_PADDING * 2.0)
+	if plaque.intersects(body):
+		_prompt.position.y = body.position.y - _prompt.size.y - PLAQUE_PADDING.y - 8.0
 
 
 func _build_prompt_plaque() -> void:
@@ -645,23 +788,32 @@ func _build_cashier_waypoint() -> void:
 	_directions_layer.layer = 4
 	add_child(_directions_layer)
 	_cashier_waypoint = CASHIER_WAYPOINT_SCRIPT.new() as CashierWaypoint
+	_cashier_waypoint.caption_key = "OFFICE_WAYPOINT"
 	_directions_layer.add_child(_cashier_waypoint)
 
 
+## An insolvent player is routed to the Manager, who extends markers: to the
+## office door on the Main Floor, then to his desk inside the office.
 func _update_cashier_waypoint() -> void:
-	if _cashier_waypoint == null:
+	if _cashier_waypoint == null or room == null:
 		return
-	var near_cashier := avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS
+	var target := CASHIER_POSITION
+	if is_main_floor() and room.anchors.has(OFFICE_DOOR_ANCHOR):
+		target = room.anchor(OFFICE_DOOR_ANCHOR)
+	elif room.id == OFFICE:
+		target = room.anchor(&"manager")
+	var arrived := avatar_position.distance_to(target) <= OFFICE_DOOR_RADIUS
 	_cashier_waypoint.update_route(
 		avatar_position,
-		CASHIER_POSITION,
+		target,
 		(
 			_floor_prompts_visible
 			and visible
-			and is_main_floor()
+			and (is_main_floor() or room.id == OFFICE)
 			and Economy.is_below_solvency_floor()
-			and not near_cashier
+			and not arrived
 			and not _cashier_open
+			and not (_office != null and _office.is_modal_open())
 		)
 	)
 
@@ -678,6 +830,8 @@ func _sync_overlay_layers() -> void:
 			_toggle_dev_floor_tools(false)
 	if _room_layer != null:
 		_room_layer.visible = floor_visible and room != null and not is_main_floor()
+	if _office != null:
+		_office.set_overlay_visible(floor_visible)
 
 
 func _build_room_hud() -> void:
@@ -776,17 +930,20 @@ func _build_dev_floor_tools() -> void:
 		button.name = "DevTarget_%s" % String(target.id)
 		button.pressed.connect(_dev_warp_to.bind(target.id))
 		_dev_buttons.append(button)
-	var overlay := _dev_button("COLLISION  ·  F2", Vector2(16, 252), DEV_BUTTON_SIZE)
+	var tools_y := 44.0 + ceilf(DEV_TARGETS.size() / 2.0) * 52.0
+	_dev_panel.size.y = tools_y + 104.0
+	_dev_panel.position.y = clampf(270.0 - _dev_panel.size.y * 0.5, 30.0, 510.0 - _dev_panel.size.y)
+	var overlay := _dev_button("COLLISION  ·  F2", Vector2(16, tools_y), DEV_BUTTON_SIZE)
 	overlay.name = "DevCollisionOverlay"
 	overlay.pressed.connect(func() -> void: toggle_collision_overlay())
 	_dev_buttons.append(overlay)
-	var close := _dev_button("CLOSE", Vector2(214, 252), DEV_BUTTON_SIZE)
+	var close := _dev_button("CLOSE", Vector2(214, tools_y), DEV_BUTTON_SIZE)
 	close.name = "DevLocationsClose"
 	close.pressed.connect(_toggle_dev_floor_tools.bind(false))
 	_dev_buttons.append(close)
 	var note := Label.new()
 	note.text = tr("DEV_LOCATIONS_NOTE")
-	note.position = Vector2(16, 306)
+	note.position = Vector2(16, tools_y + 54.0)
 	note.size = Vector2(388, 36)
 	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -951,6 +1108,15 @@ func _draw() -> void:
 		var phase := _ambient_time * TAU / cadence + float(cabinet_positions.keys().find(id)) * 1.9
 		var pulse := (sin(phase) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
 		_draw_machine_zone(id, at, is_near, pulse)
+	var ambient_pulse := (
+		(sin(_ambient_time * TAU / 1.15) + 1.0) * 0.5
+		if MotionPolicy.allows_continuous_motion()
+		else 0.0
+	)
+	if nearby_office_door:
+		_draw_station_rim(room.anchor(OFFICE_DOOR_ANCHOR), ambient_pulse)
+	elif nearby_station != &"" and not (_office != null and _office.is_modal_open()):
+		_draw_station_rim(room.anchor(nearby_station), ambient_pulse)
 	_sync_prompt_plaque()
 
 
@@ -961,6 +1127,26 @@ func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float
 		return
 	var half := Vector2(
 		MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.x, MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.y
+	)
+	var rim := PackedVector2Array(
+		[
+			at + Vector2(-half.x, 0),
+			at + Vector2(0, -half.y),
+			at + Vector2(half.x, 0),
+			at + Vector2(0, half.y),
+			at + Vector2(-half.x, 0),
+		]
+	)
+	draw_polyline(rim, Color(INLAY_HIGHLIGHT, 0.55 + pulse * 0.35), 2.0, true)
+
+
+func _draw_station_rim(at: Vector2, pulse: float) -> void:
+	var scale_factor := STATION_ZONE_SCALE * (room.avatar_scale if room != null else 1.0)
+	var half := (
+		Vector2(
+			MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.x, MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.y
+		)
+		* scale_factor
 	)
 	var rim := PackedVector2Array(
 		[
@@ -1009,10 +1195,11 @@ func _build_cashier_menu() -> void:
 	panel_style.shadow_size = 14
 	_cashier_panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(_cashier_panel)
-	var title := _cashier_label(
+	_cashier_title = _cashier_label(
 		tr("CASHIER_NAME"), Vector2(24, 16), Vector2(412, 42), 32, Color("f1e8d8")
 	)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cashier_title.name = "CashierTitle"
+	_cashier_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var rule := ColorRect.new()
 	rule.position = Vector2(54, 64)
 	rule.size = Vector2(352, 2)
@@ -1026,6 +1213,19 @@ func _build_cashier_menu() -> void:
 		tr("CASHIER_REPAY_AMOUNT"), Vector2(32, 142), Vector2(196, 24), 14, Color("b8ad9c")
 	)
 	amount_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	# Wrapping is enabled before the text so the label never grows to one line.
+	_cashier_note = Label.new()
+	_cashier_note.name = "MarkersMovedNote"
+	_cashier_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_cashier_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cashier_note.position = Vector2(40, 160)
+	_cashier_note.size = Vector2(380, 110)
+	_cashier_note.text = tr("CASHIER_MARKERS_AT_OFFICE")
+	_cashier_note.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_cashier_note.add_theme_font_size_override("font_size", 18)
+	_cashier_note.add_theme_color_override("font_color", Color("b8ad9c"))
+	_cashier_panel.add_child(_cashier_note)
+	_cashier_note.visible = false
 	_cashier_amount = _cashier_number_label(Vector2(228, 138), Vector2(200, 32), 22, IVORY)
 	_cashier_amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var adjustment_specs: Array[Dictionary] = [
@@ -1109,6 +1309,10 @@ func _build_cashier_menu() -> void:
 	_cashier_repay.focus_neighbor_left = _cashier_marker.get_path()
 	_cashier_repay.focus_neighbor_bottom = _cashier_close.get_path()
 	_cashier_close.focus_neighbor_top = _cashier_repay.get_path()
+	_cashier_marker_controls.assign(
+		[amount_caption, _cashier_amount, _cashier_preview, _cashier_marker, _cashier_repay]
+	)
+	_cashier_marker_controls.append_array(adjustment_buttons)
 
 
 func _cashier_label(
@@ -1197,6 +1401,10 @@ func _refresh_cashier_menu() -> void:
 				. set_trans(Tween.TRANS_BACK)
 				. set_ease(Tween.EASE_OUT)
 			)
+	_cashier_title.text = tr("MARKER_DESK_NAME") if _cashier_marker_mode else tr("CASHIER_NAME")
+	_cashier_note.visible = not _cashier_marker_mode
+	for control: Control in _cashier_marker_controls:
+		control.visible = _cashier_marker_mode
 	var repayment_limit := _cashier_repayment_limit()
 	_cashier_repay_amount = (
 		clampi(_cashier_repay_amount, 1, repayment_limit) if repayment_limit > 0 else 0
@@ -1267,6 +1475,8 @@ func _confirm_cashier_repayment() -> void:
 
 
 func _cashier_initial_focus() -> Button:
+	if not _cashier_marker_mode:
+		return _cashier_close
 	if not _cashier_marker.disabled:
 		return _cashier_marker
 	if not _cashier_repay.disabled:

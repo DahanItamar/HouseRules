@@ -164,6 +164,46 @@
       "zones": [
         "GrandStaircase"
       ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/staff_espresso_main_lounge_a3fc2dd8.png",
+      "crop": [
+        0,
+        300,
+        240,
+        240
+      ],
+      "zones": [
+        "LoungeDais"
+      ],
+      "clip_rects": [
+        [
+          158,
+          385,
+          212,
+          494
+        ]
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/manager_office/main_floor_door_edit_ab622cff.png",
+      "crop": [
+        768,
+        168,
+        192,
+        192
+      ],
+      "zones": [
+        "OfficeDoor"
+      ],
+      "extra_rects": [
+        [
+          887,
+          168,
+          960,
+          200
+        ]
+      ]
     }
   ]
 }

@@ -18,6 +18,8 @@ var preview_only: bool = false
 var background_path: String = ""
 var foreground_path: String = ""
 var foot_radius := Vector2(10, 6)
+## Rooms painted at a closer camera draw the same avatar larger (1.0 = main floor).
+var avatar_scale: float = 1.0
 var spawn := Vector2.ZERO
 var return_point := Vector2.ZERO
 var walk_bounds := PackedVector2Array()
@@ -54,6 +56,7 @@ func _parse(data: Dictionary) -> void:
 	background_path = String(data.get("background", ""))
 	foreground_path = String(data.get("foreground", ""))
 	foot_radius = _vector(data.get("foot_radius", [10, 6]))
+	avatar_scale = float(data.get("avatar_scale", 1.0))
 	spawn = _vector(data["spawn"])
 	return_point = _vector(data.get("return_point", data["spawn"]))
 	walk_bounds = _points(data["walk_bounds"])

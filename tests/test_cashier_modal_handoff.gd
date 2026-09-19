@@ -31,7 +31,7 @@ func after_each() -> void:
 
 
 func test_reduced_motion_settles_active_cashier_open_to_exact_visible_rest() -> void:
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	assert_true(_floor._cashier_open)
 	assert_true(_floor._cashier_panel.visible)
 	assert_true(_floor._cashier_tween.is_running())
@@ -53,7 +53,7 @@ func test_reduced_motion_settles_active_cashier_open_to_exact_visible_rest() -> 
 
 
 func test_reduced_motion_finishes_active_cashier_close_at_exact_hidden_rest() -> void:
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	await get_tree().process_frame
 	_floor._close_cashier()
 	assert_true(_floor._cashier_is_closing)
@@ -76,7 +76,7 @@ func test_reduced_motion_finishes_active_cashier_close_at_exact_hidden_rest() ->
 
 
 func test_reduced_motion_clears_active_cashier_transfer_at_canonical_feedback_rest() -> void:
-	assert_true(_floor.interact())
+	assert_true(_floor.open_marker_desk())
 	_floor._cashier_repay_amount = 10
 	_floor._confirm_cashier_repayment()
 	assert_true(_floor._cashier_transaction_tween.is_running())

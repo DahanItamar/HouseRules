@@ -1,0 +1,43 @@
+{
+  "id": "manager_office",
+  "label": "MANAGER'S OFFICE",
+  "preview_only": false,
+  "background": "res://assets/production/environments/manager_office_background_v2.png",
+  "foreground": "res://assets/production/environments/manager_office_foreground_v2.png",
+  "collision_reference": "res://assets/production/environments/manager_office_collision_v2.png",
+  "composite_preview": "res://assets/production/environments/manager_office_composite_preview_v2.png",
+  "avatar_scale": 1.35,
+  "foot_radius": [13, 8],
+  "spawn": [480, 522],
+  "return_point": [480, 522],
+  "walk_bounds": [[44, 122], [100, 110], [205, 108], [860, 108], [918, 124], [948, 270], [954, 538], [6, 538], [10, 320]],
+  "solids": [
+    {"name": "PlantBackLeft", "points": [[48, 104], [82, 104], [84, 116], [76, 125], [56, 125], [46, 116]]},
+    {"name": "PlantBackRight", "points": [[878, 100], [908, 100], [910, 116], [902, 125], [886, 125], [876, 116]]},
+    {"name": "ManagerDesk", "points": [[334, 108], [622, 108], [623, 222], [333, 222]]},
+    {"name": "Lounge", "points": [[26, 146], [70, 146], [228, 150], [236, 186], [252, 206], [264, 240], [265, 270], [256, 306], [236, 328], [200, 344], [138, 350], [76, 344], [40, 328], [16, 300], [10, 262], [14, 226], [24, 196]]},
+    {"name": "Reception", "points": [[726, 318], [758, 289], [930, 289], [952, 296], [956, 500], [815, 500], [812, 463], [790, 463], [726, 402]]},
+    {"name": "Entrance", "points": [[336, 452], [366, 440], [368, 384], [392, 356], [562, 356], [584, 384], [586, 440], [620, 450], [620, 482], [578, 484], [556, 500], [404, 500], [382, 484], [338, 484]]},
+    {"name": "LeftPlants", "points": [[6, 382], [52, 382], [56, 416], [46, 452], [44, 486], [6, 486]]},
+    {"name": "LeftRailing", "points": [[36, 468], [150, 468], [154, 494], [36, 494]]}
+  ],
+  "occluders": [
+    {"name": "PlantBackLeft", "baseline": 124, "points": [[28, 44], [60, 28], [90, 40], [98, 66], [92, 92], [84, 102], [84, 124], [48, 124], [48, 102], [30, 84]], "refine": "foliage"},
+    {"name": "PlantBackRight", "baseline": 124, "points": [[858, 60], [880, 42], [908, 46], [922, 70], [920, 94], [910, 100], [910, 124], [876, 124], [876, 100], [862, 88]], "refine": "foliage"},
+    {"name": "EntrancePortal", "baseline": 482, "points": [[366, 384], [392, 354], [562, 354], [588, 384], [588, 482], [566, 484], [556, 498], [404, 498], [390, 484], [366, 482]]},
+    {"name": "EntrancePlantLeft", "baseline": 482, "points": [[330, 410], [346, 396], [364, 400], [374, 418], [372, 440], [370, 482], [342, 482], [338, 446], [328, 430]], "refine": "foliage"},
+    {"name": "EntrancePlantRight", "baseline": 482, "points": [[582, 414], [598, 398], [616, 402], [626, 420], [622, 446], [618, 482], [588, 482], [586, 446], [580, 430]], "refine": "foliage"},
+    {"name": "LeftPlantUpper", "baseline": 416, "points": [[4, 330], [24, 322], [52, 330], [66, 352], [60, 378], [52, 384], [52, 416], [18, 416], [16, 384], [4, 372]], "refine": "foliage"},
+    {"name": "LeftPlantLower", "baseline": 486, "points": [[0, 418], [20, 410], [36, 420], [40, 446], [42, 486], [4, 486], [0, 470]], "refine": "foliage"},
+    {"name": "LeftRailing", "baseline": 494, "points": [[36, 428], [140, 428], [150, 420], [154, 494], [36, 494]]},
+    {"name": "ReceptionPlantTop", "baseline": 336, "points": [[900, 290], [918, 276], [944, 280], [956, 300], [952, 318], [944, 322], [944, 336], [912, 336], [912, 322], [902, 310]], "refine": "foliage"},
+    {"name": "ReceptionRailing", "baseline": 500, "points": [[812, 456], [920, 456], [924, 462], [924, 500], [812, 500]]},
+    {"name": "ReceptionPlantBottom", "baseline": 492, "points": [[908, 404], [926, 394], [950, 400], [960, 418], [960, 492], [918, 492], [912, 446], [904, 430]], "refine": "foliage"}
+  ],
+  "anchors": {
+    "exit": [480, 514],
+    "reception": [744, 452],
+    "manager": [480, 238]
+  },
+  "cabinets": []
+}

@@ -13,8 +13,6 @@ var _hud: AnimatedNumberLabel
 var _credit_caption: Label
 var _message_panel: Panel
 var _message: Label
-var _contracts: Label
-var _contracts_panel: Panel
 var _is_playing: bool = false
 var _message_serial: int = 0
 var _menu_transitioning: bool = false
@@ -33,7 +31,6 @@ var _menu_attract_elapsed: float = 0.0
 var _menu_first_breath: bool = true
 var _message_tween: Tween
 var _bank_feedback_tween: Tween
-var _contract_feedback_tween: Tween
 
 
 func _ready() -> void:
@@ -58,7 +55,6 @@ func _ready() -> void:
 		_present_message(tr("SAVE_INCOMPATIBLE"))
 	Wallet.balance_changed.connect(_on_balance_changed)
 	Economy.debt_changed.connect(func(_debt: int) -> void: _refresh_hud())
-	Economy.contracts_changed.connect(_on_contracts_changed)
 	Economy.contract_completed.connect(_show_contract_completed)
 	SceneRouter.session_changed.connect(_refresh_hud)
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: _refresh_menu())
@@ -125,20 +121,8 @@ func _build_hud() -> void:
 	_message.add_theme_color_override("font_color", Color("f1e8d8"))
 	_message.visible = false
 	_hud_layer.add_child(_message)
-	# The contracts plaque stays inside the back-wall band so it never covers
-	# guests, the game islands or the VIP elevator entrance.
-	_contracts_panel = _panel(Vector2(594, 8), Vector2(348, 62), Color("17161ae8"), Color("6e5225"))
-	_contracts_panel.pivot_offset = _contracts_panel.size * 0.5
-	_hud_layer.add_child(_contracts_panel)
-	_contracts = Label.new()
-	_contracts.add_theme_font_override("font", Typography.UI_FONT)
-	_contracts.position = Vector2(610, 10)
-	_contracts.size = Vector2(316, 58)
-	_contracts.add_theme_constant_override("line_spacing", -2)
-	_contracts.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-	_contracts.add_theme_font_size_override("font_size", Typography.BODY_MIN)
-	_contracts.add_theme_color_override("font_color", Color("b8ad9c"))
-	_hud_layer.add_child(_contracts)
+	# House Contracts live on the reception board in the Manager's Office; the
+	# HUD only toasts a completion (see _show_contract_completed).
 
 
 func _build_menu() -> void:
@@ -424,11 +408,6 @@ func _on_motion_preference_changed(reduced: bool) -> void:
 			_bank_feedback_tween.kill()
 		_bank_panel.scale = Vector2.ONE
 		_hud.modulate = Color.WHITE
-		if _contract_feedback_tween != null:
-			_contract_feedback_tween.kill()
-		_contracts_panel.scale = Vector2.ONE
-		_contracts.position.x = 610.0
-		_contracts.modulate = Color.WHITE
 	elif _menu != null and _menu.visible:
 		_play_menu_reveal()
 
@@ -444,19 +423,13 @@ func _refresh_hud() -> void:
 	_credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	if Wallet.test_mode_enabled and Economy.debt > 0:
 		_hud.text += HUD_DEBT_SEPARATOR + str(Economy.debt)
-	if _contracts != null:
-		var on_floor: bool = (
-			_is_playing
-			and SceneRouter.session == null
-			and (_floor == null or not _floor._cashier_open)
-		)
-		_bank_panel.visible = on_floor
-		_chip_icon.visible = on_floor
-		_credit_caption.visible = on_floor
-		_hud.visible = on_floor
-		_contracts.visible = on_floor
-		_contracts_panel.visible = _contracts.visible
-		_contracts.text = tr("CONTRACTS_HEADING") + "\n" + "\n".join(Economy.contract_lines())
+	var on_floor: bool = (
+		_is_playing and SceneRouter.session == null and (_floor == null or not _floor._cashier_open)
+	)
+	_bank_panel.visible = on_floor
+	_chip_icon.visible = on_floor
+	_credit_caption.visible = on_floor
+	_hud.visible = on_floor
 
 
 func _on_balance_changed(old_balance: int, new_balance: int) -> void:
@@ -484,40 +457,6 @@ func _on_balance_changed(old_balance: int, new_balance: int) -> void:
 		. set_ease(Tween.EASE_OUT)
 	)
 	_bank_feedback_tween.parallel().tween_property(_hud, "modulate", Color.WHITE, 0.16)
-
-
-func _on_contracts_changed() -> void:
-	_refresh_hud()
-	if _contract_feedback_tween != null:
-		_contract_feedback_tween.kill()
-	_contracts_panel.scale = Vector2.ONE
-	_contracts.modulate = Color.WHITE
-	_contracts.position.x = 610.0
-	if MotionPolicy.is_reduced() or not _contracts.visible:
-		return
-	_contracts.position.x = 622.0
-	_contracts.modulate.a = 0.62
-	_contract_feedback_tween = create_tween().set_parallel(true)
-	(
-		_contract_feedback_tween
-		. tween_property(_contracts, "position:x", 610.0, 0.18)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	_contract_feedback_tween.tween_property(_contracts, "modulate:a", 1.0, 0.16)
-	(
-		_contract_feedback_tween
-		. tween_property(_contracts_panel, "scale", Vector2(1.015, 1.015), 0.10)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	(
-		_contract_feedback_tween
-		. chain()
-		. tween_property(_contracts_panel, "scale", Vector2.ONE, 0.14)
-		. set_trans(Tween.TRANS_BACK)
-		. set_ease(Tween.EASE_OUT)
-	)
 
 
 func _start_playing() -> void:
@@ -554,6 +493,10 @@ func _show_floor_now() -> void:
 	_refresh_hud()
 	AudioService.play_ambient()
 	AudioService.play(&"confirm")
+	# The secretary's tour greets a new save. Test rigs and capture tools host
+	# this scene under their own root and start the tour themselves.
+	if get_tree().current_scene == self:
+		_floor.begin_first_run_tutorial.call_deferred()
 
 
 func _show_menu() -> void:

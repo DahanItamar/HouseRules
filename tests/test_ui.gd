@@ -126,9 +126,11 @@ func test_global_hud_reacts_to_balance_and_contract_changes() -> void:
 	assert_gt(main._chip_icon.transaction_time, 0.0)
 	assert_eq(main._chip_icon.transaction_direction, 1)
 	assert_not_null(main._bank_feedback_tween)
-	main._on_contracts_changed()
-	assert_not_null(main._contract_feedback_tween)
-	assert_lt(main._contracts.position.x, 623.0)
+	# Contracts moved to the reception board; the HUD only toasts completions.
+	assert_false("_contracts" in main)
+	main._show_contract_completed("CONTRACT_SLOT_ROUNDS", 300)
+	assert_true(main._message.visible)
+	assert_string_contains(main._message.text, "300")
 
 
 func test_reduced_motion_hud_keeps_static_transaction_feedback() -> void:

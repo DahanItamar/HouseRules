@@ -2,6 +2,12 @@ class_name SaveGame
 extends RefCounted
 
 const CURRENT_SCHEMA_VERSION: int = 2
+## First-run tour states. Saves written before the tour existed load as DONE.
+const TUTORIAL_PENDING := "pending"
+const TUTORIAL_DONE := "done"
+const TUTORIAL_SKIPPED := "skipped"
+const TUTORIAL_STATES: Array[String] = [TUTORIAL_PENDING, TUTORIAL_DONE, TUTORIAL_SKIPPED]
+const CONTRACT_LOG_SIZE: int = 6
 
 var schema_version: int = CURRENT_SCHEMA_VERSION
 var chips: int = 0
@@ -17,6 +23,11 @@ var played_seconds: float = 0.0
 var created_at: String = ""
 # Strings preserve all 64 bits through JSON's floating-point number parser.
 var rng_states: Dictionary = {}
+var tutorial_state: String = TUTORIAL_PENDING
+## Wing ids the Manager has formally invited the player into.
+var wing_invitations: Array[String] = []
+## Newest first: {"title_key": String, "reward": int}.
+var contract_log: Array[Dictionary] = []
 
 
 func to_dict() -> Dictionary:
@@ -36,7 +47,10 @@ func to_dict() -> Dictionary:
 		"rng_seed": str(rng_seed),
 		"rng_states": rng_states.duplicate(true),
 		"played_seconds": played_seconds,
-		"created_at": created_at
+		"created_at": created_at,
+		"tutorial_state": tutorial_state,
+		"wing_invitations": wing_invitations.duplicate(),
+		"contract_log": contract_log.duplicate(true)
 	}
 
 
@@ -57,4 +71,29 @@ static func from_dict(data: Dictionary) -> SaveGame:
 	result.rng_states = data.get("rng_states", {}).duplicate(true)
 	result.played_seconds = float(data.get("played_seconds", 0.0))
 	result.created_at = String(data.get("created_at", ""))
+	var tour := str(data.get("tutorial_state", TUTORIAL_DONE))
+	result.tutorial_state = tour if tour in TUTORIAL_STATES else TUTORIAL_DONE
+	var invitations: Variant = data.get("wing_invitations", [])
+	if invitations is Array:
+		for wing: Variant in invitations:
+			if wing is String and not result.wing_invitations.has(wing):
+				result.wing_invitations.append(wing)
+	result.contract_log = sanitize_contract_log(data.get("contract_log", []))
 	return result
+
+
+static func sanitize_contract_log(value: Variant) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	if not value is Array:
+		return entries
+	for entry: Variant in value:
+		if entries.size() >= CONTRACT_LOG_SIZE:
+			break
+		if entry is Dictionary and entry.get("title_key", null) is String:
+			var reward := (
+				int(str(entry.get("reward", 0)))
+				if str(entry.get("reward", 0)).is_valid_int()
+				else 0
+			)
+			entries.append({"title_key": String(entry.title_key), "reward": maxi(reward, 0)})
+	return entries

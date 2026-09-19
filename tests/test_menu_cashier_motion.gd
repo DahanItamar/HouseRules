@@ -179,18 +179,10 @@ func test_reduced_motion_settles_active_hud_feedback_to_exact_rest_state() -> vo
 	add_child_autofree(main)
 	main._show_floor_now()
 	main._on_balance_changed(100, 90)
-	main._on_contracts_changed()
 	assert_true(main._bank_feedback_tween.is_running())
-	assert_true(main._contract_feedback_tween.is_running())
 	MotionPolicy.set_reduced_motion_for_tests(true)
 	assert_eq(main._bank_panel.scale, Vector2.ONE)
 	assert_eq(main._hud.modulate, Color.WHITE)
-	assert_eq(main._contracts_panel.scale, Vector2.ONE)
-	assert_eq(main._contracts.position.x, 610.0)
-	assert_eq(main._contracts.modulate, Color.WHITE)
 	assert_true(
 		main._bank_feedback_tween == null or not main._bank_feedback_tween.is_running()
-	)
-	assert_true(
-		main._contract_feedback_tween == null or not main._contract_feedback_tween.is_running()
 	)

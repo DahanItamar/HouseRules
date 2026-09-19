@@ -556,3 +556,69 @@ The Salon's painted blackjack dealer and left slot alcove are repainted so that 
 
 Both colour fits were rejected by the correlation guard (the content changed by design), so the raw paint is baked; it already matches the room palette. The edit's extra wall sconces fall outside the clip and are not baked. Raw outputs: `assets/source/layered_v2/paint_in/hr_games/`. Layout: `data/floors/high_roller.json` now lists `baccarat` at [480,268] and `match_point` at [290,141], `preview_only: false`.
 
+## 2026-09-19 Manager's Office (new room, office door, secretary and Manager)
+
+A new walkable room, `manager_office`, reached through a walnut office door on
+the Main Floor's right wall, just north of the cashier cage. The executive
+assistant Vivienne Hale works the reception desk and hosts the House Contracts
+board and the first-run tour. The Manager, Aurelio Vance, works the large desk:
+he extends markers and gives the one-time wing invitations. All generation went
+through the connected **Higgsfield MCP**. This pass spent **22.5 credits** on its
+own jobs, confirmed against the account's transaction history (other agents
+spent from the same account in the same window). Raw outputs are in
+`assets/source/layered_v2/manager_office/` and are never modified.
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Secretary concept (used) | `351fbaab-be0f-4dfe-a11f-9cd9806fd049` | `gpt_image_2_5` (flare), 2:3, high, 2k, `background: transparent` (1360x2048) | 3 (coordinator's session) |
+| Secretary concept A (not used) | `0735f36d` (`secretary_a_0735f36d.png`) | same | 3 (coordinator's session) |
+| Manager concept (used) | `2e32a226-fd54-40a1-8ab0-c468cac526fd` | same | 3 (coordinator's session) |
+| Blocked concept: "executive secretary", leather pencil skirt with slit, tights | `6ad30438-7974-4aa1-8768-03a318d2a8de` | same; content filter (`nsfw`) | 0 (refunded) |
+| Blocked concept: leather sheath with front zip, tights | `fadc1a78-260b-40c1-b61b-66b4f36224a9` | same; content filter (`nsfw`) | 0 (refunded) |
+| Office background, empty | `3f847bd5-0413-4976-b159-a5ab59a55f94` | `gpt_image_2_5`, 16:9, high, 4k (3840x2160), High Roller upscale `280a7aef` as style reference | 4.5 |
+| Main Floor office door paint-in | `ab622cff-dc2a-46fd-ad06-b5fcd2d0ac77` | `nano_banana_pro` (served as `nano_banana_2`), 1:1, 2k, edit of the 768x768 crop at virtual (768, 168) | 2 |
+| Manager painted behind his desk | `66d71da7-6115-4fcc-91b8-d54d32ee3f81` | `nano_banana_pro`, 1:1, 2k, office crop (360, 12) plus the concept job as reference | 2 |
+| Secretary painted behind reception | `c903628f-c985-4a91-8ceb-744972694a1d` | `nano_banana_pro`, 1:1, 2k, office crop (720, 240) plus the concept job as reference | 2 |
+| Secretary "explaining with the tablet" | `811e3c5a-970f-4ec3-97a8-109d41d958b5`, cut-out `1cd03863-ae70-42cb-ba88-3e6c6a50aa3f` | `nano_banana_pro`, 2:3, 2k, concept job as reference, grey studio; then `remove_background` | 2 + 1 |
+| Secretary "pointing the way" | `0e2f3f62-5d8e-4aad-ae15-53dbaa41f91e`, cut-out `b0ccc852-eb76-4b51-91dc-11d78ce374b8` | same | 2 + 1 |
+| Manager "offering a marker" | `a1c93701-e2a2-4f2f-993e-f97f790078dd`, cut-out `9206ca94-e9f5-4d9f-8a08-ade16c7f88db` | same | 2 + 1 |
+| Manager "raising his glass" | `2cfa02b4-0822-4227-b483-e1d602ea5520`, cut-out `a07c0ecd-46bc-4512-ba20-56986433dddc` | same | 2 + 1 |
+
+Filter wording: "secretary" together with leather, tights and a slit was
+blocked. The accepted wording was "personal assistant" or "executive assistant",
+"stylish office fashion" and "fashion-editorial", with no tights, bows or slits.
+The pose edits used "elegant executive assistant" and passed on the first try.
+
+Processing:
+
+- `python tools/art/bake_paint_ins.py tools/art/bake_manager_office.json` bakes
+  the Manager and the secretary into
+  `assets/production/environments/manager_office_background_v2.png`. Pixels
+  change only inside the `ManagerDesk` and `Reception` solids, plus a head
+  rectangle above each desk. They are the real people in the room. The player
+  can never walk behind them.
+- The office door patch is appended to `tools/art/bake_main_floor.json` (zone
+  `OfficeDoor`, plus the top of the wall). The full Main Floor bake includes
+  every agent's patches. The wall stands south of the VIP platform, so it
+  correctly hides one rope post. The VIP lock sign stays visible above it.
+- `python tools/art/floor_layers.py build data/floors/manager_office.json` (and
+  `main_floor.json`) writes the foreground, collision and preview files.
+- `python tools/art/prepare_characters.py tools/art/characters_office_staff.json`
+  builds `assets/production/characters/staff/{secretary,manager}*.png`
+  (1392x2080, clear corners). New optional keys in the tool:
+  - `defringe` removes the grey studio matte that the background remover leaves
+    on hair.
+  - `grade_to` fits each person's face-skin statistics to their painted face in
+    the office background, which gives a warm, lower-key room grade.
+  - `match_to` first fits each pose's skin and head-to-torso colour to the base
+    pose, then applies the same room grade. Every pose of one person shares one
+    look.
+  - Evidence: `tests/results/screenshots/office_fhd/cameo_grade_sheet.png` shows
+    every graded cameo beside the painted face.
+- In-game, the staff appear only as brass-framed portrait cameos inside the
+  dialogue panel (head to mid-torso). A pose is mirrored whenever needed so the
+  person faces the text. In the office, the panel sits beside the painted
+  speaker with a brass pointer. No full-body figure is drawn over any room.
+
+No text, logos or brand marks are in any generated image. The door plaque is
+blank brass.

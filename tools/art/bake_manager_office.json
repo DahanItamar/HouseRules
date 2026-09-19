@@ -1,0 +1,19 @@
+{
+  "source": "assets/source/layered_v2/manager_office/office_empty_3f847bd5.png",
+  "output": "assets/production/environments/manager_office_background_v2.png",
+  "layout": "data/floors/manager_office.json",
+  "patches": [
+    {
+      "edited": "assets/source/layered_v2/manager_office/office_manager_paintin_66d71da7.png",
+      "crop": [360, 12, 240, 240],
+      "zones": ["ManagerDesk"],
+      "extra_rects": [[444, 22, 522, 110]]
+    },
+    {
+      "edited": "assets/source/layered_v2/manager_office/office_secretary_paintin_c903628f.png",
+      "crop": [720, 240, 240, 240],
+      "zones": ["Reception"],
+      "extra_rects": [[802, 254, 862, 290]]
+    }
+  ]
+}

@@ -49,6 +49,7 @@ directories; they do not overwrite the player's normal save.
 | M5 audio | Deterministic 16-bit PCM cues are cached and emitted for navigation and cabinet events. |
 | AC-037 disconnect | Losing the active gamepad pauses behind a blocking overlay; reconnecting resumes it. |
 | AC-051 | Both v1 wing transition points show their lifetime-wagered thresholds and refuse entry while locked. |
+| Manager's Office | `test_manager_office.gd`: UHD layers with clear alpha, walkable connected anchors, furniture edge samples, foreground depth, the Main Floor door route, room switching with one player, contracts board parity with Economy, marker parity after the move from the cashier, persisted one-time invitations, the tour (first run, action steps, skip, replay, saved state, reduced motion), the in-panel cameo facing the text, one shared colour grade per person, TV-safe 44px targets. |
 
 The input regression injects a real `InputEventAction` and verifies cabinet back
 does not also trigger menu exit. Physical controller use, handheld readability,

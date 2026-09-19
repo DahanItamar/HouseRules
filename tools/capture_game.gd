@@ -61,7 +61,7 @@ func _capture() -> void:
 	main._floor.avatar_position = main._floor.CASHIER_POSITION
 	main._floor._avatar_visual.position = main._floor.avatar_position
 	main._floor.refresh_proximity()
-	main._floor.interact()
+	main._floor.open_marker_desk()
 	await get_tree().create_timer(0.25).timeout
 	await _snapshot("02_cashier_menu")
 	await get_tree().create_timer(0.35).timeout

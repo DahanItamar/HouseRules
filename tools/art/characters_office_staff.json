@@ -1,0 +1,58 @@
+{
+  "characters": [
+    {
+      "output": "assets/production/characters/staff/secretary.png",
+      "source": "assets/source/layered_v2/manager_office/secretary_b_351fbaab.png",
+      "grade_to": {
+        "image": "assets/production/environments/manager_office_background_v2.png",
+        "rect": [
+          3296,
+          1072,
+          3352,
+          1132
+        ]
+      }
+    },
+    {
+      "output": "assets/production/characters/staff/secretary_explain.png",
+      "source": "assets/source/layered_v2/manager_office/secretary_explain_cutout_1cd03863.png",
+      "align_to": "assets/production/characters/staff/secretary.png",
+      "defringe": 2,
+      "match_to": "assets/production/characters/staff/secretary.png"
+    },
+    {
+      "output": "assets/production/characters/staff/secretary_point.png",
+      "source": "assets/source/layered_v2/manager_office/secretary_point_cutout_b0ccc852.png",
+      "align_to": "assets/production/characters/staff/secretary.png",
+      "defringe": 2,
+      "match_to": "assets/production/characters/staff/secretary.png"
+    },
+    {
+      "output": "assets/production/characters/staff/manager.png",
+      "source": "assets/source/layered_v2/manager_office/manager_2e32a226.png",
+      "grade_to": {
+        "image": "assets/production/environments/manager_office_background_v2.png",
+        "rect": [
+          1888,
+          152,
+          1936,
+          200
+        ]
+      }
+    },
+    {
+      "output": "assets/production/characters/staff/manager_offer.png",
+      "source": "assets/source/layered_v2/manager_office/manager_offer_cutout_9206ca94.png",
+      "align_to": "assets/production/characters/staff/manager.png",
+      "defringe": 2,
+      "match_to": "assets/production/characters/staff/manager.png"
+    },
+    {
+      "output": "assets/production/characters/staff/manager_toast.png",
+      "source": "assets/source/layered_v2/manager_office/manager_toast_cutout_a07c0ecd.png",
+      "align_to": "assets/production/characters/staff/manager.png",
+      "defringe": 2,
+      "match_to": "assets/production/characters/staff/manager.png"
+    }
+  ]
+}

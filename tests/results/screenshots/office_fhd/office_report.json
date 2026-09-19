@@ -1,0 +1,80 @@
+{
+	"invitations": [
+		"high_roller"
+	],
+	"office": {
+		"avatar_scale": 1.35000002384186,
+		"room": "manager_office",
+		"spawn": [
+			480.0,
+			522.0
+		]
+	},
+	"shots": {
+		"tour_cashier": {
+			"cameo": "[P: (790.0, 80.0), S: (112.0, 124.0)]",
+			"cameo_side": "right",
+			"faces_text": true,
+			"layout": "top_right",
+			"panel": "[P: (452.0, 70.0), S: (460.0, 144.0)]",
+			"step": "cashier"
+		},
+		"tour_contracts": {
+			"cameo": "[P: (58.0, 379.0), S: (112.0, 124.0)]",
+			"cameo_side": "left",
+			"faces_text": true,
+			"layout": "bottom_left",
+			"panel": "[P: (48.0, 369.0), S: (460.0, 144.0)]",
+			"step": "contracts"
+		},
+		"tour_help": {
+			"cameo": "[P: (58.0, 379.0), S: (112.0, 124.0)]",
+			"cameo_side": "left",
+			"faces_text": true,
+			"layout": "bottom_left",
+			"panel": "[P: (48.0, 369.0), S: (460.0, 144.0)]",
+			"step": "help"
+		},
+		"tour_inlay": {
+			"cameo": "[P: (58.0, 80.0), S: (112.0, 124.0)]",
+			"cameo_side": "left",
+			"faces_text": true,
+			"layout": "top_left",
+			"panel": "[P: (48.0, 70.0), S: (460.0, 144.0)]",
+			"step": "inlay"
+		},
+		"tour_join": {
+			"cameo": "[P: (58.0, 379.0), S: (112.0, 124.0)]",
+			"cameo_side": "left",
+			"faces_text": true,
+			"layout": "bottom_left",
+			"panel": "[P: (48.0, 369.0), S: (460.0, 144.0)]",
+			"step": "join"
+		},
+		"tour_manager": {
+			"cameo": "[P: (58.0, 379.0), S: (112.0, 124.0)]",
+			"cameo_side": "left",
+			"faces_text": true,
+			"layout": "bottom_left",
+			"panel": "[P: (48.0, 369.0), S: (460.0, 144.0)]",
+			"step": "manager"
+		},
+		"tour_move": {
+			"cameo": "[P: (58.0, 80.0), S: (112.0, 124.0)]",
+			"cameo_side": "left",
+			"faces_text": true,
+			"layout": "top_left",
+			"panel": "[P: (48.0, 70.0), S: (460.0, 144.0)]",
+			"step": "move"
+		},
+		"tour_welcome": {
+			"cameo": "[P: (58.0, 80.0), S: (112.0, 124.0)]",
+			"cameo_side": "left",
+			"faces_text": true,
+			"layout": "top_left",
+			"panel": "[P: (48.0, 70.0), S: (460.0, 144.0)]",
+			"step": "welcome"
+		}
+	},
+	"tutorial_state": "done"
+}
