@@ -14,6 +14,7 @@ var kind: Kind = Kind.SAFE
 var lifetime: float = 0.54
 var elapsed: float = 0.0
 var shard_particles: CPUParticles2D
+var sparkle_particles: CPUParticles2D
 var debris_particles: CPUParticles2D
 var smoke_particles: CPUParticles2D
 
@@ -44,6 +45,19 @@ func _configure() -> void:
 			0.7,
 			1.25
 		)
+		if not MotionPolicy.is_reduced():
+			sparkle_particles = _particle_layer(
+				"DiamondSparkles",
+				_make_sparkle_texture(),
+				8,
+				0.34,
+				SAFE_HIGHLIGHT,
+				24.0,
+				64.0,
+				Vector2.ZERO,
+				0.65,
+				1.0
+			)
 	else:
 		debris_particles = _particle_layer(
 			"MineDebris",
@@ -89,6 +103,16 @@ func _draw() -> void:
 			PackedVector2Array([Vector2(0, -8), Vector2(7, 0), Vector2(0, 10), Vector2(-7, 0)]),
 			Color(SAFE_HIGHLIGHT, acknowledge * 0.42)
 		)
+		var ray_length := 10.0 + progress * 12.0
+		for ray_index: int in range(4):
+			var ray_angle := PI * 0.25 + float(ray_index) * PI * 0.5
+			var ray_direction := Vector2.from_angle(ray_angle)
+			draw_line(
+				ray_direction * (ray_length - 5.0),
+				ray_direction * ray_length,
+				Color(SAFE_HIGHLIGHT, acknowledge * 0.60),
+				1.5
+			)
 		return
 	# The tile owns the anticipation warning. This stack begins at impact: a hot core,
 	# expanding shockwave, then physical debris and smoke particle layers.
@@ -155,6 +179,15 @@ func _make_debris_texture() -> Texture2D:
 		for x: int in range(1, 6):
 			if x + y >= 3 and x + y <= 9:
 				image.set_pixel(x, y, Color("b47b65") if y < 3 else DEBRIS_COLOR)
+	return ImageTexture.create_from_image(image)
+
+
+func _make_sparkle_texture() -> Texture2D:
+	var image := Image.create_empty(9, 9, false, Image.FORMAT_RGBA8)
+	for offset: int in range(-4, 5):
+		var alpha := 1.0 - absf(float(offset)) / 5.0
+		image.set_pixel(4 + offset, 4, Color(SAFE_HIGHLIGHT, alpha))
+		image.set_pixel(4, 4 + offset, Color(SAFE_HIGHLIGHT, alpha))
 	return ImageTexture.create_from_image(image)
 
 

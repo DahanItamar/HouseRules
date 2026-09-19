@@ -23,6 +23,8 @@ var displayed_progress: float = 0.0
 var is_ready: bool = false
 var animation_duration: float = ANIMATION_MIN_SECONDS
 var idle_time: float = 0.0
+var value_surge: float = 0.0
+var last_change_direction: int = 0
 var _value_tween: Tween
 
 
@@ -35,9 +37,14 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if not is_ready or not MotionPolicy.allows_continuous_motion():
+	if not MotionPolicy.allows_continuous_motion():
 		return
-	idle_time = fmod(idle_time + delta, 8.0)
+	if is_ready:
+		idle_time = fmod(idle_time + delta, 8.0)
+	if value_surge > 0.0:
+		value_surge = maxf(value_surge - delta / 0.34, 0.0)
+		if value_surge <= 0.0 and not is_ready:
+			set_process(false)
 	queue_redraw()
 
 
@@ -59,12 +66,16 @@ func set_values(
 	target_amount = next_amount
 	target_multiplier = next_multiplier
 	target_progress = next_progress
+	last_change_direction = signi(next_amount - int(round(displayed_amount)))
+	value_surge = 1.0 if animate and last_change_direction != 0 else 0.0
 	if _value_tween != null and _value_tween.is_valid():
 		_value_tween.kill()
 	if not animate or not is_inside_tree():
+		value_surge = 0.0
 		_apply_values(float(target_amount), target_multiplier, target_progress)
 		return
 	if MotionPolicy.is_reduced():
+		value_surge = 0.0
 		_apply_values(float(target_amount), target_multiplier, target_progress)
 		animation_finished.emit()
 		return
@@ -105,7 +116,7 @@ func set_ready(ready: bool) -> void:
 	is_ready = ready
 	if not ready:
 		idle_time = 0.0
-	set_process(ready and MotionPolicy.allows_continuous_motion())
+	set_process((ready or value_surge > 0.0) and MotionPolicy.allows_continuous_motion())
 	queue_redraw()
 
 
@@ -131,12 +142,13 @@ func _apply_values(amount: float, multiplier: float, progress: float) -> void:
 func _apply_motion_preference(reduced: bool) -> void:
 	if reduced:
 		idle_time = 0.0
+		value_surge = 0.0
 		if _value_tween != null and _value_tween.is_valid() and _value_tween.is_running():
 			_value_tween.kill()
 			_value_tween = null
 			_apply_values(float(target_amount), target_multiplier, target_progress)
 			animation_finished.emit()
-	set_process(is_ready and not reduced)
+	set_process((is_ready or value_surge > 0.0) and not reduced)
 	queue_redraw()
 
 
@@ -175,6 +187,15 @@ func _draw() -> void:
 		Typography.BODY_MIN,
 		primary_text
 	)
+	if value_surge > 0.0 and last_change_direction != 0:
+		var change_color := READY_COLOR if last_change_direction > 0 else Color("d76a62")
+		var change_alpha := sin(value_surge * PI) * 0.86
+		draw_line(
+			Vector2(90, 30),
+			Vector2(152, 30),
+			Color(change_color, change_alpha),
+			2.0
+		)
 	draw_string(
 		number_font,
 		Vector2(90, 25),
@@ -216,6 +237,13 @@ func _draw() -> void:
 				Color(0.90, 1.0, 0.93, 0.42 + ready_pulse * 0.28),
 				3.0
 			)
+		# A hard leading edge makes increasing value legible at a glance.
+		draw_line(
+			Vector2(fill.end.x, fill.position.y - 2.0),
+			Vector2(fill.end.x, fill.end.y + 2.0),
+			Color("f2eadc") if is_ready else DISABLED_COLOR,
+			2.0
+		)
 	draw_line(
 		Vector2(rail.end.x, rail.position.y - 2),
 		Vector2(rail.end.x, rail.end.y + 2),

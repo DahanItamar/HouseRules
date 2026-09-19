@@ -27,6 +27,8 @@ func test_meter_interpolates_and_finishes_on_exact_targets() -> void:
 	watch_signals(meter)
 	meter.set_values(420, 5.25, 0.9)
 	assert_true(meter.has_active_motion())
+	assert_eq(meter.last_change_direction, 1)
+	assert_eq(meter.value_surge, 1.0)
 	assert_between(
 		meter.animation_duration,
 		METER_SCRIPT.ANIMATION_MIN_SECONDS,
@@ -92,4 +94,17 @@ func test_enabling_reduced_motion_snaps_an_active_value_tween_to_its_target() ->
 	assert_eq(meter.amount_text(), "410")
 	assert_almost_eq(meter.displayed_multiplier, 4.25, 0.001)
 	assert_almost_eq(meter.displayed_progress, 0.9, 0.001)
+	assert_eq(meter.value_surge, 0.0, "Reduced motion removes the decorative value surge")
 	assert_signal_emit_count(meter, "animation_finished", 1)
+
+
+func test_meter_tracks_decreasing_value_with_a_bounded_direction_cue() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var meter := VaultCashoutMeter.new()
+	add_child_autofree(meter)
+	meter.set_values(500, 5.0, 1.0, false)
+	meter.set_values(200, 2.0, 0.4)
+	assert_eq(meter.last_change_direction, -1)
+	assert_eq(meter.value_surge, 1.0)
+	meter._process(0.40)
+	assert_eq(meter.value_surge, 0.0, "Value cue settles instead of looping indefinitely")

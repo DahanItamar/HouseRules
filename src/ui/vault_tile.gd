@@ -17,6 +17,8 @@ var is_selected: bool = false
 var _pulse_time: float = 0.0
 var _warning_remaining: float = 0.0
 var _flash_remaining: float = 0.0
+var _press_depth: float = 0.0
+var _impact_strength: float = 0.0
 var _reveal_tween: Tween
 var _idle_time: float = 0.0
 var _idle_phase: float = 0.0
@@ -41,7 +43,13 @@ func _process(delta: float) -> void:
 	if _flash_remaining > 0.0:
 		_flash_remaining = maxf(_flash_remaining - delta, 0.0)
 		needs_redraw = true
-	if face == Face.SAFE and MotionPolicy.allows_continuous_motion() and fmod(_idle_time + _idle_phase, 3.8) < 0.48:
+	if _impact_strength > 0.0:
+		needs_redraw = true
+	if (
+		face == Face.SAFE
+		and MotionPolicy.allows_continuous_motion()
+		and fmod(_idle_time + _idle_phase, 3.8) < 0.48
+	):
 		needs_redraw = true
 	if needs_redraw:
 		queue_redraw()
@@ -63,10 +71,10 @@ func reveal(next_face: Face) -> void:
 	pivot_offset = size * 0.5
 	if _reveal_tween and _reveal_tween.is_valid():
 		_reveal_tween.kill()
-	_warning_remaining = MotionPolicy.finite_duration(0.20) if next_face == Face.MINE else 0.0
+	_warning_remaining = MotionPolicy.finite_duration(0.24) if next_face == Face.MINE else 0.0
+	_press_depth = 0.0
+	_impact_strength = 0.0
 	_reveal_tween = create_tween()
-	if next_face == Face.MINE:
-		_reveal_tween.tween_interval(MotionPolicy.finite_duration(0.08))
 	if MotionPolicy.is_reduced():
 		# Preserve anticipation and the exact completion callback with no tile flip/pop.
 		_reveal_tween.tween_property(
@@ -90,24 +98,48 @@ func reveal(next_face: Face) -> void:
 				reveal_completed.emit(next_face)
 		)
 		return
-	_reveal_tween.tween_property(self, "scale:x", 0.06, MotionPolicy.finite_duration(0.10)).set_trans(
+	# A short key-travel press makes the deposit box feel operated rather than swapped.
+	_reveal_tween.tween_method(
+		_set_press_depth, 0.0, 1.0, MotionPolicy.finite_duration(0.04)
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_reveal_tween.tween_method(
+		_set_press_depth, 1.0, 0.30, MotionPolicy.finite_duration(0.03)
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_reveal_tween.tween_property(self, "scale:x", 0.06, MotionPolicy.finite_duration(0.08)).set_trans(
 		Tween.TRANS_QUAD
 	).set_ease(Tween.EASE_IN)
 	_reveal_tween.tween_callback(
 		func() -> void:
 			face = next_face
+			_impact_strength = 1.0
 			_flash_remaining = MotionPolicy.finite_duration(0.30 if next_face == Face.MINE else 0.18)
 			reveal_effect_requested.emit(next_face, size * 0.5)
 			queue_redraw()
 	)
-	_reveal_tween.tween_property(self, "scale:x", 1.0, MotionPolicy.finite_duration(0.12)).set_trans(
+	_reveal_tween.tween_property(self, "scale:x", 1.0, MotionPolicy.finite_duration(0.10)).set_trans(
 		Tween.TRANS_BACK
 	).set_ease(Tween.EASE_OUT)
 	if next_face == Face.SAFE:
-		_reveal_tween.tween_property(self, "scale", Vector2(1.12, 1.12), MotionPolicy.finite_duration(0.07)).set_trans(Tween.TRANS_QUAD)
-		_reveal_tween.tween_property(self, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.11)).set_trans(Tween.TRANS_BACK)
+		_reveal_tween.tween_property(
+			self, "scale", Vector2(1.12, 1.12), MotionPolicy.finite_duration(0.06)
+		).set_trans(Tween.TRANS_QUAD)
+		_reveal_tween.tween_property(
+			self, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.10)
+		).set_trans(Tween.TRANS_BACK)
+	else:
+		_reveal_tween.tween_property(
+			self, "scale", Vector2(1.08, 0.94), MotionPolicy.finite_duration(0.045)
+		).set_trans(Tween.TRANS_QUAD)
+		_reveal_tween.tween_property(
+			self, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.12)
+		).set_trans(Tween.TRANS_BACK)
+	_reveal_tween.parallel().tween_method(
+		_set_impact_strength, 1.0, 0.0, MotionPolicy.finite_duration(0.12)
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_reveal_tween.tween_callback(
 		func() -> void:
+			_set_press_depth(0.0)
+			_set_impact_strength(0.0)
 			is_flipping = false
 			reveal_completed.emit(next_face)
 	)
@@ -120,6 +152,8 @@ func set_face_immediate(next_face: Face) -> void:
 	is_flipping = false
 	_warning_remaining = 0.0
 	_flash_remaining = 0.0
+	_press_depth = 0.0
+	_impact_strength = 0.0
 	queue_redraw()
 
 
@@ -133,6 +167,8 @@ func _apply_motion_preference(reduced: bool) -> void:
 			scale = Vector2.ONE
 			modulate.a = 1.0
 			is_flipping = false
+			_press_depth = 0.0
+			_impact_strength = 0.0
 			_flash_remaining = MotionPolicy.finite_duration(
 				0.30 if face == Face.MINE else 0.18
 			)
@@ -141,8 +177,26 @@ func _apply_motion_preference(reduced: bool) -> void:
 	queue_redraw()
 
 
+func _set_press_depth(value: float) -> void:
+	_press_depth = clampf(value, 0.0, 1.0)
+	queue_redraw()
+
+
+func _set_impact_strength(value: float) -> void:
+	_impact_strength = clampf(value, 0.0, 1.0)
+	queue_redraw()
+
+
 func _draw() -> void:
-	draw_texture_rect(FACE_TEXTURES[face], Rect2(Vector2.ZERO, size), false)
+	var physical_offset := Vector2(0.0, roundf(_press_depth * 2.0))
+	if _press_depth > 0.01:
+		draw_rect(
+			Rect2(Vector2(4.0, size.y - 3.0), Vector2(maxf(size.x - 8.0, 0.0), 3.0)),
+			Color(0.06, 0.05, 0.06, 0.30 * _press_depth),
+			true
+		)
+	draw_texture_rect(FACE_TEXTURES[face], Rect2(physical_offset, size), false)
+	var visual_center := size * 0.5 + physical_offset
 	if _warning_remaining > 0.0:
 		var warning_alpha := 0.35 + sin(_warning_remaining * 70.0) * 0.22
 		draw_rect(
@@ -151,9 +205,9 @@ func _draw() -> void:
 			false,
 			3.0
 		)
-		var warning_progress := 1.0 - clampf(_warning_remaining / 0.20, 0.0, 1.0)
+		var warning_progress := 1.0 - clampf(_warning_remaining / 0.24, 0.0, 1.0)
 		draw_arc(
-			size * 0.5,
+			visual_center,
 			10.0 + warning_progress * 13.0,
 			0.0,
 			TAU,
@@ -161,6 +215,23 @@ func _draw() -> void:
 			Color(1.0, 0.34, 0.28, (1.0 - warning_progress) * 0.82),
 			2.0
 		)
+		# A solid hazard marker survives peripheral vision and color-vision differences.
+		var marker_center := visual_center + Vector2(0.0, -1.0)
+		draw_colored_polygon(
+			PackedVector2Array([
+				marker_center + Vector2(0.0, -9.0),
+				marker_center + Vector2(9.0, 8.0),
+				marker_center + Vector2(-9.0, 8.0),
+			]),
+			Color(0.20, 0.06, 0.07, 0.78)
+		)
+		draw_line(
+			marker_center + Vector2(0.0, -4.0),
+			marker_center + Vector2(0.0, 3.0),
+			Color("ffd8c7"),
+			2.0
+		)
+		draw_circle(marker_center + Vector2(0.0, 5.5), 1.2, Color("ffd8c7"))
 	if _flash_remaining > 0.0:
 		var flash_color := Color("ff394d") if face == Face.MINE else Color("68f0a4")
 		flash_color.a = (_flash_remaining / 0.30) * 0.55
@@ -179,9 +250,35 @@ func _draw() -> void:
 	if face == Face.SAFE:
 		var idle_pass := fmod(_idle_time + _idle_phase, 3.8)
 		if MotionPolicy.allows_continuous_motion() and idle_pass < 0.48:
-			var glint_alpha := sin(idle_pass / 0.48 * PI) * 0.55
-			draw_circle(
-				size * 0.5 + Vector2(-5.0 + idle_pass * 20.0, -7.0),
-				2.2,
-				Color(0.95, 0.92, 0.62, glint_alpha)
+			var shine_progress := idle_pass / 0.48
+			var glint_alpha := sin(shine_progress * PI) * 0.62
+			var shine_x := lerpf(-9.0, 9.0, shine_progress)
+			# Three clipped-looking facet strokes read as a turning diamond, not a dot.
+			draw_line(
+				visual_center + Vector2(shine_x - 3.0, -8.0),
+				visual_center + Vector2(shine_x + 2.0, 7.0),
+				Color(0.95, 0.96, 0.76, glint_alpha),
+				2.0
 			)
+			draw_line(
+				visual_center + Vector2(shine_x, -7.0),
+				visual_center + Vector2(shine_x + 4.0, 3.0),
+				Color(0.92, 1.0, 0.96, glint_alpha * 0.72),
+				1.0
+			)
+			draw_circle(
+				visual_center + Vector2(shine_x - 2.0, -8.0),
+				1.8,
+				Color(0.98, 1.0, 0.88, glint_alpha)
+			)
+	if _impact_strength > 0.01:
+		var impact_color := Color("ef5350") if face == Face.MINE else Color("e9fff9")
+		draw_arc(
+			visual_center,
+			19.0 + (1.0 - _impact_strength) * 9.0,
+			0.0,
+			TAU,
+			24,
+			Color(impact_color, _impact_strength * 0.72),
+			2.0
+		)

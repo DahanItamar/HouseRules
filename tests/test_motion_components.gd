@@ -4,6 +4,10 @@ const BLACKJACK_DEFINITION: CabinetDefinition = preload("res://data/cabinets/bla
 const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 
 
+func after_each() -> void:
+	MotionPolicy.clear_test_override()
+
+
 func test_slot_spin_strength_is_clamped_and_presentation_only() -> void:
 	var symbol := SlotSymbol.new()
 	symbol.size = Vector2(120, 120)
@@ -64,6 +68,22 @@ func test_vault_safe_reveal_finishes_with_a_pop_and_restored_scale() -> void:
 	assert_eq(tile.face, VaultTile.Face.SAFE)
 	assert_eq(tile.scale, Vector2.ONE)
 	assert_signal_emitted(tile, "reveal_completed")
+	assert_eq(tile._press_depth, 0.0)
+	assert_eq(tile._impact_strength, 0.0)
+
+
+func test_vault_reveal_has_physical_press_and_readable_mine_anticipation() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var tile := VaultTile.new()
+	tile.size = Vector2(56, 56)
+	add_child_autofree(tile)
+	tile.reveal(VaultTile.Face.MINE)
+	await wait_seconds(0.04)
+	assert_gt(tile._press_depth, 0.0, "Reveal starts with visible deposit-box key travel")
+	assert_gt(tile._warning_remaining, 0.0, "Mine keeps a distinct anticipation window")
+	await wait_seconds(0.24)
+	assert_eq(tile.face, VaultTile.Face.MINE)
+	assert_gt(tile._impact_strength, 0.0, "Mine impact has a bounded physical settle cue")
 
 
 func test_vault_safe_effect_uses_procedural_diamond_shards() -> void:
@@ -74,6 +94,8 @@ func test_vault_safe_effect_uses_procedural_diamond_shards() -> void:
 	assert_not_null(effect.shard_particles)
 	assert_eq(effect.shard_particles.name, "DiamondShards")
 	assert_not_null(effect.shard_particles.texture, "Safe reveal has a generated shard texture")
+	assert_not_null(effect.sparkle_particles, "Full motion adds a separate diamond facet sparkle layer")
+	assert_eq(effect.sparkle_particles.name, "DiamondSparkles")
 	assert_null(effect.debris_particles)
 	assert_null(effect.smoke_particles)
 
