@@ -1,0 +1,66 @@
+{
+  "characters": [
+    {
+      "output": "assets/production/characters/hosts/slot_hostess_v2.png",
+      "source": "assets/source/layered_v2/hosts/slot_hostess_a_c1d5b6ff.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/slot_hostess_v2_reels.png",
+      "source": "assets/source/layered_v2/hosts/slot_hostess_reels_cutout_fa067838.png",
+      "align_to": "assets/production/characters/hosts/slot_hostess_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/slot_hostess_v2_player.png",
+      "source": "assets/source/layered_v2/hosts/slot_hostess_player_cutout_090526c4.png",
+      "align_to": "assets/production/characters/hosts/slot_hostess_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/slot_hostess_v2_anticipation.png",
+      "source": "assets/source/layered_v2/hosts/slot_hostess_anticipation_cutout_fb0bc395.png",
+      "align_to": "assets/production/characters/hosts/slot_hostess_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/slot_hostess_v2_win.png",
+      "source": "assets/source/layered_v2/hosts/slot_hostess_win_cutout_2e4b5e79.png",
+      "align_to": "assets/production/characters/hosts/slot_hostess_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/blackjack_dealer_v2.png",
+      "source": "assets/source/layered_v2/hosts/dealer_a_8b0c895c.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/blackjack_dealer_v2_player.png",
+      "source": "assets/source/layered_v2/hosts/dealer_player_eba148e9.png",
+      "align_to": "assets/production/characters/hosts/blackjack_dealer_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/blackjack_dealer_v2_deal.png",
+      "source": "assets/source/layered_v2/hosts/dealer_deal_ba374f5e.png",
+      "align_to": "assets/production/characters/hosts/blackjack_dealer_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/blackjack_dealer_v2_reveal.png",
+      "source": "assets/source/layered_v2/hosts/dealer_reveal_1ca04e09.png",
+      "align_to": "assets/production/characters/hosts/blackjack_dealer_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/vault_attendant_v2.png",
+      "source": "assets/source/layered_v2/hosts/vault_a_870301bb.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/vault_attendant_v2_idle.png",
+      "source": "assets/source/layered_v2/hosts/vault_idle_ffd07bc1.png",
+      "align_to": "assets/production/characters/hosts/vault_attendant_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/vault_attendant_v2_cashout.png",
+      "source": "assets/source/layered_v2/hosts/vault_cashout_31e592a8.png",
+      "align_to": "assets/production/characters/hosts/vault_attendant_v2.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/vault_attendant_v2_warning.png",
+      "source": "assets/source/layered_v2/hosts/vault_warning_948a58ac.png",
+      "align_to": "assets/production/characters/hosts/vault_attendant_v2.png"
+    }
+  ]
+}
