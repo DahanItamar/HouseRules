@@ -59,6 +59,12 @@ The content filter blocked four hostess edits made with `gpt_image_2_5`
 (`c41440ee`, `ffc3ba3b`, `18b86989`, `b8622eb3`). The hostess poses were redone
 with `nano_banana_pro` on a grey background and cut out.
 
+### HUD
+
+| File | Job | Notes |
+| --- | --- | --- |
+| `assets/production/ui/hud_chip_stack.png` (512 px, transparent) | `3dcdc1fc-fb16-423b-a516-4ba60d6ca553` (`gpt_image_2_5`, transparent) | Burgundy and ivory art-deco chip stack with the brass fan emblem, replacing the flat vector chip. Alternate `38e7267f` rejected. |
+
 ### Rejected or superseded (local only)
 
 - Cut-out floor guest sprites (19 jobs) and the separate lock-sign prop
@@ -154,3 +160,40 @@ extraction and seam correction before it can become an accepted 24-tile set.
 Generated motion is retained as animation source footage; frame extraction,
 shared-origin alignment, palette quantization and in-game timing remain required
 before any MP4 can be called a production sprite animation.
+
+## 2026-09-19 Witcher's Vault theme (Minefield Vault re-skin)
+
+User direction: every mini-game gets its own theme and HUD. The vault became
+**Witcher's Vault**, a monster-hunter's treasure crypt. Mines are cursed rune
+sigils; safe tiles reveal silver moon coins with a violet gem. Game math is
+unchanged. All generation went through the connected **Higgsfield MCP**. This
+pass spent **26.5 credits**; the account's transaction log also shows the
+concurrent Slot and Blackjack passes.
+
+Raw outputs: `assets/source/layered_v2/vault_witcher/` (never modified).
+Production: `assets/production/characters/hosts/vault_witcher_sorceress*.png`
+via `python tools/art/prepare_characters.py tools/art/characters_vault_witcher.json`,
+and `assets/production/vault/witcher/` via
+`python tools/art/prepare_vault_witcher.py`.
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Sorceress master (indicate pose) | `683397aa-cfb2-4d60-8e98-c6790a5d7ac3` | `gpt_image_2_5`, 2:3, high, 2k, `background: transparent` (1360x2048, padded to 1392x2080) | 3 |
+| Idle pose (key ring, gaze on grid) | `1bee6a83-bc9d-4fe0-85e7-1d45207ce1d0`, cut-out `9ad395c9-492e-4b70-9a67-e312c59483d4` | `nano_banana_pro` edit of the master on grey, 2k, then `remove_background` | 2 + 1 |
+| Cash-out pose (palm-up to player) | `bdb500f8-c743-48ec-b8b7-78135ac4ef4b`, cut-out `5ef43ed9-eb87-4433-9b74-79c9ee300469` | same | 2 + 1 |
+| Curse warning (raised palm, faint silver ward sign) | `d6fa9987-7284-416e-88b7-6697309489a6`, cut-out `0fad4a35-c6c6-40ba-aa71-a90bc5ba3283` | same | 2 + 1 |
+| Crypt backdrop (used) | `c816f431-6241-4b5c-91bf-7a3ae9755e96` | `gpt_image_2_5`, 16:9, high, 4k (3840x2160) | 4.5 |
+| Sealed rune tile | `4555b947-d89e-4a98-a266-3b4344982309` | `gpt_image_2_5`, 1:1, high, 1k, transparent | 2 |
+| Safe tile (silver coins and gem) | `c1548e5b-e004-4f08-96da-c0fb4cd24b5a` | `gpt_image_2_5` edit referencing the sealed tile, transparent | 2 |
+| Cursed tile (crimson rune sigil) | `6dfc5bdc-246b-4336-a3f4-b3f53bfa58ef` | same | 2 |
+
+Rejected: backdrop `d19f9aeb-089b-4f59-8156-06c395d975b0` (`nano_banana_pro`
+4k, 4 credits). It rendered flat and cartoon-like, clashing with the painterly
+sorceress. The raw file stays in the source folder for provenance.
+
+Placement: every pose is registered to the master's head on one 1392x2080
+canvas (stance centre x=772). Each pose keeps its own sole line and is rescaled
+by `ratio` to the master's 1994 px stature. On screen she is 264 px tall, with
+her boots at canvas (735, 386) on the crypt flagstones, clear of the grid,
+meter, status, deck, Cash Out and How to Play. Known art caveat: the cash-out
+edit drew bare hands where the other poses wear gloves.

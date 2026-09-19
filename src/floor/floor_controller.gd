@@ -108,7 +108,10 @@ var _room_back: Button
 
 
 func _ready() -> void:
+	# 4K masters are mipmapped, so the downscaled room stays crisp without shimmer.
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	room = FloorRoomLayout.load_room(MAIN_FLOOR)
+	_prefetch_rooms()
 	_background = room.background()
 	for id: StringName in cabinet_positions:
 		cabinet_positions[id] = room.anchor(id)
@@ -179,6 +182,18 @@ func move_avatar(direction: Vector2, delta: float) -> void:
 
 func _is_walkable(point: Vector2) -> bool:
 	return room.is_walkable(point)
+
+
+## Starts loading the other rooms' 4K layers in the background, so switching
+## rooms never stalls on a synchronous texture load.
+func _prefetch_rooms() -> void:
+	for room_id: StringName in ROOM_IDS:
+		if room_id == MAIN_FLOOR:
+			continue
+		var layout := FloorRoomLayout.load_room(room_id)
+		for path: String in [layout.background_path, layout.foreground_path]:
+			if not ResourceLoader.has_cached(path):
+				ResourceLoader.load_threaded_request(path)
 
 
 func is_main_floor() -> bool:
