@@ -9,12 +9,15 @@ signal ball_landed(pocket: int)
 
 const BOWL := preload("res://assets/production/roulette/roulette_wheel_bowl.png")
 const ROTOR := preload("res://assets/production/roulette/roulette_wheel_rotor.png")
-## Radii as fractions of the painted bowl radius (the source is 1000 px).
+## Radii as fractions of the painted bowl radius (the source is 1000 px). The
+## bowl art paints its own pocket ring between 0.50 and 0.66 with the frets at
+## 0.58, so the drawn ring sits exactly on it instead of floating inside it.
 const BOWL_SOURCE_RADIUS: float = 1000.0
-const RING_INNER: float = 0.472
-const RING_OUTER: float = 0.645
-const POCKET_REST: float = 0.535
-const TRACK: float = 0.75
+const RING_INNER: float = 0.500
+const RING_OUTER: float = 0.660
+const POCKET_REST: float = 0.580
+## The ball runs the painted wood track just inside the brass rim.
+const TRACK: float = 0.780
 const SPIN_SECONDS: float = 4.6
 const IDLE_SPEED: float = 0.22
 const SPIN_SPEED: float = 1.9
@@ -22,6 +25,8 @@ const BALL_TURNS: float = 5.0
 const REDUCED_CUE_SECONDS: float = 0.45
 
 var radius: float = 120.0
+## Vertical foreshortening of the painted bowl (1.0 = seen from straight above).
+var squash: float = 1.0
 var wheel_order: PackedInt32Array
 var math: RouletteMath
 var rotor_angle: float = 0.0
@@ -29,6 +34,7 @@ var ball_pocket: int = 0
 var spinning: bool = false
 var _ring: Node2D
 var _rotor_sprite: Sprite2D
+var _rotor_holder: Node2D
 var _ball: Node2D
 var _elapsed: float = 0.0
 var _beta_start: float = 0.0
@@ -38,26 +44,36 @@ var _ball_beta: float = 0.0
 var _cue_left: float = 0.0
 
 
-func setup(table_math: RouletteMath, display_radius: float) -> void:
+## `squash` tilts the bowl into perspective. It is applied to the painted
+## sprites and folded into every computed position, so the ball stays round and
+## the pocket numbers stay upright instead of being squashed with the node.
+func setup(table_math: RouletteMath, display_radius: float, wheel_squash: float = 1.0) -> void:
 	math = table_math
 	wheel_order = math.paytable.wheel_order
 	radius = display_radius
+	squash = clampf(wheel_squash, 0.1, 1.0)
 	var bowl := Sprite2D.new()
 	bowl.name = "WheelBowl"
 	bowl.texture = BOWL
-	bowl.scale = Vector2.ONE * radius / BOWL_SOURCE_RADIUS
+	bowl.scale = Vector2(1.0, squash) * radius / BOWL_SOURCE_RADIUS
 	bowl.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	add_child(bowl)
 	_ring = Node2D.new()
 	_ring.name = "PocketRing"
 	_ring.draw.connect(_draw_ring)
 	add_child(_ring)
+	# The holder squashes an upright rotating sprite, so the rotor turns as an
+	# ellipse rather than a spinning oval.
+	_rotor_holder = Node2D.new()
+	_rotor_holder.name = "RotorHolder"
+	_rotor_holder.scale = Vector2(1.0, squash)
+	add_child(_rotor_holder)
 	_rotor_sprite = Sprite2D.new()
 	_rotor_sprite.name = "WheelRotor"
 	_rotor_sprite.texture = ROTOR
-	_rotor_sprite.scale = bowl.scale
+	_rotor_sprite.scale = Vector2.ONE * radius / BOWL_SOURCE_RADIUS
 	_rotor_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	_ring.add_child(_rotor_sprite)
+	_rotor_holder.add_child(_rotor_sprite)
 	_ball = Node2D.new()
 	_ball.name = "Ball"
 	_ball.draw.connect(_draw_ball)
@@ -130,7 +146,8 @@ func _process(delta: float) -> void:
 		if progress >= 1.0:
 			_land()
 	rotor_angle = fposmod(rotor_angle + speed * delta, TAU)
-	_ring.rotation = rotor_angle
+	_rotor_sprite.rotation = rotor_angle
+	_ring.queue_redraw()
 	_place_ball()
 
 
@@ -157,49 +174,60 @@ func _land() -> void:
 func _place_ball() -> void:
 	if _ball == null:
 		return
-	var angle := rotor_angle + _ball_beta
-	_ball.position = Vector2(sin(angle), -cos(angle)) * radius * _ball_radius_fraction
+	_ball.position = _at(rotor_angle + _ball_beta, _ball_radius_fraction)
 	_ball.queue_redraw()
+
+
+## A point on the wheel: `fraction` of the radius at `angle`, foreshortened.
+func _at(angle: float, fraction: float) -> Vector2:
+	var reach := radius * fraction
+	return Vector2(sin(angle) * reach, -cos(angle) * reach * squash)
 
 
 ## Screen-space centre of a pocket (used by tests and the cue).
 func pocket_position(pocket: int) -> Vector2:
-	var angle := rotor_angle + pocket_angle(pocket)
-	return Vector2(sin(angle), -cos(angle)) * radius * POCKET_REST
+	return _at(rotor_angle + pocket_angle(pocket), POCKET_REST)
 
 
 func _draw_ring() -> void:
 	var count := wheel_order.size()
 	var step := TAU / float(count)
-	var inner := radius * RING_INNER
-	var outer := radius * RING_OUTER
 	for index: int in range(count):
 		var number := wheel_order[index]
-		var start := step * (float(index) - 0.5)
+		var start := rotor_angle + step * (float(index) - 0.5)
 		var points := PackedVector2Array()
 		for sample: int in range(5):
-			var angle := start + step * float(sample) / 4.0
-			points.append(Vector2(sin(angle), -cos(angle)) * outer)
+			points.append(_at(start + step * float(sample) / 4.0, RING_OUTER))
 		for sample: int in range(4, -1, -1):
-			var angle := start + step * float(sample) / 4.0
-			points.append(Vector2(sin(angle), -cos(angle)) * inner)
+			points.append(_at(start + step * float(sample) / 4.0, RING_INNER))
 		_ring.draw_colored_polygon(points, RouletteStyle.pocket_color(number, math))
-		var edge := Vector2(sin(start), -cos(start))
-		_ring.draw_line(edge * inner, edge * outer, RouletteStyle.BRASS, 1.2, true)
-		var mid := step * float(index)
-		var label_at := Vector2(sin(mid), -cos(mid)) * (outer - radius * 0.052)
-		_ring.draw_set_transform(label_at, mid, Vector2.ONE)
-		RouletteStyle.draw_centered(_ring, str(number), Vector2.ZERO, 8, RouletteStyle.IVORY)
-		_ring.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	_ring.draw_arc(Vector2.ZERO, outer, 0.0, TAU, 96, RouletteStyle.BRASS, 1.6, true)
-	var fret := Color(RouletteStyle.BRASS, 0.55)
-	_ring.draw_arc(Vector2.ZERO, radius * (POCKET_REST + 0.055), 0.0, TAU, 96, fret, 1.0, true)
+		_ring.draw_line(
+			_at(start, RING_INNER), _at(start, RING_OUTER), RouletteStyle.BRASS, 1.0, true
+		)
+	# Brass frets bound the painted ring; the numbers stay upright so they read
+	# at a glance instead of tipping over with the perspective.
+	_draw_ellipse(RING_OUTER, RouletteStyle.BRASS, 1.6)
+	_draw_ellipse(RING_INNER, Color(RouletteStyle.BRASS, 0.55), 1.0)
+	for index: int in range(count):
+		var mid := rotor_angle + step * float(index)
+		var label_at := _at(mid, (RING_INNER + RING_OUTER) * 0.5)
+		RouletteStyle.draw_centered(
+			_ring, str(wheel_order[index]), label_at, 9, RouletteStyle.IVORY
+		)
 	if _cue_left > 0.0:
-		var angle := pocket_angle(ball_pocket)
-		var cue := Vector2(sin(angle), -cos(angle)) * radius * POCKET_REST
 		var alpha := clampf(_cue_left / REDUCED_CUE_SECONDS, 0.0, 1.0)
 		var ink := Color(RouletteStyle.BRASS_BRIGHT, alpha)
-		_ring.draw_arc(cue, radius * 0.07, 0.0, TAU, 24, ink, 2.0, true)
+		var cue := pocket_position(ball_pocket)
+		var wide := radius * 0.075
+		_ring.draw_arc(cue, wide, 0.0, TAU, 24, ink, 2.0, true)
+
+
+## An ellipse at `fraction` of the radius, drawn as the foreshortened circle.
+func _draw_ellipse(fraction: float, ink: Color, width: float) -> void:
+	var points := PackedVector2Array()
+	for step: int in range(97):
+		points.append(_at(TAU * float(step) / 96.0, fraction))
+	_ring.draw_polyline(points, ink, width, true)
 
 
 func _draw_ball() -> void:

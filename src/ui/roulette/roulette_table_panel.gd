@@ -115,9 +115,9 @@ func _build_wheel() -> void:
 	wheel = RouletteWheel.new()
 	wheel.name = "RouletteWheel"
 	wheel.position = WHEEL_CENTER
-	wheel.scale = Vector2(1.0, WHEEL_SQUASH)
+	wheel.scale = Vector2.ONE
 	_art_root.add_child(wheel)
-	wheel.setup(table_math, WHEEL_RADIUS)
+	wheel.setup(table_math, WHEEL_RADIUS, WHEEL_SQUASH)
 	wheel.ball_landed.connect(_on_ball_landed)
 
 
