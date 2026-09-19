@@ -8,6 +8,7 @@ var _floor: FloorController
 func before_each() -> void:
 	_original_platform = SaveService.platform
 	_original_test_mode = Wallet.test_mode_enabled
+	Wallet.set_test_mode(false)
 	SaveService.platform = LocalPlatform.new("user://tests/session_%s" % Time.get_ticks_usec())
 	SaveService.new_game(1234)
 	_floor = FloorController.new()
@@ -90,13 +91,36 @@ func test_floor_avatar_uses_four_real_leg_phases_at_a_walking_pace() -> void:
 		regions[avatar._atlas.region] = true
 		avatar.set_motion(Vector2.RIGHT * 16.0)
 	assert_eq(regions.size(), 4, "Walk cycle uses four distinct contact and passing poses")
-	assert_false(avatar._sprite.flip_h, "Generated directional frames do not fake steps by mirroring")
+	assert_false(avatar._sprite.flip_h, "East uses the authored side-facing frames")
 	assert_eq(
 		avatar._atlas.region.position.x,
 		6 * FloorAvatar.GUEST_CELL_SIZE.x,
 		"Right movement uses the east atlas column"
 	)
+	avatar.set_motion(Vector2.LEFT * 5.0)
+	assert_true(avatar._sprite.flip_h, "West mirrors the matching east walk frames")
+	assert_eq(
+		avatar._atlas.region.position.x,
+		6 * FloorAvatar.GUEST_CELL_SIZE.x,
+		"Left and right share one consistent authored walk cycle"
+	)
 	assert_lte(FloorController.SPEED, 120.0, "Floor traversal stays at a natural walking pace")
+
+
+func test_developer_floor_tools_warp_to_every_real_floor_target() -> void:
+	assert_true(_floor._dev_tools_enabled)
+	assert_not_null(_floor._dev_panel)
+	_floor._toggle_dev_floor_tools(true)
+	assert_true(_floor._dev_open)
+	_floor._dev_warp_to(&"slot_classic")
+	assert_eq(_floor.avatar_position, _floor.cabinet_positions[&"slot_classic"])
+	assert_eq(_floor.nearby_definition.id, &"slot_classic")
+	assert_false(_floor._dev_open)
+	_floor._dev_warp_to(&"cashier")
+	assert_eq(_floor.avatar_position, FloorController.CASHIER_POSITION)
+	assert_null(_floor.nearby_definition)
+	_floor._dev_warp_to(&"high_roller")
+	assert_eq(_floor.nearby_wing, &"high_roller")
 
 
 func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:

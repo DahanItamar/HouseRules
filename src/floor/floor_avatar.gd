@@ -82,7 +82,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 
 func _update_facing_texture() -> void:
 	facing_index = WalkAtlas.direction_index(facing)
-	_sprite.flip_h = false
+	_sprite.flip_h = WalkAtlas.is_mirrored(facing_index)
 	_atlas.region = WalkAtlas.region(facing_index, walk_frame)
 
 

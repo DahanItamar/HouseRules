@@ -62,6 +62,11 @@ func _ready() -> void:
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: _refresh_menu())
 	_refresh_hud()
 	_refresh_menu()
+	if (
+		DisplayServer.get_name() != "headless"
+		and bool(ProjectSettings.get_setting("house_rules/testing/start_on_floor", false))
+	):
+		_start_playing.call_deferred()
 
 
 func _process(delta: float) -> void:

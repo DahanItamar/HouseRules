@@ -7,8 +7,8 @@ const ROWS := 4
 const CELL_SIZE := Vector2i(240, 240)
 const CONTENT_SIZE := Vector2i(222, 222)
 const GUTTER := Vector2i(9, 9)
-# Source columns run counter-clockwise from north.
-const DIRECTION_COLUMNS: Array[int] = [0, 7, 6, 5, 4, 3, 2, 1]
+# North, east-side diagonals/cardinal, and south are authored. West mirrors east.
+const DIRECTION_COLUMNS: Array[int] = [0, 7, 6, 5, 4, 5, 6, 7]
 
 
 static func direction_index(facing: Vector2) -> int:
@@ -24,3 +24,7 @@ static func region(direction: int, phase: int) -> Rect2:
 		posmod(phase, ROWS)
 	)
 	return Rect2(Vector2(cell * CELL_SIZE), Vector2(CELL_SIZE))
+
+
+static func is_mirrored(direction: int) -> bool:
+	return posmod(direction, DIRECTION_COLUMNS.size()) >= 5

@@ -28,9 +28,25 @@ const CAMERA_FOCUS_ZOOM := Vector2(1.03, 1.03)
 const CAMERA_FOCUS_OFFSET: float = 9.0
 const CASHIER_NO_DIRECTION: int = -1
 const PATRON_LAYOUT: Array[Dictionary] = [
-	{"position": Vector2(102, 151), "profile": 0, "phase": 0.0},
-	{"position": Vector2(856, 152), "profile": 1, "phase": 1.15},
-	{"position": Vector2(111, 392), "profile": 2, "phase": 2.35},
+	{"position": Vector2(290, 150), "profile": 0, "phase": 0.0},
+	{"position": Vector2(850, 390), "profile": 1, "phase": 0.55},
+	{"position": Vector2(700, 150), "profile": 2, "phase": 1.10},
+	{"position": Vector2(830, 150), "profile": 3, "phase": 1.65},
+	{"position": Vector2(560, 150), "profile": 4, "phase": 2.20},
+	{"position": Vector2(390, 150), "profile": 5, "phase": 2.75},
+	{"position": Vector2(105, 345), "profile": 6, "phase": 0.30},
+	{"position": Vector2(105, 425), "profile": 7, "phase": 0.85},
+	{"position": Vector2(505, 145), "profile": 8, "phase": 1.40},
+	{"position": Vector2(630, 175), "profile": 9, "phase": 1.95},
+]
+const DEV_TARGETS: Array[Dictionary] = [
+	{"id": &"spawn", "label": "SPAWN", "position": Vector2(480, 408)},
+	{"id": &"slot_classic", "label": "SLOTS", "position": Vector2(334, 242)},
+	{"id": &"blackjack", "label": "BLACKJACK", "position": Vector2(504, 240)},
+	{"id": &"minefield_vault", "label": "VAULT", "position": Vector2(680, 242)},
+	{"id": &"cashier", "label": "CASHIER", "position": CASHIER_POSITION},
+	{"id": &"high_roller", "label": "HIGH ROLLER GATE", "position": Vector2(250, 265)},
+	{"id": &"vip", "label": "VIP GATE", "position": Vector2(790, 242)},
 ]
 static var NAV_OBSTACLES: Array[PackedVector2Array] = [
 	PackedVector2Array([Vector2(0, 0), Vector2(208, 0), Vector2(236, 72), Vector2(258, 194), Vector2(226, 244), Vector2(0, 250)]),
@@ -86,6 +102,11 @@ var _cashier_waypoint: CashierWaypoint
 var _directions_layer: CanvasLayer
 var _floor_prompts_visible: bool = true
 var _has_moved: bool = false
+var _dev_tools_enabled: bool = false
+var _dev_layer: CanvasLayer
+var _dev_panel: Panel
+var _dev_buttons: Array[Button] = []
+var _dev_open: bool = false
 
 
 func _ready() -> void:
@@ -118,6 +139,11 @@ func _ready() -> void:
 	add_child(_prompt)
 	_build_cashier_waypoint()
 	_build_cashier_menu()
+	_dev_tools_enabled = bool(
+		ProjectSettings.get_setting("house_rules/testing/dev_floor_tools", false)
+	)
+	if _dev_tools_enabled:
+		_build_dev_floor_tools()
 	SceneRouter.register_floor(self)
 	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: refresh_proximity())
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh_proximity())
@@ -242,11 +268,20 @@ func _physics_process(delta: float) -> void:
 	if MotionPolicy.allows_continuous_motion():
 		_ambient_time += delta
 	queue_redraw()
-	if not _cashier_open:
+	if not _cashier_open and not _dev_open:
 		move_avatar(Input.get_vector("move_left", "move_right", "move_up", "move_down"), delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _dev_tools_enabled and event.is_action_pressed("help"):
+		_toggle_dev_floor_tools()
+		get_viewport().set_input_as_handled()
+		return
+	if _dev_open:
+		if event.is_action_pressed("back"):
+			_toggle_dev_floor_tools(false)
+			get_viewport().set_input_as_handled()
+		return
 	if (
 		event.is_action_pressed("back")
 		or event.is_action_pressed("interact")
@@ -498,6 +533,108 @@ func _build_patrons() -> void:
 		patron.call("configure", int(layout["profile"]), float(layout["phase"]))
 		add_child(patron)
 		_patrons.append(patron)
+
+
+func _build_dev_floor_tools() -> void:
+	_dev_layer = CanvasLayer.new()
+	_dev_layer.name = "DeveloperFloorTools"
+	_dev_layer.layer = 40
+	add_child(_dev_layer)
+	_dev_panel = Panel.new()
+	_dev_panel.name = "DeveloperLocations"
+	_dev_panel.position = Vector2(316, 104)
+	_dev_panel.size = Vector2(328, 228)
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("161215f5")
+	panel_style.border_color = Color("8a682f")
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(10)
+	panel_style.shadow_color = Color("07050680")
+	panel_style.shadow_size = 8
+	_dev_panel.add_theme_stylebox_override("panel", panel_style)
+	_dev_layer.add_child(_dev_panel)
+	var title := Label.new()
+	title.text = "DEV LOCATIONS  ·  F1 CLOSE"
+	title.position = Vector2(16, 12)
+	title.size = Vector2(296, 26)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	title.add_theme_font_size_override("font_size", Typography.CONTROL)
+	title.add_theme_color_override("font_color", IVORY)
+	_dev_panel.add_child(title)
+	for index: int in range(DEV_TARGETS.size()):
+		var target: Dictionary = DEV_TARGETS[index]
+		var button := _dev_button(
+			String(target.label),
+			Vector2(16 + (index % 2) * 150, 46 + (index / 2) * 40),
+			Vector2(142, 34)
+		)
+		button.name = "DevTarget_%s" % String(target.id)
+		button.pressed.connect(_dev_warp_to.bind(target.id))
+		_dev_buttons.append(button)
+	var close := _dev_button("CLOSE", Vector2(166, 166), Vector2(142, 34))
+	close.name = "DevLocationsClose"
+	close.pressed.connect(_toggle_dev_floor_tools.bind(false))
+	_dev_buttons.append(close)
+	var note := Label.new()
+	note.text = "HIGH ROLLER + VIP ARE LOCKED GATE PREVIEWS"
+	note.position = Vector2(16, 204)
+	note.size = Vector2(296, 16)
+	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	note.add_theme_font_override("font", Typography.UI_FONT)
+	note.add_theme_font_size_override("font_size", Typography.MICRO)
+	note.add_theme_color_override("font_color", Color("a99e90"))
+	_dev_panel.add_child(note)
+	_toggle_dev_floor_tools(DisplayServer.get_name() != "headless")
+
+
+func _dev_button(text_value: String, at: Vector2, dimensions: Vector2) -> Button:
+	var button := Button.new()
+	button.text = text_value
+	button.position = at
+	button.size = dimensions
+	button.focus_mode = Control.FOCUS_ALL
+	button.add_theme_font_override("font", Typography.UI_FONT)
+	button.add_theme_font_size_override("font_size", Typography.CAPTION)
+	for state: String in ["normal", "hover", "pressed", "focus"]:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("5a111c") if state != "pressed" else Color("351016")
+		style.border_color = CYAN if state == "focus" else Color("8a682f")
+		style.set_border_width_all(2 if state == "focus" else 1)
+		style.set_corner_radius_all(6)
+		button.add_theme_stylebox_override(state, style)
+	_dev_panel.add_child(button)
+	ButtonFeedback.attach(button)
+	return button
+
+
+func _toggle_dev_floor_tools(force_open: Variant = null) -> void:
+	if not _dev_tools_enabled or _dev_panel == null:
+		return
+	_dev_open = not _dev_open if force_open == null else bool(force_open)
+	_dev_panel.visible = _dev_open
+	if _dev_open and not _dev_buttons.is_empty():
+		_dev_buttons[0].call_deferred("grab_focus")
+	elif not _dev_open:
+		var focused := get_viewport().gui_get_focus_owner()
+		if focused is Control and _dev_panel.is_ancestor_of(focused):
+			(focused as Control).release_focus()
+
+
+func _dev_warp_to(target_id: StringName) -> void:
+	for target: Dictionary in DEV_TARGETS:
+		if target.id != target_id:
+			continue
+		if _cashier_open:
+			_close_cashier()
+		avatar_position = target.position as Vector2
+		if _avatar_visual != null:
+			_avatar_visual.position = avatar_position
+		_has_moved = true
+		_toggle_dev_floor_tools(false)
+		refresh_proximity()
+		AudioService.play(&"move")
+		return
 
 
 func _build_machine_attracts() -> void:

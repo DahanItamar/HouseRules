@@ -15,13 +15,20 @@ func after_each() -> void:
 	MotionPolicy.clear_test_override()
 
 
-func test_floor_builds_three_distinct_noninteractive_patrons() -> void:
-	assert_eq(_floor._patrons.size(), 3)
+func test_floor_builds_ten_distinct_noninteractive_patrons() -> void:
+	assert_eq(_floor._patrons.size(), 10)
 	var profiles: Dictionary = {}
+	var textures: Dictionary = {}
 	for patron: Node2D in _floor._patrons:
 		profiles[patron.get("profile_index")] = true
+		textures[(patron as CasinoPatron).portrait_texture().resource_path] = true
 		assert_false(patron.has_method("interact"), "Ambient patrons expose no gameplay action")
-	assert_eq(profiles.size(), 3, "Every patron has a distinct visual profile")
+	assert_eq(profiles.size(), 10, "Every patron has a distinct visual profile")
+	assert_eq(textures.size(), 10, "Every lady and gentleman uses different authored art")
+	assert_false(
+		textures.has(FloorAvatar.GUEST_TEXTURE.resource_path),
+		"No ambient patron reuses the player character"
+	)
 
 
 func test_patrons_live_inside_existing_solid_furniture_zones() -> void:
@@ -39,22 +46,30 @@ func test_patron_gestures_are_phase_staggered_and_have_calm_cadences() -> void:
 	for patron: Node2D in _floor._patrons:
 		phases[patron.get("phase_offset")] = true
 		assert_between(float(patron.get("gesture_interval")), 2.0, 5.0)
-	assert_eq(phases.size(), 3)
+	assert_eq(phases.size(), 10)
 	_floor._patrons[0].call("_process", 0.2)
 	assert_gt(float(_floor._patrons[0].get("gesture_strength")), 0.0)
 
 
-func test_patrons_cycle_through_authored_limb_poses_without_moving_the_root() -> void:
+func test_patrons_use_bounded_identity_specific_gestures_without_moving_the_root() -> void:
 	var patron: CasinoPatron = _floor._patrons[0] as CasinoPatron
 	assert_not_null(patron.get_node_or_null("PatronPortrait"))
-	var region_start := patron.authored_pose_region()
+	var position_start := patron._sprite.position
 	patron._process(0.2)
 	assert_ne(
-		patron.authored_pose_region(),
-		region_start,
-		"The guest changes to an authored frame with different arm and leg positions"
+		patron._sprite.position,
+		position_start,
+		"The guest performs a restrained identity-specific gesture"
 	)
 	assert_eq(patron.rotation, 0.0, "The patron root remains stable")
+
+
+func test_patron_assets_have_real_transparency_for_floor_compositing() -> void:
+	for patron: CasinoPatron in _floor._patrons:
+		var image := patron.portrait_texture().get_image()
+		assert_true(image.detect_alpha() != Image.ALPHA_NONE)
+		assert_eq(image.get_pixel(0, 0).a, 0.0)
+		assert_eq(image.get_pixel(image.get_width() - 1, image.get_height() - 1).a, 0.0)
 
 
 func test_reduced_motion_holds_every_patron_joint_in_a_stable_rest_pose() -> void:

@@ -39,7 +39,7 @@ func test_atlas_uses_exact_integer_cells_with_transparent_gutters() -> void:
 			assert_true(gutter_is_clear, "Every frame is isolated by transparent pixels")
 
 
-func test_all_direction_and_phase_regions_have_unique_pixels() -> void:
+func test_authored_east_frames_are_reused_for_mirrored_west_motion() -> void:
 	var texture: Texture2D = load(
 		"res://assets/production/characters/casino_guest_walk_integer.png"
 	)
@@ -52,7 +52,7 @@ func test_all_direction_and_phase_regions_have_unique_pixels() -> void:
 			assert_eq(region.size, Vector2(WalkAtlas.CELL_SIZE))
 			var frame := image.get_region(Rect2i(region))
 			hashes[hash(frame.get_data())] = true
-	assert_eq(hashes.size(), 32, "Every direction and leg phase has distinct pixels")
+	assert_eq(hashes.size(), 20, "Five authored directions provide four real leg phases each")
 
 
 func test_direction_mapping_preserves_all_eight_compass_facings() -> void:
@@ -66,11 +66,13 @@ func test_direction_mapping_preserves_all_eight_compass_facings() -> void:
 		Vector2.LEFT,
 		Vector2(-1, -1),
 	]
-	var expected_columns: Array[int] = [0, 7, 6, 5, 4, 3, 2, 1]
+	var expected_columns: Array[int] = [0, 7, 6, 5, 4, 5, 6, 7]
+	var expected_mirrors: Array[bool] = [false, false, false, false, false, true, true, true]
 	for index: int in range(facings.size()):
 		assert_eq(WalkAtlas.direction_index(facings[index]), index)
 		var region := WalkAtlas.region(index, 0)
 		assert_eq(int(region.position.x), expected_columns[index] * WalkAtlas.CELL_SIZE.x)
+		assert_eq(WalkAtlas.is_mirrored(index), expected_mirrors[index])
 
 
 func test_avatar_advances_real_leg_frames_without_anchor_sliding() -> void:
