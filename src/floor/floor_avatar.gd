@@ -2,12 +2,15 @@ class_name FloorAvatar
 extends Node2D
 ## Resolution-independent casino guest animated from real movement distance.
 
-const GUEST_TEXTURE := preload("res://assets/production/characters/casino_guest_walk_32.png")
-const GUEST_CELL_SIZE := Vector2(221.75, 221.75)
+const WalkAtlas := preload("res://src/floor/character_walk_atlas.gd")
+const GUEST_TEXTURE: Texture2D = preload(
+	"res://assets/production/characters/casino_guest_walk_integer.png"
+)
+# Compatibility-facing size remains a Vector2; atlas math itself uses the
+# integer-only CharacterWalkAtlas.CELL_SIZE.
+const GUEST_CELL_SIZE := Vector2(240, 240)
 const GUEST_SCALE: float = 0.34
 const WALK_CYCLE_DISTANCE: float = 64.0
-# Generated atlas columns run counter-clockwise from north.
-const DIRECTION_COLUMNS: Array[int] = [0, 7, 6, 5, 4, 3, 2, 1]
 var facing := Vector2.DOWN
 var walk_phase: float = 0.0
 var walk_frame: int = 0
@@ -25,7 +28,7 @@ func _ready() -> void:
 	_atlas = AtlasTexture.new()
 	_atlas.atlas = GUEST_TEXTURE
 	_sprite.texture = _atlas
-	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_sprite.scale = Vector2.ONE * GUEST_SCALE
 	_sprite.position = Vector2(0, -19)
 	add_child(_sprite)
@@ -59,17 +62,13 @@ func _process(delta: float) -> void:
 		idle_time += delta
 		queue_redraw()
 	var reduced := MotionPolicy.is_reduced()
-	var stride := sin(walk_phase) if is_walking and not reduced else 0.0
 	var breathe := sin(idle_time * 2.6) * 0.008 if not is_walking and not reduced else 0.0
-	_sprite.rotation = stride * 0.006
-	var contact_compression := (
-		0.97 if is_walking and walk_frame % 2 == 0 and not reduced else 1.0
-	)
-	_sprite.scale = Vector2(
-		GUEST_SCALE * (2.0 - contact_compression),
-		GUEST_SCALE * contact_compression * (1.0 + breathe)
-	)
-	_sprite.position = Vector2(stride * 0.35, -23.0 - absf(stride) * 0.65)
+	_sprite.rotation = 0.0
+	_sprite.scale = Vector2(GUEST_SCALE, GUEST_SCALE * (1.0 + breathe))
+	# The rendered gait comes from the photographed leg phases. Keeping the
+	# anchor integer-stable prevents the old procedural sway from looking like
+	# the character is sliding over the carpet.
+	_sprite.position = Vector2(0, -23)
 
 
 func _apply_motion_preference(reduced: bool) -> void:
@@ -82,11 +81,9 @@ func _apply_motion_preference(reduced: bool) -> void:
 
 
 func _update_facing_texture() -> void:
-	var clockwise_from_north := atan2(facing.x, -facing.y)
-	facing_index = posmod(int(round(clockwise_from_north / (PI / 4.0))), 8)
+	facing_index = WalkAtlas.direction_index(facing)
 	_sprite.flip_h = false
-	var cell := Vector2i(DIRECTION_COLUMNS[facing_index], walk_frame)
-	_atlas.region = Rect2(Vector2(cell) * GUEST_CELL_SIZE, GUEST_CELL_SIZE)
+	_atlas.region = WalkAtlas.region(facing_index, walk_frame)
 
 
 func _draw() -> void:

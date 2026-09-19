@@ -5,8 +5,10 @@ extends Node2D
 ## Patrons deliberately have no collision or domain references. They live inside the
 ## floor art's already-blocked furniture silhouettes and only add ambient motion.
 
-const GUEST_TEXTURE := preload("res://assets/production/characters/casino_guest_walk_32.png")
-const GUEST_CELL_SIZE := Vector2(221.75, 221.75)
+const WalkAtlas := preload("res://src/floor/character_walk_atlas.gd")
+const GUEST_TEXTURE: Texture2D = preload(
+	"res://assets/production/characters/casino_guest_walk_integer.png"
+)
 const PROFILE_TINTS: Array[Color] = [
 	Color("ffd9dc"),
 	Color("d7f5df"),
@@ -46,11 +48,13 @@ func _ready() -> void:
 	var columns: Array[int] = [5, 3, 4]
 	var frames: Array[int] = [0, 2, 1]
 	_atlas.region = Rect2(
-		Vector2(columns[profile_index], frames[profile_index]) * GUEST_CELL_SIZE,
-		GUEST_CELL_SIZE
+		Vector2(
+			Vector2i(columns[profile_index], frames[profile_index]) * WalkAtlas.CELL_SIZE
+		),
+		Vector2(WalkAtlas.CELL_SIZE)
 	)
 	_sprite.texture = _atlas
-	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_sprite.scale = Vector2.ONE * 0.285
 	_sprite.position = _rest_position
 	add_child(_sprite)
