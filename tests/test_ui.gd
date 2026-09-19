@@ -345,14 +345,26 @@ func test_reference_captures_keep_a_full_16_by_9_frame() -> void:
 		assert_gte(dimensions.x, 960, "%s is at least the logical canvas width" % filename)
 
 
-func test_exact_fhd_qhd_and_uhd_game_captures_are_native_resolution() -> void:
+func test_exact_fhd_qhd_and_uhd_release_journeys_are_native_resolution() -> void:
 	var captures := {
+		"res://tests/results/screenshots/fhd/01_menu.png": Vector2i(1920, 1080),
+		"res://tests/results/screenshots/fhd/02_floor.png": Vector2i(1920, 1080),
+		"res://tests/results/screenshots/fhd/02_floor_join.png": Vector2i(1920, 1080),
+		"res://tests/results/screenshots/fhd/02_cashier_menu.png": Vector2i(1920, 1080),
 		"res://tests/results/screenshots/fhd/03_slot_idle.png": Vector2i(1920, 1080),
 		"res://tests/results/screenshots/fhd/05_blackjack.png": Vector2i(1920, 1080),
 		"res://tests/results/screenshots/fhd/06_vault_reveal.png": Vector2i(1920, 1080),
+		"res://tests/results/screenshots/qhd_exact/01_menu.png": Vector2i(2560, 1440),
+		"res://tests/results/screenshots/qhd_exact/02_floor.png": Vector2i(2560, 1440),
+		"res://tests/results/screenshots/qhd_exact/02_floor_join.png": Vector2i(2560, 1440),
+		"res://tests/results/screenshots/qhd_exact/02_cashier_menu.png": Vector2i(2560, 1440),
 		"res://tests/results/screenshots/qhd_exact/03_slot_idle.png": Vector2i(2560, 1440),
 		"res://tests/results/screenshots/qhd_exact/05_blackjack.png": Vector2i(2560, 1440),
 		"res://tests/results/screenshots/qhd_exact/06_vault_reveal.png": Vector2i(2560, 1440),
+		"res://tests/results/screenshots/uhd/01_menu.png": Vector2i(3840, 2160),
+		"res://tests/results/screenshots/uhd/02_floor.png": Vector2i(3840, 2160),
+		"res://tests/results/screenshots/uhd/02_floor_join.png": Vector2i(3840, 2160),
+		"res://tests/results/screenshots/uhd/02_cashier_menu.png": Vector2i(3840, 2160),
 		"res://tests/results/screenshots/uhd/03_slot_idle.png": Vector2i(3840, 2160),
 		"res://tests/results/screenshots/uhd/05_blackjack.png": Vector2i(3840, 2160),
 		"res://tests/results/screenshots/uhd/06_vault_reveal.png": Vector2i(3840, 2160),

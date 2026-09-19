@@ -58,7 +58,7 @@ GUT 9.5.0 is vendored and pinned to commit
 Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 `gdlint src tests`. CI runs formatting, lint, GUT and one million production-math
 rounds per cabinet, and uploads JSON evidence even on failure. The current release
-gate passes **214/214 tests and 3,037 assertions**. All three fixed-seed million-round
+gate passes **215/215 tests and 3,081 assertions**. All three fixed-seed million-round
 RTP measurements pass AC-027; see `tests/results/rtp.json`.
 
 Capture a deterministic rendered journey plus authentic slot start/mid/result
@@ -67,6 +67,11 @@ frames and outcome proof with:
 ```powershell
 & 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --path . res://tools/capture_game.tscn -- --capture-dir=session_temporal_qa
 ```
+
+The committed release-evidence matrix covers the same menu, floor, join dialog,
+cashier, Slot, Blackjack, and Vault build at FHD, QHD, and native 4K resolution.
+A controller-only automated journey also verifies menu-to-floor-to-cabinet play
+and the guarded return to the floor.
 
 ## Windows build
 
