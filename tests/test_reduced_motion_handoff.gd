@@ -111,13 +111,11 @@ func test_live_stake_flash_settles_without_a_frozen_enlarged_ring() -> void:
 	var selector: StakeSelector = session.cabinet.panel._stake_selector
 	selector._buttons[1].pressed.emit()
 	selector._process(0.08)
-	assert_gt(selector._bet_flash, 0.0, "The preference changes during the visible ring flash")
-	assert_gt(selector._selection_time, 0.0, "The selected operation is visibly breathing")
+	assert_gt(selector._bet_flash, 0.0, "The preference changes during the selection flash")
 
 	MotionPolicy.set_reduced_motion_for_tests(true)
 
-	assert_eq(selector._bet_flash, 0.0, "No enlarged ring frame may freeze after the handoff")
-	assert_eq(selector._selection_time, 0.0)
+	assert_eq(selector._bet_flash, 0.0, "No selection accent may freeze after the handoff")
 	assert_false(selector.is_processing())
 	for button: Button in selector._buttons:
 		assert_eq(button.modulate, Color.WHITE, "Every bet action reaches its exact rest tint")

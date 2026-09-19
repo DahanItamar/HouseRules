@@ -1,21 +1,11 @@
 class_name StakeSelector
 extends Control
-## Shared casino bet console. Every game uses the same exact wager operations.
-
-const ACTIONS: Array[Dictionary] = [
-	{"name": "BetMin", "label": "MIN", "operation": MiniGame.BetOperation.MIN},
-	{"name": "BetAdd10", "label": "+10", "operation": MiniGame.BetOperation.ADD_10},
-	{"name": "BetAdd25", "label": "+25", "operation": MiniGame.BetOperation.ADD_25},
-	{"name": "BetTimes2", "label": "X2", "operation": MiniGame.BetOperation.MULTIPLY_2},
-	{"name": "BetTimes5", "label": "X5", "operation": MiniGame.BetOperation.MULTIPLY_5},
-	{"name": "BetMax", "label": "MAX", "operation": MiniGame.BetOperation.MAX},
-]
+## Shared casino wager console. Pointer and controller use one denomination model.
 
 var cabinet: MiniGame
 var _buttons: Array[Button] = []
-var _active_operation: int = -1
+var _button_amounts: Array[int] = []
 var _bet_flash: float = 0.0
-var _selection_time: float = 0.0
 var _stake_value: AnimatedNumberLabel
 
 
@@ -29,57 +19,60 @@ func _ready() -> void:
 	_stake_value.add_theme_font_size_override("font_size", Typography.CONTROL)
 	_stake_value.add_theme_color_override("font_color", Color("fff0d4"))
 	add_child(_stake_value)
-	for action: Dictionary in ACTIONS:
-		var button := Button.new()
-		button.name = action.name
-		button.text = action.label
-		button.focus_mode = Control.FOCUS_ALL
-		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-		button.add_theme_font_override("font", Typography.UI_FONT)
-		button.add_theme_font_size_override("font_size", Typography.CONTROL)
-		button.add_theme_color_override("font_color", Color("f2e6cf"))
-		button.add_theme_color_override("font_disabled_color", Color("746a60"))
-		button.add_theme_stylebox_override(
-			"normal", _button_style(Color("24171a"), Color("8a682f"), 2)
-		)
-		button.add_theme_stylebox_override(
-			"hover", _button_style(Color("671321"), Color("f2c84b"), 3)
-		)
-		button.add_theme_stylebox_override(
-			"pressed", _button_style(Color("3b0c14"), Color("fff0a0"), 4)
-		)
-		button.add_theme_stylebox_override(
-			"focus", _button_style(Color("301318"), Color("4cc9d7"), 2)
-		)
-		button.add_theme_stylebox_override(
-			"disabled", _button_style(Color("1f191a"), Color("4d433c"), 1)
-		)
-		button.pressed.connect(_apply_operation.bind(int(action.operation)))
-		add_child(button)
-		ButtonFeedback.attach(button)
-		_buttons.append(button)
+	_rebuild_buttons()
 	_layout_buttons()
 	refresh_controls()
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 	_apply_motion_preference(MotionPolicy.is_reduced())
 
 
+func _rebuild_buttons() -> void:
+	for button: Button in _buttons:
+		button.queue_free()
+	_buttons.clear()
+	_button_amounts = cabinet.available_stakes() if cabinet != null else []
+	for amount: int in _button_amounts:
+		var button := Button.new()
+		button.name = "BetAmount%d" % amount
+		button.text = str(amount)
+		button.toggle_mode = true
+		button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+		button.focus_mode = Control.FOCUS_ALL
+		button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		button.add_theme_font_override("font", Typography.UI_FONT)
+		button.add_theme_font_size_override("font_size", Typography.CONTROL)
+		button.add_theme_color_override("font_color", Color("f2e6cf"))
+		button.add_theme_color_override("font_disabled_color", Color("82776d"))
+		button.add_theme_stylebox_override(
+			"normal", _button_style(Color("21191b"), Color("665b50"), 1)
+		)
+		button.add_theme_stylebox_override(
+			"hover", _button_style(Color("342126"), Color("c8a34b"), 2)
+		)
+		button.add_theme_stylebox_override(
+			"pressed", _button_style(Color("661727"), Color("f2c84b"), 3)
+		)
+		button.add_theme_stylebox_override(
+			"focus", _button_style(Color("2c2023"), Color("48c5d5"), 2)
+		)
+		button.add_theme_stylebox_override(
+			"disabled", _button_style(Color("1b1718"), Color("3e3733"), 1)
+		)
+		button.pressed.connect(_select_amount.bind(amount))
+		add_child(button)
+		ButtonFeedback.attach(button)
+		_buttons.append(button)
+
+
 func _process(delta: float) -> void:
 	if _bet_flash > 0.0:
-		_bet_flash = maxf(0.0, _bet_flash - delta * 2.8)
+		_bet_flash = maxf(0.0, _bet_flash - delta * 4.5)
 		queue_redraw()
-	if _active_operation >= 0:
-		_selection_time = fmod(_selection_time + delta, 2.4)
-		var active_index := _operation_index(_active_operation)
-		if active_index >= 0:
-			var emphasis := (sin(_selection_time * TAU / 2.4) + 1.0) * 0.5
-			_buttons[active_index].modulate = Color(1.0, 0.90 + emphasis * 0.10, 0.88 + emphasis * 0.12)
 
 
 func _apply_motion_preference(reduced: bool) -> void:
 	set_process(not reduced)
 	if reduced:
-		_selection_time = 0.0
 		_bet_flash = 0.0
 		for button: Button in _buttons:
 			button.modulate = Color.WHITE
@@ -91,33 +84,37 @@ func button_rects() -> Array[Rect2]:
 	var gap := 4.0
 	var button_width := (size.x - gap * float(_buttons.size() - 1)) / maxf(_buttons.size(), 1)
 	for index: int in range(_buttons.size()):
-		rects.append(Rect2(Vector2(index * (button_width + gap), 42), Vector2(button_width, 38)))
+		rects.append(Rect2(Vector2(index * (button_width + gap), 38), Vector2(button_width, 40)))
 	return rects
 
 
 func chip_rects() -> Array[Rect2]:
-	# Compatibility for older callers; these are now semantic button targets.
 	return button_rects()
 
 
 func refresh_controls() -> void:
 	if cabinet == null:
 		return
+	var available := cabinet.available_stakes()
+	if available != _button_amounts:
+		_rebuild_buttons()
+		_layout_buttons()
+	var displayed_stake := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
 	for index: int in range(_buttons.size()):
-		var operation := int(ACTIONS[index].operation)
 		var button := _buttons[index]
-		button.disabled = not cabinet.can_apply_bet(operation)
+		var amount := _button_amounts[index]
+		var is_selected := amount == displayed_stake
+		button.disabled = cabinet.is_round_active
+		button.set_pressed_no_signal(is_selected)
 		button.add_theme_stylebox_override(
 			"normal",
 			_button_style(
-				Color("6b1725") if operation == _active_operation else Color("24171a"),
-				Color("48c5d5") if operation == _active_operation else Color("8a682f"),
-				3 if operation == _active_operation else 2
+				Color("661727") if is_selected else Color("21191b"),
+				Color("f2c84b") if is_selected else Color("665b50"),
+				3 if is_selected else 1
 			)
 		)
-		if operation != _active_operation:
-			button.modulate = Color.WHITE
-	var displayed_stake := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
+		button.modulate = Color.WHITE
 	_stake_value.set_number(displayed_stake)
 	queue_redraw()
 
@@ -141,15 +138,14 @@ func _layout_buttons() -> void:
 		_buttons[index].position = rects[index].position
 		_buttons[index].size = rects[index].size
 	if _stake_value != null:
-		_stake_value.position = Vector2(size.x - 88.0, 4.0)
-		_stake_value.size = Vector2(68.0, 30.0)
+		_stake_value.position = Vector2(48.0, 1.0)
+		_stake_value.size = Vector2(72.0, 32.0)
 
 
-func _apply_operation(operation: int) -> void:
-	if cabinet != null and cabinet.apply_bet(operation):
-		_active_operation = operation
+func _select_amount(amount: int) -> void:
+	if cabinet != null and cabinet.select_stake(amount):
 		_bet_flash = 1.0
-		refresh_controls()
+	refresh_controls()
 
 
 func _draw() -> void:
@@ -158,29 +154,36 @@ func _draw() -> void:
 	var displayed_stake := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
 	draw_string(
 		Typography.UI_FONT,
-		Vector2(8, 18),
+		Vector2(8, 20),
 		tr("BET_IN_PLAY") if cabinet.is_round_active else tr("BET_TOTAL"),
 		HORIZONTAL_ALIGNMENT_LEFT,
-		96,
+		42,
 		Typography.CAPTION,
 		Color("b8aa97")
 	)
-	var chip_center := Vector2(size.x - 54.0, 20.0)
-	var glow_alpha := 0.18 + _bet_flash * 0.42
-	draw_circle(chip_center, 24.0 + _bet_flash * 3.0, Color("48c5d5", glow_alpha))
-	draw_circle(chip_center, 21.0, Color("601521"))
-	draw_arc(chip_center, 19.0, 0.0, TAU, 48, Color("f2c84b"), 2.0)
-	var after_bet := maxi(0, cabinet.context.balance - displayed_stake)
-	var after_bet_text := "AFTER BET  ∞" if Wallet.test_mode_enabled else tr("BET_AFTER") % after_bet
+	var limit_text := "%d-%d" % [cabinet.context.definition.min_bet, cabinet.bet_cap()]
 	draw_string(
 		Typography.UI_FONT,
-		Vector2(104, 24),
-		after_bet_text,
+		Vector2(128, 20),
+		"LIMIT %s" % limit_text,
 		HORIZONTAL_ALIGNMENT_LEFT,
-		size.x - 168,
+		88,
 		Typography.MICRO,
 		Color("b8aa97")
 	)
+	var after_bet := maxi(0, cabinet.context.balance - displayed_stake)
+	var funds_text := "DEV FUNDS  ∞" if Wallet.test_mode_enabled else tr("BET_AFTER") % after_bet
+	draw_string(
+		Typography.UI_FONT,
+		Vector2(218, 20),
+		funds_text,
+		HORIZONTAL_ALIGNMENT_RIGHT,
+		size.x - 218,
+		Typography.MICRO,
+		Color("b8aa97")
+	)
+	if _bet_flash > 0.0:
+		draw_rect(Rect2(0, 34, size.x * _bet_flash, 2), Color("48c5d5"))
 
 
 func _button_style(fill: Color, border: Color, border_width: int) -> StyleBoxFlat:
@@ -188,14 +191,5 @@ func _button_style(fill: Color, border: Color, border_width: int) -> StyleBoxFla
 	style.bg_color = fill
 	style.border_color = border
 	style.set_border_width_all(border_width)
-	style.set_corner_radius_all(24)
-	style.shadow_color = Color("08060799")
-	style.shadow_size = 3
+	style.set_corner_radius_all(8)
 	return style
-
-
-func _operation_index(operation: int) -> int:
-	for index: int in range(ACTIONS.size()):
-		if int(ACTIONS[index].operation) == operation:
-			return index
-	return -1

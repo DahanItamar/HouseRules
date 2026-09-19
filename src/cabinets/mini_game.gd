@@ -52,6 +52,19 @@ func stake_options() -> Array[int]:
 	return options
 
 
+func available_stakes() -> Array[int]:
+	if context == null:
+		return []
+	var cap := bet_cap()
+	var available: Array[int] = stake_options().filter(
+		func(amount: int) -> bool: return amount <= cap
+	)
+	if cap >= context.definition.min_bet and not available.has(cap):
+		available.append(cap)
+	available.sort()
+	return available
+
+
 func bet_cap() -> int:
 	if context == null:
 		return 0
@@ -114,14 +127,20 @@ func normalize_selected_stake() -> void:
 func adjust_stake(direction: int) -> bool:
 	if is_round_active or context == null or direction == 0:
 		return false
-	var available: Array[int] = stake_options().filter(
-		func(amount: int) -> bool: return amount <= context.balance
-	)
+	var available := available_stakes()
 	if available.is_empty():
 		return false
 	var index: int = available.find(selected_stake)
 	if index < 0:
 		index = 0
+		while index < available.size() and available[index] < selected_stake:
+			index += 1
+		if direction < 0:
+			index -= 1
+		index = clampi(index, 0, available.size() - 1)
+		var changed_to_nearest := selected_stake != available[index]
+		selected_stake = available[index]
+		return changed_to_nearest
 	var next_index: int = clampi(index + signi(direction), 0, available.size() - 1)
 	var changed: bool = selected_stake != available[next_index]
 	selected_stake = available[next_index]

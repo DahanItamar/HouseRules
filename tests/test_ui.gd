@@ -157,6 +157,21 @@ func test_stakes_move_between_casino_denominations() -> void:
 	assert_eq(game.selected_stake, 5)
 
 
+func test_available_stakes_include_an_exact_balance_cap_and_step_adjacent() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(VAULT_DEFINITION)
+	var game: MiniGame = session.cabinet
+	game.context.balance = 18
+	game.selected_stake = 11
+	assert_eq(game.available_stakes(), [1, 2, 5, 10, 18])
+	assert_true(game.adjust_stake(-1))
+	assert_eq(game.selected_stake, 10, "Left chooses the adjacent denomination")
+	game.selected_stake = 11
+	assert_true(game.adjust_stake(1))
+	assert_eq(game.selected_stake, 18, "Right chooses the exact balance cap")
+
+
 func test_shared_bet_console_applies_exact_add_and_multiplier_operations() -> void:
 	var slot_session := CabinetSession.new()
 	add_child_autofree(slot_session)
@@ -204,29 +219,33 @@ func test_shared_bet_console_respects_balance_and_locks_during_rounds() -> void:
 	assert_eq(game.selected_stake, 18)
 
 
-func test_every_game_exposes_six_semantic_bet_buttons_and_total_readout() -> void:
+func test_every_game_exposes_direct_denomination_buttons_and_total_readout() -> void:
 	for definition: CabinetDefinition in [SLOT_DEFINITION, BLACKJACK_DEFINITION, VAULT_DEFINITION]:
 		var session := CabinetSession.new()
 		add_child_autofree(session)
 		session.begin(definition)
 		var selector: StakeSelector = session.cabinet.panel._stake_selector
-		assert_eq(selector._buttons.size(), 6)
-		assert_eq(selector._buttons.map(func(button: Button) -> String: return button.text), ["MIN", "+10", "+25", "X2", "X5", "MAX"])
+		assert_eq(selector._button_amounts, session.cabinet.available_stakes())
+		assert_eq(
+			selector._buttons.map(func(button: Button) -> String: return button.text),
+			selector._button_amounts.map(func(amount: int) -> String: return str(amount))
+		)
 		var selector_bounds := Rect2(Vector2.ZERO, selector.size)
 		for button_rect: Rect2 in selector.button_rects():
 			assert_true(selector_bounds.encloses(button_rect), "Every bet action remains in its console")
 		assert_gte(Typography.PROMINENT, Typography.CRITICAL)
 
 
-func test_bet_buttons_apply_their_operation_and_show_active_feedback() -> void:
+func test_bet_buttons_select_the_exact_amount_and_show_persistent_feedback() -> void:
 	var session := CabinetSession.new()
 	add_child_autofree(session)
 	session.begin(SLOT_DEFINITION)
 	var selector: StakeSelector = session.cabinet.panel._stake_selector
-	selector._buttons[1].pressed.emit()
-	assert_eq(session.cabinet.selected_stake, 11)
-	assert_eq(selector._stake_value.target_value, 11)
-	assert_eq(selector._active_operation, MiniGame.BetOperation.ADD_10)
+	var amount := selector._button_amounts[3]
+	selector._buttons[3].pressed.emit()
+	assert_eq(session.cabinet.selected_stake, amount)
+	assert_eq(selector._stake_value.target_value, amount)
+	assert_true(selector._buttons[3].button_pressed)
 	assert_gt(selector._bet_flash, 0.0)
 
 
