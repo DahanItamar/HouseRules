@@ -1,63 +1,41 @@
 class_name CasinoPatron
 extends Node2D
-## Presentation-only casino-floor patron with a quiet, phase-staggered idle gesture.
+## Presentation-only casino-floor patron animated from authored atlas poses.
 ##
-## Patrons deliberately have no collision or domain references. They live inside the
-## floor art's already-blocked furniture silhouettes and only add ambient motion.
+## Patrons have no collision or domain references. They live inside the floor art's
+## already-blocked furniture zones and cycle through production character poses.
 
 const WalkAtlas := preload("res://src/floor/character_walk_atlas.gd")
 const GUEST_TEXTURE: Texture2D = preload(
 	"res://assets/production/characters/casino_guest_walk_integer.png"
 )
-const PROFILE_TINTS: Array[Color] = [
-	Color("ffd9dc"),
-	Color("d7f5df"),
-	Color("d9e5ff"),
-]
-const PROFILE_ACCENTS: Array[Color] = [
-	Color("d4495f"),
-	Color("36a879"),
-	Color("5f86d9"),
-]
+const PROFILE_COLUMNS: Array[int] = [5, 3, 4]
+const PROFILE_REST_FRAMES: Array[int] = [0, 2, 1]
+const GESTURE_POSES: Array[Array] = [[0, 1, 2, 1], [2, 3, 0, 3], [1, 2, 3, 2]]
 
 var profile_index: int = 0
 var phase_offset: float = 0.0
 var gesture_interval: float = 3.0
 var gesture_strength: float = 0.0
 var elapsed: float = 0.0
+var gesture_frame: int = 0
 var _sprite: Sprite2D
 var _atlas: AtlasTexture
-var _rest_position := Vector2(0, -19)
+var _sprite_rest_position := Vector2(0, -19)
 
 
 func configure(profile: int, phase: float) -> void:
-	profile_index = posmod(profile, PROFILE_TINTS.size())
+	profile_index = posmod(profile, PROFILE_COLUMNS.size())
 	phase_offset = maxf(0.0, phase)
-	# Each guest has a distinct cadence, all within the requested 2–5 second range.
+	# Each guest has a distinct cadence, all within the requested 2-5 second range.
 	gesture_interval = 2.6 + float(profile_index) * 0.85
 	if is_node_ready():
 		_apply_profile()
+		_set_gesture_frame(PROFILE_REST_FRAMES[profile_index])
 
 
 func _ready() -> void:
-	_sprite = Sprite2D.new()
-	_sprite.name = "PatronPortrait"
-	_atlas = AtlasTexture.new()
-	_atlas.atlas = GUEST_TEXTURE
-	# Profiles face different directions and use relaxed contact/passing poses.
-	var columns: Array[int] = [5, 3, 4]
-	var frames: Array[int] = [0, 2, 1]
-	_atlas.region = Rect2(
-		Vector2(
-			Vector2i(columns[profile_index], frames[profile_index]) * WalkAtlas.CELL_SIZE
-		),
-		Vector2(WalkAtlas.CELL_SIZE)
-	)
-	_sprite.texture = _atlas
-	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	_sprite.scale = Vector2.ONE * 0.285
-	_sprite.position = _rest_position
-	add_child(_sprite)
+	_build_authored_sprite()
 	_apply_profile()
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 	_apply_motion_preference(MotionPolicy.is_reduced())
@@ -70,22 +48,63 @@ func _process(delta: float) -> void:
 		return
 	elapsed += delta
 	var cycle_time := fmod(elapsed + phase_offset, gesture_interval)
-	# A brief ease-shaped gesture followed by a long, calm resting beat.
-	var gesture_duration := 0.72
-	gesture_strength = sin(cycle_time / gesture_duration * PI) if cycle_time < gesture_duration else 0.0
-	var breath := sin((elapsed + phase_offset) * 1.35) * 0.006
-	match profile_index:
-		0: # raises a drink / greets a passing guest
-			_sprite.position = _rest_position + Vector2(0, -gesture_strength * 2.2)
-			_sprite.rotation = gesture_strength * 0.018
-		1: # glances toward the nearby table
-			_sprite.position = _rest_position + Vector2(gesture_strength * 1.8, 0)
-			_sprite.rotation = -gesture_strength * 0.025
-		_: # small approving nod
-			_sprite.position = _rest_position + Vector2(0, gesture_strength * 1.5)
-			_sprite.rotation = sin(cycle_time / gesture_duration * TAU) * 0.012 if cycle_time < gesture_duration else 0.0
-	_sprite.scale = Vector2(0.285 * (1.0 - breath), 0.285 * (1.0 + breath))
+	# A short deliberate gesture followed by a long calm rest keeps the floor readable.
+	var gesture_duration := 0.78
+	gesture_strength = (
+		sin(cycle_time / gesture_duration * PI) if cycle_time < gesture_duration else 0.0
+	)
+	if cycle_time < gesture_duration:
+		var progress := clampf(cycle_time / gesture_duration, 0.0, 0.999)
+		var pose_index := mini(int(floor(progress * 4.0)), 3)
+		_set_gesture_frame(int(GESTURE_POSES[profile_index][pose_index]))
+	else:
+		_set_gesture_frame(PROFILE_REST_FRAMES[profile_index])
+	_apply_sprite_pose(cycle_time)
 	queue_redraw()
+
+
+func authored_pose_region() -> Rect2:
+	return _atlas.region if _atlas != null else Rect2()
+
+
+func _build_authored_sprite() -> void:
+	_sprite = Sprite2D.new()
+	_sprite.name = "PatronPortrait"
+	_atlas = AtlasTexture.new()
+	_atlas.atlas = GUEST_TEXTURE
+	_sprite.texture = _atlas
+	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_sprite.scale = Vector2.ONE * 0.285
+	_sprite.position = _sprite_rest_position
+	add_child(_sprite)
+	_set_gesture_frame(PROFILE_REST_FRAMES[profile_index])
+
+
+func _set_gesture_frame(frame: int) -> void:
+	gesture_frame = posmod(frame, WalkAtlas.ROWS)
+	if _atlas == null:
+		return
+	_atlas.region = Rect2(
+		Vector2(Vector2i(PROFILE_COLUMNS[profile_index], gesture_frame) * WalkAtlas.CELL_SIZE),
+		Vector2(WalkAtlas.CELL_SIZE)
+	)
+
+
+func _apply_sprite_pose(cycle_time: float) -> void:
+	var breath := sin((elapsed + phase_offset) * 1.35) * 0.006
+	_sprite.scale = Vector2(0.285 * (1.0 - breath), 0.285 * (1.0 + breath))
+	match profile_index:
+		0:
+			_sprite.position = _sprite_rest_position + Vector2(0, -gesture_strength * 2.2)
+			_sprite.rotation = gesture_strength * 0.018
+		1:
+			_sprite.position = _sprite_rest_position + Vector2(gesture_strength * 1.8, 0)
+			_sprite.rotation = -gesture_strength * 0.025
+		_:
+			_sprite.position = _sprite_rest_position + Vector2(0, gesture_strength * 1.5)
+			_sprite.rotation = (
+				sin(cycle_time / 0.78 * TAU) * 0.012 if cycle_time < 0.78 else 0.0
+			)
 
 
 func _apply_motion_preference(reduced: bool) -> void:
@@ -93,32 +112,22 @@ func _apply_motion_preference(reduced: bool) -> void:
 		return
 	elapsed = 0.0
 	gesture_strength = 0.0
-	_sprite.position = _rest_position
-	_sprite.rotation = 0.0
-	_sprite.scale = Vector2.ONE * 0.285
+	_set_gesture_frame(PROFILE_REST_FRAMES[profile_index])
+	if _sprite != null:
+		_sprite.position = _sprite_rest_position
+		_sprite.rotation = 0.0
+		_sprite.scale = Vector2.ONE * 0.285
 	queue_redraw()
 
 
 func _apply_profile() -> void:
 	if _sprite == null:
 		return
-	_sprite.modulate = PROFILE_TINTS[profile_index]
+	_sprite.modulate = Color("ffd9dc") if profile_index == 0 else Color.WHITE
 
 
 func _draw() -> void:
 	_draw_ellipse(Vector2(0, 8), Vector2(12.0, 4.0), Color("08060775"))
-	var accent := PROFILE_ACCENTS[profile_index]
-	# Small floor-side props distinguish the silhouettes without adding obstruction.
-	match profile_index:
-		0:
-			draw_line(Vector2(12, -4), Vector2(12, -12 - gesture_strength * 3.0), accent, 2.0, true)
-			draw_circle(Vector2(12, -13 - gesture_strength * 3.0), 2.5, Color("f2d58dcc"))
-		1:
-			draw_arc(Vector2(-11, -5), 5.0, PI, TAU, 12, accent, 2.0, true)
-			draw_circle(Vector2(-11, -5), 1.8, Color("f2c84b"))
-		_:
-			draw_circle(Vector2(12, 4), 4.0 + gesture_strength, Color(accent, 0.8))
-			draw_circle(Vector2(12, 4), 1.4, Color("f2c84b"))
 
 
 func _draw_ellipse(center: Vector2, radii: Vector2, color: Color) -> void:

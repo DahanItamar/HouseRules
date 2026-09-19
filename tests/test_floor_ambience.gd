@@ -5,9 +5,14 @@ var _floor: FloorController
 
 
 func before_each() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
 	_floor = FloorController.new()
 	add_child_autofree(_floor)
 	_floor.set_physics_process(false)
+
+
+func after_each() -> void:
+	MotionPolicy.clear_test_override()
 
 
 func test_floor_builds_three_distinct_noninteractive_patrons() -> void:
@@ -37,6 +42,32 @@ func test_patron_gestures_are_phase_staggered_and_have_calm_cadences() -> void:
 	assert_eq(phases.size(), 3)
 	_floor._patrons[0].call("_process", 0.2)
 	assert_gt(float(_floor._patrons[0].get("gesture_strength")), 0.0)
+
+
+func test_patrons_cycle_through_authored_limb_poses_without_moving_the_root() -> void:
+	var patron: CasinoPatron = _floor._patrons[0] as CasinoPatron
+	assert_not_null(patron.get_node_or_null("PatronPortrait"))
+	var region_start := patron.authored_pose_region()
+	patron._process(0.2)
+	assert_ne(
+		patron.authored_pose_region(),
+		region_start,
+		"The guest changes to an authored frame with different arm and leg positions"
+	)
+	assert_eq(patron.rotation, 0.0, "The patron root remains stable")
+
+
+func test_reduced_motion_holds_every_patron_joint_in_a_stable_rest_pose() -> void:
+	var patron: CasinoPatron = _floor._patrons[0] as CasinoPatron
+	patron._process(0.2)
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	var rest_region := patron.authored_pose_region()
+	var rest_position := patron._sprite.position
+	patron._process(1.0)
+	assert_eq(patron.elapsed, 0.0)
+	assert_eq(patron.gesture_strength, 0.0)
+	assert_eq(patron.authored_pose_region(), rest_region)
+	assert_eq(patron._sprite.position, rest_position)
 
 
 func test_camera_focus_is_bounded_and_recenters_after_leaving_machine() -> void:
