@@ -1,6 +1,7 @@
 extends GutTest
 
 const BLACKJACK_DEFINITION: CabinetDefinition = preload("res://data/cabinets/blackjack.tres")
+const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 
 
 func test_slot_spin_strength_is_clamped_and_presentation_only() -> void:
@@ -56,6 +57,30 @@ func test_vault_safe_reveal_finishes_with_a_pop_and_restored_scale() -> void:
 	assert_eq(tile.face, VaultTile.Face.SAFE)
 	assert_eq(tile.scale, Vector2.ONE)
 	assert_signal_emitted(tile, "reveal_completed")
+
+
+func test_vault_safe_effect_uses_procedural_diamond_shards() -> void:
+	var host := Node2D.new()
+	add_child_autofree(host)
+	var effect = VAULT_REVEAL_FX.spawn(host, Vector2(32, 24), VAULT_REVEAL_FX.Kind.SAFE)
+	assert_eq(effect.kind, VAULT_REVEAL_FX.Kind.SAFE)
+	assert_not_null(effect.shard_particles)
+	assert_eq(effect.shard_particles.name, "DiamondShards")
+	assert_not_null(effect.shard_particles.texture, "Safe reveal has a generated shard texture")
+	assert_null(effect.debris_particles)
+	assert_null(effect.smoke_particles)
+
+
+func test_vault_mine_effect_layers_shockwave_debris_and_smoke() -> void:
+	var host := Node2D.new()
+	add_child_autofree(host)
+	var effect = VAULT_REVEAL_FX.spawn(host, Vector2.ZERO, VAULT_REVEAL_FX.Kind.MINE)
+	assert_eq(effect.kind, VAULT_REVEAL_FX.Kind.MINE)
+	assert_not_null(effect.debris_particles)
+	assert_not_null(effect.smoke_particles)
+	assert_eq(effect.debris_particles.name, "MineDebris")
+	assert_eq(effect.smoke_particles.name, "MineSmoke")
+	assert_gt(effect.lifetime, 0.5, "Mine impact has time for its layered shockwave to read")
 
 
 func test_number_ticker_reaches_exact_target_and_handles_infinity() -> void:

@@ -22,12 +22,22 @@ var displayed_multiplier: float = 1.0
 var displayed_progress: float = 0.0
 var is_ready: bool = false
 var animation_duration: float = ANIMATION_MIN_SECONDS
+var idle_time: float = 0.0
 var _value_tween: Tween
 
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(240, 64)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
+	queue_redraw()
+
+
+func _process(delta: float) -> void:
+	if not is_ready or not MotionPolicy.allows_continuous_motion():
+		return
+	idle_time = fmod(idle_time + delta, 8.0)
 	queue_redraw()
 
 
@@ -93,6 +103,9 @@ func set_ready(ready: bool) -> void:
 	if is_ready == ready:
 		return
 	is_ready = ready
+	if not ready:
+		idle_time = 0.0
+	set_process(ready and MotionPolicy.allows_continuous_motion())
 	queue_redraw()
 
 
@@ -115,16 +128,36 @@ func _apply_values(amount: float, multiplier: float, progress: float) -> void:
 	queue_redraw()
 
 
+func _apply_motion_preference(reduced: bool) -> void:
+	if reduced:
+		idle_time = 0.0
+	set_process(is_ready and not reduced)
+	queue_redraw()
+
+
 func _draw() -> void:
 	var bounds := Rect2(Vector2.ZERO, size)
+	var ready_pulse := (
+		(sin(idle_time * TAU / 1.8) + 1.0) * 0.5
+		if is_ready and MotionPolicy.allows_continuous_motion()
+		else 0.0
+	)
 	var panel := StyleBoxFlat.new()
 	panel.bg_color = PANEL_COLOR
-	panel.border_color = READY_COLOR if is_ready else PANEL_BORDER
+	panel.border_color = (
+		READY_COLOR.lerp(Color("8bf2b1"), ready_pulse * 0.34)
+		if is_ready
+		else PANEL_BORDER
+	)
 	panel.set_border_width_all(2)
 	panel.set_corner_radius_all(8)
 	draw_style_box(panel, bounds)
 
-	var accent := READY_COLOR if is_ready else DISABLED_COLOR
+	var accent := (
+		READY_COLOR.lerp(Color("b5f2c8"), ready_pulse * 0.22)
+		if is_ready
+		else DISABLED_COLOR
+	)
 	var primary_text := TEXT_COLOR if is_ready else MUTED_TEXT_COLOR
 	var label_font := Typography.UI_FONT
 	var number_font := Typography.DISPLAY_FONT
@@ -158,10 +191,26 @@ func _draw() -> void:
 
 	var rail := Rect2(Vector2(12, size.y - 18), Vector2(maxf(size.x - 24, 0.0), 7))
 	draw_rect(rail, RAIL_COLOR, true)
+	for marker_index: int in range(1, 5):
+		var marker_x := rail.position.x + rail.size.x * float(marker_index) / 5.0
+		draw_line(
+			Vector2(marker_x, rail.position.y - 1.0),
+			Vector2(marker_x, rail.end.y + 1.0),
+			Color(PANEL_BORDER, 0.62),
+			1.0
+		)
 	if displayed_progress > 0.0:
 		var fill := rail
 		fill.size.x *= displayed_progress
 		draw_rect(fill, accent, true)
+		if is_ready and MotionPolicy.allows_continuous_motion() and fill.size.x > 8.0:
+			var glint_x := lerpf(fill.position.x + 3.0, fill.end.x - 3.0, fmod(idle_time * 0.72, 1.0))
+			draw_line(
+				Vector2(glint_x, fill.position.y),
+				Vector2(glint_x, fill.end.y),
+				Color(0.90, 1.0, 0.93, 0.42 + ready_pulse * 0.28),
+				3.0
+			)
 	draw_line(
 		Vector2(rail.end.x, rail.position.y - 2),
 		Vector2(rail.end.x, rail.end.y + 2),

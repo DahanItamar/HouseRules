@@ -58,7 +58,7 @@ func reveal(next_face: Face) -> void:
 	pivot_offset = size * 0.5
 	if _reveal_tween and _reveal_tween.is_valid():
 		_reveal_tween.kill()
-	_warning_remaining = MotionPolicy.finite_duration(0.16) if next_face == Face.MINE else 0.0
+	_warning_remaining = MotionPolicy.finite_duration(0.20) if next_face == Face.MINE else 0.0
 	_reveal_tween = create_tween()
 	if next_face == Face.MINE:
 		_reveal_tween.tween_interval(MotionPolicy.finite_duration(0.08))
@@ -151,13 +151,31 @@ func _draw() -> void:
 			false,
 			3.0
 		)
+		var warning_progress := 1.0 - clampf(_warning_remaining / 0.20, 0.0, 1.0)
+		draw_arc(
+			size * 0.5,
+			10.0 + warning_progress * 13.0,
+			0.0,
+			TAU,
+			28,
+			Color(1.0, 0.34, 0.28, (1.0 - warning_progress) * 0.82),
+			2.0
+		)
 	if _flash_remaining > 0.0:
 		var flash_color := Color("ff394d") if face == Face.MINE else Color("68f0a4")
 		flash_color.a = (_flash_remaining / 0.30) * 0.55
 		draw_rect(Rect2(Vector2.ONE, size - Vector2(2, 2)), flash_color, false, 4.0)
 	if is_selected:
 		var pulse := (sin(_pulse_time * 4.5) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
-		draw_arc(size * 0.5, 20.0 + pulse * 2.0, 0, TAU, 32, Color("48c5d5", 0.28 + pulse * 0.22), 2.0)
+		draw_arc(
+			size * 0.5,
+			24.0 + pulse * 2.0,
+			0,
+			TAU,
+			32,
+			Color("48c5d5", 0.28 + pulse * 0.22),
+			2.0
+		)
 	if face == Face.HIDDEN:
 		draw_circle(size * 0.5, 5.0, Color("6e5225"), true, -1.0, true)
 		draw_line(size * 0.5 + Vector2(-8, 0), size * 0.5 + Vector2(8, 0), Color("b8ad9c"), 2.0)

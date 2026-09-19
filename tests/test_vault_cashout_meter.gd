@@ -3,6 +3,10 @@ extends GutTest
 const METER_SCRIPT := preload("res://src/ui/vault_cashout_meter.gd")
 
 
+func after_each() -> void:
+	MotionPolicy.clear_test_override()
+
+
 func test_meter_sets_exact_values_without_motion() -> void:
 	var meter := METER_SCRIPT.new()
 	meter.size = Vector2(420, 76)
@@ -62,3 +66,14 @@ func test_meter_exposes_distinct_ready_and_disabled_states() -> void:
 	assert_false(meter.is_ready)
 	assert_eq(meter.mouse_filter, Control.MOUSE_FILTER_IGNORE)
 	assert_ne(METER_SCRIPT.READY_COLOR, METER_SCRIPT.DISABLED_COLOR)
+
+
+func test_ready_meter_keeps_a_bounded_idle_pulse_and_respects_reduced_motion() -> void:
+	var meter := VaultCashoutMeter.new()
+	add_child_autofree(meter)
+	meter.set_ready(true)
+	meter._process(0.25)
+	assert_gt(meter.idle_time, 0.0, "Ready cash-out state remains visibly alive")
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	assert_eq(meter.idle_time, 0.0)
+	assert_false(meter.is_processing(), "Reduced motion freezes the persistent meter pulse")

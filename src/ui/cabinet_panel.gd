@@ -81,8 +81,9 @@ const SLOT_REEL_TOP: float = 151.0
 const SLOT_REEL_BOUNCE_Y: float = 144.0
 const SLOT_CELL_HEIGHT: float = 78.0
 const SLOT_STRIP_HEIGHT: float = SLOT_CELL_HEIGHT * 5.0
-const VAULT_GRID_ORIGIN := Vector2(354, 134)
-const VAULT_GRID_PITCH: float = 56.0
+const VAULT_GRID_ORIGIN := Vector2(342, 122)
+const VAULT_GRID_PITCH: float = 60.0
+const VAULT_TILE_SIZE: float = 56.0
 const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const BLACKJACK_DEALER := preload("res://assets/drafts/m2/dealer.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
@@ -91,6 +92,7 @@ const VAULT_BACKDROP := preload("res://assets/production/vault/vault_backdrop.pn
 const VAULT_TILE_HIDDEN := preload("res://assets/drafts/m2/tile_unrevealed.png")
 const VAULT_TILE_SAFE := preload("res://assets/drafts/m2/tile_safe_revealed.png")
 const VAULT_TILE_MINE := preload("res://assets/drafts/m2/tile_mine_revealed.png")
+const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 
 
 func _ready() -> void:
@@ -476,7 +478,7 @@ func _refresh_vault() -> void:
 	if _vault_cursor != null:
 		var cursor_target := (
 			VAULT_GRID_ORIGIN
-			- Vector2(4, 4)
+			- Vector2(2, 2)
 			+ Vector2((cursor % 5) * VAULT_GRID_PITCH, (cursor / 5) * VAULT_GRID_PITCH)
 		)
 		if _cursor_tween != null:
@@ -492,6 +494,11 @@ func _refresh_vault() -> void:
 		else 0
 	)
 	_detail.text = tr("VAULT_GRID") % [cabinet.get("mine_count"), math.multiplier(), cash_out]
+	if cabinet.is_round_active and not math.revealed.is_empty():
+		# Replace the onboarding sentence with compact live round telemetry after
+		# the first choice. The cashout rail remains the primary hierarchy.
+		_status.text = _detail.text
+		_status.add_theme_color_override("font_color", Color("b8e5dc"))
 	if _vault_cashout_meter != null:
 		var can_cash_out := cabinet.is_round_active and math.safe_reveals > 0
 		var safe_target := maxi(1, 25 - cabinet.get("mine_count"))
@@ -744,8 +751,8 @@ func _build_blackjack_deck() -> void:
 func _build_vault_deck() -> void:
 	var status_panel := Panel.new()
 	status_panel.name = "VaultStatusPanel"
-	status_panel.position = Vector2(58, 98)
-	status_panel.size = Vector2(286, 104)
+	status_panel.position = Vector2(48, 150)
+	status_panel.size = Vector2(280, 122)
 	status_panel.z_index = 4
 	status_panel.add_theme_stylebox_override(
 		"panel", _panel_style(Color("0d0a1cdd"), Color("6d4fb3"), 7, 1)
@@ -753,8 +760,8 @@ func _build_vault_deck() -> void:
 	add_child(status_panel)
 	_vault_cashout_meter = VaultCashoutMeter.new()
 	_vault_cashout_meter.name = "VaultCashoutMeter"
-	_vault_cashout_meter.position = Vector2(668, 350)
-	_vault_cashout_meter.size = Vector2(244, 64)
+	_vault_cashout_meter.position = Vector2(650, 258)
+	_vault_cashout_meter.size = Vector2(262, 76)
 	_vault_cashout_meter.z_index = 4
 	add_child(_vault_cashout_meter)
 	var deck := Panel.new()
@@ -1012,7 +1019,7 @@ func _build_vault_art() -> void:
 		tile.position = VAULT_GRID_ORIGIN + Vector2(
 			(index % 5) * VAULT_GRID_PITCH, (index / 5) * VAULT_GRID_PITCH
 		)
-		tile.size = Vector2(48, 48)
+		tile.size = Vector2.ONE * VAULT_TILE_SIZE
 		tile.reveal_effect_requested.connect(_on_vault_reveal_effect.bind(tile))
 		tile.reveal_completed.connect(_on_vault_reveal_completed)
 		_vault_tiles.append(tile)
@@ -1020,10 +1027,10 @@ func _build_vault_art() -> void:
 	_vault_cursor = Node2D.new()
 	_vault_cursor.name = "SnapCursorArt"
 	for border: Rect2 in [
-		Rect2(0, 0, 52, 3),
-		Rect2(0, 49, 52, 3),
-		Rect2(0, 0, 3, 52),
-		Rect2(49, 0, 3, 52),
+		Rect2(0, 0, 60, 3),
+		Rect2(0, 57, 60, 3),
+		Rect2(0, 0, 3, 60),
+		Rect2(57, 0, 3, 60),
 	]:
 		var edge := ColorRect.new()
 		edge.position = border.position
@@ -1031,7 +1038,7 @@ func _build_vault_art() -> void:
 		edge.color = Color("00e5ff")
 		_vault_cursor.add_child(edge)
 	_art_root.add_child(_vault_cursor)
-	_vault_cursor.position = VAULT_GRID_ORIGIN - Vector2(4, 4)
+	_vault_cursor.position = VAULT_GRID_ORIGIN - Vector2(2, 2)
 	_build_vault_deck()
 
 
@@ -1039,11 +1046,10 @@ func _on_vault_reveal_effect(face_value: int, local_origin: Vector2, tile: Vault
 	var mine_hit := face_value == VaultTile.Face.MINE
 	if not mine_hit:
 		AudioService.play(&"vault_safe")
-	ImpactBurst.spawn(
+	VAULT_REVEAL_FX.spawn(
 		_art_root,
 		tile.position + local_origin,
-		Color("ef5350") if mine_hit else Color("5de4d2"),
-		mine_hit
+		VAULT_REVEAL_FX.Kind.MINE if mine_hit else VAULT_REVEAL_FX.Kind.SAFE
 	)
 	if mine_hit:
 		_shake_stage(5.0, 0.22)
@@ -1066,13 +1072,13 @@ func _apply_vault_fullscreen_layout() -> void:
 	_stake.position = Vector2(64, 444)
 	_stake.size = Vector2(250, 44)
 	_stake.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status.position = Vector2(65, 98)
-	_status.size = Vector2(250, 88)
+	_status.position = Vector2(62, 164)
+	_status.size = Vector2(252, 94)
 	_status.z_index = 6
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_status.add_theme_color_override("font_color", Color("f1e8d8"))
-	_detail.position = Vector2(676, 356)
+	_detail.position = Vector2(676, 342)
 	_detail.size = Vector2(220, 58)
 	_detail.z_index = 6
 	_detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

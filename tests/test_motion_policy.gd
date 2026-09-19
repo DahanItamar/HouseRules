@@ -1,6 +1,7 @@
 extends GutTest
 
 const SLOT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/slot_classic.tres")
+const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 
 
 func before_each() -> void:
@@ -54,6 +55,19 @@ func test_reduced_vault_reveal_completes_callbacks_in_headless() -> void:
 	assert_eq(tile.scale, Vector2.ONE)
 	assert_signal_emitted(tile, "reveal_effect_requested")
 	assert_signal_emitted(tile, "reveal_completed")
+
+
+func test_reduced_vault_effect_keeps_static_acknowledgement_without_smoke() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	var host := Node2D.new()
+	add_child_autofree(host)
+	var safe_effect = VAULT_REVEAL_FX.spawn(host, Vector2.ZERO, VAULT_REVEAL_FX.Kind.SAFE)
+	var mine_effect = VAULT_REVEAL_FX.spawn(host, Vector2.ZERO, VAULT_REVEAL_FX.Kind.MINE)
+	assert_eq(safe_effect.shard_particles.amount, 1)
+	assert_eq(safe_effect.shard_particles.initial_velocity_max, 0.0)
+	assert_eq(mine_effect.debris_particles.amount, 1)
+	assert_eq(mine_effect.debris_particles.initial_velocity_max, 0.0)
+	assert_null(mine_effect.smoke_particles, "Reduced motion omits drifting smoke")
 
 
 func test_reduced_floor_stops_dust_patrons_and_camera_emphasis() -> void:
