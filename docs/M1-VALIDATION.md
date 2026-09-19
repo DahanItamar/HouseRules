@@ -9,7 +9,7 @@ the final physical-device pass.
 - Godot 4.7.2 standard resource import completed without script errors.
 - `gdformat --check src tests` and `gdlint src tests` are part of the repository
   verification workflow.
-- GUT 9.5.0: **174 tests passing, 2,567 assertions** in the authoritative local
+- GUT 9.5.0: **179 tests passing, 2,603 assertions** in the authoritative local
   Windows release-gate run.
 - The suite ran locally on Windows using Godot 4.7.2. The repository also ships
   a GitHub Actions workflow; this document does not claim a remote run.

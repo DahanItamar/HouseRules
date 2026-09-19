@@ -40,6 +40,7 @@ var _slot_result_value: Label
 var _slot_result_formula: Label
 var _slot_result_tween: Tween
 var _celebration: WinCelebration
+var _win_flash: Control
 var _stake_selector: StakeSelector
 var _help_button: Button
 var _help_overlay: Control
@@ -117,6 +118,7 @@ const VAULT_TILE_SAFE := preload("res://assets/drafts/m2/tile_safe_revealed.png"
 const VAULT_TILE_MINE := preload("res://assets/drafts/m2/tile_mine_revealed.png")
 const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 const BLACKJACK_BET_STACK := preload("res://src/ui/blackjack_bet_stack.gd")
+const CABINET_WIN_FLASH_SCRIPT := preload("res://src/ui/cabinet_win_flash.gd")
 
 
 func _ready() -> void:
@@ -164,6 +166,11 @@ func _ready() -> void:
 	_celebration.size = Vector2(960, 540)
 	_celebration.z_index = 50
 	add_child(_celebration)
+	_win_flash = CABINET_WIN_FLASH_SCRIPT.new()
+	_win_flash.name = "CabinetWinFlash"
+	_win_flash.size = Vector2(960, 540)
+	_win_flash.z_index = 45
+	add_child(_win_flash)
 	_build_help_ui()
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh())
 	MotionPolicy.motion_preference_changed.connect(_apply_live_feedback_motion_preference)
@@ -213,6 +220,9 @@ func show_result(result: RoundResult) -> void:
 	_set_live_text(_status, tr("ROUND_RESULT") % [result.stake, result.payout])
 	AudioService.play(_result_audio_cue(result))
 	_play_result_impact(result)
+	_win_flash.play(
+		_result_flash_tint(result), _last_result_impact_tier == ResultImpactTier.BIG_WIN
+	)
 	if result.payout > result.stake:
 		var win_multiple := float(result.payout) / maxf(result.stake, 1.0)
 		_celebration.burst(Vector2(480, 300), 32 if win_multiple >= 10.0 else (20 if win_multiple >= 5.0 else 12))
@@ -248,6 +258,20 @@ func _result_audio_cue(result: RoundResult) -> StringName:
 		&"minefield_vault":
 			return &"vault_cashout" if result.payout > 0 else &"vault_bust"
 	return &"win" if result.payout > result.stake else &"loss"
+
+
+func _result_flash_tint(result: RoundResult) -> Color:
+	if result.outcome == RoundResult.Outcome.PUSH:
+		return Color("c8a34b")
+	if result.payout <= result.stake:
+		return Color("a53243")
+	match cabinet.context.definition.id:
+		&"blackjack":
+			return Color("3fc276")
+		&"minefield_vault":
+			return Color("48c5d5")
+		_:
+			return Color("f2c84b")
 
 
 func _process(delta: float) -> void:
@@ -1405,6 +1429,7 @@ func has_active_motion() -> bool:
 		or (_blackjack_fx_tween != null and _blackjack_fx_tween.is_running())
 		or (_vault_fx_tween != null and _vault_fx_tween.is_running())
 		or (_result_impact_tween != null and _result_impact_tween.is_running())
+		or (_win_flash != null and _win_flash.is_playing())
 		or has_live_state_feedback()
 		or _result_reveal_active
 	)
