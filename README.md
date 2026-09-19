@@ -28,7 +28,8 @@ Enter / gamepad A starts or interacts. WASD / left stick / D-pad moves.
 Escape / B leaves a cabinet or returns to the menu; leaving a live round forfeits
 its stake. F1 / Menu opens the current game's How to Play card. Left/right moves
 between controls; mouse, Tab, or controller focus can select the shared wager
-console. On the casino floor, step into a machine's colored table ring to open
+console. On the main menu, X toggles the visible Reduced Motion setting. On the
+casino floor, step into a machine's colored table ring to open
 its translucent join card; Enter / A joins and Escape / B dismisses the card.
 Every cabinet shows TOTAL BET with MIN, +10, +25, X2, X5 and MAX.
 Blackjack: X stands, Y doubles. Vault:
@@ -57,8 +58,15 @@ GUT 9.5.0 is vendored and pinned to commit
 Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 `gdlint src tests`. CI runs formatting, lint, GUT and one million production-math
 rounds per cabinet, and uploads JSON evidence even on failure. The current release
-gate passes **117/117 tests and 1,779 assertions**. All three fixed-seed million-round
+gate passes **144/144 tests and 2,164 assertions**. All three fixed-seed million-round
 RTP measurements pass AC-027; see `tests/results/rtp.json`.
+
+Capture a deterministic rendered journey plus authentic slot start/mid/result
+frames and outcome proof with:
+
+```powershell
+& 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --path . res://tools/capture_game.tscn -- --capture-dir=session_temporal_qa
+```
 
 ## Windows build
 
