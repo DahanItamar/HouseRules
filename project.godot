@@ -53,6 +53,7 @@ theme/default_font_multichannel_signed_distance_field=true
 
 [house_rules]
 
+audio/muted=false
 testing/unlimited_bankroll=true
 
 [internationalization]

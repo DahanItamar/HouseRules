@@ -60,7 +60,8 @@ func _ready() -> void:
 		_buttons.append(button)
 	_layout_buttons()
 	refresh_controls()
-	set_process(true)
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 
 
 func _process(delta: float) -> void:
@@ -73,6 +74,15 @@ func _process(delta: float) -> void:
 		if active_index >= 0:
 			var emphasis := (sin(_selection_time * TAU / 2.4) + 1.0) * 0.5
 			_buttons[active_index].modulate = Color(1.0, 0.90 + emphasis * 0.10, 0.88 + emphasis * 0.12)
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	set_process(not reduced)
+	if reduced:
+		_selection_time = 0.0
+		for button: Button in _buttons:
+			button.modulate = Color.WHITE
+	queue_redraw()
 
 
 func button_rects() -> Array[Rect2]:

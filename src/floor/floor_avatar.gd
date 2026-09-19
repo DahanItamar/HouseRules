@@ -30,6 +30,8 @@ func _ready() -> void:
 	_sprite.position = Vector2(0, -19)
 	add_child(_sprite)
 	_update_facing_texture()
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 	set_process(true)
 	queue_redraw()
 
@@ -53,18 +55,30 @@ func set_motion(displacement: Vector2) -> void:
 func _process(delta: float) -> void:
 	_walk_hold = maxf(0.0, _walk_hold - delta)
 	is_walking = _walk_hold > 0.0
-	if not is_walking:
+	if not is_walking and MotionPolicy.allows_continuous_motion():
 		idle_time += delta
 		queue_redraw()
-	var stride := sin(walk_phase) if is_walking else 0.0
-	var breathe := sin(idle_time * 2.6) * 0.008 if not is_walking else 0.0
+	var reduced := MotionPolicy.is_reduced()
+	var stride := sin(walk_phase) if is_walking and not reduced else 0.0
+	var breathe := sin(idle_time * 2.6) * 0.008 if not is_walking and not reduced else 0.0
 	_sprite.rotation = stride * 0.006
-	var contact_compression := 0.97 if is_walking and walk_frame % 2 == 0 else 1.0
+	var contact_compression := (
+		0.97 if is_walking and walk_frame % 2 == 0 and not reduced else 1.0
+	)
 	_sprite.scale = Vector2(
 		GUEST_SCALE * (2.0 - contact_compression),
 		GUEST_SCALE * contact_compression * (1.0 + breathe)
 	)
 	_sprite.position = Vector2(stride * 0.35, -23.0 - absf(stride) * 0.65)
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if reduced and _sprite != null:
+		idle_time = 0.0
+		_sprite.rotation = 0.0
+		_sprite.scale = Vector2.ONE * GUEST_SCALE
+		_sprite.position = Vector2(0, -23)
+	queue_redraw()
 
 
 func _update_facing_texture() -> void:

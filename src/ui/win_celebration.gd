@@ -13,7 +13,8 @@ func _ready() -> void:
 
 
 func burst(origin: Vector2, count: int = 12) -> void:
-	for index: int in range(count):
+	var token_count := mini(count, 3) if MotionPolicy.is_reduced() else count
+	for index: int in range(token_count):
 		var atlas := AtlasTexture.new()
 		atlas.atlas = SHEET
 		var cell := index % 12
@@ -30,6 +31,18 @@ func burst(origin: Vector2, count: int = 12) -> void:
 		token.position = origin - token.pivot_offset
 		token.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		add_child(token)
+		if MotionPolicy.is_reduced():
+			# A compact acknowledgement retains win feedback without viewport-crossing motion.
+			token.position += Vector2((index - 1) * 22.0, 0.0)
+			var reduced_feedback := create_tween().set_parallel(true)
+			reduced_feedback.tween_property(
+				token, "scale", Vector2(0.88, 0.88), MotionPolicy.finite_duration(0.24)
+			)
+			reduced_feedback.tween_property(
+				token, "modulate:a", 0.0, MotionPolicy.finite_duration(0.24)
+			)
+			reduced_feedback.chain().tween_callback(token.queue_free)
+			continue
 		var direction := -1.0 if index % 2 == 0 else 1.0
 		var vertical_exit := (
 			_rng.randf_range(260.0, 420.0)

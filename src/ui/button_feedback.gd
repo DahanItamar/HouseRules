@@ -27,6 +27,8 @@ func _bind(button: Button) -> void:
 	_button.button_down.connect(_press)
 	_button.button_up.connect(_release)
 	_button.resized.connect(func() -> void: _button.pivot_offset = _button.size * 0.5)
+	MotionPolicy.motion_preference_changed.connect(_on_motion_preference_changed)
+	_on_motion_preference_changed(MotionPolicy.is_reduced())
 
 
 func _hover_in() -> void:
@@ -45,6 +47,9 @@ func _press() -> void:
 
 
 func _release() -> void:
+	if MotionPolicy.is_reduced():
+		_reset_scale()
+		return
 	if _button.disabled:
 		_animate_to(Vector2.ONE, 0.1, Tween.TRANS_QUAD, Tween.EASE_OUT)
 		return
@@ -55,9 +60,25 @@ func _release() -> void:
 
 
 func _animate_to(target: Vector2, duration: float, transition: Tween.TransitionType, ease: Tween.EaseType) -> void:
+	if MotionPolicy.is_reduced():
+		_reset_scale()
+		return
 	if _motion != null:
 		_motion.kill()
 	_motion = create_tween()
 	_motion.tween_property(
 		_button, "scale", target, MotionPolicy.finite_duration(duration)
 	).set_trans(transition).set_ease(ease)
+
+
+func _on_motion_preference_changed(reduced: bool) -> void:
+	if reduced:
+		_reset_scale()
+
+
+func _reset_scale() -> void:
+	if _motion != null:
+		_motion.kill()
+		_motion = null
+	if _button != null:
+		_button.scale = Vector2.ONE

@@ -29,10 +29,14 @@ func cover() -> void:
 	_rule.modulate.a = 0.0
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
-	tween.tween_property(_fade, "color:a", 0.72, 0.18)
-	tween.tween_property(_upper, "position:y", 0.0, 0.18)
-	tween.tween_property(_lower, "position:y", 270.0, 0.18)
-	tween.tween_property(_rule, "modulate:a", 1.0, 0.16)
+	if MotionPolicy.is_reduced():
+		# Retain a brief context-change cue without sweeping the viewport.
+		tween.tween_property(_fade, "color:a", 0.72, MotionPolicy.finite_duration(0.12))
+	else:
+		tween.tween_property(_fade, "color:a", 0.72, 0.18)
+		tween.tween_property(_upper, "position:y", 0.0, 0.18)
+		tween.tween_property(_lower, "position:y", 270.0, 0.18)
+		tween.tween_property(_rule, "modulate:a", 1.0, 0.16)
 	await tween.finished
 
 
@@ -42,10 +46,13 @@ func reveal() -> void:
 	visible = true
 	var tween := create_tween().set_parallel(true)
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	tween.tween_property(_fade, "color:a", 0.0, 0.24)
-	tween.tween_property(_upper, "position:y", -270.0, 0.24)
-	tween.tween_property(_lower, "position:y", 540.0, 0.24)
-	tween.tween_property(_rule, "modulate:a", 0.0, 0.12)
+	if MotionPolicy.is_reduced():
+		tween.tween_property(_fade, "color:a", 0.0, MotionPolicy.finite_duration(0.12))
+	else:
+		tween.tween_property(_fade, "color:a", 0.0, 0.24)
+		tween.tween_property(_upper, "position:y", -270.0, 0.24)
+		tween.tween_property(_lower, "position:y", 540.0, 0.24)
+		tween.tween_property(_rule, "modulate:a", 0.0, 0.12)
 	await tween.finished
 	visible = false
 	_active = false

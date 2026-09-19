@@ -62,6 +62,22 @@ func set_face_down(hidden: bool, animated: bool = false) -> void:
 	pivot_offset = size * 0.5
 	var resting_rotation := rotation
 	_flip_tween = create_tween()
+	if MotionPolicy.is_reduced():
+		# A local crossfade communicates the face change without a card-collapse effect.
+		_flip_tween.tween_property(
+			self, "modulate:a", 0.58, MotionPolicy.finite_duration(0.09)
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_flip_tween.tween_callback(
+			func() -> void:
+				_visual_face_down = hidden
+				_trigger_sheen()
+				queue_redraw()
+		)
+		_flip_tween.tween_property(
+			self, "modulate:a", 1.0, MotionPolicy.finite_duration(0.11)
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_flip_tween.tween_callback(func() -> void: flip_completed.emit())
+		return
 	_flip_tween.set_parallel(true)
 	var close_duration := MotionPolicy.finite_duration(0.11)
 	var open_duration := MotionPolicy.finite_duration(0.15)
@@ -94,6 +110,13 @@ func _trigger_sheen() -> void:
 func _apply_motion_preference(reduced: bool) -> void:
 	if reduced:
 		_idle_time = 1.0
+		if _flip_tween != null and _flip_tween.is_valid() and _flip_tween.is_running():
+			_flip_tween.kill()
+			_visual_face_down = face_down
+			scale = Vector2.ONE
+			modulate.a = 1.0
+			_trigger_sheen()
+			flip_completed.emit()
 	queue_redraw()
 
 

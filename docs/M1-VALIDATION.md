@@ -1,20 +1,20 @@
-# M1 validation — 2026-09-18
+# MVP validation — 2026-09-19
 
-Status: implementation and automated AC-001–015 checks pass; **AC-027 remains
-failed for the classic slot's required million-round sample**. This is not a
-production-readiness certification.
+Status: the current local release gate passes, including all three fixed-seed
+million-round RTP samples. This is automated MVP evidence, not a substitute for
+the final physical-device pass.
 
 ## Executed checks
 
 - Godot 4.7.2 standard resource import completed without script errors.
-- `gdformat --check src tests`: 33 files unchanged; pass.
-- `gdlint src tests`: no problems; pass.
-- GUT 9.5.0: **22 tests, 21 passing, 1 failing; 973/974 assertions**. The sole
-  failure is the strict slot RTP tolerance. Process exit status is 1.
-- The suite ran locally on Windows using the installed Godot binary. A GitHub
-  Actions workflow is provided, but **no remote CI run was performed**.
-- After the final router/prompt change, the six session tests were rerun:
-  **6/6 passing, 52 assertions**, without runtime errors.
+- `gdformat --check src tests` and `gdlint src tests` are part of the repository
+  verification workflow.
+- GUT 9.5.0: **117 tests passing, 1,779 assertions** in the authoritative local
+  Windows release-gate run.
+- The suite ran locally on Windows using Godot 4.7.2. The repository also ships
+  a GitHub Actions workflow; this document does not claim a remote run.
+- The release pack exported successfully and remained running through a hidden
+  five-second launch smoke test.
 - A source scan found no HTTP, WebSocket, ENet, TCP/UDP client/server or external
   shell-link APIs in `src/`. This is static evidence, not a network packet capture.
 
@@ -34,7 +34,7 @@ in [GUT-PROVENANCE.md](../addons/GUT-PROVENANCE.md).
 | 006 | Real slot reports a RoundResult signal; balance is unchanged until settlement. | PASS |
 | 007 | Session applies stake and payout together, and rejects duplicate settlement. | PASS |
 | 008 | Exit returns to the floor at the recorded avatar position. | PASS |
-| 009 | Exiting during spin resolves ABANDONED once, forfeits stake and saves. | PASS |
+| 009 | Exiting during a live round requires confirmation; confirming resolves ABANDONED once, forfeits stake and saves. | PASS |
 | 010 | Wallet results remain integer typed; invalid negative requests are rejected. | PASS |
 | 011 | Insufficient funds emit rejection and preserve the balance. | PASS |
 | 012 | A balance change emits the exact previous/current values once. | PASS |
@@ -61,7 +61,7 @@ Headless evidence does not certify physical gamepad use, 7-inch handheld
 readability, full rendered animation or power-loss/crash behavior. Those require
 the later device and manual verification passes.
 
-## RTP evidence and unresolved acceptance
+## RTP evidence
 
 Seed **20260918** was chosen before measurement. Each cabinet executed one million
 rounds through its shipped domain math and resources. Stakes and payouts are

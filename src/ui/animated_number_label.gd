@@ -14,7 +14,7 @@ func set_number(value: int, format_text: String = "%d", animate: bool = true) ->
 		return
 	_format = format_text
 	target_value = value
-	if not _initialized or not animate or not is_inside_tree():
+	if not _initialized or not animate or not is_inside_tree() or MotionPolicy.is_reduced():
 		_initialized = true
 		displayed_value = value
 		_apply_value(displayed_value)

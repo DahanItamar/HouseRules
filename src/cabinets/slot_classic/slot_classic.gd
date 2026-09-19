@@ -13,6 +13,7 @@ func start_round(amount: int) -> bool:
 		return false
 	current_stake = amount
 	is_round_active = true
+	AudioService.play(&"chip")
 	_pending = math.spin(amount, context.rng)
 	panel.begin_slot_spin(_pending.detail.get("symbols", [0, 1, 2]), resolve_pending)
 	return true

@@ -10,6 +10,8 @@ func start_round(amount: int) -> bool:
 		return false
 	current_stake = amount
 	is_round_active = true
+	AudioService.play(&"chip")
+	AudioService.play(&"vault_tension")
 	snap_cursor.reset()
 	math.begin(amount, mine_count, context.rng)
 	panel.set_status("VAULT_REVEAL")
@@ -26,6 +28,8 @@ func request_open() -> bool:
 		return false
 	var result: RoundResult
 	if is_round_active:
+		if not math.revealed.has(snap_cursor.index):
+			AudioService.play(&"vault_tension")
 		result = math.reveal(snap_cursor.index)
 	else:
 		return start_round(selected_stake)

@@ -12,6 +12,8 @@ var event_energy: float = 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 
 
 func _process(delta: float) -> void:
@@ -22,6 +24,19 @@ func _process(delta: float) -> void:
 
 func trigger_event(strength: float = 1.0) -> void:
 	event_energy = clampf(strength, 0.0, 1.0)
+	queue_redraw()
+	if MotionPolicy.is_reduced():
+		var feedback := create_tween()
+		feedback.tween_property(
+			self, "event_energy", 0.0, MotionPolicy.finite_duration(0.20)
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		feedback.tween_callback(queue_redraw)
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	set_process(not reduced)
+	if reduced:
+		elapsed = 0.0
 	queue_redraw()
 
 

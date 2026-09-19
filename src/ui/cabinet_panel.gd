@@ -178,7 +178,7 @@ func show_result(result: RoundResult) -> void:
 	_status_key = "ROUND_READY"
 	refresh()
 	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
-	AudioService.play(&"win" if result.payout > result.stake else &"loss")
+	AudioService.play(_result_audio_cue(result))
 	if result.payout > result.stake:
 		var win_multiple := float(result.payout) / maxf(result.stake, 1.0)
 		_celebration.burst(Vector2(480, 300), 32 if win_multiple >= 10.0 else (20 if win_multiple >= 5.0 else 12))
@@ -205,6 +205,19 @@ func present_result_after_reveal(_result: RoundResult, on_ready: Callable) -> vo
 	_try_complete_result_reveal()
 
 
+func _result_audio_cue(result: RoundResult) -> StringName:
+	match cabinet.context.definition.id:
+		&"slot_classic":
+			return &"slot_win" if result.payout > result.stake else &"loss"
+		&"blackjack":
+			if result.outcome == RoundResult.Outcome.PUSH:
+				return &"blackjack_push"
+			return &"blackjack_win" if result.payout > result.stake else &"blackjack_loss"
+		&"minefield_vault":
+			return &"vault_cashout" if result.payout > 0 else &"vault_bust"
+	return &"win" if result.payout > result.stake else &"loss"
+
+
 func _process(delta: float) -> void:
 	if help_open or not _slot_spinning:
 		return
@@ -214,9 +227,10 @@ func _process(delta: float) -> void:
 			continue
 		var duration: float = _slot_stop_times[reel_index]
 		var progress: float = clampf(_slot_spin_elapsed / duration, 0.0, 1.0)
-		var eased: float = 1.0 - pow(1.0 - progress, 3.0)
-		_slot_offsets[reel_index] = _slot_total_offsets[reel_index] * eased
-		_update_spinning_reel(reel_index)
+		if not MotionPolicy.is_reduced():
+			var eased: float = 1.0 - pow(1.0 - progress, 3.0)
+			_slot_offsets[reel_index] = _slot_total_offsets[reel_index] * eased
+			_update_spinning_reel(reel_index)
 		if progress >= 1.0:
 			_stop_reel(reel_index)
 	if _slot_stopped.all(func(stopped: bool) -> bool: return stopped):
@@ -273,10 +287,13 @@ func set_help_open(open: bool) -> void:
 		_help_overlay.modulate.a = 0.0
 		var modal := _help_overlay.get_child(1) as Control
 		modal.pivot_offset = modal.size * 0.5
-		modal.scale = Vector2(0.96, 0.96)
+		modal.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(0.96, 0.96)
 		var reveal := create_tween().set_parallel(true)
-		reveal.tween_property(_help_overlay, "modulate:a", 1.0, 0.15)
-		reveal.tween_property(modal, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
+		reveal.tween_property(
+			_help_overlay, "modulate:a", 1.0, MotionPolicy.finite_duration(0.15)
+		)
+		if not MotionPolicy.is_reduced():
+			reveal.tween_property(modal, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
 		var close_button := _help_overlay.find_child("HelpClose", true, false) as Button
 		if close_button != null:
 			close_button.grab_focus()
@@ -464,8 +481,11 @@ func _refresh_vault() -> void:
 		)
 		if _cursor_tween != null:
 			_cursor_tween.kill()
-		_cursor_tween = create_tween()
-		_cursor_tween.tween_property(_vault_cursor, "position", cursor_target, 0.09)
+		if MotionPolicy.is_reduced():
+			_vault_cursor.position = cursor_target
+		else:
+			_cursor_tween = create_tween()
+			_cursor_tween.tween_property(_vault_cursor, "position", cursor_target, 0.09)
 	var cash_out := (
 		MinefieldMath.payout_for(cabinet.current_stake, cabinet.get("mine_count"), math.safe_reveals)
 		if cabinet.is_round_active and math.safe_reveals > 0
@@ -515,10 +535,13 @@ func _refresh_vault() -> void:
 		)
 		if cash_out_was_disabled and not _vault_cash_out.disabled:
 			_vault_cash_out.pivot_offset = _vault_cash_out.size * 0.5
-			_vault_cash_out.scale = Vector2(1.045, 1.045)
-			create_tween().tween_property(
-				_vault_cash_out, "scale", Vector2.ONE, 0.3
-			).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			if MotionPolicy.is_reduced():
+				_vault_cash_out.scale = Vector2.ONE
+			else:
+				_vault_cash_out.scale = Vector2(1.045, 1.045)
+				create_tween().tween_property(
+					_vault_cash_out, "scale", Vector2.ONE, 0.3
+				).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _ensure_art() -> void:
@@ -897,6 +920,7 @@ func _sync_playing_card(
 			if tracks_flip:
 				_blackjack_pending_motions += 1
 				card.flip_completed.connect(_on_blackjack_flip_completed, CONNECT_ONE_SHOT)
+				AudioService.play(&"card_flip")
 			card.set_face_down(hidden, card.face_down and not hidden)
 			return
 	_add_playing_card(rank, hand_index, hand_size, dealer_hand, hidden, deal_index)
@@ -918,17 +942,25 @@ func _add_playing_card(
 	card.position = Vector2(804, 144)
 	card.rotation = 0.08
 	card.modulate.a = 0.0
+	if MotionPolicy.is_reduced():
+		card.position = destination
+		card.rotation = (hand_index - 1) * 0.025
 	_art_root.add_child(card)
 	_blackjack_cards.append(card)
+	AudioService.play(&"card_deal")
 	_blackjack_pending_motions += 1
 	var deal := create_tween().set_parallel(true)
-	deal.tween_property(card, "position", destination, 0.26).set_delay(deal_index * 0.08)
-	deal.tween_property(card, "rotation", (hand_index - 1) * 0.025, 0.26).set_delay(
-		deal_index * 0.08
-	)
-	deal.tween_property(card, "modulate:a", 1.0, 0.12).set_delay(deal_index * 0.08)
+	var deal_delay := MotionPolicy.finite_duration(deal_index * 0.08)
+	if not MotionPolicy.is_reduced():
+		deal.tween_property(card, "position", destination, 0.26).set_delay(deal_delay)
+		deal.tween_property(card, "rotation", (hand_index - 1) * 0.025, 0.26).set_delay(
+			deal_delay
+		)
+	deal.tween_property(
+		card, "modulate:a", 1.0, MotionPolicy.finite_duration(0.12)
+	).set_delay(deal_delay)
 	deal.finished.connect(_complete_blackjack_motion)
-	if dealer_hand and not hidden and hand_index == 1:
+	if dealer_hand and not hidden and hand_index == 1 and not MotionPolicy.is_reduced():
 		card.scale.x = 0.05
 		create_tween().tween_property(card, "scale:x", 1.0, 0.14).set_delay(0.18)
 
@@ -1005,7 +1037,8 @@ func _build_vault_art() -> void:
 
 func _on_vault_reveal_effect(face_value: int, local_origin: Vector2, tile: VaultTile) -> void:
 	var mine_hit := face_value == VaultTile.Face.MINE
-	AudioService.play(&"reveal")
+	if not mine_hit:
+		AudioService.play(&"vault_safe")
 	ImpactBurst.spawn(
 		_art_root,
 		tile.position + local_origin,
@@ -1100,10 +1133,13 @@ func has_active_motion() -> bool:
 
 func _play_art_entrance() -> void:
 	_art_root.modulate.a = 0.0
-	_art_root.position.y = 8.0
+	_art_root.position.y = 0.0 if MotionPolicy.is_reduced() else 8.0
 	_entrance_tween = create_tween().set_parallel(true)
-	_entrance_tween.tween_property(_art_root, "modulate:a", 1.0, 0.2)
-	_entrance_tween.tween_property(_art_root, "position:y", 0.0, 0.2)
+	_entrance_tween.tween_property(
+		_art_root, "modulate:a", 1.0, MotionPolicy.finite_duration(0.2)
+	)
+	if not MotionPolicy.is_reduced():
+		_entrance_tween.tween_property(_art_root, "position:y", 0.0, 0.2)
 
 
 func _start_slot_motion() -> void:
@@ -1111,18 +1147,21 @@ func _start_slot_motion() -> void:
 	if _slot_reels.is_empty():
 		return
 	_slot_spin_elapsed = 0.0
+	var duration_scale := MotionPolicy.REDUCED_DURATION_SCALE if MotionPolicy.is_reduced() else 1.0
+	for index: int in range(_slot_stop_times.size()):
+		_slot_stop_times[index] *= duration_scale
 	_slot_offsets = [0.0, 0.0, 0.0]
 	_slot_stopped = [false, false, false]
 	_slot_spinning = true
 	for reel_cells: Array in _slot_reel_cells:
 		for cell: SlotSymbol in reel_cells:
-			cell.set_spin_strength(1.0)
-	if _slot_lever != null:
+			cell.set_spin_strength(0.18 if MotionPolicy.is_reduced() else 1.0)
+	if _slot_lever != null and not MotionPolicy.is_reduced():
 		_slot_lever.rotation = 0.0
 		_motion_tween = create_tween()
 		_motion_tween.tween_property(_slot_lever, "rotation", 0.42, 0.16)
 		_motion_tween.tween_property(_slot_lever, "rotation", 0.0, 0.18)
-	elif _slot_spin_label != null:
+	elif _slot_spin_label != null and not MotionPolicy.is_reduced():
 		_slot_spin_label.scale = Vector2.ONE
 		_slot_spin_label.pivot_offset = _slot_spin_label.size * 0.5
 		_motion_tween = create_tween()
@@ -1161,20 +1200,25 @@ func _stop_reel(reel_index: int, emit_impact: bool = true) -> void:
 	_slot_stopped[reel_index] = true
 	for cell: SlotSymbol in _slot_reel_cells[reel_index]:
 		create_tween().tween_method(
-			cell.set_spin_strength, cell.spin_strength, 0.0, 0.18
+			cell.set_spin_strength, cell.spin_strength, 0.0, MotionPolicy.finite_duration(0.18)
 		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	var reel: Control = _slot_reels[reel_index]
 	if emit_impact:
+		AudioService.play(&"reel_stop")
+	if emit_impact and not MotionPolicy.is_reduced():
 		ImpactBurst.spawn(
 			_art_root,
 			reel.position + Vector2(reel.size.x * 0.5, reel.size.y * 0.5),
 			Color("f2c84b"),
 			false
 		)
-	reel.position.y = SLOT_REEL_BOUNCE_Y
-	create_tween().tween_property(reel, "position:y", SLOT_REEL_TOP, 0.11).set_trans(
-		Tween.TRANS_BACK
-	)
+	if MotionPolicy.is_reduced():
+		reel.position.y = SLOT_REEL_TOP
+	else:
+		reel.position.y = SLOT_REEL_BOUNCE_Y
+		create_tween().tween_property(reel, "position:y", SLOT_REEL_TOP, 0.11).set_trans(
+			Tween.TRANS_BACK
+		)
 
 
 func _chroma_material(key_color: Color, threshold: float) -> ShaderMaterial:
@@ -1288,8 +1332,10 @@ func _animate_blackjack_result(result: RoundResult) -> void:
 		color = Color("f2c84b")
 	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
 		label.pivot_offset = label.size * 0.5
-		label.scale = Vector2(1.18, 1.18)
+		label.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(1.18, 1.18)
 		label.add_theme_color_override("font_color", color)
+	if MotionPolicy.is_reduced():
+		return
 	_blackjack_fx_tween = create_tween().set_parallel(true)
 	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
 		_blackjack_fx_tween.tween_property(label, "scale", Vector2.ONE, 0.34).set_trans(Tween.TRANS_BACK)
@@ -1304,13 +1350,15 @@ func _animate_vault_result(result: RoundResult) -> void:
 	var color := Color("3fc276") if result.payout > 0 else Color("d55353")
 	for edge: ColorRect in _vault_cursor.get_children():
 		edge.color = color
-	_vault_cursor.scale = Vector2(1.14, 1.14)
+	_vault_cursor.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(1.14, 1.14)
+	if MotionPolicy.is_reduced():
+		return
 	_vault_fx_tween = create_tween().set_parallel(true)
 	_vault_fx_tween.tween_property(_vault_cursor, "scale", Vector2.ONE, 0.32).set_trans(Tween.TRANS_BACK)
 
 
 func _shake_stage(intensity: float, duration: float) -> void:
-	if _art_root == null:
+	if _art_root == null or not MotionPolicy.allows_camera_emphasis():
 		return
 	var origin := Vector2.ZERO
 	var shake := create_tween()
@@ -1406,6 +1454,9 @@ func _reset_slot_win_feedback() -> void:
 
 func _animate_slot_result(payout: int) -> void:
 	if _slot_result_value == null:
+		return
+	if MotionPolicy.is_reduced():
+		_slot_result_value.text = tr("SLOT_RETURNED") % payout
 		return
 	_slot_result_value.text = tr("SLOT_RETURNED") % 0
 	create_tween().tween_method(

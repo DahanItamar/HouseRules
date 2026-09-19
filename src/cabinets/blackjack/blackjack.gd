@@ -9,6 +9,7 @@ func start_round(amount: int) -> bool:
 	panel.prepare_blackjack_round()
 	current_stake = amount
 	is_round_active = true
+	AudioService.play(&"chip")
 	_resolve(math.begin(amount, context.rng))
 	return true
 
@@ -50,6 +51,7 @@ func request_double() -> bool:
 	if not math.can_double(context.balance):
 		panel.set_status("BLACKJACK_DOUBLE_UNAVAILABLE")
 		return false
+	AudioService.play(&"chip")
 	_resolve(math.double_down(context.balance))
 	return true
 

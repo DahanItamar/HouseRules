@@ -90,7 +90,7 @@ Celebration scales in three bands, consistently across every machine:
 | 20–100× | Coin cascade, brief screen-edge glow |
 | > 100× | Full bed, screen flash, extended tally |
 
-A loss gets silence. No sad trombone, no consolation animation — the absence of sound after a resolution is the clearest loss signal available and it never gets tiring.
+A loss gets one short cabinet-specific mechanical cue, never a melody or consolation animation. Slot, blackjack and vault use different restrained timbres so the result remains legible without becoming punishing or tiring.
 
 ---
 

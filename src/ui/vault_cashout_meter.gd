@@ -54,6 +54,10 @@ func set_values(
 	if not animate or not is_inside_tree():
 		_apply_values(float(target_amount), target_multiplier, target_progress)
 		return
+	if MotionPolicy.is_reduced():
+		_apply_values(float(target_amount), target_multiplier, target_progress)
+		animation_finished.emit()
+		return
 
 	var amount_distance := absf(float(target_amount) - displayed_amount)
 	var multiplier_distance := absf(target_multiplier - displayed_multiplier)

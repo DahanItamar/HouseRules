@@ -85,7 +85,7 @@ A secondary and explicit goal: this repository is a portfolio artifact. It is re
 | AC-037 | The game shall allow every interaction to be completed on a gamepad, with no action requiring a mouse or keyboard. |
 | AC-038 | When the active input device changes between gamepad and keyboard, the input router shall update every on-screen prompt to that device's glyphs. |
 | AC-039 | While a betting interface is shown, the input router shall move a snap cursor between betting regions with the D-pad or the left stick. |
-| AC-040 | The game shall render from a base viewport of 960×540 and scale it by integer factors only. |
+| AC-040 | The game shall use a 960×540 logical coordinate system while rendering canvas items natively at 16:9 FHD, QHD and 4K output sizes without QHD letterboxing. |
 | AC-041 | The game shall cap the frame rate at sixty frames per second. |
 | AC-042 | The game shall render body text at no less than 8 pixels in base-viewport space, and chip balances, bet amounts and multipliers at no less than 16. |
 | AC-043 | The game shall resolve every user-facing string through the translation system, with no literal user-facing text in a scene or script. |
@@ -182,10 +182,10 @@ Because: explicitly requested. A future Steam release must not require touching 
 Instead of: calling `FileAccess` directly and abstracting later — lost because "later" means every call site.
 Note: this is the one piece of indirection in the document that isn't earned by present need. It is kept because it is two files and the alternative is a refactor across the codebase.
 
-**Base viewport 960×540, integer scaling only** — locked, and the most expensive decision here to reverse.
-Because: ×2 is exactly 1920×1080 on both a desktop monitor and the Ally X, ×4 is 4K. No filtering, no shimmer.
+**960×540 logical coordinates with native canvas rendering** — locked, and the most expensive decision here to reverse.
+Because: the logical grid keeps interaction and layout stable while `canvas_items` rendering, MSDF fonts, mipmapped production art and high-DPI output stay sharp at 1920×1080, 2560×1440 and 3840×2160. Fractional QHD scaling fills the display instead of letterboxing a 1920×1080 image.
 Instead of: 640×360 — lost because casino UI is text-dense. A European roulette board carries 37 numbered betting regions and cannot be drawn legibly in 640 pixels, and roulette is machine #4.
-Revisit if: the art direction abandons pixel art entirely.
+Revisit if: a future cabinet requires a different aspect ratio; preserve the 16:9 safe-area contract if that happens.
 
 **GDScript, not C#** — the installed Godot 4.7.2 at `C:\Godot` is the standard build with no .NET support.
 Because: switching means a different engine download, and GDScript's engine integration is tighter for a solo project.
@@ -518,52 +518,55 @@ Short by construction. This is a single-player offline game with no accounts, no
 ## 10. Build Order
 
 Each milestone ends in something demoable. `/spec-tasks` turns this into `TASKS.md`.
+Checked items reflect implemented repository scope. Physical 4K, Windows DPI and
+keyboard-free handheld verification remain manual release checks in
+`docs/DISPLAY-VALIDATION.md` and `docs/M4-CONTROLLER-AUDIT.md`.
 
 **M1 — One machine, end to end**
 *Demo: launch the game, walk the floor with a gamepad, sit at the slot, bet, spin, win chips, quit, relaunch, and the chips are still there.*
-- [ ] Godot project, folder layout, `.gitignore`, CI pipeline — closes AC-040, AC-041
-- [ ] `Wallet` with integer transactions and signals — closes AC-010, AC-011, AC-012
-- [ ] `RNGService` with named seeded streams — closes AC-013, AC-014
-- [ ] `PlatformServices` + `LocalPlatform`, atomic write, schema version, migration chain — closes AC-016, AC-018, AC-019, AC-020, AC-021, AC-022
-- [ ] `SaveService` with corrupt-file handling — closes AC-015, AC-017
-- [ ] `FloorController`: avatar, proximity, prompts, unavailable state — closes AC-001, AC-002, AC-004
-- [ ] New-game initialization: 200 chips, zero debt — closes AC-052
-- [ ] `SceneRouter` + `CabinetSession` + the `MiniGame` contract — closes AC-003, AC-005, AC-006, AC-007, AC-008, AC-009
-- [ ] `SlotMachineMath` in `domain/`, weighted strips, paytable resource — closes AC-028, AC-029
-- [ ] Classic slot cabinet scene on the contract — closes AC-044
-- [ ] Single-instance guard, no network — closes AC-023, AC-045
+- [x] Godot project, folder layout, `.gitignore`, CI pipeline — closes AC-040, AC-041
+- [x] `Wallet` with integer transactions and signals — closes AC-010, AC-011, AC-012
+- [x] `RNGService` with named seeded streams — closes AC-013, AC-014
+- [x] `PlatformServices` + `LocalPlatform`, atomic write, schema version, migration chain — closes AC-016, AC-018, AC-019, AC-020, AC-021, AC-022
+- [x] `SaveService` with corrupt-file handling — closes AC-015, AC-017
+- [x] `FloorController`: avatar, proximity, prompts, unavailable state — closes AC-001, AC-002, AC-004
+- [x] New-game initialization: 200 chips, zero debt — closes AC-052
+- [x] `SceneRouter` + `CabinetSession` + the `MiniGame` contract — closes AC-003, AC-005, AC-006, AC-007, AC-008, AC-009
+- [x] `SlotMachineMath` in `domain/`, weighted strips, paytable resource — closes AC-028, AC-029
+- [x] Classic slot cabinet scene on the contract — closes AC-044
+- [x] Single-instance guard, no network — closes AC-023, AC-045
 
 **M2 — The framework proves itself**
 *Demo: three machines of three different shapes, all on one contract, none of which required changing the contract.*
-- [ ] `BlackjackMath`: six-deck shoe, dealer rules, naturals — closes AC-030, AC-031, AC-032
-- [ ] Blackjack cabinet scene on the contract — closes AC-006, AC-044 for this cabinet
-- [ ] `MinefieldMath`: grid, mine placement, multiplier curve — closes AC-033, AC-034, AC-035, AC-036
-- [ ] Minefield Vault cabinet scene on the contract — closes AC-006, AC-044 for this cabinet
-- [ ] Check the `MiniGame` contract against the four capabilities in `docs/design/CABINET-CATALOG.md` §"What this catalog tells you" — closes AC-005
-- [ ] If the contract needed changing for either cabinet, that is the finding — record it before continuing
+- [x] `BlackjackMath`: six-deck shoe, dealer rules, naturals — closes AC-030, AC-031, AC-032
+- [x] Blackjack cabinet scene on the contract — closes AC-006, AC-044 for this cabinet
+- [x] `MinefieldMath`: grid, mine placement, multiplier curve — closes AC-033, AC-034, AC-035, AC-036
+- [x] Minefield Vault cabinet scene on the contract — closes AC-006, AC-044 for this cabinet
+- [x] Check the `MiniGame` contract against the four capabilities in `docs/design/CABINET-CATALOG.md` §"What this catalog tells you" — closes AC-005
+- [x] Record contract findings before continuing; the shared wager, reveal and settlement seams now cover all three cabinets
 
 **M3 — The economy closes**
 *Demo: a CI run printing measured RTP per machine, and a player who cannot go broke.*
-- [ ] Headless RTP harness over one million rounds per machine — closes AC-027
-- [ ] Paytables tuned until measured meets target
-- [ ] Contracts — closes AC-024
-- [ ] `Cashier` floor interactable, always reachable — closes AC-048
-- [ ] Marker at the cashier + solvency waypoint — closes AC-025, AC-026, AC-049
-- [ ] Debt repayment at the cashier — closes AC-046, AC-047, AC-053
-- [ ] Wing transition points (staircase, elevator), locked, showing thresholds — closes AC-050, AC-051
+- [x] Headless RTP harness over one million rounds per machine — closes AC-027
+- [x] Paytables tuned until measured meets target
+- [x] Contracts — closes AC-024
+- [x] `Cashier` floor interactable, always reachable — closes AC-048
+- [x] Marker at the cashier + solvency waypoint — closes AC-025, AC-026, AC-049
+- [x] Debt repayment at the cashier — closes AC-046, AC-047, AC-053
+- [x] Wing transition points (staircase, elevator), locked, showing thresholds — closes AC-050, AC-051
 
 **M4 — Controller and handheld**
 *Demo: the game played end to end on an Ally X with the keyboard unplugged, readable at arm's length.*
-- [ ] Full gamepad coverage audit — closes AC-037
-- [ ] Glyph swapping on device change — closes AC-038
-- [ ] Betting snap cursor — closes AC-039
-- [ ] Readability pass against the 8px/16px floor — closes AC-042
-- [ ] Gamepad disconnect auto-pause
+- [x] Full gamepad mapping and automated coverage audit — closes AC-037
+- [x] Glyph swapping on device change — closes AC-038
+- [x] Betting snap cursor — closes AC-039
+- [x] Readability pass against the 8px/16px floor — closes AC-042
+- [x] Gamepad disconnect auto-pause
 
 **M5 — Localization and polish**
 *Demo: every string in one CSV; switching it swaps the whole UI.*
-- [ ] Extract all strings to `locale/en.csv`; CI key-existence check — closes AC-043
-- [ ] Art pass against the bible, audio pass, transition juice
+- [x] Extract all strings to `locale/en.csv`; CI key-existence check — closes AC-043
+- [x] Art pass against the bible, cabinet-specific audio, transitions and reduced-motion alternatives
 
 ---
 
@@ -575,8 +578,8 @@ Each milestone ends in something demoable. `/spec-tasks` turns this into `TASKS.
 4. **Blackjack ships without splitting, insurance or surrender in v1.** Hit, stand and double only. Splitting needs multi-hand UI and state, which is a cabinet-sized piece of work on its own; it is the first thing to add in v2.
 5. **Minefield Vault is a 5×5 grid with a player-chosen mine count of 1–24.** The multiplier curve derives from true odds reduced by a flat house edge.
 6. **Art is generated, then post-processed.** AI image generation produces raster output at its own resolution; reaching an exact 48×64 sprite at a locked palette needs a downsample, a palette quantize and a manual cleanup pass. Multi-frame animation with frame-to-frame consistency is where these tools are weakest, so animated sprites are specified for hand-pixelling or heavy cleanup, and generation is aimed at static and large elements — cabinet art, backgrounds, portraits, promo. `docs/art/ASSET-SPECS.md` is written on that basis.
-7. **The Higgsfield MCP server is not connected to this session.** Asset specs are written as generation-ready briefs with literal prompts, usable once it is connected or by hand. If it becomes available, nothing in the specs changes.
-8. **The project folder is still `D:\Dev\repos\MyFirstGame`.** The rename to `HouseRules` has not been run. Every path in this spec is relative to the project root, so the rename does not invalidate anything here.
+7. **Higgsfield source assets ship with provenance.** Generated masters, processing manifests and production derivatives are retained under `assets/source/`, `assets/drafts/`, `assets/production/` and `tools/art/` so the runtime never fetches art from the network.
+8. **The project root is `D:\Dev\repos\HouseRules`.** Documentation and scripts use project-relative paths except where a local Godot executable is explicitly required.
 
 ---
 

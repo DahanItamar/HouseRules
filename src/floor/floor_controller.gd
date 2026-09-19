@@ -332,11 +332,12 @@ func _animate_prompt_change() -> void:
 		_prompt_tween.kill()
 	_prompt.modulate.a = 0.25
 	_prompt.pivot_offset = _prompt.size * 0.5
-	_prompt.scale = Vector2(0.98, 0.98)
+	_prompt.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(0.98, 0.98)
 	_prompt_tween = create_tween().set_parallel(true)
 	var duration := MotionPolicy.finite_duration(0.16)
 	_prompt_tween.tween_property(_prompt, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_QUAD)
-	_prompt_tween.tween_property(_prompt, "scale", Vector2.ONE, duration).set_trans(Tween.TRANS_BACK)
+	if not MotionPolicy.is_reduced():
+		_prompt_tween.tween_property(_prompt, "scale", Vector2.ONE, duration).set_trans(Tween.TRANS_BACK)
 
 
 func _build_dust() -> void:
@@ -708,15 +709,16 @@ func _refresh_cashier_menu() -> void:
 	if opening:
 		_cashier_panel.pivot_offset = _cashier_panel.size * 0.5
 		_cashier_panel.modulate.a = 0.0
-		_cashier_panel.scale = Vector2(0.96, 0.96)
+		_cashier_panel.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(0.96, 0.96)
 		if _cashier_tween != null:
 			_cashier_tween.kill()
 		_cashier_tween = create_tween().set_parallel(true)
 		var duration := MotionPolicy.finite_duration(0.18)
 		_cashier_tween.tween_property(_cashier_panel, "modulate:a", 1.0, duration)
-		_cashier_tween.tween_property(
-			_cashier_panel, "scale", Vector2.ONE, duration
-		).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		if not MotionPolicy.is_reduced():
+			_cashier_tween.tween_property(
+				_cashier_panel, "scale", Vector2.ONE, duration
+			).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	var repayment_limit := _cashier_repayment_limit()
 	_cashier_repay_amount = (
 		clampi(_cashier_repay_amount, 1, repayment_limit) if repayment_limit > 0 else 0

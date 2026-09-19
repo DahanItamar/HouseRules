@@ -15,6 +15,7 @@ var _flash_remaining: float = 0.0
 var _reveal_tween: Tween
 var _idle_time: float = 0.0
 var _idle_phase: float = 0.0
+var _pending_face: Face = Face.HIDDEN
 
 
 func _ready() -> void:
@@ -52,6 +53,7 @@ func reveal(next_face: Face) -> void:
 	if face == next_face and not is_flipping:
 		return
 	is_flipping = true
+	_pending_face = next_face
 	_idle_phase = fmod(float(get_index() * 13) * 0.17, 3.8)
 	pivot_offset = size * 0.5
 	if _reveal_tween and _reveal_tween.is_valid():
@@ -60,6 +62,29 @@ func reveal(next_face: Face) -> void:
 	_reveal_tween = create_tween()
 	if next_face == Face.MINE:
 		_reveal_tween.tween_interval(MotionPolicy.finite_duration(0.08))
+	if MotionPolicy.is_reduced():
+		# Preserve anticipation and the exact completion callback with no tile flip/pop.
+		_reveal_tween.tween_property(
+			self, "modulate:a", 0.60, MotionPolicy.finite_duration(0.09)
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		_reveal_tween.tween_callback(
+			func() -> void:
+				face = next_face
+				_flash_remaining = MotionPolicy.finite_duration(
+					0.30 if next_face == Face.MINE else 0.18
+				)
+				reveal_effect_requested.emit(next_face, size * 0.5)
+				queue_redraw()
+		)
+		_reveal_tween.tween_property(
+			self, "modulate:a", 1.0, MotionPolicy.finite_duration(0.11)
+		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_reveal_tween.tween_callback(
+			func() -> void:
+				is_flipping = false
+				reveal_completed.emit(next_face)
+		)
+		return
 	_reveal_tween.tween_property(self, "scale:x", 0.06, MotionPolicy.finite_duration(0.10)).set_trans(
 		Tween.TRANS_QUAD
 	).set_ease(Tween.EASE_IN)
@@ -86,6 +111,7 @@ func reveal(next_face: Face) -> void:
 func set_face_immediate(next_face: Face) -> void:
 	face = next_face
 	scale = Vector2.ONE
+	modulate.a = 1.0
 	is_flipping = false
 	_warning_remaining = 0.0
 	_flash_remaining = 0.0
@@ -96,6 +122,17 @@ func _apply_motion_preference(reduced: bool) -> void:
 	if reduced:
 		_pulse_time = 0.0
 		_idle_time = 1.0
+		if _reveal_tween != null and _reveal_tween.is_valid() and _reveal_tween.is_running():
+			_reveal_tween.kill()
+			face = _pending_face
+			scale = Vector2.ONE
+			modulate.a = 1.0
+			is_flipping = false
+			_flash_remaining = MotionPolicy.finite_duration(
+				0.30 if face == Face.MINE else 0.18
+			)
+			reveal_effect_requested.emit(face, size * 0.5)
+			reveal_completed.emit(face)
 	queue_redraw()
 
 

@@ -10,11 +10,19 @@ var elapsed: float = 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	set_process(true)
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 
 
 func _process(delta: float) -> void:
 	elapsed += delta
+	queue_redraw()
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	set_process(not reduced)
+	if reduced:
+		elapsed = 0.0
 	queue_redraw()
 
 

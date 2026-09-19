@@ -16,6 +16,7 @@ shader_type canvas_item;
 
 uniform float spin_strength : hint_range(0.0, 1.0) = 0.0;
 uniform float symbol_phase : hint_range(0.0, 8.0) = 0.0;
+uniform float continuous_motion : hint_range(0.0, 1.0) = 1.0;
 
 void fragment() {
 	vec4 base = texture(TEXTURE, UV);
@@ -29,7 +30,7 @@ void fragment() {
 	float diagonal = fract(UV.x + UV.y * 0.22);
 	float sheen = 1.0 - smoothstep(0.0, 0.055, abs(diagonal - sweep_position));
 	vec3 sheen_color = vec3(1.0, 0.86, 0.52);
-	treated.rgb += sheen_color * sheen * (1.0 - spin_strength) * treated.a * 0.13;
+	treated.rgb += sheen_color * sheen * (1.0 - spin_strength) * treated.a * 0.13 * continuous_motion;
 	COLOR = treated;
 }
 """
@@ -49,7 +50,8 @@ var _symbol_material: ShaderMaterial
 func _ready() -> void:
 	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_install_symbol_shader()
-	set_process(true)
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	_apply_motion_preference(MotionPolicy.is_reduced())
 
 
 func _process(delta: float) -> void:
@@ -71,8 +73,20 @@ func _install_symbol_shader() -> void:
 	_symbol_material.shader = shader
 	_symbol_material.set_shader_parameter("spin_strength", spin_strength)
 	_symbol_material.set_shader_parameter("symbol_phase", _phase_seed())
+	_symbol_material.set_shader_parameter(
+		"continuous_motion", 0.0 if MotionPolicy.is_reduced() else 1.0
+	)
 	material = _symbol_material
 	shader_backend_active = true
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	set_process(not reduced)
+	if reduced:
+		_motion_time = 0.0
+	if _symbol_material != null:
+		_symbol_material.set_shader_parameter("continuous_motion", 0.0 if reduced else 1.0)
+	queue_redraw()
 
 
 func _phase_seed() -> float:
@@ -85,7 +99,9 @@ func _draw() -> void:
 	var scale_factor: float = minf(size.x / source_size.x, size.y / source_size.y)
 	var draw_size := source_size * scale_factor
 	var phase := float(symbol_index) * 0.91 + position.x * 0.013 + position.y * 0.007
-	var idle_offset := Vector2(0.0, sin(_motion_time * 1.7 + phase) * (1.25 - spin_strength))
+	var idle_offset := Vector2.ZERO
+	if MotionPolicy.allows_continuous_motion():
+		idle_offset.y = sin(_motion_time * 1.7 + phase) * (1.25 - spin_strength)
 	var draw_origin := (size - draw_size) * 0.5 + idle_offset
 	if spin_strength > 0.001:
 		for trail: float in [-18.0, -10.0, 10.0, 18.0]:

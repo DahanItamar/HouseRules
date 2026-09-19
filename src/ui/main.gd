@@ -237,6 +237,7 @@ func _show_floor_now() -> void:
 	_menu.hide()
 	_is_playing = true
 	_refresh_hud()
+	AudioService.play_ambient()
 	AudioService.play(&"confirm")
 
 
@@ -267,6 +268,7 @@ func _show_menu_now() -> void:
 		_floor.set_physics_process(false)
 		_floor.set_process_unhandled_input(false)
 	_menu.show()
+	AudioService.stop_ambient()
 	_refresh_hud()
 
 
