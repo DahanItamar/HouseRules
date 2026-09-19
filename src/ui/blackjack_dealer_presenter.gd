@@ -5,10 +5,12 @@ extends Node2D
 ## The node never reads or changes Blackjack state. CabinetPanel tells it when a
 ## deal or result beat occurred, while MotionPolicy owns how that beat is shown.
 
-const DEALER_TEXTURE := preload("res://assets/production/blackjack/dealer_presenter.png")
+const DEALER_TEXTURE := preload(
+	"res://assets/production/characters/hosts/blackjack_dealer_woman.png"
+)
 const DEALER_CARD_PROP_SCRIPT := preload("res://src/ui/blackjack_dealer_card_prop.gd")
 const DISPLAY_SIZE := Vector2(200, 216)
-const DISPLAY_SCALE := Vector2(200.0 / 1226.0, 216.0 / 1283.0)
+const DISPLAY_SCALE := Vector2(200.0 / 1024.0, 216.0 / 1536.0)
 const REST_CUE_ALPHA: float = 0.34
 const CARD_SIZE := Vector2(16, 23)
 const DEAL_HAND_REST := Vector2(146, 174)

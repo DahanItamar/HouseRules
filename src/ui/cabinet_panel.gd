@@ -33,6 +33,7 @@ var _slot_anticipation_frame: Panel
 var _slot_anticipating_third: bool = false
 var _slot_cascade_clones: Array[Control] = []
 var _slot_lever: Node2D
+var _slot_hostess: Control
 var _slot_spin_label: SlotSpinButton
 var _slot_payline: ColorRect
 var _slot_credit_value: AnimatedNumberLabel
@@ -82,6 +83,7 @@ var _vault_credit_value: AnimatedNumberLabel
 var _vault_open: Button
 var _vault_cash_out: Button
 var _vault_cashout_meter: VaultCashoutMeter
+var _vault_attendant: Control
 var _vault_revealed: Dictionary = {}
 var _ambient: CasinoAmbient
 var _lighting: CasinoLighting
@@ -108,6 +110,10 @@ enum ResultImpactTier { NONE, WIN, BIG_WIN }
 
 const SLOT_BODY := preload("res://assets/production/slot/symbols/slot_fullscreen_bezel.png")
 const SLOT_LEVER_SCRIPT := preload("res://src/ui/slot_lever.gd")
+const CABINET_HOST_SCRIPT := preload("res://src/ui/cabinet_host.gd")
+const SLOT_HOSTESS_TEXTURE := preload(
+	"res://assets/production/characters/hosts/slot_blonde_hostess.png"
+)
 const SLOT_SYMBOL_COUNT: int = 6
 const SLOT_REEL_TOP: float = 151.0
 const SLOT_REEL_BOUNCE_Y: float = 144.0
@@ -120,6 +126,9 @@ const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
 const BLACKJACK_TABLE := preload("res://assets/production/blackjack/blackjack_table.png")
 const VAULT_BACKDROP := preload("res://assets/production/vault/vault_backdrop.png")
+const VAULT_ATTENDANT_TEXTURE := preload(
+	"res://assets/production/characters/hosts/vault_attendant_woman.png"
+)
 const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 const BLACKJACK_BET_STACK := preload("res://src/ui/blackjack_bet_stack.gd")
 const CABINET_WIN_FLASH_SCRIPT := preload("res://src/ui/cabinet_win_flash.gd")
@@ -765,6 +774,12 @@ func _build_slot_art() -> void:
 		_art_root.add_child(separator)
 	var body := _texture("SlotCabinetArt", SLOT_BODY, Vector2(20, 5), Vector2(920, 528))
 	_art_root.add_child(body)
+	_slot_hostess = CABINET_HOST_SCRIPT.new()
+	_slot_hostess.name = "SlotHostess"
+	_slot_hostess.position = Vector2(24, 120)
+	_slot_hostess.configure(SLOT_HOSTESS_TEXTURE, Vector2(128, 300))
+	_slot_hostess.z_index = 1
+	_art_root.add_child(_slot_hostess)
 	_slot_payline = ColorRect.new()
 	_slot_payline.name = "WinningPayline"
 	_slot_payline.position = Vector2(151, SLOT_REEL_TOP + SLOT_CELL_HEIGHT * 1.5 - 2.0)
@@ -1353,6 +1368,12 @@ func _build_vault_art() -> void:
 	veil.size = Vector2(960, 540)
 	veil.color = Color("09051555")
 	_art_root.add_child(veil)
+	_vault_attendant = CABINET_HOST_SCRIPT.new()
+	_vault_attendant.name = "VaultAttendant"
+	_vault_attendant.position = Vector2(770, 72)
+	_vault_attendant.configure(VAULT_ATTENDANT_TEXTURE, Vector2(142, 178))
+	_vault_attendant.z_index = 1
+	_art_root.add_child(_vault_attendant)
 	for index: int in range(25):
 		var tile := VaultTile.new()
 		tile.name = "VaultTile%02d" % index
