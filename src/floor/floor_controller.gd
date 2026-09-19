@@ -564,6 +564,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 		_dust.visible = not reduced
 	if reduced:
 		_ambient_time = 0.0
+		_settle_cashier_motion()
 		if _prompt_tween != null:
 			_prompt_tween.kill()
 			_prompt_tween = null
@@ -583,6 +584,34 @@ func _apply_motion_preference(reduced: bool) -> void:
 	for attract: MachineAttract in _machine_attracts.values():
 		attract.apply_motion_preference(reduced)
 	queue_redraw()
+
+
+func _settle_cashier_motion() -> void:
+	if _cashier_tween != null and _cashier_tween.is_valid():
+		_cashier_tween.kill()
+	_cashier_tween = null
+	if _cashier_panel != null:
+		var keep_open := _cashier_open and not _cashier_is_closing
+		_cashier_panel.visible = keep_open
+		_cashier_panel.mouse_filter = (
+			Control.MOUSE_FILTER_STOP if keep_open else Control.MOUSE_FILTER_IGNORE
+		)
+		_cashier_panel.modulate = Color.WHITE
+		_cashier_panel.scale = Vector2.ONE
+	if _cashier_scrim != null:
+		_cashier_scrim.visible = _cashier_open and not _cashier_is_closing
+		_cashier_scrim.modulate.a = 1.0
+	_cashier_is_closing = false
+	if _cashier_transaction_tween != null and _cashier_transaction_tween.is_valid():
+		_cashier_transaction_tween.kill()
+	_cashier_transaction_tween = null
+	if _cashier_transfer_layer != null:
+		for child: Node in _cashier_transfer_layer.get_children():
+			child.queue_free()
+	if _cashier_summary_flash != null:
+		_cashier_summary_flash.color.a = 0.0
+	if _cashier_preview != null:
+		_cashier_preview.add_theme_color_override("font_color", Color("b8ad9c"))
 
 
 func _draw() -> void:

@@ -102,3 +102,42 @@ func test_live_cabinet_entrance_tween_settles_to_its_canonical_pose() -> void:
 		panel._entrance_tween == null or not panel._entrance_tween.is_running(),
 		"The tracked entrance tween cannot keep travelling after a live toggle"
 	)
+
+
+func test_live_stake_flash_settles_without_a_frozen_enlarged_ring() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	var selector: StakeSelector = session.cabinet.panel._stake_selector
+	selector._buttons[1].pressed.emit()
+	selector._process(0.08)
+	assert_gt(selector._bet_flash, 0.0, "The preference changes during the visible ring flash")
+	assert_gt(selector._selection_time, 0.0, "The selected operation is visibly breathing")
+
+	MotionPolicy.set_reduced_motion_for_tests(true)
+
+	assert_eq(selector._bet_flash, 0.0, "No enlarged ring frame may freeze after the handoff")
+	assert_eq(selector._selection_time, 0.0)
+	assert_false(selector.is_processing())
+	for button: Button in selector._buttons:
+		assert_eq(button.modulate, Color.WHITE, "Every bet action reaches its exact rest tint")
+	selector._process(1.0)
+	assert_eq(selector._bet_flash, 0.0, "The canonical ring rest remains byte-stable")
+
+
+func test_live_credit_transaction_settles_to_one_canonical_rest_state() -> void:
+	var chip := CreditChipIcon.new()
+	add_child_autofree(chip)
+	chip.play_transaction(-25)
+	chip._process(0.08)
+	assert_gt(chip.transaction_time, 0.0, "The handoff occurs while the debit ring is visible")
+	assert_eq(chip.transaction_direction, -1)
+
+	MotionPolicy.set_reduced_motion_for_tests(true)
+
+	assert_eq(chip.idle_time, 0.0, "Ambient chip travel returns to its canonical sample")
+	assert_eq(chip.transaction_time, 0.0, "The in-flight ring cannot continue with a new duration basis")
+	assert_eq(chip.transaction_direction, 0, "No stale credit/debit accent survives at rest")
+	assert_false(chip.is_processing())
+	chip._process(1.0)
+	assert_eq(chip.transaction_time, 0.0, "The canonical transaction rest remains exact")

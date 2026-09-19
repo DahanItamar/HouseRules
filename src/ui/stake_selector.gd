@@ -80,6 +80,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 	set_process(not reduced)
 	if reduced:
 		_selection_time = 0.0
+		_bet_flash = 0.0
 		for button: Button in _buttons:
 			button.modulate = Color.WHITE
 	queue_redraw()

@@ -10,6 +10,10 @@ var particles: Node2D
 var lifetime: float = 0.42
 
 
+func _ready() -> void:
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+
+
 static func spawn(parent: Node, at: Vector2, color: Color, strong: bool = false) -> ImpactBurst:
 	var burst := ImpactBurst.new()
 	burst.name = "ImpactBurst"
@@ -80,3 +84,12 @@ func _configure_cpu(color: Color, strong: bool) -> void:
 	cpu.color = color
 	particles = cpu
 	add_child(cpu)
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if not reduced:
+		return
+	if particles != null:
+		particles.set("emitting", false)
+	visible = false
+	queue_free()

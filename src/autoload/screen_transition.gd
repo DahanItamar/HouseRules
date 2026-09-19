@@ -6,6 +6,7 @@ var _upper: ColorRect
 var _lower: ColorRect
 var _rule: ColorRect
 var _active: bool = false
+var _transition: Tween
 
 
 func _ready() -> void:
@@ -16,6 +17,12 @@ func _ready() -> void:
 	_rule = _rect("BrassSeam", Vector2(0, 269), Vector2(960, 2), Color("c8a34b"))
 	_rule.modulate.a = 0.0
 	visible = false
+	call_deferred("_connect_motion_preference")
+
+
+func _connect_motion_preference() -> void:
+	if not MotionPolicy.motion_preference_changed.is_connected(_apply_motion_preference):
+		MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 
 
 func cover() -> void:
@@ -27,7 +34,8 @@ func cover() -> void:
 	_upper.position.y = -270.0
 	_lower.position.y = 540.0
 	_rule.modulate.a = 0.0
-	var tween := create_tween().set_parallel(true)
+	_transition = create_tween().set_parallel(true)
+	var tween := _transition
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	if MotionPolicy.is_reduced():
 		# Retain a brief context-change cue without sweeping the viewport.
@@ -38,13 +46,16 @@ func cover() -> void:
 		tween.tween_property(_lower, "position:y", 270.0, 0.18)
 		tween.tween_property(_rule, "modulate:a", 1.0, 0.16)
 	await tween.finished
+	if _transition == tween:
+		_transition = null
 
 
 func reveal() -> void:
 	if DisplayServer.get_name() == "headless":
 		return
 	visible = true
-	var tween := create_tween().set_parallel(true)
+	_transition = create_tween().set_parallel(true)
+	var tween := _transition
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	if MotionPolicy.is_reduced():
 		tween.tween_property(_fade, "color:a", 0.0, MotionPolicy.finite_duration(0.12))
@@ -54,8 +65,17 @@ func reveal() -> void:
 		tween.tween_property(_lower, "position:y", 540.0, 0.24)
 		tween.tween_property(_rule, "modulate:a", 0.0, 0.12)
 	await tween.finished
+	if _transition == tween:
+		_transition = null
 	visible = false
 	_active = false
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if reduced and _transition != null and _transition.is_valid():
+		# Finish the authoritative cover/reveal destination immediately so callers
+		# awaiting the transition cannot hang on a killed tween.
+		_transition.custom_step(10.0)
 
 
 func _rect(node_name: String, at: Vector2, dimensions: Vector2, color: Color) -> ColorRect:

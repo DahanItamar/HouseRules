@@ -55,6 +55,7 @@ func _ready() -> void:
 	_leave_button.pressed.connect(confirm_leave)
 	_cancel_button.focus_neighbor_right = _leave_button.get_path()
 	_leave_button.focus_neighbor_left = _cancel_button.get_path()
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 
 
 func present(stake: int) -> void:
@@ -146,6 +147,16 @@ func _reset_visual_state() -> void:
 	_dialog.modulate = Color.WHITE
 	_dialog.position = Vector2(250, 146)
 	_dialog.scale = Vector2.ONE
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if not reduced:
+		return
+	if _transition != null and _transition.is_valid():
+		_transition.kill()
+	_transition = null
+	_reset_visual_state()
+	visible = is_open
 
 
 func handle_input(event: InputEvent) -> bool:

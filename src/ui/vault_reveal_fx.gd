@@ -30,6 +30,10 @@ static func spawn(parent: Node, at: Vector2, effect_kind: Kind) -> Node2D:
 	return effect
 
 
+func _ready() -> void:
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+
+
 func _configure() -> void:
 	lifetime = MotionPolicy.finite_duration(0.54 if kind == Kind.SAFE else 0.78)
 	if kind == Kind.SAFE:
@@ -92,6 +96,19 @@ func _configure() -> void:
 func _process(delta: float) -> void:
 	elapsed = minf(elapsed + delta, lifetime)
 	queue_redraw()
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if not reduced:
+		return
+	for particles: CPUParticles2D in [
+		shard_particles, sparkle_particles, debris_particles, smoke_particles
+	]:
+		if particles != null:
+			particles.emitting = false
+	visible = false
+	set_process(false)
+	queue_free()
 
 
 func _draw() -> void:

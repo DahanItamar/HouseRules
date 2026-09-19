@@ -35,6 +35,8 @@ func play_transaction(delta_chips: int) -> void:
 func _apply_motion_preference(reduced: bool) -> void:
 	if reduced:
 		idle_time = 0.0
+		transaction_time = 0.0
+		transaction_direction = 0
 	set_process(not reduced or transaction_time > 0.0)
 	queue_redraw()
 
