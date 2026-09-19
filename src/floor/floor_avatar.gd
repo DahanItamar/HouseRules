@@ -4,15 +4,15 @@ extends Node2D
 
 const WalkAtlas := preload("res://src/floor/character_walk_atlas.gd")
 const GUEST_TEXTURE: Texture2D = preload(
-	"res://assets/production/characters/casino_guest_walk_integer.png"
+	"res://assets/production/characters/player_walk_v2.png"
 )
 # Compatibility-facing size remains a Vector2; atlas math itself uses the
 # integer-only CharacterWalkAtlas.CELL_SIZE.
 const GUEST_CELL_SIZE := Vector2(240, 240)
 const GUEST_SCALE: float = 0.29
 ## Feet sit on the node origin, which is also the avatar's depth-sort point.
-## The atlas figure's soles are 111 px below its 240 px cell centre.
-const FOOT_OFFSET := Vector2(0, -111.0 * GUEST_SCALE)
+## The atlas figure's lowest sole is 110 px below its 240 px cell centre.
+const FOOT_OFFSET := Vector2(0, -110.0 * GUEST_SCALE)
 const WALK_CYCLE_DISTANCE: float = 64.0
 var facing := Vector2.DOWN
 var walk_phase: float = 0.0

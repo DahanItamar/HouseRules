@@ -622,3 +622,19 @@ Processing:
 
 No text, logos or brand marks are in any generated image. The door plaque is
 blank brass.
+
+## 2026-09-19 Player character and eight-direction walk cycle
+
+The old burgundy player blended into the burgundy carpet, and its atlas had no leg motion in the front and back views (the feet stayed the same width in every frame) and only one passing pose in the side view. The code also mapped the atlas columns backwards, so every side and diagonal walk faced away from the direction of travel. The column map is fixed in `src/floor/character_walk_atlas.gd` (clockwise N…NW, no mirroring). The new player is an original character in an ivory dinner jacket with a teal pocket square, chosen to read clearly on the burgundy, navy and green floors.
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Player master (front, transparent) | `fdd4d071-023e-46fb-871d-bd85ed90851a` | `gpt_image_2_5`, 2:3, high, 2k | 3 |
+| East walk sheet (4x2, 8 frames) | `919bbe86-e289-42e1-a719-b8c0126dd551` | `nano_banana_pro` (served as `nano_banana_2`), master as reference, 16:9, 2k | 2 |
+| South walk sheet (4 frames) | `1fda4226-6171-4825-9941-935cf7d7df08` | same | 2 |
+| North walk sheet (4 frames) | `1d559697-1f70-47cf-aa5f-c83d6e7100ec` | same | 2 |
+| South-east walk sheet (4 frames) | `6fb1a3c6-f714-4008-9ec0-e52778380f0e` | same | 2 |
+| North-east walk sheet (4 frames) | `485daf1c-4130-47ac-aa16-9f6487387b5f` | same | 2 |
+| Passing-pose edit of five strides (rejected: legs came back unchanged) | `ad10073b-ff91-43ae-ac64-854eb828684e`, input upload `d91ba4d9-fb13-4c58-bb21-63385e19ded7` | `nano_banana_pro` edit, 21:9, 2k | 2 |
+
+The generated sheets barely move the legs between frames, so `tools/art/build_player_walk.py` synthesises the cycle from their stride frames so that both legs move on every beat: for the front and back walks it mirrors the legs below the jacket hem to put the other foot forward and levels the feet for the passing beats; for the side and diagonal walks it slides each leg in under the hips (shoes keep their shape) for the passing beats. Passing beats rise by 1.2% of the figure height. It keys out the flat grey, scales each sheet once, puts the lowest foot on the atlas foot line and mirrors the east-side columns for the west. It writes `assets/production/characters/player_walk_v2.png` (8 x 4 cells of 240 px with a 9 px transparent gutter). Uploaded reference crops (`ref_*.png`) and the raw sheets are in `assets/source/layered_v2/walk_v2/`. In-engine proof: `tests/results/screenshots/walk_fhd/` (`walk_sheet.png`, a real-time `walk_loop.gif` from `tools/capture_walk.tscn`, and `walk_cycles.gif`, a close-up of every direction's four beats).

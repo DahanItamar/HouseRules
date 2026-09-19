@@ -5,7 +5,7 @@ const WalkAtlas := preload("res://src/floor/character_walk_atlas.gd")
 
 func test_atlas_uses_exact_integer_cells_with_transparent_gutters() -> void:
 	var texture: Texture2D = load(
-		"res://assets/production/characters/casino_guest_walk_integer.png"
+		"res://assets/production/characters/player_walk_v2.png"
 	)
 	var image := texture.get_image()
 	assert_eq(image.get_size(), WalkAtlas.CELL_SIZE * Vector2i(WalkAtlas.COLUMNS, WalkAtlas.ROWS))
@@ -41,9 +41,9 @@ func test_atlas_uses_exact_integer_cells_with_transparent_gutters() -> void:
 			assert_true(gutter_is_clear, "Every frame is isolated by transparent pixels")
 
 
-func test_authored_east_frames_are_reused_for_mirrored_west_motion() -> void:
+func test_all_direction_and_phase_regions_have_unique_pixels() -> void:
 	var texture: Texture2D = load(
-		"res://assets/production/characters/casino_guest_walk_integer.png"
+		"res://assets/production/characters/player_walk_v2.png"
 	)
 	var image := texture.get_image()
 	var hashes: Dictionary = {}
@@ -54,7 +54,7 @@ func test_authored_east_frames_are_reused_for_mirrored_west_motion() -> void:
 			assert_eq(region.size, Vector2(WalkAtlas.CELL_SIZE))
 			var frame := image.get_region(Rect2i(region))
 			hashes[hash(frame.get_data())] = true
-	assert_eq(hashes.size(), 20, "Five authored directions provide four real leg phases each")
+	assert_eq(hashes.size(), 32, "Eight authored directions provide four real leg phases each")
 
 
 func test_direction_mapping_preserves_all_eight_compass_facings() -> void:
@@ -68,13 +68,56 @@ func test_direction_mapping_preserves_all_eight_compass_facings() -> void:
 		Vector2.LEFT,
 		Vector2(-1, -1),
 	]
-	var expected_columns: Array[int] = [0, 7, 6, 5, 4, 5, 6, 7]
-	var expected_mirrors: Array[bool] = [false, false, false, false, false, true, true, true]
 	for index: int in range(facings.size()):
 		assert_eq(WalkAtlas.direction_index(facings[index]), index)
 		var region := WalkAtlas.region(index, 0)
-		assert_eq(int(region.position.x), expected_columns[index] * WalkAtlas.CELL_SIZE.x)
-		assert_eq(WalkAtlas.is_mirrored(index), expected_mirrors[index])
+		assert_eq(int(region.position.x), index * WalkAtlas.CELL_SIZE.x)
+		assert_false(WalkAtlas.is_mirrored(index), "Every facing is authored, none mirrored")
+
+
+func test_rendered_face_turns_toward_the_direction_of_travel() -> void:
+	# A walker moving screen-right must show his face right of his head's
+	# centre; moving screen-left, left of it. This catches a moonwalking map.
+	var image := TexturePixels.readable(
+		load("res://assets/production/characters/player_walk_v2.png")
+	)
+	for phase: int in range(4):
+		for index: int in [1, 2, 3]:
+			assert_gt(_face_offset(image, index, phase), 1.0, "Facing %d looks right" % index)
+		for index: int in [5, 6, 7]:
+			assert_lt(_face_offset(image, index, phase), -1.0, "Facing %d looks left" % index)
+
+
+## Mean x of skin pixels minus mean x of the head silhouette, in the top 26
+## rows of the figure as drawn for this facing (mirroring included).
+func _face_offset(image: Image, index: int, phase: int) -> float:
+	var region := Rect2i(WalkAtlas.region(index, phase))
+	var frame := image.get_region(region)
+	if WalkAtlas.is_mirrored(index):
+		frame.flip_x()
+	var top := -1
+	for y: int in range(frame.get_height()):
+		for x: int in range(frame.get_width()):
+			if frame.get_pixel(x, y).a > 0.5:
+				top = y
+				break
+		if top >= 0:
+			break
+	var head_sum := 0.0
+	var head_count := 0
+	var skin_sum := 0.0
+	var skin_count := 0
+	for y: int in range(top, top + 26):
+		for x: int in range(frame.get_width()):
+			var pixel := frame.get_pixel(x, y)
+			if pixel.a <= 0.5:
+				continue
+			head_sum += x
+			head_count += 1
+			if pixel.r8 > 150 and pixel.g8 > 100 and pixel.r8 - pixel.b8 > 40:
+				skin_sum += x
+				skin_count += 1
+	return skin_sum / maxf(skin_count, 1) - head_sum / maxf(head_count, 1)
 
 
 func test_avatar_advances_real_leg_frames_without_anchor_sliding() -> void:

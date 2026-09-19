@@ -91,18 +91,18 @@ func test_floor_avatar_uses_four_real_leg_phases_at_a_walking_pace() -> void:
 		regions[avatar._atlas.region] = true
 		avatar.set_motion(Vector2.RIGHT * 16.0)
 	assert_eq(regions.size(), 4, "Walk cycle uses four distinct contact and passing poses")
-	assert_false(avatar._sprite.flip_h, "East uses the authored side-facing frames")
+	assert_false(avatar._sprite.flip_h, "East uses the authored east-facing frames")
 	assert_eq(
 		avatar._atlas.region.position.x,
-		6 * FloorAvatar.GUEST_CELL_SIZE.x,
+		2 * FloorAvatar.GUEST_CELL_SIZE.x,
 		"Right movement uses the east atlas column"
 	)
 	avatar.set_motion(Vector2.LEFT * 5.0)
-	assert_true(avatar._sprite.flip_h, "West mirrors the matching east walk frames")
+	assert_false(avatar._sprite.flip_h, "West has its own authored frames, never a mirror")
 	assert_eq(
 		avatar._atlas.region.position.x,
 		6 * FloorAvatar.GUEST_CELL_SIZE.x,
-		"Left and right share one consistent authored walk cycle"
+		"Left movement uses the west atlas column"
 	)
 	assert_lte(FloorController.SPEED, 120.0, "Floor traversal stays at a natural walking pace")
 

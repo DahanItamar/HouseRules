@@ -1,7 +1,10 @@
 # House Rules
 
-Offline Godot casino MVP: a walkable floor, three playable cabinets on one
-session contract, integer chip wallet, contracts, cashier recovery, versioned
+Offline Godot casino MVP: a walkable Main Floor with three wings (High Roller
+Salon, VIP Penthouse, Manager's Office), seven playable cabinets on one session
+contract (Elven Court slots, Blackjack, Hexbound Vault, Ruby Roulette, Texas
+Hold'em against NPCs, Velvet Baccarat, Match Point), a hosted first-run tour,
+integer chip wallet, House Contracts, Manager's markers, versioned
 local saves, controller-first UI, high-resolution generated art, native motion
 and audio.
 
@@ -41,15 +44,17 @@ furniture zones, the player, and a transparent foreground of object fronts
 (lamps, plants, rails, the cashier cage) sorted by where each object meets the
 floor. Collision follows the visible rug and platform borders. In debug builds
 F1 on the floor opens developer locations, including the separate High Roller
-Salon and VIP Penthouse preview rooms (Escape / B or the on-screen control
-returns to the Main Floor). F2 toggles the collision overlay. Room data lives in
+Salon (Baccarat, Match Point), VIP Penthouse (Roulette, Hold'em) and Manager's
+Office rooms (Escape / B or the on-screen control returns to the Main Floor).
+F2 toggles the collision overlay. Room data lives in
 `data/floors/*.json`; see `docs/art/FLOOR-LAYOUT-FORMAT.md`.
 
 The current test build enables an unlimited `TEST BANK` without writing the test
 balance into the player's save. Set `house_rules/testing/unlimited_bankroll=false`
 in `project.godot` to exercise the normal economy. New games otherwise start with
-200 chips and no debt. Below 20 chips, the cashier can grant
-a 100-chip marker. Saves live in Godot's `user://` directory, normally
+200 chips and no debt. Below 20 chips, the Manager (through the office door
+beside the cashier) can grant a 100-chip marker; his assistant at reception keeps
+the House Contracts board and replays the first-run tour. Saves live in Godot's `user://` directory, normally
 `%APPDATA%/Godot/app_userdata/House Rules/save.json` on Windows.
 
 ## Verify
@@ -67,8 +72,9 @@ GUT 9.5.0 is vendored and pinned to commit
 Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 `gdlint src tests`. CI runs formatting, lint, GUT and one million production-math
 rounds per cabinet, and uploads JSON evidence even on failure. The current release
-gate passes **241/241 tests and 3,505 assertions**. All three fixed-seed million-round
-RTP measurements pass AC-027; see `tests/results/rtp.json`.
+gate passes **390/390 tests and 109,858 assertions** across 42 scripts. All six
+fixed-seed million-round RTP measurements pass AC-027, and Hold'em records its
+skill-dependent 100,000-hand baseline; see `tests/results/rtp.json`.
 
 Capture the floor composition (player around every furniture group, collision
 overlay, both preview rooms) with:

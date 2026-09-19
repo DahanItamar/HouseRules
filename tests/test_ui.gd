@@ -459,7 +459,7 @@ func test_reduced_motion_preference_persists_and_reloads() -> void:
 
 func test_walk_atlas_has_four_phases_per_eight_directions_and_transparency() -> void:
 	var atlas: Texture2D = load(
-		"res://assets/production/characters/casino_guest_walk_integer.png"
+		"res://assets/production/characters/player_walk_v2.png"
 	)
 	assert_not_null(atlas)
 	assert_eq(atlas.get_size(), Vector2(1920, 960))
