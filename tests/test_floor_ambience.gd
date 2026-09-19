@@ -41,6 +41,50 @@ func test_patrons_live_inside_existing_solid_furniture_zones() -> void:
 		assert_true(_floor._is_walkable(approach), "Patrons do not alter cabinet approaches")
 
 
+func test_machine_guests_flank_game_art_and_peripheral_guests_use_real_landmarks() -> void:
+	var expected_stations: Array[StringName] = [
+		&"slot_left", &"slot_right", &"blackjack_left", &"blackjack_right",
+		&"vault_left", &"vault_right", &"elevator", &"cashier", &"upper_couch",
+		&"lower_couch",
+	]
+	var stations: Dictionary = {}
+	for patron: CasinoPatron in _floor._patrons:
+		stations[patron.get_meta("station")] = patron
+	assert_eq(stations.size(), expected_stations.size())
+	for station: StringName in expected_stations:
+		assert_true(stations.has(station), "The %s landmark has its authored guest" % station)
+	for game_id: StringName in _floor.cabinet_positions:
+		var machine_x: float = (_floor.cabinet_positions[game_id] as Vector2).x
+		for side: String in ["left", "right"]:
+			var prefix := (
+				"vault"
+				if game_id == &"minefield_vault"
+				else String(game_id).trim_suffix("_classic")
+			)
+			var patron: CasinoPatron = stations[StringName("%s_%s" % [prefix, side])]
+			assert_gte(
+				absf(patron.position.x - machine_x),
+				48.0,
+				"%s guest leaves the game identity and controls readable" % game_id
+			)
+	assert_gt((stations[&"cashier"] as CasinoPatron).position.y, 400.0)
+	assert_gt((stations[&"lower_couch"] as CasinoPatron).position.y, 420.0)
+
+
+func test_back_row_scale_is_quieter_than_the_old_foreground_scale() -> void:
+	var cashier_height := 0.0
+	for patron: CasinoPatron in _floor._patrons:
+		var displayed_height := patron._sprite.texture.get_height() * patron._sprite_scale
+		if patron.position.y < 300.0:
+			assert_lte(displayed_height, 56.0)
+			assert_eq(patron.z_index, 2)
+		else:
+			if patron.get_meta("station") == &"cashier":
+				cashier_height = displayed_height
+			assert_eq(patron.z_index, 3)
+	assert_gt(cashier_height, 56.0, "The closer cashier attendant carries foreground scale")
+
+
 func test_patron_gestures_are_phase_staggered_and_have_calm_cadences() -> void:
 	var phases: Dictionary = {}
 	for patron: Node2D in _floor._patrons:
@@ -101,3 +145,11 @@ func test_camera_focus_is_bounded_and_recenters_after_leaving_machine() -> void:
 	assert_almost_eq(_floor._floor_camera.position.x, FloorController.CAMERA_CENTER.x, 0.01)
 	assert_almost_eq(_floor._floor_camera.position.y, FloorController.CAMERA_CENTER.y, 0.01)
 	assert_eq(_floor._floor_camera.zoom, Vector2.ONE)
+
+
+func test_floor_foreground_restores_depth_above_avatar_and_patrons() -> void:
+	assert_not_null(_floor._floor_foreground)
+	assert_gt(_floor._floor_foreground.z_index, _floor._avatar_visual.z_index)
+	for patron: CasinoPatron in _floor._patrons:
+		assert_gt(_floor._floor_foreground.z_index, patron.z_index)
+	assert_eq(_floor._floor_foreground.call("occluder_count"), 6)

@@ -107,7 +107,7 @@ func test_floor_avatar_uses_four_real_leg_phases_at_a_walking_pace() -> void:
 	assert_lte(FloorController.SPEED, 120.0, "Floor traversal stays at a natural walking pace")
 
 
-func test_developer_floor_tools_warp_to_every_real_floor_target() -> void:
+func test_developer_floor_tools_warp_and_open_distinct_room_views() -> void:
 	assert_true(_floor._dev_tools_enabled)
 	assert_not_null(_floor._dev_panel)
 	_floor._toggle_dev_floor_tools(true)
@@ -120,7 +120,33 @@ func test_developer_floor_tools_warp_to_every_real_floor_target() -> void:
 	assert_eq(_floor.avatar_position, FloorController.CASHIER_POSITION)
 	assert_null(_floor.nearby_definition)
 	_floor._dev_warp_to(&"high_roller")
-	assert_eq(_floor.nearby_wing, &"high_roller")
+	assert_not_null(_floor._active_dev_room)
+	assert_eq(_floor._active_dev_room.get("room_id"), &"high_roller")
+	assert_eq((_floor._active_dev_room.get("_title") as Label).text, "HIGH ROLLER SALON")
+	var high_roller_art := _floor._active_dev_room.get_node("RoomEnvironment") as TextureRect
+	assert_string_contains(high_roller_art.texture.resource_path, "high_roller_room.png")
+	assert_gte(high_roller_art.texture.get_width(), 1500)
+	assert_false(_floor._dev_open)
+	assert_eq(_floor.avatar_position, FloorController.CASHIER_POSITION)
+	_floor._dev_warp_to(&"vip")
+	assert_not_null(_floor._active_dev_room)
+	assert_eq(_floor._active_dev_room.get("room_id"), &"vip")
+	assert_eq((_floor._active_dev_room.get("_title") as Label).text, "VIP PENTHOUSE")
+	var vip_art := _floor._active_dev_room.get_node("RoomEnvironment") as TextureRect
+	assert_string_contains(vip_art.texture.resource_path, "vip_room.png")
+	assert_ne(vip_art.texture.resource_path, high_roller_art.texture.resource_path)
+	assert_gte(vip_art.texture.get_width(), 1500)
+	assert_ne((_floor._active_dev_room.get("_title") as Label).text, "HIGH ROLLER SALON")
+	_floor._exit_dev_room()
+	assert_null(_floor._active_dev_room)
+	assert_null(_floor._dev_room_layer)
+	for target: Dictionary in FloorController.DEV_TARGETS:
+		if target.id == &"high_roller" or target.id == &"vip":
+			continue
+		assert_true(
+			_floor._is_walkable(target.position),
+			"Developer destination %s must never place the avatar in furniture" % target.id
+		)
 
 
 func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:

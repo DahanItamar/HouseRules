@@ -14,39 +14,73 @@ const CASINO_PATRON_SCRIPT := preload("res://src/floor/casino_patron.gd")
 const CASHIER_WAYPOINT_SCRIPT := preload("res://src/floor/cashier_waypoint.gd")
 const MACHINE_ATTRACT_SCRIPT := preload("res://src/floor/machine_attract.gd")
 const PRACTICAL_LIGHT_RIG_SCRIPT := preload("res://src/floor/practical_light_rig.gd")
+const DEVELOPER_ROOM_VIEW_SCRIPT := preload("res://src/floor/developer_room_view.gd")
+const FLOOR_FOREGROUND_SCRIPT := preload("res://src/floor/floor_foreground.gd")
 const ANIMATED_PAIR_LABEL_SCRIPT := preload("res://src/ui/animated_pair_label.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
 const AVATAR_RADIUS: float = 15.0
 const MACHINE_ZONE_RADIUS: float = 50.0
-const MACHINE_ZONE_SCALE := Vector2(1.48, 0.96)
+const MACHINE_ZONE_SCALE := Vector2(1.25, 0.82)
 const JOIN_DIALOG_SIZE := Vector2(286, 70)
-const JOIN_DIALOG_OFFSET := Vector2(-143, 42)
+const JOIN_DIALOG_OFFSET := Vector2(-143, 40)
 const CAMERA_CENTER := Vector2(480, 270)
 const CAMERA_FOCUS_ZOOM := Vector2(1.03, 1.03)
 const CAMERA_FOCUS_OFFSET: float = 9.0
 const CASHIER_NO_DIRECTION: int = -1
 const PATRON_LAYOUT: Array[Dictionary] = [
-	{"position": Vector2(290, 150), "profile": 0, "phase": 0.0},
-	{"position": Vector2(850, 390), "profile": 1, "phase": 0.55},
-	{"position": Vector2(700, 150), "profile": 2, "phase": 1.10},
-	{"position": Vector2(830, 150), "profile": 3, "phase": 1.65},
-	{"position": Vector2(560, 150), "profile": 4, "phase": 2.20},
-	{"position": Vector2(390, 150), "profile": 5, "phase": 2.75},
-	{"position": Vector2(105, 345), "profile": 6, "phase": 0.30},
-	{"position": Vector2(105, 425), "profile": 7, "phase": 0.85},
-	{"position": Vector2(505, 145), "profile": 8, "phase": 1.40},
-	{"position": Vector2(630, 175), "profile": 9, "phase": 1.95},
+	# Back-row guests flank each cabinet instead of covering its identity art.
+	{
+		"position": Vector2(270, 202), "profile": 0, "phase": 0.0,
+		"face_left": false, "station": &"slot_left",
+	},
+	{
+		"position": Vector2(401, 202), "profile": 5, "phase": 2.75,
+		"face_left": true, "station": &"slot_right",
+	},
+	{
+		"position": Vector2(449, 200), "profile": 8, "phase": 1.40,
+		"face_left": false, "station": &"blackjack_left",
+	},
+	{
+		"position": Vector2(573, 202), "profile": 4, "phase": 2.20,
+		"face_left": true, "station": &"blackjack_right",
+	},
+	{
+		"position": Vector2(624, 196), "profile": 9, "phase": 1.95,
+		"face_left": false, "station": &"vault_left",
+	},
+	{
+		"position": Vector2(754, 202), "profile": 2, "phase": 1.10,
+		"face_left": true, "station": &"vault_right",
+	},
+	# Peripheral guests belong to actual lounge/cashier landmarks.
+	{
+		"position": Vector2(838, 198), "profile": 3, "phase": 1.65,
+		"face_left": true, "station": &"elevator",
+	},
+	{
+		"position": Vector2(716, 429), "profile": 1, "phase": 0.55,
+		"face_left": false, "station": &"cashier",
+	},
+	{
+		"position": Vector2(104, 361), "profile": 6, "phase": 0.30,
+		"face_left": true, "station": &"upper_couch",
+	},
+	{
+		"position": Vector2(91, 448), "profile": 7, "phase": 0.85,
+		"face_left": false, "station": &"lower_couch",
+	},
 ]
 const DEV_TARGETS: Array[Dictionary] = [
 	{"id": &"spawn", "label": "SPAWN", "position": Vector2(480, 408)},
-	{"id": &"slot_classic", "label": "SLOTS", "position": Vector2(334, 242)},
-	{"id": &"blackjack", "label": "BLACKJACK", "position": Vector2(504, 240)},
-	{"id": &"minefield_vault", "label": "VAULT", "position": Vector2(680, 242)},
+	{"id": &"slot_classic", "label": "SLOTS", "position": Vector2(334, 254)},
+	{"id": &"blackjack", "label": "BLACKJACK", "position": Vector2(504, 252)},
+	{"id": &"minefield_vault", "label": "VAULT", "position": Vector2(680, 254)},
 	{"id": &"cashier", "label": "CASHIER", "position": CASHIER_POSITION},
-	{"id": &"high_roller", "label": "HIGH ROLLER GATE", "position": Vector2(250, 265)},
-	{"id": &"vip", "label": "VIP GATE", "position": Vector2(790, 242)},
+	{"id": &"high_roller", "label": "HIGH ROLLER ROOM", "position": Vector2(250, 265)},
+	{"id": &"vip", "label": "VIP ROOM", "position": Vector2(790, 242)},
 ]
 static var NAV_OBSTACLES: Array[PackedVector2Array] = [
 	PackedVector2Array([Vector2(0, 0), Vector2(208, 0), Vector2(236, 72), Vector2(258, 194), Vector2(226, 244), Vector2(0, 250)]),
@@ -62,9 +96,9 @@ var avatar_position := Vector2(480, 408)
 var nearby_definition: CabinetDefinition
 var nearby_wing: StringName = &""
 var cabinet_positions: Dictionary = {
-	&"slot_classic": Vector2(334, 242),
-	&"blackjack": Vector2(504, 240),
-	&"minefield_vault": Vector2(680, 242),
+	&"slot_classic": Vector2(334, 254),
+	&"blackjack": Vector2(504, 252),
+	&"minefield_vault": Vector2(680, 254),
 }
 var definitions: Dictionary = {}
 var _prompt: Label
@@ -107,6 +141,9 @@ var _dev_layer: CanvasLayer
 var _dev_panel: Panel
 var _dev_buttons: Array[Button] = []
 var _dev_open: bool = false
+var _dev_room_layer: CanvasLayer
+var _active_dev_room: Control
+var _floor_foreground: Node2D
 
 
 func _ready() -> void:
@@ -129,8 +166,14 @@ func _ready() -> void:
 	_avatar_visual = FLOOR_AVATAR_SCRIPT.new()
 	_avatar_visual.name = "FloorAvatar"
 	_avatar_visual.position = avatar_position
+	_avatar_visual.z_index = 4
 	add_child(_avatar_visual)
+	_floor_foreground = FLOOR_FOREGROUND_SCRIPT.new() as Node2D
+	_floor_foreground.name = "FloorForeground"
+	_floor_foreground.z_index = 5
+	add_child(_floor_foreground)
 	_prompt = Label.new()
+	_prompt.z_index = 10
 	_prompt.size = Vector2(260, 72)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -268,7 +311,7 @@ func _physics_process(delta: float) -> void:
 	if MotionPolicy.allows_continuous_motion():
 		_ambient_time += delta
 	queue_redraw()
-	if not _cashier_open and not _dev_open:
+	if not _cashier_open and not _dev_open and _active_dev_room == null:
 		move_avatar(Input.get_vector("move_left", "move_right", "move_up", "move_down"), delta)
 
 
@@ -280,6 +323,11 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _dev_open:
 		if event.is_action_pressed("back"):
 			_toggle_dev_floor_tools(false)
+			get_viewport().set_input_as_handled()
+			return
+	if _active_dev_room != null:
+		if event.is_action_pressed("back"):
+			_exit_dev_room()
 			get_viewport().set_input_as_handled()
 		return
 	if (
@@ -529,8 +577,14 @@ func _build_patrons() -> void:
 		var patron := CASINO_PATRON_SCRIPT.new() as Node2D
 		patron.name = "CasinoPatron%d" % (index + 1)
 		patron.position = layout["position"] as Vector2
-		patron.z_index = 2
-		patron.call("configure", int(layout["profile"]), float(layout["phase"]))
+		patron.set_meta("station", layout["station"] as StringName)
+		patron.z_index = 2 if patron.position.y < 300.0 else 3
+		patron.call(
+			"configure",
+			int(layout["profile"]),
+			float(layout["phase"]),
+			bool(layout["face_left"])
+		)
 		add_child(patron)
 		_patrons.append(patron)
 
@@ -577,7 +631,7 @@ func _build_dev_floor_tools() -> void:
 	close.pressed.connect(_toggle_dev_floor_tools.bind(false))
 	_dev_buttons.append(close)
 	var note := Label.new()
-	note.text = "HIGH ROLLER + VIP ARE LOCKED GATE PREVIEWS"
+	note.text = "ROOM BUTTONS OPEN DISTINCT DEVELOPMENT FLOORS"
 	note.position = Vector2(16, 204)
 	note.size = Vector2(296, 16)
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -622,6 +676,11 @@ func _toggle_dev_floor_tools(force_open: Variant = null) -> void:
 
 
 func _dev_warp_to(target_id: StringName) -> void:
+	if target_id == &"high_roller" or target_id == &"vip":
+		_enter_dev_room(target_id)
+		return
+	if _active_dev_room != null:
+		_exit_dev_room()
 	for target: Dictionary in DEV_TARGETS:
 		if target.id != target_id:
 			continue
@@ -635,6 +694,31 @@ func _dev_warp_to(target_id: StringName) -> void:
 		refresh_proximity()
 		AudioService.play(&"move")
 		return
+
+
+func _enter_dev_room(room_id: StringName) -> void:
+	if _cashier_open:
+		_close_cashier()
+	if _active_dev_room != null:
+		_exit_dev_room()
+	_dev_room_layer = CanvasLayer.new()
+	_dev_room_layer.name = "DeveloperRoomLayer"
+	_dev_room_layer.layer = 8
+	add_child(_dev_room_layer)
+	_active_dev_room = DEVELOPER_ROOM_VIEW_SCRIPT.new() as Control
+	_active_dev_room.call("configure", room_id)
+	_active_dev_room.connect("exit_requested", _exit_dev_room)
+	_dev_room_layer.add_child(_active_dev_room)
+	_toggle_dev_floor_tools(false)
+	AudioService.play(&"confirm")
+
+
+func _exit_dev_room() -> void:
+	if _dev_room_layer != null:
+		_dev_room_layer.queue_free()
+	_dev_room_layer = null
+	_active_dev_room = null
+	AudioService.play(&"move")
 
 
 func _build_machine_attracts() -> void:

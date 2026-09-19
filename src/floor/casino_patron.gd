@@ -14,7 +14,7 @@ const PATRON_TEXTURES: Array[Texture2D] = [
 	preload("res://assets/production/characters/patrons/patron_auburn_champagne.png"),
 	preload("res://assets/production/characters/patrons/patron_tux_seated.png"),
 ]
-const PROFILE_HEIGHTS: Array[float] = [76.0, 74.0, 73.0, 78.0, 77.0, 78.0, 66.0, 64.0, 74.0, 66.0]
+const PROFILE_HEIGHTS: Array[float] = [54.0, 66.0, 54.0, 56.0, 56.0, 56.0, 54.0, 52.0, 54.0, 46.0]
 
 var profile_index: int = 0
 var phase_offset: float = 0.0
@@ -22,14 +22,16 @@ var gesture_interval: float = 3.0
 var gesture_strength: float = 0.0
 var elapsed: float = 0.0
 var gesture_frame: int = 0
+var faces_left: bool = false
 var _sprite: Sprite2D
 var _sprite_scale: float = 1.0
 var _sprite_rest_position := Vector2.ZERO
 
 
-func configure(profile: int, phase: float) -> void:
+func configure(profile: int, phase: float, face_left: bool = false) -> void:
 	profile_index = posmod(profile, PATRON_TEXTURES.size())
 	phase_offset = maxf(0.0, phase)
+	faces_left = face_left
 	gesture_interval = 2.6 + float(profile_index % 3) * 0.85
 	if is_node_ready():
 		_apply_profile()
@@ -73,6 +75,7 @@ func _build_authored_sprite() -> void:
 	_sprite.name = "PatronPortrait"
 	_sprite.texture = PATRON_TEXTURES[profile_index]
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_sprite.flip_h = faces_left
 	_sprite_scale = PROFILE_HEIGHTS[profile_index] / _sprite.texture.get_height()
 	_sprite.scale = Vector2.ONE * _sprite_scale
 	_sprite_rest_position = Vector2(0, 8.0 - PROFILE_HEIGHTS[profile_index] * 0.5)
@@ -115,6 +118,7 @@ func _apply_profile() -> void:
 	if _sprite == null:
 		return
 	_sprite.texture = PATRON_TEXTURES[profile_index]
+	_sprite.flip_h = faces_left
 	_sprite_scale = PROFILE_HEIGHTS[profile_index] / _sprite.texture.get_height()
 	_sprite_rest_position = Vector2(0, 8.0 - PROFILE_HEIGHTS[profile_index] * 0.5)
 	_sprite.position = _sprite_rest_position
