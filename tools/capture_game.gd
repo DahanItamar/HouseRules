@@ -26,6 +26,7 @@ func _capture() -> void:
 	scene_root.add_child(main)
 	saves.new_game(20260918)
 	main._refresh_hud()
+	await get_tree().create_timer(0.55).timeout
 	await _snapshot("01_menu")
 	main._start_playing()
 	await get_tree().create_timer(0.55).timeout
