@@ -1,7 +1,7 @@
 {
   "id": "vip",
   "label": "VIP PENTHOUSE",
-  "preview_only": true,
+  "preview_only": false,
   "background": "res://assets/production/environments/vip_background_v2.png",
   "foreground": "res://assets/production/environments/vip_foreground_v2.png",
   "collision_reference": "res://assets/production/environments/vip_collision_v2.png",
@@ -44,8 +44,14 @@
   "anchors": {
     "exit": [480, 380],
     "bar": [884, 220],
-    "roulette_view": [480, 240]
+    "roulette_view": [480, 240],
+    "roulette": [480, 246],
+    "poker": [196, 200]
   },
   "patrons": [],
-  "preview_actors": []
+  "preview_actors": [],
+  "cabinets": [
+    "roulette",
+    "poker"
+  ]
 }

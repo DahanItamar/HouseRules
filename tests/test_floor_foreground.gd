@@ -37,7 +37,7 @@ func test_pieces_sample_the_foreground_exactly_where_they_are_drawn() -> void:
 func test_foreground_layers_are_transparent_except_for_object_fronts() -> void:
 	for room_id: StringName in FloorController.ROOM_IDS:
 		var layout := FloorRoomLayout.load_room(room_id)
-		var image := layout.foreground().get_image()
+		var image := TexturePixels.readable(layout.foreground())
 		assert_eq(image.get_size(), Vector2i(3840, 2160))
 		assert_ne(image.detect_alpha(), Image.ALPHA_NONE)
 		for corner: Vector2i in [

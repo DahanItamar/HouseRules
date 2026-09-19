@@ -131,13 +131,13 @@ func test_developer_floor_tools_warp_and_switch_whole_rooms() -> void:
 	for room_id: StringName in [FloorController.HIGH_ROLLER, FloorController.VIP]:
 		_floor._dev_warp_to(room_id)
 		assert_eq(_floor.room.id, room_id, "The whole environment switches")
-		assert_true(_floor.room.preview_only)
 		assert_string_contains(_floor.room.background_path, "%s_background_v2.png" % room_id)
 		assert_eq(_floor.avatar_position, _floor.room.spawn)
 		assert_same(_floor._avatar_visual, avatar, "Room switching never creates a second player")
 		assert_true(_floor._room_layer.visible, "Preview rooms say so and offer a way back")
-		assert_eq(_floor._room_status.text, tr("ROOM_PREVIEW_ONLY"))
-		assert_null(_floor.nearby_definition, "Preview rooms expose no playable controls")
+		var expected_status := tr("ROOM_PREVIEW_ONLY") if _floor.is_preview_room() else ""
+		assert_eq(_floor._room_status.text, expected_status, "Only table-less rooms say preview")
+		assert_null(_floor.nearby_definition, "Nothing is joined just by arriving")
 		assert_true(_floor._is_walkable(_floor.room.spawn))
 		_floor._room_back.pressed.emit()
 		assert_eq(_floor.room.id, FloorController.MAIN_FLOOR)

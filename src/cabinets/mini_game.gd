@@ -174,8 +174,19 @@ func handle_common_input(event: InputEvent) -> bool:
 	return false
 
 
+## Games with their own table presentation return a CabinetPanel subclass.
+func _create_panel() -> CabinetPanel:
+	return CabinetPanel.new()
+
+
+## Games whose result waits for an on-screen reveal (cards, tiles, a wheel)
+## hold settlement until the panel reports that the reveal finished.
+func _gates_result_on_reveal() -> bool:
+	return context.definition.id in [&"blackjack", &"minefield_vault"]
+
+
 func _ready() -> void:
-	panel = CabinetPanel.new()
+	panel = _create_panel()
 	panel.cabinet = self
 	add_child(panel)
 	exit_confirmation = CabinetExitConfirmation.new()
@@ -192,7 +203,7 @@ func _finish(result: RoundResult) -> void:
 	if (
 		result.outcome != RoundResult.Outcome.ABANDONED
 		and panel != null
-		and context.definition.id in [&"blackjack", &"minefield_vault"]
+		and _gates_result_on_reveal()
 	):
 		is_result_pending = true
 		_pending_result = result

@@ -26,6 +26,8 @@ var solids: Array[Dictionary] = []
 ## Each entry: {"name": String, "baseline": float, "points": PackedVector2Array}.
 var occluders: Array[Dictionary] = []
 var anchors: Dictionary = {}
+## Playable cabinet ids; each has an anchor of the same name.
+var cabinets: Array[StringName] = []
 
 var _warped_bounds := PackedVector2Array()
 var _warped_blockers: Array[PackedVector2Array] = []
@@ -68,6 +70,8 @@ func _parse(data: Dictionary) -> void:
 				}
 			)
 		)
+	for cabinet_id: String in data.get("cabinets", []):
+		cabinets.append(StringName(cabinet_id))
 	var raw_anchors: Dictionary = data.get("anchors", {})
 	for key: String in raw_anchors:
 		anchors[StringName(key)] = _vector(raw_anchors[key])

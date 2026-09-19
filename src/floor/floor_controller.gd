@@ -21,6 +21,12 @@ const CASHIER_WAYPOINT_SCRIPT := preload("res://src/floor/cashier_waypoint.gd")
 const PRACTICAL_LIGHT_RIG_SCRIPT := preload("res://src/floor/practical_light_rig.gd")
 const FLOOR_FOREGROUND_SCRIPT := preload("res://src/floor/floor_foreground.gd")
 const COLLISION_OVERLAY_SCRIPT := preload("res://src/floor/floor_collision_overlay.gd")
+const PLAQUE_FRAME: Texture2D = preload("res://assets/production/ui/plaque_frame.png")
+const PLAQUE_ORNAMENT: Texture2D = preload("res://assets/production/ui/plaque_ornament.png")
+## The plaque master is drawn at quarter scale so its brass stays crisp at 4K.
+const PLAQUE_SCALE: float = 0.25
+const PLAQUE_MARGIN: int = 64
+const PLAQUE_PADDING := Vector2(18, 12)
 const ANIMATED_PAIR_LABEL_SCRIPT := preload("res://src/ui/animated_pair_label.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
@@ -54,14 +60,13 @@ var avatar_position := Vector2(480, 408)
 var nearby_definition: CabinetDefinition
 var nearby_wing: StringName = &""
 var nearby_exit: bool = false
-var cabinet_positions: Dictionary = {
-	&"slot_classic": Vector2(324, 246),
-	&"blackjack": Vector2(493, 246),
-	&"minefield_vault": Vector2(671, 246),
-}
+## Playable cabinets in the current room, by id, at their join anchors.
+var cabinet_positions: Dictionary = {}
 var definitions: Dictionary = {}
 var _background: Texture2D
 var _prompt: Label
+var _prompt_plaque: NinePatchRect
+var _prompt_ornament: Sprite2D
 var _cashier_open: bool = false
 var _avatar_visual: Node2D
 var _depth_layer: Node2D
@@ -113,16 +118,7 @@ func _ready() -> void:
 	room = FloorRoomLayout.load_room(MAIN_FLOOR)
 	_prefetch_rooms()
 	_background = room.background()
-	for id: StringName in cabinet_positions:
-		cabinet_positions[id] = room.anchor(id)
-		var definition: CabinetDefinition = load("res://data/cabinets/%s.tres" % id)
-		assert(
-			definition != null and definition.is_valid_definition(),
-			"Invalid cabinet resource: %s" % id
-		)
-		assert(definition.id == id, "Cabinet resource ID must match its registry key: %s" % id)
-		assert(not definitions.has(definition.id), "Duplicate cabinet ID: %s" % definition.id)
-		definitions[id] = definition
+	_load_room_cabinets()
 	_build_camera()
 	_build_dust()
 	_build_practical_lights()
@@ -146,8 +142,11 @@ func _ready() -> void:
 	_prompt.size = Vector2(260, 72)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_prompt.add_theme_font_size_override("font_size", Typography.CRITICAL)
+	_prompt.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_prompt.add_theme_font_size_override("font_size", 17)
+	_prompt.add_theme_constant_override("line_spacing", 2)
 	_prompt.add_theme_color_override("font_color", IVORY)
+	_build_prompt_plaque()
 	add_child(_prompt)
 	_build_cashier_waypoint()
 	_build_cashier_menu()
@@ -196,6 +195,31 @@ func _prefetch_rooms() -> void:
 				ResourceLoader.load_threaded_request(path)
 
 
+## Loads the current room's playable cabinets. A cabinet whose game has not
+## been built yet is skipped, so rooms can list planned tables safely.
+func _load_room_cabinets() -> void:
+	cabinet_positions.clear()
+	for id: StringName in room.cabinets:
+		var path := "res://data/cabinets/%s.tres" % id
+		if not ResourceLoader.exists(path) or not CabinetSceneRegistry.has_scene(id):
+			continue
+		var definition: CabinetDefinition = definitions.get(id, load(path))
+		assert(definition != null and definition.is_valid_definition(), "Invalid cabinet: %s" % id)
+		assert(definition.id == id, "Cabinet resource ID must match its registry key: %s" % id)
+		definitions[id] = definition
+		cabinet_positions[id] = room.anchor(id)
+
+
+## A preview room has no playable table yet and says so.
+func is_preview_room() -> bool:
+	return room != null and room.preview_only and cabinet_positions.is_empty()
+
+
+## Wings open once the player has wagered enough, and always in the test bank.
+func is_wing_unlocked(wing_id: StringName) -> bool:
+	return Wallet.test_mode_enabled or Economy.lifetime_wagered >= int(WING_THRESHOLDS[wing_id])
+
+
 func is_main_floor() -> bool:
 	return room != null and room.id == MAIN_FLOOR
 
@@ -212,6 +236,7 @@ func enter_room(room_id: StringName) -> void:
 	previous_room_id = from_id
 	_background = room.background()
 	_floor_foreground.call("configure", room)
+	_load_room_cabinets()
 	if room_id == MAIN_FLOOR:
 		avatar_position = WING_POSITIONS.get(from_id, room.return_point)
 	else:
@@ -237,21 +262,20 @@ func refresh_proximity() -> void:
 	nearby_definition = null
 	nearby_wing = &""
 	nearby_exit = false
-	if is_main_floor():
-		var nearest_score: float = INF
-		for id: StringName in cabinet_positions:
-			var score := _machine_proximity_score(avatar_position, cabinet_positions[id])
-			if score <= 1.0 and score <= nearest_score:
-				nearest_score = score
-				nearby_definition = definitions.get(id)
-		if nearby_definition == null:
-			var nearest_wing_distance: float = INTERACTION_RADIUS
-			for id: StringName in WING_POSITIONS:
-				var distance: float = avatar_position.distance_to(WING_POSITIONS[id])
-				if distance <= nearest_wing_distance:
-					nearest_wing_distance = distance
-					nearby_wing = id
-	elif room != null and room.anchors.has(EXIT_ANCHOR):
+	var nearest_score: float = INF
+	for id: StringName in cabinet_positions:
+		var score := _machine_proximity_score(avatar_position, cabinet_positions[id])
+		if score <= 1.0 and score <= nearest_score:
+			nearest_score = score
+			nearby_definition = definitions.get(id)
+	if is_main_floor() and nearby_definition == null:
+		var nearest_wing_distance: float = INTERACTION_RADIUS
+		for id: StringName in WING_POSITIONS:
+			var distance: float = avatar_position.distance_to(WING_POSITIONS[id])
+			if distance <= nearest_wing_distance:
+				nearest_wing_distance = distance
+				nearby_wing = id
+	elif not is_main_floor() and nearby_definition == null and room.anchors.has(EXIT_ANCHOR):
 		nearby_exit = avatar_position.distance_to(room.anchor(EXIT_ANCHOR)) <= INTERACTION_RADIUS
 	var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
 	_update_camera_focus(current_game)
@@ -277,6 +301,9 @@ func interact() -> bool:
 		AudioService.play(&"confirm")
 		return true
 	if nearby_wing != &"":
+		if is_wing_unlocked(nearby_wing):
+			enter_room(nearby_wing)
+			return true
 		_update_prompt()
 		return false
 	if is_main_floor() and avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
@@ -327,8 +354,14 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 		return
 	if not is_main_floor():
-		if event.is_action_pressed("back") or (event.is_action_pressed("interact") and nearby_exit):
-			return_to_main_floor()
+		if event.is_action_pressed("back"):
+			if nearby_definition != null and _dismissed_game != nearby_definition.id:
+				dismiss_game_prompt()
+			else:
+				return_to_main_floor()
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("interact"):
+			interact()
 			get_viewport().set_input_as_handled()
 		return
 	if (
@@ -380,7 +413,7 @@ func _update_prompt() -> void:
 			tr("CASHIER_ACTIONS")
 			% [InputRouter.glyph("move"), InputRouter.glyph("interact"), InputRouter.glyph("back")]
 		)
-	elif not is_main_floor():
+	elif not is_main_floor() and nearby_definition == null:
 		_prompt.position = Vector2(330, 482)
 		_prompt.size = Vector2(300, 34)
 		if nearby_exit:
@@ -414,10 +447,16 @@ func _update_prompt() -> void:
 		var wing_at: Vector2 = WING_POSITIONS[nearby_wing]
 		_prompt.position = Vector2(clampf(wing_at.x - 115.0, 24.0, 706.0), wing_at.y + 40.0)
 		_prompt.size = Vector2(230, 72)
-		_prompt.text = (
-			tr("WING_LOCKED")
-			% [tr("WING_" + String(nearby_wing).to_upper()), WING_THRESHOLDS[nearby_wing]]
-		)
+		if is_wing_unlocked(nearby_wing):
+			_prompt.text = (
+				tr("WING_ENTER")
+				% [InputRouter.glyph("interact"), tr("WING_" + String(nearby_wing).to_upper())]
+			)
+		else:
+			_prompt.text = (
+				tr("WING_LOCKED")
+				% [tr("WING_" + String(nearby_wing).to_upper()), WING_THRESHOLDS[nearby_wing]]
+			)
 	elif avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_prompt.position = Vector2(350, 472)
 		_prompt.size = Vector2(260, 44)
@@ -436,6 +475,46 @@ func _update_prompt() -> void:
 		_prompt.text = previous_text
 		_animate_prompt_hide()
 	queue_redraw()
+
+
+func _build_prompt_plaque() -> void:
+	_prompt_plaque = NinePatchRect.new()
+	_prompt_plaque.name = "PromptPlaque"
+	_prompt_plaque.texture = PLAQUE_FRAME
+	_prompt_plaque.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	for side: Side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		_prompt_plaque.set_patch_margin(side, PLAQUE_MARGIN)
+	_prompt_plaque.scale = Vector2.ONE * PLAQUE_SCALE
+	_prompt_plaque.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_prompt_plaque.z_index = 9
+	_prompt_plaque.visible = false
+	add_child(_prompt_plaque)
+	_prompt_ornament = Sprite2D.new()
+	_prompt_ornament.name = "PromptOrnament"
+	_prompt_ornament.texture = PLAQUE_ORNAMENT
+	_prompt_ornament.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_prompt_ornament.scale = Vector2.ONE * PLAQUE_SCALE * 1.6
+	_prompt_ornament.z_index = 9
+	_prompt_ornament.visible = false
+	add_child(_prompt_ornament)
+
+
+## The brass plaque tracks the prompt's rectangle and fade every frame.
+func _sync_prompt_plaque() -> void:
+	if _prompt_plaque == null:
+		return
+	var shown := _prompt != null and _prompt.visible and not _prompt.text.is_empty()
+	_prompt_plaque.visible = shown
+	var join_dialog := nearby_definition != null and _dismissed_game != nearby_definition.id
+	_prompt_ornament.visible = shown and join_dialog
+	if not shown:
+		return
+	var rect := Rect2(_prompt.position - PLAQUE_PADDING, _prompt.size + PLAQUE_PADDING * 2.0)
+	_prompt_plaque.position = rect.position
+	_prompt_plaque.size = rect.size / PLAQUE_SCALE
+	_prompt_plaque.modulate.a = _prompt.modulate.a
+	_prompt_ornament.position = Vector2(rect.get_center().x, rect.position.y + 1.0)
+	_prompt_ornament.modulate.a = _prompt.modulate.a
 
 
 func _join_dialog_position(game_id: StringName) -> Vector2:
@@ -598,7 +677,7 @@ func _sync_overlay_layers() -> void:
 		if not floor_visible and _dev_open:
 			_toggle_dev_floor_tools(false)
 	if _room_layer != null:
-		_room_layer.visible = floor_visible and room != null and room.preview_only
+		_room_layer.visible = floor_visible and room != null and not is_main_floor()
 
 
 func _build_room_hud() -> void:
@@ -640,7 +719,7 @@ func _build_room_hud() -> void:
 func _refresh_room_hud() -> void:
 	if _room_layer == null:
 		return
-	_room_status.text = tr("ROOM_PREVIEW_ONLY") if room.preview_only else ""
+	_room_status.text = tr("ROOM_PREVIEW_ONLY") if is_preview_room() else ""
 	_room_back.text = tr("ROOM_BACK_BUTTON") % InputRouter.glyph("back")
 	_sync_overlay_layers()
 
@@ -865,35 +944,14 @@ func _draw() -> void:
 	draw_rect(Rect2(0, 0, 960, 540), Color("0c0b0d24"))
 	# A flat band behind the top HUD keeps its text readable over the back wall.
 	draw_rect(Rect2(0, 0, 960, HUD_BAND_HEIGHT), Color("0c0b0d9c"))
-	if is_main_floor():
-		for id: StringName in cabinet_positions:
-			var at: Vector2 = cabinet_positions[id]
-			var is_near: bool = nearby_definition != null and nearby_definition.id == id
-			var cadence := 1.15 if is_near else 3.2
-			var phase := (
-				_ambient_time * TAU / cadence + float(cabinet_positions.keys().find(id)) * 1.9
-			)
-			var pulse := (
-				(sin(phase) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
-			)
-			_draw_machine_zone(id, at, is_near, pulse)
-	if _prompt != null and _prompt.visible:
-		var prompt_rect := Rect2(_prompt.position - Vector2(12, 8), _prompt.size + Vector2(24, 16))
-		var join_dialog := nearby_definition != null and _dismissed_game != nearby_definition.id
-		var prompt_alpha := _prompt.modulate.a
-		if join_dialog:
-			draw_rect(
-				Rect2(prompt_rect.position + Vector2(6, 7), prompt_rect.size),
-				Color("05040570") * Color(1, 1, 1, prompt_alpha)
-			)
-		var surface := Color("17161ab8") if join_dialog else Color("17161ae8")
-		var border := (
-			_machine_accent(nearby_definition.id)
-			if join_dialog and nearby_definition != null
-			else Color("6e5225")
-		)
-		draw_rect(prompt_rect, surface * Color(1, 1, 1, prompt_alpha))
-		draw_rect(prompt_rect, border * Color(1, 1, 1, prompt_alpha), false, 2.0)
+	for id: StringName in cabinet_positions:
+		var at: Vector2 = cabinet_positions[id]
+		var is_near: bool = nearby_definition != null and nearby_definition.id == id
+		var cadence := 1.15 if is_near else 3.2
+		var phase := _ambient_time * TAU / cadence + float(cabinet_positions.keys().find(id)) * 1.9
+		var pulse := (sin(phase) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
+		_draw_machine_zone(id, at, is_near, pulse)
+	_sync_prompt_plaque()
 
 
 func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float) -> void:
@@ -901,11 +959,18 @@ func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float
 	# on it does a thin brass line trace its rim, so the floor stays clean.
 	if not is_near or _dismissed_game == id:
 		return
-	var half := Vector2(MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.x, MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.y)
-	var rim := PackedVector2Array([
-		at + Vector2(-half.x, 0), at + Vector2(0, -half.y),
-		at + Vector2(half.x, 0), at + Vector2(0, half.y), at + Vector2(-half.x, 0),
-	])
+	var half := Vector2(
+		MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.x, MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.y
+	)
+	var rim := PackedVector2Array(
+		[
+			at + Vector2(-half.x, 0),
+			at + Vector2(0, -half.y),
+			at + Vector2(half.x, 0),
+			at + Vector2(0, half.y),
+			at + Vector2(-half.x, 0),
+		]
+	)
 	draw_polyline(rim, Color(INLAY_HIGHLIGHT, 0.55 + pulse * 0.35), 2.0, true)
 
 

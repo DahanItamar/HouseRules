@@ -56,5 +56,10 @@
     "cashier": [668, 402],
     "high_roller": [150, 274],
     "vip": [862, 216]
-  }
+  },
+  "cabinets": [
+    "slot_classic",
+    "blackjack",
+    "minefield_vault"
+  ]
 }

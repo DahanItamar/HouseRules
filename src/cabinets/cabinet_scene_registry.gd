@@ -6,11 +6,13 @@ const SCENE_PATHS: Dictionary = {
 	&"slot_classic": "res://src/cabinets/slot_classic/slot_classic.tscn",
 	&"blackjack": "res://src/cabinets/blackjack/blackjack.tscn",
 	&"minefield_vault": "res://src/cabinets/minefield_vault/minefield_vault.tscn",
+	&"roulette": "res://src/cabinets/roulette/roulette.tscn",
+	&"poker": "res://src/cabinets/poker/poker.tscn",
 }
 
 
 static func has_scene(cabinet_id: StringName) -> bool:
-	return SCENE_PATHS.has(cabinet_id)
+	return SCENE_PATHS.has(cabinet_id) and ResourceLoader.exists(SCENE_PATHS[cabinet_id])
 
 
 static func instantiate(cabinet_id: StringName) -> MiniGame:
