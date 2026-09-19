@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CabinetDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/cabinet_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"match_point"
+name_key = "CABINET_MATCH_POINT_NAME"
+tier = 1
+min_bet = 10
+max_bet = 200
+target_rtp = 0.96
+volatility = 2

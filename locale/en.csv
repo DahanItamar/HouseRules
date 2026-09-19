@@ -180,3 +180,320 @@ VAULT_WITCHER_TITLE,HEXBOUND VAULT
 WING_ENTER,[%s] Enter the %s
 DEV_LOCATIONS_TITLE,DEV LOCATIONS  ·  F1 CLOSE
 DEV_LOCATIONS_NOTE,ROOM BUTTONS SWITCH THE WHOLE ENVIRONMENT · DEBUG BUILDS ONLY
+CABINET_ROULETTE_NAME,RUBY ROULETTE
+ROULETTE_THEME_TITLE,RUBY ROULETTE
+ROULETTE_PLACE_BETS,Place your bets · single zero
+ROULETTE_NO_MORE_BETS,No more bets
+ROULETTE_RESULT_WIN,%s · returned %d on %d
+ROULETTE_RESULT_LOSS,%s · %d swept
+ROULETTE_LIMIT_REACHED,Table limit or bankroll reached
+ROULETTE_REBET_UNAVAILABLE,Nothing to rebet within your limit
+ROULETTE_PLACE_FIRST,Place a chip before you spin
+ROULETTE_CLEAR,CLEAR
+ROULETTE_REBET,REBET
+ROULETTE_SPIN,SPIN
+ROULETTE_BET_TOTAL,BET %d / %d
+ROULETTE_PAYS,%d TO 1
+ROULETTE_DECK_HINT,[%s] Place  [%s] Take back  [%s] Spin
+ROULETTE_HISTORY,RECENT
+ROULETTE_WHEEL_READY,WHEEL READY
+ROULETTE_SINGLE_ZERO,37 POCKETS · ONE ZERO
+ROULETTE_ZERO_DETAIL,ZERO · OUTSIDE BETS LOSE
+ROULETTE_COLOR_RED,RED
+ROULETTE_COLOR_BLACK,BLACK
+ROULETTE_COLOR_GREEN,ZERO
+ROULETTE_KIND_STRAIGHT,STRAIGHT %s
+ROULETTE_KIND_SPLIT,SPLIT %s
+ROULETTE_KIND_STREET,STREET %s
+ROULETTE_KIND_CORNER,CORNER %s
+ROULETTE_KIND_SIX_LINE,SIX LINE %d-%d
+ROULETTE_NAME_DOZEN_1,1ST DOZEN
+ROULETTE_NAME_DOZEN_2,2ND DOZEN
+ROULETTE_NAME_DOZEN_3,3RD DOZEN
+ROULETTE_NAME_COLUMN_1,COLUMN 1-34
+ROULETTE_NAME_COLUMN_2,COLUMN 2-35
+ROULETTE_NAME_COLUMN_3,COLUMN 3-36
+ROULETTE_NAME_RED,RED
+ROULETTE_NAME_BLACK,BLACK
+ROULETTE_NAME_ODD,ODD
+ROULETTE_NAME_EVEN,EVEN
+ROULETTE_NAME_LOW,LOW 1-18
+ROULETTE_NAME_HIGH,HIGH 19-36
+ROULETTE_SPOT_DOZEN_1,1st 12
+ROULETTE_SPOT_DOZEN_2,2nd 12
+ROULETTE_SPOT_DOZEN_3,3rd 12
+ROULETTE_SPOT_COLUMN_1,2 to 1
+ROULETTE_SPOT_COLUMN_2,2 to 1
+ROULETTE_SPOT_COLUMN_3,2 to 1
+ROULETTE_SPOT_LOW,1-18
+ROULETTE_SPOT_EVEN,EVEN
+ROULETTE_SPOT_ODD,ODD
+ROULETTE_SPOT_HIGH,19-36
+ROULETTE_GUEST_SYSTEM,MR. OKADA
+ROULETTE_GUEST_DREAMER,DESMOND
+ROULETTE_GUEST_REGULAR,SIGNORA LUCIA
+ROULETTE_TAG_SYSTEM,SYSTEM BETTOR
+ROULETTE_TAG_DREAMER,DREAMER
+ROULETTE_TAG_REGULAR,REGULAR
+ROULETTE_LINE_SYSTEM_BASE,"“One unit, %d. The system holds.”"
+ROULETTE_LINE_SYSTEM_DOUBLE,“Doubling to %d. Patience.”
+ROULETTE_LINE_SYSTEM_WIN,“As calculated.”
+ROULETTE_LINE_SYSTEM_LOSS,“A minor variance.”
+ROULETTE_LINE_SYSTEM_ZERO,“Zero. Noted in the book.”
+ROULETTE_LINE_DREAMER_BET,“All on %d! Feel it?”
+ROULETTE_LINE_DREAMER_BET_ALT,“%d again. It's due.”
+ROULETTE_LINE_DREAMER_WIN,“SEVENTEEN! I told you!”
+ROULETTE_LINE_DREAMER_LONGSHOT,“A long shot lands! Again!”
+ROULETTE_LINE_DREAMER_LOSS,“Next one. Definitely.”
+ROULETTE_LINE_REGULAR_BET,"“Nonna's birthday: 7, 14, 23.”"
+ROULETTE_LINE_REGULAR_WIN,"“Grazie, Nonna!”"
+ROULETTE_LINE_REGULAR_LOSS,"(sigh) “Not today, cara.”"
+ROULETTE_LINE_REGULAR_ZERO,“Zero? Madonna mia…”
+HELP_ROULETTE_RULES,"European wheel: 37 pockets, one zero.
+
+Place chips on numbers, lines, corners or outside bets, then spin. Straight pays 35 to 1, split 17, street 11, corner 8, six line 5, dozen or column 2, red/black, odd/even, low/high 1.
+
+Zero loses outside bets. Chips you have not spun return when you leave."
+HELP_ROULETTE_CONTROLS,"%s  Move on the layout
+
+[%s] Place chip
+
+[%s] Take chip back
+
+[%s] Spin
+
+Chips, Clear and Rebet sit below the layout
+
+[%s] Leave"
+CABINET_POKER_NAME,TEXAS HOLD'EM
+POKER_NPC_SHARK,THE SHARK
+POKER_NPC_ROCK,THE ROCK
+POKER_NPC_MANIAC,THE MANIAC
+POKER_NPC_CALLING_STATION,CALLING STATION
+POKER_NPC_TOURIST,THE TOURIST
+POKER_YOU,YOU
+POKER_YOU_AT,YOU · %s
+POKER_POSITION_BUTTON,DEALER
+POKER_POSITION_SMALL_BLIND,SMALL BLIND
+POKER_POSITION_BIG_BLIND,BIG BLIND
+POKER_READY,"Pick the stakes, then deal in"
+POKER_STACK_CAPTION,STACK
+POKER_DEALER_GLYPH,D
+POKER_POT,POT %d
+POKER_STAKES_CAPTION,BLINDS %d/%d · LIMIT %d/%d
+POKER_THINKING,%s is thinking
+POKER_STATUS_ACTION,%s · %s
+POKER_STATUS_DEAL,Cards are in the air
+POKER_STATUS_SHOWDOWN,Showdown
+POKER_STATUS_WINS,%s wins %d
+POKER_STATUS_SPLIT,Split pot · %s · %d
+POKER_STREET_FLOP,The flop
+POKER_STREET_TURN,The turn
+POKER_STREET_RIVER,The river
+POKER_YOUR_TURN_CALL,Your action · %d to call
+POKER_YOUR_TURN_CHECK,Your action · check or bet
+POKER_ACT_SMALL_BLIND,SMALL BLIND %d
+POKER_ACT_BIG_BLIND,BIG BLIND %d
+POKER_ACT_FOLD,FOLD
+POKER_ACT_CHECK,CHECK
+POKER_ACT_CALL,CALL %d
+POKER_ACT_BET,BET %d
+POKER_ACT_RAISE,RAISE %d
+POKER_ACT_ALL_IN,ALL IN %d
+POKER_BUTTON_DEAL,DEAL IN
+POKER_BUTTON_FOLD,FOLD
+POKER_BUTTON_CHECK,CHECK
+POKER_BUTTON_CALL,CALL %d
+POKER_BUTTON_ALL_IN,ALL IN %d
+POKER_BUTTON_BET,BET %d
+POKER_BUTTON_RAISE,RAISE %d
+POKER_BUTTON_RAISE_IDLE,BET / RAISE
+POKER_INFO_TO_CALL,TO CALL
+POKER_INFO_POT,POT
+POKER_INFO_LIMIT,LIMIT
+POKER_INFO_IN_POT,YOUR CHIPS IN
+POKER_RESULT_WIN,YOU WIN %d
+POKER_RESULT_WIN_HAND,YOU WIN %d · %s
+POKER_RESULT_SPLIT,SPLIT POT · %d BACK
+POKER_RESULT_LOSS,POT LOST · %d
+POKER_RESULT_LOSS_TO,%s WINS · %s
+POKER_RESULT_FOLDED,FOLDED · %d IN THE POT
+POKER_RESULT_ABANDONED,HAND FORFEITED · %d
+POKER_RESULT_RAKE, · RAKE %d
+POKER_HAND_HIGH_CARD,HIGH CARD
+POKER_HAND_PAIR,PAIR
+POKER_HAND_TWO_PAIR,TWO PAIR
+POKER_HAND_TRIPS,THREE OF A KIND
+POKER_HAND_STRAIGHT,STRAIGHT
+POKER_HAND_FLUSH,FLUSH
+POKER_HAND_FULL_HOUSE,FULL HOUSE
+POKER_HAND_QUADS,FOUR OF A KIND
+POKER_HAND_STRAIGHT_FLUSH,STRAIGHT FLUSH
+HELP_POKER_RULES,"Best five cards from your two plus five shared cards wins.
+
+Fixed limit: bets are the stake before the turn, twice it after. Blinds are half and one stake. Four bets per street at most.
+
+Rake: 10% of pots you win, at most three stakes, none if no flop."
+HELP_POKER_CONTROLS,"[%s] Deal / Check / Call
+
+[%s] Fold
+
+[%s] Bet / Raise
+
+%s  Change stakes
+
+[%s] Leave"
+POKER_LIMIT_VALUE,%d/%d
+POKER_BUTTON_CALL_IDLE,CHECK / CALL
+POKER_STATUS_BLINDS,Blinds are in
+POKER_RESULT_FOLDED_FREE,FOLDED · NO CHIPS LOST
+CABINET_MATCH_POINT_NAME,MATCH POINT
+MATCH_POINT_THEME_TITLE,MATCH POINT
+MATCH_POINT_SERVE,SERVE
+MATCH_POINT_BET_LINE,BET %d · %s
+MATCH_POINT_TOP_PRIZE,TOP COURT PAYS %d
+MATCH_POINT_DECK_HINT,[%s] Serve  [%s] Change risk
+MATCH_POINT_LAST_DROP,LAST DROP
+MATCH_POINT_HISTORY,RECENT DROPS
+MATCH_POINT_READY,NEW SET
+MATCH_POINT_READY_DETAIL,12 rows · 13 courts
+MATCH_POINT_RESULT_WIN,WINNER
+MATCH_POINT_RESULT_OUT,OUT
+MATCH_POINT_RESULT_LET,LET
+MATCH_POINT_RISK,RISK
+MATCH_POINT_RISK_LOW,LOW
+MATCH_POINT_RISK_MEDIUM,MEDIUM
+MATCH_POINT_RISK_HIGH,HIGH
+MATCH_POINT_RISK_RANGE,CENTRE %s×  ·  EDGE %s×
+MATCH_POINT_IN_PLAY,Ball in play
+MATCH_POINT_LANDED,In the %s× court
+MATCH_POINT_RESULT_STATUS,%s× · returned %d on %d
+MATCH_POINT_READY_STATUS,Pick a stake and risk · serve
+MATCH_POINT_NEED_STAKE,No stake your credits can cover
+MATCH_POINT_RETURN_LINE,Court %d · paid %d
+HELP_MATCH_POINT_RULES,"Serve a ball into the board. It hops left or right off one post in each of 12 rows and lands in one of 13 courts, which pays its multiplier times your stake.
+
+Centre courts are the most likely; edge courts are rare and pay the most. Risk changes the multipliers, not the odds: every table returns 95.996% over time.
+
+The court is decided when you serve."
+HELP_MATCH_POINT_CONTROLS,"%s  Move between keys
+
+[%s] Press the focused key
+
+[%s] Serve
+
+[%s] Change risk
+
+[%s] Leave (asks first while the ball is in play)"
+CABINET_BACCARAT_NAME,VELVET BACCARAT
+BACCARAT_THEME_TITLE,VELVET BACCARAT
+BACCARAT_LIMIT_REACHED,Table limit or bankroll reached
+BACCARAT_REBET_UNAVAILABLE,Nothing to rebet within your limit
+BACCARAT_PLACE_FIRST,Place a chip before the deal
+BACCARAT_CLEAR,CLEAR
+BACCARAT_REBET,REBET
+BACCARAT_DEAL,DEAL
+BACCARAT_BET_TOTAL,BET %d / %d
+BACCARAT_DECK_HINT,[%s] Place  [%s] Take back  [%s] Deal
+BACCARAT_BEAD_ROAD,BEAD ROAD
+BACCARAT_ROAD_COUNTS,B %d · P %d · T %d
+BACCARAT_BEAD_PLAYER,P
+BACCARAT_BEAD_BANKER,B
+BACCARAT_BEAD_TIE,T
+BACCARAT_TOTAL_HIDDEN,–
+BACCARAT_PLACE_YOUR_BETS,PLACE YOUR BETS
+BACCARAT_TABLE_RULE,PUNTO BANCO · 8 DECKS
+BACCARAT_TABLE_PRICES,Player 1:1 · Banker 1:1 less 5% · Tie 8:1 · Pairs 11:1
+BACCARAT_NO_MORE_BETS,NO MORE BETS
+BACCARAT_DEALING_DETAIL,Dealing from the shoe
+BACCARAT_PLAYER_WINS,PLAYER WINS
+BACCARAT_BANKER_WINS,BANKER WINS
+BACCARAT_TIE_RESULT,TIE
+BACCARAT_OVER,%d OVER %d
+BACCARAT_BOTH,BOTH %d
+BACCARAT_NATURAL,NATURAL
+BACCARAT_PAIR_TAG,PAIR
+BACCARAT_HAND_PLAYER,PLAYER
+BACCARAT_HAND_BANKER,BANKER
+BACCARAT_SPOT_PLAYER_PAIR,PLAYER PAIR
+BACCARAT_SPOT_PLAYER,PLAYER
+BACCARAT_SPOT_TIE,TIE
+BACCARAT_SPOT_BANKER,BANKER
+BACCARAT_SPOT_BANKER_PAIR,BANKER PAIR
+BACCARAT_PRICE,PAYS %d TO 1
+BACCARAT_PRICE_BANKER,1 TO 1 LESS %d%%
+BACCARAT_STATUS_BETTING,"Choose a chip, then a spot"
+BACCARAT_STATUS_DEALING,No more bets · dealing
+BACCARAT_STATUS_SQUEEZE_PLAYER,Squeezing the Player cards
+BACCARAT_STATUS_SQUEEZE_BANKER,Squeezing the Banker cards
+BACCARAT_STATUS_THIRD_PLAYER,Player draws a third card
+BACCARAT_STATUS_THIRD_BANKER,Banker draws a third card
+BACCARAT_STATUS_REVEALED,All cards face up
+BACCARAT_RESULT_RETURNED,%s · returned %d on %d
+BACCARAT_RESULT_SWEPT,%s · %d swept
+BACCARAT_TAG_TIE,TIE
+BACCARAT_TAG_WINS,WINS
+BACCARAT_PAYOUT_PUSH,Push · %d returned
+BACCARAT_PAYOUT_RETURNED,Returned %d on %d
+BACCARAT_PAYOUT_SWEPT,%d swept
+BACCARAT_PAYOUT_COMMISSION,commission %d
+HELP_BACCARAT_RULES,"Eight-deck Punto Banco, shuffled for every coup. Back the hand that ends closer to 9.
+
+Player pays 1 to 1. Banker pays 1 to 1 less 5% commission: 19 for every 20. Tie pays 8 to 1, and Player and Banker bets push on a tie. Pairs pay 11 to 1.
+
+Aces count 1, tens and courts 0. Third cards follow the fixed tableau."
+HELP_BACCARAT_CONTROLS,"%s  Move between spots and the chip rack
+
+[%s] Place chip
+
+[%s] Take chip back
+
+[%s] Deal
+
+Chips, Clear and Rebet sit on the rail
+
+[%s] Leave (asks first while cards are out)"
+SPEAKER_SECRETARY,VIVIENNE HALE  ·  EXECUTIVE ASSISTANT
+SPEAKER_MANAGER,AURELIO VANCE  ·  MANAGER
+RECEPTION_GREETING,"Good evening. The House Contracts board is right here, and I am happy to walk you through the floor again."
+RECEPTION_CONTRACTS,CONTRACTS
+RECEPTION_TOUR,REPLAY TOUR
+DIALOGUE_GOODBYE,GOODBYE
+MANAGER_GREETING,"Good evening. If your chips run thin, the house extends a marker. Settle it whenever you are ahead."
+MANAGER_MARKERS,MARKERS
+MANAGER_INVITE_LINE,Before business: your play has not gone unnoticed. Allow me to extend a formal invitation to the %s.
+MANAGER_SEE_INVITATION,ACCEPT THE CARD
+MANAGER_AFTER_INVITATION,"Enjoy the room. Now, is there anything else I can arrange for you?"
+INVITE_KICKER,AN INVITATION
+INVITE_WING_HIGH_ROLLER,HIGH ROLLER SALON
+INVITE_WING_VIP,VIP PENTHOUSE
+INVITE_BODY,The Manager requests the pleasure of your company in the %s. Your lifetime play of %d chips has opened its doors.
+INVITE_SIGNATURE,AURELIO VANCE  ·  MANAGER
+INVITE_ACCEPT,ACCEPT  [%s]
+CONTRACT_BOARD_TITLE,HOUSE CONTRACTS
+CONTRACT_BOARD_SUBTITLE,Three open contracts. Each pays its reward the moment it completes.
+CONTRACT_BOARD_PROGRESS,%d / %d
+CONTRACT_BOARD_REWARD,+%d
+CONTRACT_BOARD_LOG_TITLE,RECENTLY COMPLETED
+CONTRACT_BOARD_LOG_EMPTY,Nothing yet. Completed contracts are listed here.
+CONTRACT_BOARD_LOG_LINE,%s   +%d chips
+CONTRACT_BOARD_CLOSE,CLOSE  [%s]
+TUTORIAL_WELCOME,"Welcome to House Rules. I am Vivienne, the Manager's assistant. Let me show you around the floor; it only takes a minute."
+TUTORIAL_MOVE,"First, stretch your legs. Walk the floor with %s."
+TUTORIAL_INLAY,Every game has a brass inlay on the carpet in front of it. Step onto one of them.
+TUTORIAL_JOIN,"Perfect. Press %s to take a seat, or %s to decline. Play a round now if you like; I will wait."
+TUTORIAL_CASHIER,The cashier's cage on the right keeps count of your chips and of any marker you owe.
+TUTORIAL_CONTRACTS,"House Contracts pay flat bonuses for play. Come and see me at the office, the walnut door beside the VIP lift, to check the board."
+TUTORIAL_MANAGER,"The Manager extends markers when your chips run low, and he personally invites guests into the High Roller Salon and the VIP Penthouse."
+TUTORIAL_HELP,"At any table, press %s for its rules and payouts. Enjoy your evening."
+TUTORIAL_NEXT,CONTINUE
+TUTORIAL_DONE,THANK YOU
+TUTORIAL_SKIP,SKIP TOUR  [%s]
+TUTORIAL_CONTINUE_ACTION,CONTINUE  [%s]
+OFFICE_TALK_RECEPTION,[%s] Speak with Vivienne
+OFFICE_TALK_MANAGER,[%s] Speak with the Manager
+OFFICE_DOOR_ENTER,[%s] Enter the Manager's Office
+OFFICE_DOOR_INVITATION,[%s] The Manager has an invitation for you
+OFFICE_WAYPOINT,MANAGER  ·  100-CHIP MARKER
+MARKER_DESK_NAME,THE MANAGER'S MARKERS
+CASHIER_MARKERS_AT_OFFICE,Your chips are counted here. Markers are now arranged with the Manager: his office is the walnut door just north of this cage.

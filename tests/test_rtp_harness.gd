@@ -7,7 +7,9 @@ const SEED := 20260918
 
 func test_million_rounds_per_cabinet() -> void:
 	var measurements: Array[Dictionary] = []
-	for id in ["slot_classic", "blackjack", "minefield_vault"]:
+	for id in [
+		"slot_classic", "blackjack", "minefield_vault", "roulette", "match_point", "baccarat"
+	]:
 		var definition = load("res://data/cabinets/%s.tres" % id)
 		assert_not_null(definition, "Shipped definition exists: " + id)
 		if definition == null:
@@ -22,6 +24,13 @@ func test_million_rounds_per_cabinet() -> void:
 				math = BlackjackMath.new()
 			"minefield_vault":
 				math = MinefieldMath.new()
+			"roulette":
+				math = RouletteMath.new()
+			"match_point":
+				math = MatchPointMath.new()
+			"baccarat":
+				math = BaccaratMath.new()
+		var roulette_spots: Array = math.spots().keys() if id == "roulette" else []
 		var wagered: int = 0
 		var returned: int = 0
 		var started := Time.get_ticks_msec()
@@ -40,6 +49,20 @@ func test_million_rounds_per_cabinet() -> void:
 							break
 					if result == null:
 						result = math.cash_out()
+				"roulette":
+					# Four independently chosen layout spots, 10 chips each, per spin.
+					for pick in 4:
+						math.place(
+							roulette_spots[rng.randi_range(0, roulette_spots.size() - 1)], 10, 100
+						)
+					result = math.spin(rng)
+				"match_point":
+					# One drop of 10 per round, risk cycling Low, Medium, High.
+					result = math.drop(10, index % 3, rng)
+				"baccarat":
+					# 20 on Banker every coup: the declared (best) bet, commission exact.
+					math.place(BaccaratMath.BANKER, 20, 400)
+					result = math.deal(rng)
 			wagered += result.stake
 			returned += result.payout
 		var observed := float(returned) / wagered
@@ -57,16 +80,43 @@ func test_million_rounds_per_cabinet() -> void:
 			(
 				"basic strategy"
 				if id == "blackjack"
-				else "fixed 3 reveals / 3 mines" if id == "minefield_vault" else "spin"
+				else (
+					"fixed 3 reveals / 3 mines"
+					if id == "minefield_vault"
+					else (
+						"4 random spots x 10"
+						if id == "roulette"
+						else (
+							"10 per drop, risk cycles low/medium/high"
+							if id == "match_point"
+							else "spin"
+						)
+					)
+				)
 			),
 		}
+		if id == "baccarat":
+			measurement.strategy = "20 on Banker, 8-deck shoe shuffled every coup"
 		measurements.append(measurement)
 		print(JSON.stringify(measurement))
 		assert_almost_eq(observed, definition.target_rtp, 0.01, "AC-027 " + id)
 	DirAccess.make_dir_recursive_absolute("res://tests/results")
+	# Keep entries this harness does not measure (the skill-dependent poker
+	# baseline written by tests/poker_economics.gd) instead of dropping them.
+	var measured: Array[String] = []
+	for entry: Dictionary in measurements:
+		measured.append(str(entry.cabinet))
+	var results: Array = measurements.duplicate()
+	var previous: Variant = JSON.parse_string(
+		FileAccess.get_file_as_string("res://tests/results/rtp.json")
+	)
+	if previous is Dictionary:
+		for entry: Variant in (previous as Dictionary).get("results", []):
+			if entry is Dictionary and not measured.has(str(entry.get("cabinet", ""))):
+				results.append(entry)
 	var report := FileAccess.open("res://tests/results/rtp.json", FileAccess.WRITE)
 	assert_not_null(report)
 	if report != null:
 		report.store_string(
-			JSON.stringify({"engine": Engine.get_version_info(), "results": measurements}, "\t")
+			JSON.stringify({"engine": Engine.get_version_info(), "results": results}, "\t")
 		)

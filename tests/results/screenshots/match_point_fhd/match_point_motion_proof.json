@@ -1,0 +1,92 @@
+[
+	{
+		"ball_at": [
+			312.0,
+			393.183380126953
+		],
+		"board_court": 0,
+		"court_rest": [
+			312.0,
+			397.0
+		],
+		"decided_court": 0,
+		"draw": 0,
+		"label": "edge_high",
+		"matches": true,
+		"multiplier": "120",
+		"path": [
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0,
+			0
+		]
+	},
+	{
+		"ball_at": [
+			480.0,
+			393.183380126953
+		],
+		"board_court": 6,
+		"court_rest": [
+			480.0,
+			397.0
+		],
+		"decided_court": 6,
+		"draw": 2366,
+		"label": "centre_medium",
+		"matches": true,
+		"multiplier": "0.3",
+		"path": [
+			1,
+			1,
+			0,
+			0,
+			1,
+			1,
+			1,
+			0,
+			0,
+			0,
+			1,
+			0
+		]
+	},
+	{
+		"ball_at": [
+			508.0,
+			397.0
+		],
+		"board_court": 7,
+		"court_rest": [
+			508.0,
+			397.0
+		],
+		"decided_court": 7,
+		"draw": 3082,
+		"label": "reduced_motion",
+		"matches": true,
+		"multiplier": "0.7",
+		"path": [
+			1,
+			1,
+			0,
+			0,
+			1,
+			0,
+			1,
+			1,
+			0,
+			1,
+			1,
+			0
+		]
+	}
+]

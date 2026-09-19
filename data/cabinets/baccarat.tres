@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CabinetDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/cabinet_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"baccarat"
+name_key = "CABINET_BACCARAT_NAME"
+tier = 1
+min_bet = 20
+max_bet = 400
+target_rtp = 0.989
+volatility = 0

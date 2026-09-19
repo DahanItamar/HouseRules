@@ -68,12 +68,22 @@ RTP and 500× maximum were preserved while return moved toward frequent outcomes
 | Classic slot | 95.5083% | 95.5% | PASS |
 | Blackjack | 99.0051888518% | 99.0% | PASS |
 | Minefield | 96.39864% | 97.0% | PASS |
+| Ruby Roulette | 97.7191% | 97.3% (exact 36/37) | PASS |
+| Match Point | 96.1322% | 96.0% (exact 39320/40960 = 95.99609375%) | PASS |
+| Velvet Baccarat | 98.99387% | 98.9% (exact Banker, 20 chips: 98.9421%) | PASS |
 
 Blackjack uses the specified basic strategy, 10-chip base stakes, and includes
 doubled stakes in the denominator. Minefield uses legal 25-chip stakes, 3 mines,
 and cashes out after the first 3 safe tile indices. Integer payout rounding lowers
 its expectation relative to the continuous 97% formula; this sample is not proof
 that every legal mine count/stake/cashout combination attains 97%.
+Match Point drops 10 credits per round and cycles the Low, Medium and High tables;
+all three return exactly 95.99609375%, and legal stakes (multiples of 10) settle
+without rounding.
+Velvet Baccarat puts 20 chips on Banker every coup from an eight-deck shoe shuffled
+for every coup. `tests/test_baccarat.gd` enumerates every ordered deal exactly:
+Banker 98.9421%, Player 98.7649%, Tie 85.6404%, each pair 89.6386%. Every chip is a
+multiple of 20, so the whole-chip commission is exactly 5%.
 
 Exact enumeration of the 31-stop slot gives RTP **95.4952838105468%**. Its
 single-stop 500× jackpot remains the maximum win, while a 3× two-cherry return

@@ -1,0 +1,23 @@
+{
+  "characters": [
+    {
+      "output": "assets/production/characters/hosts/roulette_croupier.png",
+      "source": "assets/source/layered_v2/roulette/croupier_a_f200083a.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/roulette_croupier_spin.png",
+      "source": "assets/source/layered_v2/roulette/croupier_spin_cutout_9cb59a4f.png",
+      "align_to": "assets/production/characters/hosts/roulette_croupier.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/roulette_croupier_no_more_bets.png",
+      "source": "assets/source/layered_v2/roulette/croupier_nomorebets_cutout_0621aee7.png",
+      "align_to": "assets/production/characters/hosts/roulette_croupier.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/roulette_croupier_announce.png",
+      "source": "assets/source/layered_v2/roulette/croupier_announce_cutout_b0604db4.png",
+      "align_to": "assets/production/characters/hosts/roulette_croupier.png"
+    }
+  ]
+}

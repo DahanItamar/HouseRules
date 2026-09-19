@@ -46,6 +46,69 @@
 			"strategy": "fixed 3 reveals / 3 mines",
 			"target_rtp": 0.97,
 			"wagered": 25000000
+		},
+		{
+			"absolute_error": 0.00419100000000006,
+			"cabinet": "roulette",
+			"elapsed_ms": 16863,
+			"observed_rtp": 0.977191,
+			"returned": 39087640,
+			"rounds": 1000000,
+			"seed": 20260918,
+			"strategy": "4 random spots x 10",
+			"target_rtp": 0.973,
+			"wagered": 40000000
+		},
+		{
+			"absolute_error": 0.00132200000000005,
+			"cabinet": "match_point",
+			"elapsed_ms": 21660,
+			"observed_rtp": 0.961322,
+			"returned": 9613220,
+			"rounds": 1000000,
+			"seed": 20260918,
+			"strategy": "10 per drop, risk cycles low/medium/high",
+			"target_rtp": 0.96,
+			"wagered": 10000000
+		},
+		{
+			"absolute_error": 0.000938699999999959,
+			"cabinet": "baccarat",
+			"elapsed_ms": 19716,
+			"observed_rtp": 0.9899387,
+			"returned": 19798774,
+			"rounds": 1000000,
+			"seed": 20260918,
+			"strategy": "20 on Banker, 8-deck shoe shuffled every coup",
+			"target_rtp": 0.989,
+			"wagered": 20000000
+		},
+		{
+			"absolute_error": 0.00006344814425984,
+			"cabinet": "poker",
+			"elapsed_ms": 206663.0,
+			"fold_rate": 0.75324,
+			"note": "Return depends on player skill; this is one declared baseline, not a fixed RTP.",
+			"npc_bb_per_100": {
+				"calling_station": -38.92,
+				"maniac": 10.3,
+				"rock": -1.28,
+				"shark": 15.34,
+				"tourist": -15.07
+			},
+			"observed_rtp": 1.06493655185574,
+			"player_bb_per_100": 11.57,
+			"player_showdown_rate": 0.22053,
+			"rake_paid": 180659.0,
+			"returned": 1897472.0,
+			"rounds": 100000.0,
+			"seed": 20260918.0,
+			"skill_dependent": true,
+			"standard_error": 0.00866367769448752,
+			"strategy": "baseline: top 25% preflop, equity vs pot odds postflop",
+			"target_rtp": 1.065,
+			"wagered": 1781770.0,
+			"win_rate": 0.1276
 		}
 	]
 }

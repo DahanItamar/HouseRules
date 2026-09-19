@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CabinetDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/cabinet_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"poker"
+name_key = "CABINET_POKER_NAME"
+tier = 2
+min_bet = 4
+max_bet = 100
+target_rtp = 1.065
+volatility = 1

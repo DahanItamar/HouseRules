@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BaccaratPaytable" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/baccarat_paytable.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+decks = 8
+player_pays = 1
+banker_pays = 1
+banker_commission_percent = 5
+tie_pays = 8
+pair_pays = 11

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="PokerRules" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/poker_rules.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+seats = 6
+max_bets_per_street = 4
+rake_percent = 10
+rake_cap_stakes = 3
+no_flop_no_drop = true
+npc_buy_in_stakes = 40
+npc_rebuy_below_stakes = 24

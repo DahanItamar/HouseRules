@@ -291,3 +291,211 @@ Processing:
   halves meet on a dark rule. Ranks, indices and 2-10 pip layouts are laid out in
   `src/ui/playing_card.gd`; no generated text is used anywhere. No third-party
   deck marks, logos or back designs.
+
+## 2026-09-19 Ruby Roulette (European Roulette, VIP Penthouse)
+
+New playable cabinet `roulette`. The hostess is an adult croupier with an auburn
+chignon and green eyes, in a fitted ruby satin croupier dress with a black sash.
+The HUD is mahogany plates with brass rules, ivory inlay lines and brass studs.
+All generation used the connected **Higgsfield MCP**. This pass spent
+**33 credits** (19.5 + 10.5 + 3). Other agents spent credits from the same
+account in the same window, so compare against these job IDs, not the balance.
+
+Raw outputs: `assets/source/layered_v2/roulette/`. These files are never modified.
+Production: `python tools/art/prepare_roulette.py` builds the backdrop, wheel bowl
+and rotor, chips and guest busts. `python tools/art/prepare_characters.py
+tools/art/characters_roulette.json` builds the croupier masters (1392x2080,
+alpha-cleaned, colour-bled, head-registered, clear corners).
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Salon backdrop (used) | `5a29c98f-1394-4459-bf30-cbf71aab3fcc` | `gpt_image_2_5`, 16:9, high, 4k (3840x2160) | 4.5 |
+| Higher-angle backdrop (rejected) | `af2a1c16-0c50-4575-b1b8-7e73fa4ea53a` | `gpt_image_2_5` with the first backdrop as reference, 16:9, high, 4k | 4.5 |
+| Wheel (bowl and rotor source) | `b4bfdba9-365e-4282-ada3-720bbee69ff5` | `gpt_image_2_5`, 1:1, high, 2k, `background: transparent` | 3 |
+| Croupier master (idle, watching the wheel) | `f200083a-92d7-4cff-9224-c773624e3da0` | `gpt_image_2_5`, 2:3, high, 2k, transparent (1360x2048) | 3 |
+| Spin launch pose | `0f5712bb-aa97-4d20-baac-8bd33b5c2de3`, cut-out `9cb59a4f-5ff9-483a-ab8b-09437fcb8714` | `nano_banana_pro` edit of the master on grey, 2k, then `remove_background` | 2 + 1 |
+| "No more bets" pose | `5d1c5f6e-66c6-4b8b-b50d-41b370d647d1`, cut-out `0621aee7-7895-4b85-8e28-43dc89ea061c` | same | 2 + 1 |
+| Announce pose (to the player) | `d1cbdc55-979e-4d4c-80f1-2fa7d9eccf11`, cut-out `b0604db4-d694-4ec5-9fda-9f77146bcdc8` | same | 2 + 1 |
+| Guest: Mr. Okada (system bettor) | `56593fc6-8cec-4db9-89a8-7cb38c931652` | `gpt_image_2_5`, 1:1, high, 1k | 2 |
+| Guest: Desmond (dreamer) | `dfc293d7-aa46-40dc-b4ca-f90869581ff9` | same | 2 |
+| Guest: Signora Lucia (regular) | `3b660a0d-824b-409c-8caf-5a922039ce2c` | same | 2 |
+| Chip sheet (ivory, ruby, sapphire, emerald, jet) | `c4a5265b-b772-4845-a158-9f9b677aab83` | `gpt_image_2_5`, 16:9, high, 2k, transparent. Sliced to five 320 px chips. | 3 |
+
+Rejected: the higher-angle backdrop `af2a1c16`. Its far rail sits at about
+y=150 virtual, which leaves too little room for a grounded croupier behind the
+table. The shallower backdrop gives her about 182 px from head to rail. The raw
+file stays in the source folder for provenance.
+
+Exact geometry is drawn in code. The painted wheel is re-centred on its bowl
+(source centre 1010,997, radius 1000 px). Rotor radius 472 px becomes
+`roulette_wheel_rotor.png`. The 37-pocket ring (radii 0.472 to 0.645) is drawn by
+`RouletteWheel` in European wheel order from the paytable, so the ball lands in
+the pocket the math chose. The betting layout is also code-drawn on the painted
+sapphire felt.
+
+Placement: every croupier pose shares one canvas. Head centre x=735, and her rail
+line is at source y=1861 (upper thigh). On screen she is 182 px from head to rail,
+anchored at the far rail (y=209) above the wheel. A clipping lane hides her below
+the rail, and the wheel sits in front of her. Her lane is clear of the layout,
+seat plates, title, result plaque and deck (`tests/test_roulette.gd`).
+Known art caveat: the "no more bets" edit is framed about 50 px narrower at the
+hip, so the cross-fade shows a small lateral shift of the lower body (under 6
+virtual px).
+
+## Penthouse Texas Hold'em table (2026-09-19)
+
+New VIP game `poker`: a sapphire-felt oval table seen from the player's seat, a
+platinum-blonde dealer in a black-and-sapphire vest dress standing behind the far
+rail, five NPC regulars as portrait busts with one reaction face each, and a
+chip-stack prop. Cards reuse the shared `PlayingCard` deck. All generation went
+through the connected **Higgsfield MCP**; this pass spent **41.5 credits** by
+per-job price (the account is shared with other agents working in parallel, so
+the balance delta is larger). One first "reserved smile" edit for the Rock
+failed on the provider side and was resubmitted with a softer wording.
+
+Raw outputs: `assets/source/layered_v2/poker/` (never modified).
+Production: `python assets/source/layered_v2/poker/prepare_poker.py` ->
+`assets/production/poker/` (table, `npc/*.png` 512x512, `props/chips_{pot,black}.png`),
+and `python tools/art/prepare_characters.py tools/art/characters_poker_dealer.json`
+-> `assets/production/characters/hosts/poker_dealer*.png` (1392x2080, clean alpha
+corners, variants head-aligned to the master).
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Table backdrop (used as is) | `c4d00003-5996-40bc-8417-5d4a37ded2b1` | `gpt_image_2_5`, 16:9, high, 4k (3840x2160) | 4.5 |
+| Dealer master (rest pose, deck at waist) | `a8a49296-f91f-4b57-a6e6-1fff87497f48` | `gpt_image_2_5`, 2:3, high, 2k, `background: transparent` | 3 |
+| Dealer deal / reveal / push poses | `05cdc110-d343-41f9-a12a-74a1d234f680`, `95c246c3-3844-437b-8e0e-f0583bb44870`, `579c1162-fe27-4e7b-9c57-bfbe9dd49c8b` | `gpt_image_2_5` edit referencing the master (`image_references`), 2k, transparent | 3 each |
+| Dealer "awaiting the player" pose | `6cdafe90-c2cf-43e4-9cf3-c4fe746987ab` | same | 3 |
+| The Shark / Rock / Maniac / Calling Station / Tourist busts | `f6722d87-0266-473a-b450-ab2eac39932c`, `e8c2b761-ed46-4d0f-9df2-c308d4258b8b`, `483fc85f-99ab-420c-9c9a-b36780fa1152`, `9e4ca8bd-5824-451a-a83b-9ed62be4c66c`, `885a9b33-66b9-49ab-824b-05e2e0614b91` | `gpt_image_2_5`, 1:1, high, 1k, dark sapphire studio background | 2 each |
+| Reaction faces (Shark, Maniac, Calling Station, Tourist) | `7ac4ceed-bc84-44e0-8429-d915cb842cf2`, `c1abdadf-e6d8-45ce-8d1b-c6b2a7f5a392`, `f9c885c3-4dbf-479d-84d5-cd4c0d95855b`, `cb5d4b56-65cd-454b-954b-75b343ab4ed7` | `gpt_image_2_5` edit referencing each bust, 1k | 2 each |
+| Rock reaction face | `0d60be3d-1828-40bd-8095-ed34075192d7` (first try `3279dfcb-6ffa-4fbc-9aa3-ac6129ccc6b9` failed, not charged) | same | 2 |
+| Chip stacks (sapphire / white / black) | `50a6a76a-839a-48ba-930e-e5235c9f1c28` | `gpt_image_2_5`, 1:1, high, 1k, transparent | 2 |
+
+Processing: the table is used unmodified; its far padded rail is level at 4k
+y=760 (virtual y=190) across x 1300-2600, so the dealer is anchored with her
+upper thigh (source 696,1600) on that line at scale 0.095 and a 240x72 patch of
+the table texture redrawn over her from the rail down (`PokerDealerPresenter`).
+Every pose keeps its hands above the rail, so no separate hands layer is needed.
+The chip trio overlaps, so only the free-standing black stack is cut out for
+seat bets; the whole trio is the pot pile. Portraits are centre-cropped to
+512x512. No text, logos or third-party marks appear in any asset (the dealer
+button "D" is drawn in code from a translation key).
+
+## 2026-09-19 Match Point (tennis Plinko, High Roller)
+
+New playable cabinet `match_point`. The hostess is an original adult woman in
+country-club tennis chic: a white cropped polo, a white pleated tennis skirt, a
+green-and-cream striped sweater tied over her shoulders, a plain green round bag
+with no logo, light honey-blonde glossy waves, green eyes, bronzed skin and gold
+hoops. She is kept visibly lighter and greener-eyed than the Velvet Baccarat
+hostess, who is a darker brunette with brown eyes. The approved master concept is
+`assets/source/layered_v2/hostess_bronde/bronde_tennis_4f41ac74.png` (Higgsfield
+job `4f41ac74-3187-4b75-b884-19d6b6045816`, `gpt_image_2_5`, transparent,
+1360x2048). It was generated before this pass and is not counted below. The HUD
+is a scoreboard: racing-green plates with double brass piping and cream enamel
+score strips.
+
+All generation used the connected **Higgsfield MCP**. This pass spent
+**19.5 credits** (8 + 4 + 4.5 + 3). Another agent spent credits from the same
+account in the same window, so compare against these job IDs, not the balance.
+
+Raw outputs: `assets/source/layered_v2/match_point/`. These files are never
+modified. Production: `python tools/art/prepare_match_point.py` copies the
+backdrop, slices the ball and peg, and builds the hostess masters. Each cut-out is
+de-fringed against its measured grey edit backdrop: the edge colour is un-mixed
+from the grey and near-grey rim texels lose alpha, which takes the grey share of
+soft-edge texels from 43% to 3–6%. Each cut-out is then scaled from 1696x2528 to
+the 1360x2048 house canvas and passed through the shared
+`tools/art/prepare_characters.py` steps (alpha floor, colour bleed, pose
+registration, 16 px clear border). The results are 1392x2080 masters with clear
+corners.
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Idle pose (watching the board, ball in hand) | `d92433bb-3695-4ef3-8875-5f1f477cfe3f`, cut-out `70a9384e-4bdc-4afe-b056-10c21cea91d1` | `nano_banana_pro` edit, master job as image reference, 2:3, 2k, on flat grey (the job reports `nano_banana_2`), then `remove_background` | 2 + 1 |
+| Serve pose (tossing the ball up to the right) | `619d5f00-3065-4353-abb5-08b61e3e6b82`, cut-out `32598080-b390-4788-aa59-342e1671770b` | same | 2 + 1 |
+| Watch pose (anticipation, hands clasped) | `1b9932fe-141d-4d6c-9341-d46dbde9b472`, cut-out `760929b5-af21-4fb9-8756-2c7cde9f8f6a` | same | 2 + 1 |
+| Celebrate pose (fist pump to the player) | `37bf61b2-2851-42b5-a2b4-85c97c8bff32`, cut-out `acc757fc-b703-4118-917f-c675bef65041` | same | 2 + 1 |
+| Clubhouse cabinet backdrop | `f1f01d22-372d-4fdc-a31c-366d17cb2ac9` | `gpt_image_2_5`, 16:9, high, 4k (3840x2160) | 4.5 |
+| Prop sheet (tennis ball, brass court-stud post) | `f41b5c0c-d466-4492-aaf5-208305f6b933` | `gpt_image_2_5`, 3:2, high, 2k, `background: transparent`; sliced to a 256 px ball and a 128 px post | 3 |
+
+Nothing was rejected or regenerated.
+
+Exact geometry is drawn in code. The backdrop's plain racing-green panel (x 270
+to 690 virtual) carries a code-drawn field: 12 rows of posts at 28 px pitch, 13
+cream-enamel courts, and a brass serve hatch. The ball follows the path the math
+decided. The courts, multipliers and hatch contain no generated text.
+
+Placement: the four poses are registered on the midpoint between the eyes, with
+per-pose size ratios (serve 0.96, watch 0.89, celebrate 0.96) because the edits
+came back at slightly different figure scales. The cut line sits 1480 source px
+below the eyes, which is the top of the deck at y=440. She stands in the
+clubhouse window alcove at display scale 0.211, and a clipping lane
+(0,27 280×413) hides her below mid-thigh. Every pose fits inside the lane, and the
+lane is clear of the field, title, result plaque, risk plate, Help and deck
+(`tests/test_match_point.gd`).
+
+Known art caveats: the serve edit came back framed lower (its head is about 250
+source px lower on the canvas), so it is registered by the eye line rather than
+the canvas. Its lower cut is closest to the deck (2050 of 2063 source px). The
+celebrate pose turns her torso toward the viewer, so the cross-fade from the
+watch pose changes silhouette more than the other beats.
+
+## 2026-09-19 Velvet Baccarat (Punto Banco, High Roller Salon)
+
+New playable cabinet `baccarat`. The hostess is an original adult woman built from
+the approved concept `assets/source/layered_v2/hostess_bronde/bronde_evening_4d76e701.png`
+(Higgsfield job `4d76e701-d06e-4c18-959a-bb33bded4f4f`, `gpt_image_2_5`, transparent,
+1360x2048). She has long glossy dark-brunette hair with honey balayage in big waves,
+bronzed skin, brown eyes and gold hoops, and wears a violet satin ruched midi dress. She
+drops the white shoulder bag in every table pose, so no pose change makes it appear
+or vanish. She stays distinct from the Match Point hostess (lighter blonde, green eyes,
+tennis whites). The HUD is violet lacquer plates with brass rules, pearl inlay lines
+and pearl studs.
+
+All generation used the connected **Higgsfield MCP**. This pass spent
+**21.5 credits** (17.5 for the batch at 16:37:05 UTC, then 4 x 1 for background removal
+at 16:39:45 to 16:39:52 UTC). The account is shared with another agent, so compare
+against these job IDs and times, not the balance.
+
+Raw outputs: `assets/source/layered_v2/baccarat/`. These files are never modified.
+Production: `python tools/art/prepare_baccarat.py` builds everything. For the hostess,
+it un-mattes each cut-out: it un-mixes the studio grey (137,137,137) that
+`remove_background` leaves in edge texels and pulls the rim in by 3 px. It then
+normalises every pose to the same stature (head-top to sole 1990 px) and head column,
+and runs the shared `prepare_characters.py` alpha clean, colour bleed and 16 px clear
+border. The results are four 1392x2080 masters with clear corners.
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Hostess idle (watching the shoe) | `ac8e1b5c-ef66-4238-b471-912ea2e10d11`, cut-out `1da6b775-4763-4c5a-b49c-b95e24bd6445` | `nano_banana_pro` edit, job `4d76e701` as image reference, 2:3, 2k, grey studio background, then `remove_background` | 2 + 1 |
+| Hostess dealing (hand toward the card lane) | `7b9aa6bb-1954-4239-bf7b-5728c9f55132`, cut-out `88a6aff8-be88-4712-bb87-53344d619ea3` | same | 2 + 1 |
+| Hostess squeeze (studying a card) | `cbc5f6f3-b349-40fe-8d50-dabbb4140329`, cut-out `1b01554e-7053-48b7-803d-967717a2ca74` | same | 2 + 1 |
+| Hostess announce (smile, gaze to the player) | `b3351222-8f53-4f8d-890a-12325ee4cdb4`, cut-out `69f02fd1-4905-4954-8cf9-f6f738224435` | same | 2 + 1 |
+| Private salon backdrop (violet and walnut, no people) | `8443d56d-76ba-44cc-8f36-90c38352de33` | `gpt_image_2_5`, 16:9, high, 4k (3840x2160) | 4.5 |
+| Chip sheet (pearl, lavender, plum, black lacquer) | `726a4b95-b3c3-406d-9a71-1d24d152b43d` | `gpt_image_2_5`, 16:9, high, 2k, `background: transparent`. Sliced to four 320 px chips (20, 40, 100, 200). | 3 |
+| Card shoe (walnut and brass) | `94872ed0-c1ac-4977-aab9-97b95aabf504` | `gpt_image_2_5`, 1:1, high, 1k, `background: transparent`. Trimmed to 926x774. | 2 |
+
+Model note: the four pose edits were requested as `nano_banana_pro` and billed as
+"Nano Banana Pro", but the job status reports the backend as `nano_banana_2`.
+
+Local output names: `hostess_{idle,deal,squeeze,announce}_nb_<job>.png` (the edits on
+grey) and `hostess_*_cutout_<job>.png` (transparent). Production files are
+`assets/production/characters/hosts/baccarat_hostess{,_deal,_squeeze,_announce}.png`
+and `assets/production/baccarat/baccarat_{salon_backdrop,shoe,chip_20,chip_40,chip_100,chip_200}.png`.
+Nothing was rejected; each asset took one generation.
+
+Placement: every pose shares one canvas. Head centre x=696, and her rail line is at
+source y=1030 (hip, just above the side slit). On screen she is 182 px from head to
+rail. The painted far rail's top edge is at virtual y=222 (backdrop row 889). A
+clipping lane (336,0 288x222) hides her below the rail. The lane stays clear of the
+title, coup plaque, bead road, help button, hand boxes, card slots, bet spots and deck
+(`tests/test_baccarat.gd`). The dealing pose's hand and card fall below the rail, so
+they are hidden: the arm reads as reaching down to the felt. The code-drawn cards
+travel from the painted shoe.
+
+Known art caveats: the idle edit turns her side-on, so the slit and ruching are out of
+view in that pose, and her hips sit a few px left of the other poses under the rail.
+A faint light rim remains on a few hair strands of the idle pose after un-matting. It
+is about half a virtual pixel at game scale.
+

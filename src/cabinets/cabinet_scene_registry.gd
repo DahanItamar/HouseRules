@@ -8,6 +8,8 @@ const SCENE_PATHS: Dictionary = {
 	&"minefield_vault": "res://src/cabinets/minefield_vault/minefield_vault.tscn",
 	&"roulette": "res://src/cabinets/roulette/roulette.tscn",
 	&"poker": "res://src/cabinets/poker/poker.tscn",
+	&"match_point": "res://src/cabinets/match_point/match_point.tscn",
+	&"baccarat": "res://src/cabinets/baccarat/baccarat.tscn",
 }
 
 

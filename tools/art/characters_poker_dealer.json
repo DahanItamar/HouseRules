@@ -1,0 +1,28 @@
+{
+  "characters": [
+    {
+      "output": "assets/production/characters/hosts/poker_dealer.png",
+      "source": "assets/source/layered_v2/poker/dealer_master_a8a49296.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/poker_dealer_deal.png",
+      "source": "assets/source/layered_v2/poker/dealer_deal_05cdc110.png",
+      "align_to": "assets/production/characters/hosts/poker_dealer.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/poker_dealer_reveal.png",
+      "source": "assets/source/layered_v2/poker/dealer_reveal_95c246c3.png",
+      "align_to": "assets/production/characters/hosts/poker_dealer.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/poker_dealer_push.png",
+      "source": "assets/source/layered_v2/poker/dealer_push_579c1162.png",
+      "align_to": "assets/production/characters/hosts/poker_dealer.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/poker_dealer_player.png",
+      "source": "assets/source/layered_v2/poker/dealer_player_6cdafe90.png",
+      "align_to": "assets/production/characters/hosts/poker_dealer.png"
+    }
+  ]
+}
