@@ -2,8 +2,8 @@ class_name WinCelebration
 extends Control
 ## Higgsfield-authored chip/coin atlas animated by Godot for deterministic win bursts.
 
-const SHEET := preload("res://assets/production/effects/casino_win_burst.png")
-const CELL_SIZE := Vector2(256, 341.3333)
+const SHEET := preload("res://assets/production/effects/casino_win_burst_integer.png")
+const CELL_SIZE := Vector2i(256, 344)
 var _rng := RandomNumberGenerator.new()
 
 
@@ -19,8 +19,8 @@ func burst(origin: Vector2, count: int = 12) -> void:
 		atlas.atlas = SHEET
 		var cell := index % 12
 		atlas.region = Rect2(
-			Vector2(cell % 4, cell / 4) * CELL_SIZE,
-			CELL_SIZE
+			Vector2i(cell % 4, cell / 4) * CELL_SIZE,
+			Vector2(CELL_SIZE)
 		)
 		var token := TextureRect.new()
 		token.texture = atlas

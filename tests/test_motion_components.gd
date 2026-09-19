@@ -94,6 +94,9 @@ func test_number_ticker_reaches_exact_target_and_handles_infinity() -> void:
 	assert_eq(int(ticker.displayed_value), 110)
 	ticker.set_infinity()
 	assert_eq(ticker.text, "∞")
+	ticker.set_number(110)
+	assert_eq(ticker.text, "110", "Returning to the same target clears infinity state")
+	assert_false(ticker._showing_infinity)
 
 
 func test_primary_spin_button_has_a_restrained_idle_breath() -> void:
@@ -107,6 +110,24 @@ func test_primary_spin_button_has_a_restrained_idle_breath() -> void:
 	before = spin.idle_time
 	spin._process(0.2)
 	assert_eq(spin.idle_time, before, "Disabled primary actions do not pulse")
+
+
+func test_win_burst_uses_integer_gutter_safe_regions() -> void:
+	var texture: Texture2D = load(
+		"res://assets/production/effects/casino_win_burst_integer.png"
+	)
+	assert_not_null(texture)
+	assert_eq(texture.get_size(), Vector2(1024, 1032))
+	assert_eq(WinCelebration.CELL_SIZE, Vector2i(256, 344))
+	var image := texture.get_image()
+	for row: int in range(3):
+		for column: int in range(4):
+			var origin := Vector2i(column * 256, row * 344)
+			assert_eq(
+				image.get_pixelv(origin).a,
+				0.0,
+				"Every particle frame starts with a clear gutter"
+			)
 
 
 func test_blackjack_input_unlocks_from_completed_deal_motion() -> void:
