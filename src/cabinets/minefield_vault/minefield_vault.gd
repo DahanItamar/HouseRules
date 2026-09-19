@@ -39,6 +39,28 @@ func request_open() -> bool:
 	return true
 
 
+func request_select_tile(index: int) -> bool:
+	if (
+		is_result_pending
+		or not is_round_active
+		or index < 0
+		or index >= snap_cursor.columns * snap_cursor.rows
+		or math.revealed.has(index)
+	):
+		return false
+	if snap_cursor.index != index:
+		snap_cursor.index = index
+		snap_cursor.moved.emit(index)
+	panel.refresh()
+	return true
+
+
+func request_open_tile(index: int) -> bool:
+	if not request_select_tile(index):
+		return false
+	return request_open()
+
+
 func request_cash_out() -> bool:
 	if is_result_pending or not is_round_active:
 		return false

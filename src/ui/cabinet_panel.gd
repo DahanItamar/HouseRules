@@ -403,6 +403,7 @@ func set_help_open(open: bool) -> void:
 	if _slot_lever != null:
 		_slot_lever.disabled = open or cabinet.is_round_active
 		_slot_lever.queue_redraw()
+	_refresh_vault_pointer_interaction()
 
 
 func _build_help_ui() -> void:
@@ -619,6 +620,7 @@ func _refresh_vault() -> void:
 				_vault_tiles[index].reveal(next_face)
 			elif not _vault_tiles[index].is_flipping:
 				_vault_tiles[index].set_face_immediate(next_face)
+	_refresh_vault_pointer_interaction()
 	if _vault_cursor != null:
 		var cursor_target := (
 			VAULT_GRID_ORIGIN
@@ -1360,6 +1362,8 @@ func _build_vault_art() -> void:
 		tile.size = Vector2.ONE * VAULT_TILE_SIZE
 		tile.reveal_effect_requested.connect(_on_vault_reveal_effect.bind(tile))
 		tile.reveal_completed.connect(_on_vault_reveal_completed)
+		tile.pointer_focused.connect(_on_vault_tile_pointer_focused.bind(index))
+		tile.pointer_activated.connect(_on_vault_tile_pointer_activated.bind(index))
 		_vault_tiles.append(tile)
 		_art_root.add_child(tile)
 	_vault_cursor = Node2D.new()
@@ -1374,10 +1378,45 @@ func _build_vault_art() -> void:
 		edge.position = border.position
 		edge.size = border.size
 		edge.color = Color("00e5ff")
+		edge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		_vault_cursor.add_child(edge)
 	_art_root.add_child(_vault_cursor)
 	_vault_cursor.position = VAULT_GRID_ORIGIN - Vector2(2, 2)
 	_build_vault_deck()
+
+
+func _vault_pointer_can_target(index: int) -> bool:
+	if (
+		cabinet == null
+		or cabinet.context == null
+		or cabinet.context.definition.id != &"minefield_vault"
+		or not cabinet.is_round_active
+		or cabinet.is_result_pending
+		or help_open
+		or _vault_pending_reveals > 0
+		or index < 0
+		or index >= _vault_tiles.size()
+	):
+		return false
+	var math: MinefieldMath = cabinet.get("math")
+	return not math.revealed.has(index) and not _vault_tiles[index].is_flipping
+
+
+func _refresh_vault_pointer_interaction() -> void:
+	for index: int in range(_vault_tiles.size()):
+		_vault_tiles[index].set_interaction_enabled(_vault_pointer_can_target(index))
+
+
+func _on_vault_tile_pointer_focused(index: int) -> void:
+	if not _vault_pointer_can_target(index):
+		return
+	cabinet.call("request_select_tile", index)
+
+
+func _on_vault_tile_pointer_activated(index: int) -> void:
+	if not _vault_pointer_can_target(index):
+		return
+	cabinet.call("request_open_tile", index)
 
 
 func _on_vault_reveal_effect(face_value: int, local_origin: Vector2, tile: VaultTile) -> void:
@@ -1395,6 +1434,8 @@ func _on_vault_reveal_effect(face_value: int, local_origin: Vector2, tile: Vault
 
 func _on_vault_reveal_completed(_face_value: int) -> void:
 	_vault_pending_reveals = maxi(0, _vault_pending_reveals - 1)
+	if _vault_pending_reveals == 0:
+		_refresh_vault_pointer_interaction()
 	_try_complete_result_reveal()
 
 

@@ -4,6 +4,8 @@ extends Control
 
 signal reveal_effect_requested(face_value: int, local_origin: Vector2)
 signal reveal_completed(face_value: int)
+signal pointer_focused
+signal pointer_activated
 
 enum Face { HIDDEN, SAFE, MINE }
 const FACE_TEXTURES: Array[Texture2D] = [
@@ -23,10 +25,16 @@ var _reveal_tween: Tween
 var _idle_time: float = 0.0
 var _idle_phase: float = 0.0
 var _pending_face: Face = Face.HIDDEN
+var _interaction_enabled: bool = false
+var _pointer_hovered: bool = false
+var _pointer_pressed: bool = false
 
 
 func _ready() -> void:
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
+	gui_input.connect(_on_gui_input)
 	_apply_motion_preference(MotionPolicy.is_reduced())
 
 
@@ -60,6 +68,45 @@ func set_selected(selected: bool) -> void:
 	if not selected:
 		_pulse_time = 0.0
 	queue_redraw()
+
+
+func set_interaction_enabled(enabled: bool) -> void:
+	_interaction_enabled = enabled
+	mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
+	mouse_default_cursor_shape = (
+		Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
+	)
+	if not enabled:
+		_pointer_hovered = false
+		_pointer_pressed = false
+	queue_redraw()
+
+
+func _on_mouse_entered() -> void:
+	if not _interaction_enabled:
+		return
+	_pointer_hovered = true
+	pointer_focused.emit()
+	queue_redraw()
+
+
+func _on_mouse_exited() -> void:
+	_pointer_hovered = false
+	_pointer_pressed = false
+	queue_redraw()
+
+
+func _on_gui_input(event: InputEvent) -> void:
+	if not _interaction_enabled or not event is InputEventMouseButton:
+		return
+	var mouse_event := event as InputEventMouseButton
+	if mouse_event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	_pointer_pressed = mouse_event.pressed
+	queue_redraw()
+	accept_event()
+	if mouse_event.pressed:
+		pointer_activated.emit()
 
 
 func reveal(next_face: Face) -> void:
@@ -188,7 +235,8 @@ func _set_impact_strength(value: float) -> void:
 
 
 func _draw() -> void:
-	var physical_offset := Vector2(0.0, roundf(_press_depth * 2.0))
+	var pointer_depth := 1.0 if _pointer_pressed and not MotionPolicy.is_reduced() else 0.0
+	var physical_offset := Vector2(0.0, roundf(_press_depth * 2.0 + pointer_depth))
 	if _press_depth > 0.01:
 		draw_rect(
 			Rect2(Vector2(4.0, size.y - 3.0), Vector2(maxf(size.x - 8.0, 0.0), 3.0)),
@@ -197,6 +245,18 @@ func _draw() -> void:
 		)
 	draw_texture_rect(FACE_TEXTURES[face], Rect2(physical_offset, size), false)
 	var visual_center := size * 0.5 + physical_offset
+	if _pointer_hovered and face == Face.HIDDEN:
+		draw_rect(
+			Rect2(Vector2(3, 3) + physical_offset, size - Vector2(6, 6)),
+			Color("d9fbff", 0.18),
+			true
+		)
+		draw_rect(
+			Rect2(Vector2(2, 2) + physical_offset, size - Vector2(4, 4)),
+			Color("8be7ef", 0.82),
+			false,
+			2.0
+		)
 	if _warning_remaining > 0.0:
 		var warning_alpha := 0.35 + sin(_warning_remaining * 70.0) * 0.22
 		draw_rect(
