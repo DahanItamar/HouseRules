@@ -6,11 +6,13 @@ const BLACKJACK_DEFINITION: CabinetDefinition = preload("res://data/cabinets/bla
 const VAULT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/minefield_vault.tres")
 var _original_platform: PlatformServices
 var _original_test_mode: bool
+var _original_reduced_motion: bool
 
 
 func before_each() -> void:
 	_original_platform = SaveService.platform
 	_original_test_mode = Wallet.test_mode_enabled
+	_original_reduced_motion = bool(ProjectSettings.get_setting(MotionPolicy.SETTING_PATH, false))
 	SaveService.platform = LocalPlatform.new("user://tests/ui_%s" % Time.get_ticks_usec())
 	SaveService.new_game(20260918)
 
@@ -18,6 +20,7 @@ func before_each() -> void:
 func after_each() -> void:
 	SaveService.platform = _original_platform
 	Wallet.set_test_mode(_original_test_mode)
+	MotionPolicy.set_reduced_motion(_original_reduced_motion)
 	SaveService.new_game(20260918)
 
 
@@ -338,6 +341,37 @@ func test_redesigned_shell_uses_high_resolution_production_environments() -> voi
 	var floor_art: Texture2D = load("res://assets/production/environments/casino_floor.png")
 	assert_gte(menu_art.get_width(), 1280)
 	assert_gte(floor_art.get_width(), 1280)
+
+
+func test_main_menu_exposes_a_focusable_reduced_motion_setting() -> void:
+	MotionPolicy.set_reduced_motion(false)
+	var main := MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	var toggle: Button = main._menu_motion_button
+	assert_not_null(toggle)
+	assert_eq(toggle.focus_mode, Control.FOCUS_ALL)
+	assert_eq(toggle.size, Vector2(360, 56), "Setting keeps a generous controller target")
+	assert_string_contains(toggle.text, tr("SETTING_OFF"))
+	assert_string_contains(toggle.accessibility_name, tr("SETTING_OFF"))
+	toggle.grab_focus()
+	assert_eq(get_viewport().gui_get_focus_owner(), toggle)
+	toggle.pressed.emit()
+	assert_true(MotionPolicy.is_reduced())
+	assert_true(toggle.button_pressed)
+	assert_string_contains(toggle.text, tr("SETTING_ON"))
+	assert_string_contains(toggle.accessibility_name, tr("SETTING_ON"))
+
+
+func test_main_menu_motion_shortcut_works_for_keyboard_and_controller_action() -> void:
+	MotionPolicy.set_reduced_motion(false)
+	var main := MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	var shortcut := InputEventAction.new()
+	shortcut.action = &"secondary"
+	shortcut.pressed = true
+	main._unhandled_input(shortcut)
+	assert_true(MotionPolicy.is_reduced())
+	assert_string_contains(main._menu_motion_button.text, InputRouter.glyph("secondary"))
 
 
 func test_walk_atlas_has_four_phases_per_eight_directions_and_transparency() -> void:

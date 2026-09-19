@@ -3,6 +3,11 @@ GAME_TITLE,HOUSE RULES
 MENU_KICKER,VELVET DECO CASINO
 MENU_SUBTITLE,"Three games. One bankroll. The house remembers."
 MENU_CONTROLS,"[%s] Enter the casino\n[%s] Save and quit"
+MENU_REDUCED_MOTION,[%s] REDUCED MOTION  %s
+MENU_REDUCED_MOTION_HELP,Stops ambient movement and shortens transitions.
+MENU_REDUCED_MOTION_ACCESSIBLE,Reduced motion: %s
+SETTING_ON,ON
+SETTING_OFF,OFF
 HUD_CHIPS,CHIPS  %d
 HUD_CREDITS,CREDITS
 HUD_TEST_BANK,TEST BANK

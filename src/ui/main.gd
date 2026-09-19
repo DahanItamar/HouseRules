@@ -19,6 +19,7 @@ var _menu_background: TextureRect
 var _menu_title: Label
 var _menu_prompt_panel: Panel
 var _menu_prompt: Label
+var _menu_motion_button: Button
 var _menu_reveal_tween: Tween
 var _menu_attract_tween: Tween
 var _menu_attract_elapsed: float = 0.0
@@ -193,7 +194,52 @@ func _build_menu() -> void:
 	_menu_prompt.add_theme_font_size_override("font_size", Typography.PROMINENT)
 	_menu_prompt.add_theme_color_override("font_color", Color("f1e8d8"))
 	_menu.add_child(_menu_prompt)
+	_build_motion_preference_button()
 	_play_menu_reveal()
+
+
+func _build_motion_preference_button() -> void:
+	_menu_motion_button = Button.new()
+	_menu_motion_button.name = "ReducedMotionToggle"
+	_menu_motion_button.position = Vector2(70, 444)
+	_menu_motion_button.size = Vector2(360, 56)
+	_menu_motion_button.toggle_mode = true
+	_menu_motion_button.focus_mode = Control.FOCUS_ALL
+	_menu_motion_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	_menu_motion_button.add_theme_font_override("font", Typography.UI_FONT)
+	_menu_motion_button.add_theme_font_size_override("font_size", 18)
+	_menu_motion_button.add_theme_color_override("font_color", Color("f1e8d8"))
+	_menu_motion_button.add_theme_color_override("font_hover_color", Color("fff4d8"))
+	_menu_motion_button.add_theme_color_override("font_focus_color", Color("fff4d8"))
+	_menu_motion_button.add_theme_color_override("font_pressed_color", Color("f2c84b"))
+	_menu_motion_button.add_theme_stylebox_override(
+		"normal", _menu_button_style(Color("17161ae8"), Color("6e5225"), 1)
+	)
+	_menu_motion_button.add_theme_stylebox_override(
+		"hover", _menu_button_style(Color("242027f2"), Color("c8a34b"), 1)
+	)
+	_menu_motion_button.add_theme_stylebox_override(
+		"pressed", _menu_button_style(Color("302719f2"), Color("f2c84b"), 2)
+	)
+	_menu_motion_button.add_theme_stylebox_override(
+		"focus", _menu_button_style(Color("00000000"), Color("f2c84b"), 3)
+	)
+	_menu_motion_button.tooltip_text = tr("MENU_REDUCED_MOTION_HELP")
+	_menu_motion_button.pressed.connect(_toggle_motion_preference)
+	ButtonFeedback.attach(_menu_motion_button)
+	_menu.add_child(_menu_motion_button)
+	_refresh_motion_preference_button()
+
+
+func _menu_button_style(fill: Color, border: Color, border_width: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = fill
+	style.border_color = border
+	style.set_border_width_all(border_width)
+	style.set_corner_radius_all(6)
+	style.content_margin_left = 18.0
+	style.content_margin_right = 18.0
+	return style
 
 
 func _panel(at: Vector2, dimensions: Vector2, fill: Color, border: Color) -> Panel:
@@ -216,6 +262,23 @@ func _refresh_menu() -> void:
 	_menu_prompt.text = (
 		tr("MENU_CONTROLS") % [InputRouter.glyph("interact"), InputRouter.glyph("back")]
 	)
+	_refresh_motion_preference_button()
+
+
+func _refresh_motion_preference_button() -> void:
+	if _menu_motion_button == null:
+		return
+	var state_key := "SETTING_ON" if MotionPolicy.is_reduced() else "SETTING_OFF"
+	_menu_motion_button.text = (
+		tr("MENU_REDUCED_MOTION") % [InputRouter.glyph("secondary"), tr(state_key)]
+	)
+	_menu_motion_button.button_pressed = MotionPolicy.is_reduced()
+	_menu_motion_button.accessibility_name = tr("MENU_REDUCED_MOTION_ACCESSIBLE") % tr(state_key)
+
+
+func _toggle_motion_preference() -> void:
+	MotionPolicy.set_reduced_motion(not MotionPolicy.is_reduced())
+	AudioService.play(&"confirm")
 
 
 func _play_menu_reveal() -> void:
@@ -266,6 +329,7 @@ func _apply_menu_final_state() -> void:
 
 
 func _on_motion_preference_changed(reduced: bool) -> void:
+	_refresh_motion_preference_button()
 	if reduced:
 		if _menu_reveal_tween != null:
 			_menu_reveal_tween.kill()
@@ -446,6 +510,9 @@ func _unhandled_input(event: InputEvent) -> void:
 	if not _is_playing:
 		if event.is_action_pressed("interact"):
 			_start_playing()
+			get_viewport().set_input_as_handled()
+		elif event.is_action_pressed("secondary"):
+			_toggle_motion_preference()
 			get_viewport().set_input_as_handled()
 		elif event.is_action_pressed("back"):
 			_quit_game()

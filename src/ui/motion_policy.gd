@@ -32,6 +32,14 @@ func finite_duration(full_motion_seconds: float) -> float:
 	return full_motion_seconds
 
 
+func set_reduced_motion(reduced: bool) -> void:
+	## Update the live player preference. This remains presentation-only and does not
+	## enter the deterministic save or gameplay state.
+	_test_override = null
+	ProjectSettings.set_setting(SETTING_PATH, reduced)
+	motion_preference_changed.emit(reduced)
+
+
 func set_reduced_motion_for_tests(reduced: bool) -> void:
 	_test_override = reduced
 	motion_preference_changed.emit(reduced)
