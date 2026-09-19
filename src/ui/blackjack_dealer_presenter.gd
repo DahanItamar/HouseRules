@@ -6,12 +6,20 @@ extends Node2D
 ## deal or result beat occurred, while MotionPolicy owns how that beat is shown.
 
 const DEALER_TEXTURE := preload("res://assets/production/blackjack/dealer_presenter.png")
+const DEALER_CARD_PROP_SCRIPT := preload("res://src/ui/blackjack_dealer_card_prop.gd")
 const DISPLAY_SIZE := Vector2(200, 216)
 const DISPLAY_SCALE := Vector2(200.0 / 1226.0, 216.0 / 1283.0)
 const REST_CUE_ALPHA: float = 0.34
+const CARD_SIZE := Vector2(16, 23)
+const DEAL_HAND_REST := Vector2(146, 174)
+const DEAL_HAND_EXTENDED := Vector2(160, 190)
+const REVEAL_HAND_REST := Vector2(45, 163)
 
 var _sprite: Sprite2D
 var _cue: ColorRect
+var _hand_anchor: Node2D
+var _card_prop: Control
+var _motion_trace: Line2D
 var _gesture_tween: Tween
 var _idle_time: float = 0.0
 var _gesture_active: bool = false
@@ -36,6 +44,31 @@ func _ready() -> void:
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	add_child(_sprite)
 
+	# The production portrait stays intact. This small foreground assembly gives
+	# the held card its own timing, so the action reads as a hand-off rather than
+	# translating the dealer like a rigid puppet.
+	_motion_trace = Line2D.new()
+	_motion_trace.name = "DealerHandTrace"
+	_motion_trace.points = PackedVector2Array([
+		DEAL_HAND_REST + Vector2(4, 8), Vector2(164, 194), Vector2(187, 207)
+	])
+	_motion_trace.width = 1.25
+	_motion_trace.default_color = Color(0.85, 0.71, 0.29, 0.0)
+	_motion_trace.antialiased = true
+	add_child(_motion_trace)
+
+	_hand_anchor = Node2D.new()
+	_hand_anchor.name = "DealerCardHand"
+	_hand_anchor.position = DEAL_HAND_REST
+	_hand_anchor.z_index = 2
+	add_child(_hand_anchor)
+
+	_card_prop = DEALER_CARD_PROP_SCRIPT.new()
+	_card_prop.name = "DealerCardProp"
+	_card_prop.size = CARD_SIZE
+	_card_prop.visible = false
+	_hand_anchor.add_child(_card_prop)
+
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 	_apply_motion_preference(MotionPolicy.is_reduced())
 
@@ -57,14 +90,29 @@ func play_deal(card_count: int = 1) -> void:
 	_gesture_active = true
 	_gesture_tween = create_tween()
 	for _index: int in range(clampi(card_count, 1, 4)):
-		_gesture_tween.tween_property(_sprite, "position", Vector2(0, 3), 0.08).set_trans(
+		_gesture_tween.tween_callback(_prime_deal_card)
+		_gesture_tween.tween_property(_hand_anchor, "position", DEAL_HAND_EXTENDED, 0.10).set_trans(
 			Tween.TRANS_QUAD
 		).set_ease(Tween.EASE_OUT)
-		_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.018, 0.08)
-		_gesture_tween.tween_property(_sprite, "position", Vector2.ZERO, 0.11).set_trans(
+		_gesture_tween.parallel().tween_property(_sprite, "position", Vector2(0, 1), 0.10)
+		_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.004, 0.10)
+		_gesture_tween.parallel().tween_property(
+			_motion_trace, "default_color:a", 0.42, 0.10
+		)
+		# The hand recoils first; the released card continues along the table lane.
+		_gesture_tween.tween_property(_hand_anchor, "position", DEAL_HAND_REST, 0.13).set_trans(
 			Tween.TRANS_QUAD
-		).set_ease(Tween.EASE_IN)
-		_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.0, 0.11)
+		).set_ease(Tween.EASE_IN_OUT)
+		_gesture_tween.parallel().tween_property(_card_prop, "position", Vector2(18, 11), 0.13)
+		_gesture_tween.parallel().tween_property(_card_prop, "rotation", 0.07, 0.13)
+		_gesture_tween.parallel().tween_property(_card_prop, "modulate:a", 0.0, 0.13)
+		_gesture_tween.parallel().tween_property(_sprite, "position", Vector2.ZERO, 0.13)
+		_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.0, 0.13)
+		_gesture_tween.parallel().tween_property(
+			_motion_trace, "default_color:a", 0.0, 0.10
+		)
+		_gesture_tween.tween_callback(_hide_card_prop)
+		_gesture_tween.tween_interval(0.025)
 	_gesture_tween.tween_property(_cue, "modulate:a", REST_CUE_ALPHA, 0.14)
 	_gesture_tween.finished.connect(_finish_gesture)
 
@@ -76,16 +124,26 @@ func play_reveal() -> void:
 		_play_reduced_cue()
 		return
 	_gesture_active = true
+	_prime_reveal_card()
 	_gesture_tween = create_tween()
-	_gesture_tween.tween_property(_sprite, "position", Vector2(5, -2), 0.11).set_trans(
+	_gesture_tween.tween_property(_hand_anchor, "position", REVEAL_HAND_REST + Vector2(7, -3), 0.11).set_trans(
 		Tween.TRANS_QUAD
 	).set_ease(Tween.EASE_OUT)
-	_gesture_tween.parallel().tween_property(_sprite, "rotation", -0.012, 0.11)
-	_gesture_tween.tween_property(_sprite, "position", Vector2.ZERO, 0.18).set_trans(
+	_gesture_tween.parallel().tween_property(_sprite, "position", Vector2(1, -1), 0.11)
+	_gesture_tween.parallel().tween_property(_sprite, "rotation", -0.004, 0.11)
+	_gesture_tween.parallel().tween_property(_card_prop, "scale:x", 0.08, 0.11)
+	_gesture_tween.tween_callback(func() -> void: _card_prop.set_face_down(false))
+	_gesture_tween.tween_property(_card_prop, "scale:x", 1.0, 0.10).set_trans(
+		Tween.TRANS_BACK
+	).set_ease(Tween.EASE_OUT)
+	_gesture_tween.tween_property(_hand_anchor, "position", REVEAL_HAND_REST, 0.14).set_trans(
 		Tween.TRANS_QUAD
 	).set_ease(Tween.EASE_IN_OUT)
-	_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.0, 0.18)
-	_gesture_tween.parallel().tween_property(_cue, "modulate:a", REST_CUE_ALPHA, 0.18)
+	_gesture_tween.parallel().tween_property(_card_prop, "modulate:a", 0.0, 0.14)
+	_gesture_tween.parallel().tween_property(_sprite, "position", Vector2.ZERO, 0.14)
+	_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.0, 0.14)
+	_gesture_tween.parallel().tween_property(_cue, "modulate:a", REST_CUE_ALPHA, 0.14)
+	_gesture_tween.tween_callback(_hide_card_prop)
 	_gesture_tween.finished.connect(_finish_gesture)
 
 
@@ -165,6 +223,40 @@ func _set_rest_pose() -> void:
 	_sprite.position = Vector2.ZERO
 	_sprite.rotation = 0.0
 	_sprite.scale = DISPLAY_SCALE
+	if _hand_anchor != null:
+		_hand_anchor.position = DEAL_HAND_REST
+	if _card_prop != null:
+		_card_prop.position = Vector2.ZERO
+		_card_prop.rotation = 0.0
+		_card_prop.scale = Vector2.ONE
+		_card_prop.modulate = Color.WHITE
+		_card_prop.visible = false
+	if _motion_trace != null:
+		_motion_trace.default_color.a = 0.0
+
+
+func _prime_deal_card() -> void:
+	_hand_anchor.position = DEAL_HAND_REST
+	_card_prop.position = Vector2.ZERO
+	_card_prop.rotation = -0.045
+	_card_prop.scale = Vector2.ONE
+	_card_prop.modulate = Color.WHITE
+	_card_prop.set_face_down(true)
+	_card_prop.visible = true
+
+
+func _prime_reveal_card() -> void:
+	_hand_anchor.position = REVEAL_HAND_REST
+	_card_prop.position = Vector2.ZERO
+	_card_prop.rotation = -0.09
+	_card_prop.scale = Vector2.ONE
+	_card_prop.modulate = Color.WHITE
+	_card_prop.set_face_down(true)
+	_card_prop.visible = true
+
+
+func _hide_card_prop() -> void:
+	_card_prop.visible = false
 
 
 func _apply_motion_preference(reduced: bool) -> void:

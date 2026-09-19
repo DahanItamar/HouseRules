@@ -61,6 +61,12 @@ func test_dealer_idle_and_deal_gesture_are_presentation_only() -> void:
 	assert_eq(dealer._cue.color, Color("d9b44a"))
 	await wait_seconds(0.10)
 	assert_ne(dealer._sprite.position, Vector2.ZERO, "Deal beat briefly reaches toward the table")
+	assert_true(dealer._card_prop.visible, "A card travels independently from the portrait")
+	assert_ne(
+		dealer._hand_anchor.position,
+		BlackjackDealerPresenter.DEAL_HAND_REST,
+		"The dealing hand leads the restrained torso counter-motion"
+	)
 
 
 func test_dealer_marks_the_hole_card_reveal_with_a_distinct_gesture() -> void:
@@ -78,6 +84,8 @@ func test_dealer_marks_the_hole_card_reveal_with_a_distinct_gesture() -> void:
 	assert_true(dealer.has_active_gesture())
 	await wait_seconds(0.13)
 	assert_gt(dealer._sprite.position.x, 0.0, "Reveal beat leans toward the hole card")
+	assert_true(dealer._card_prop.visible)
+	assert_lt(dealer._card_prop.scale.x, 1.0, "Reveal has a local card turn, not a whole-body flip")
 
 
 func test_reduced_dealer_uses_a_bounded_static_cue_and_stable_pose() -> void:
@@ -92,6 +100,8 @@ func test_reduced_dealer_uses_a_bounded_static_cue_and_stable_pose() -> void:
 	assert_eq(dealer._sprite.position, Vector2.ZERO)
 	assert_eq(dealer._sprite.rotation, 0.0)
 	assert_eq(dealer._sprite.scale, BlackjackDealerPresenter.DISPLAY_SCALE)
+	assert_false(dealer._card_prop.visible)
+	assert_eq(dealer._hand_anchor.position, BlackjackDealerPresenter.DEAL_HAND_REST)
 	assert_eq(dealer._cue.modulate.a, 1.0, "Color cue acknowledges the deal immediately")
 	await wait_seconds(0.24)
 	assert_almost_eq(
@@ -100,6 +110,24 @@ func test_reduced_dealer_uses_a_bounded_static_cue_and_stable_pose() -> void:
 		0.02,
 		"Reduced cue settles instead of looping"
 	)
+
+
+func test_enabling_reduced_motion_settles_an_active_articulated_deal() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var dealer := session.cabinet.panel._blackjack_dealer_presenter
+	dealer.play_deal(2)
+	await wait_seconds(0.08)
+	assert_true(dealer._card_prop.visible)
+
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	assert_false(dealer.has_active_gesture())
+	assert_false(dealer._card_prop.visible)
+	assert_eq(dealer._hand_anchor.position, BlackjackDealerPresenter.DEAL_HAND_REST)
+	assert_eq(dealer._sprite.position, Vector2.ZERO)
+	assert_eq(dealer._sprite.rotation, 0.0)
 
 
 func test_live_stake_places_a_readable_wager_stack_on_the_felt() -> void:
