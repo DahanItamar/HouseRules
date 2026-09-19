@@ -135,6 +135,10 @@ func test_floor_movement_help_yields_after_the_player_moves() -> void:
 	assert_string_contains(_floor._prompt.text, InputRouter.glyph("move"))
 	_floor.move_avatar(Vector2.RIGHT, 0.05)
 	assert_true(_floor._has_moved)
+	assert_false(_floor._prompt_target_visible)
+	assert_true(_floor._prompt.visible, "Full-motion prompt keeps its pixels for the exit fade")
+	assert_true(_floor._prompt_tween.is_running())
+	await wait_seconds(0.14)
 	assert_false(_floor._prompt.visible, "Persistent tutorial chrome clears after first movement")
 	_floor.avatar_position = _floor.cabinet_positions[&"blackjack"]
 	_floor.refresh_proximity()
@@ -279,6 +283,9 @@ func test_insolvent_player_gets_a_safe_area_cashier_route_until_arrival() -> voi
 
 	_floor.avatar_position = FloorController.CASHIER_POSITION
 	_floor.refresh_proximity()
+	assert_false(waypoint._active)
+	assert_true(waypoint.visible, "Waypoint keeps its plaque for the bounded exit fade")
+	await wait_seconds(0.14)
 	assert_false(waypoint.visible, "The route yields to the nearby cashier interaction prompt")
 	assert_string_contains(_floor._prompt.text, InputRouter.glyph("interact"))
 
@@ -288,6 +295,7 @@ func test_cashier_route_clears_as_soon_as_the_bankroll_recovers() -> void:
 	_floor.refresh_proximity()
 	assert_true(_floor._cashier_waypoint.visible)
 	Wallet.reset(Economy.SOLVENCY_FLOOR)
+	await wait_seconds(0.14)
 	assert_false(_floor._cashier_waypoint.visible)
 
 
@@ -296,6 +304,7 @@ func test_cashier_route_never_leaks_over_a_cabinet_or_main_menu() -> void:
 	_floor.refresh_proximity()
 	assert_true(_floor._cashier_waypoint.visible)
 	_floor.set_prompt_visible(false)
+	await wait_seconds(0.14)
 	assert_false(_floor._cashier_waypoint.visible)
 	_floor.set_prompt_visible(true)
 	assert_true(_floor._cashier_waypoint.visible)

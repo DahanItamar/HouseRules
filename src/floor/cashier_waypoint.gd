@@ -12,6 +12,7 @@ const SURFACE := Color("17161aeb")
 var _arrow: Polygon2D
 var _caption: Label
 var _active: bool = false
+var _visibility_tween: Tween
 
 
 func _ready() -> void:
@@ -64,16 +65,47 @@ func update_route(origin_world: Vector2, target_world: Vector2, should_show: boo
 	)
 
 	if should_show == _active:
-		visible = should_show
 		return
 	_active = should_show
-	visible = should_show
+	if _visibility_tween != null and _visibility_tween.is_valid():
+		_visibility_tween.kill()
+	_visibility_tween = null
 	if should_show:
-		modulate.a = 0.0
-		var tween := create_tween()
-		tween.tween_property(self, "modulate:a", 1.0, MotionPolicy.finite_duration(0.16))
+		show()
+		pivot_offset = size * 0.5
+		modulate.a = 1.0 if MotionPolicy.is_reduced() else 0.0
+		scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(0.98, 0.98)
+		if not MotionPolicy.is_reduced():
+			_visibility_tween = create_tween().set_parallel(true)
+			_visibility_tween.tween_property(self, "modulate:a", 1.0, 0.16).set_trans(
+				Tween.TRANS_QUAD
+			).set_ease(Tween.EASE_OUT)
+			_visibility_tween.tween_property(self, "scale", Vector2.ONE, 0.16).set_trans(
+				Tween.TRANS_QUAD
+			).set_ease(Tween.EASE_OUT)
 	else:
-		modulate.a = 1.0
+		if MotionPolicy.is_reduced() or not visible:
+			hide()
+			modulate.a = 1.0
+			scale = Vector2.ONE
+			return
+		_visibility_tween = create_tween().set_parallel(true)
+		_visibility_tween.tween_property(self, "modulate:a", 0.0, 0.12).set_trans(
+			Tween.TRANS_QUAD
+		).set_ease(Tween.EASE_IN)
+		_visibility_tween.tween_property(self, "scale", Vector2(0.98, 0.98), 0.12).set_trans(
+			Tween.TRANS_QUAD
+		).set_ease(Tween.EASE_IN)
+		_visibility_tween.finished.connect(_finish_hide)
+
+
+func _finish_hide() -> void:
+	if _active:
+		return
+	hide()
+	modulate.a = 1.0
+	scale = Vector2.ONE
+	_visibility_tween = null
 
 
 func route_angle() -> float:

@@ -65,9 +65,10 @@ func test_cashier_close_animates_then_releases_focus_and_hides() -> void:
 	assert_false(_floor._cashier_open)
 	assert_true(_floor._cashier_panel.visible, "Full-motion close retains the panel for its exit beat")
 	assert_true(_floor._cashier_is_closing)
-	assert_false(
+	assert_false(_floor._prompt_target_visible)
+	assert_true(
 		_floor._prompt.visible,
-		"The next contextual prompt waits until the cashier exit beat is complete"
+		"Cashier instructions fade with the modal before the next contextual prompt appears"
 	)
 	var focused := get_viewport().gui_get_focus_owner()
 	assert_true(focused == null or not _floor._cashier_panel.is_ancestor_of(focused))

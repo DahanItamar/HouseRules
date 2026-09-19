@@ -68,6 +68,7 @@ var _dismissed_game: StringName = &""
 var _last_nearby_game: StringName = &""
 var _prompt_signature: String = ""
 var _prompt_tween: Tween
+var _prompt_target_visible: bool = false
 var _cashier_tween: Tween
 var _cashier_transaction_tween: Tween
 var _cashier_is_closing: bool = false
@@ -280,6 +281,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _update_prompt() -> void:
+	var previous_text := _prompt.text
 	_prompt.position = Vector2(56, 454)
 	_prompt.size = Vector2(848, 54)
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -339,8 +341,13 @@ func _update_prompt() -> void:
 		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
 	else:
 		_prompt.text = ""
-	_prompt.visible = _floor_prompts_visible and not _prompt.text.is_empty()
-	_animate_prompt_change()
+	_prompt_target_visible = _floor_prompts_visible and not _prompt.text.is_empty()
+	if _prompt_target_visible:
+		_prompt.visible = true
+		_animate_prompt_change()
+	else:
+		_prompt.text = previous_text
+		_animate_prompt_hide()
 	queue_redraw()
 
 
@@ -367,6 +374,36 @@ func _animate_prompt_change() -> void:
 	_prompt_tween.tween_property(_prompt, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_QUAD)
 	if not MotionPolicy.is_reduced():
 		_prompt_tween.tween_property(_prompt, "position", final_position, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _animate_prompt_hide() -> void:
+	if _prompt_signature == "hidden":
+		return
+	_prompt_signature = "hidden"
+	if _prompt_tween != null:
+		_prompt_tween.kill()
+	if not _prompt.visible or MotionPolicy.is_reduced():
+		_finish_prompt_hide()
+		return
+	var exit_position := _prompt.position + Vector2(0, 6)
+	_prompt_tween = create_tween().set_parallel(true)
+	_prompt_tween.tween_property(_prompt, "modulate:a", 0.0, 0.12).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN)
+	_prompt_tween.tween_property(_prompt, "position", exit_position, 0.12).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN)
+	_prompt_tween.finished.connect(_finish_prompt_hide)
+
+
+func _finish_prompt_hide() -> void:
+	if _prompt_target_visible:
+		return
+	_prompt.visible = false
+	_prompt.text = ""
+	_prompt.modulate.a = 1.0
+	_prompt_tween = null
+	queue_redraw()
 
 
 func _build_dust() -> void:
@@ -571,10 +608,16 @@ func _draw() -> void:
 	if _prompt != null and _prompt.visible:
 		var prompt_rect := Rect2(_prompt.position - Vector2(12, 8), _prompt.size + Vector2(24, 16))
 		var join_dialog := nearby_definition != null and _dismissed_game != nearby_definition.id
+		var prompt_alpha := _prompt.modulate.a
 		if join_dialog:
-			draw_rect(Rect2(prompt_rect.position + Vector2(6, 7), prompt_rect.size), Color("05040570"))
-		draw_rect(prompt_rect, Color("17161ad4") if join_dialog else Color("17161af0"))
-		draw_rect(prompt_rect, CYAN if join_dialog else Color("6e5225"), false, 2.0)
+			draw_rect(
+				Rect2(prompt_rect.position + Vector2(6, 7), prompt_rect.size),
+				Color("05040570") * Color(1, 1, 1, prompt_alpha)
+			)
+		var surface := Color("17161ad4") if join_dialog else Color("17161af0")
+		var border := CYAN if join_dialog else Color("6e5225")
+		draw_rect(prompt_rect, surface * Color(1, 1, 1, prompt_alpha))
+		draw_rect(prompt_rect, border * Color(1, 1, 1, prompt_alpha), false, 2.0)
 
 
 func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float) -> void:
