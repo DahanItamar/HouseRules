@@ -10,6 +10,10 @@ var _initialized: bool = false
 var _showing_infinity: bool = false
 
 
+func _ready() -> void:
+	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
+
+
 func set_number(value: int, format_text: String = "%d", animate: bool = true) -> void:
 	if _initialized and not _showing_infinity and target_value == value and _format == format_text:
 		return
@@ -50,3 +54,12 @@ func set_infinity() -> void:
 func _apply_value(value: float) -> void:
 	displayed_value = value
 	text = _format % int(round(value))
+
+
+func _apply_motion_preference(reduced: bool) -> void:
+	if not reduced or _showing_infinity:
+		return
+	if _number_tween != null and _number_tween.is_valid() and _number_tween.is_running():
+		_number_tween.kill()
+		_number_tween = null
+		_apply_value(float(target_value))

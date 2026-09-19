@@ -8,8 +8,15 @@ signal motion_preference_changed(reduced: bool)
 
 const SETTING_PATH := "accessibility/reduced_motion"
 const REDUCED_DURATION_SCALE := 0.6
+const DEFAULT_PREFERENCE_PATH := "user://accessibility.cfg"
 
 var _test_override: Variant = null
+var preference_path: String = DEFAULT_PREFERENCE_PATH
+var persistence_enabled: bool = true
+
+
+func _ready() -> void:
+	load_preference()
 
 
 func is_reduced() -> bool:
@@ -37,7 +44,26 @@ func set_reduced_motion(reduced: bool) -> void:
 	## enter the deterministic save or gameplay state.
 	_test_override = null
 	ProjectSettings.set_setting(SETTING_PATH, reduced)
+	if persistence_enabled:
+		var config := ConfigFile.new()
+		config.set_value("accessibility", "reduced_motion", reduced)
+		config.save(preference_path)
 	motion_preference_changed.emit(reduced)
+
+
+func load_preference() -> Error:
+	if not persistence_enabled:
+		return OK
+	var config := ConfigFile.new()
+	var error := config.load(preference_path)
+	if error == ERR_FILE_NOT_FOUND:
+		return OK
+	if error != OK:
+		return error
+	var reduced := bool(config.get_value("accessibility", "reduced_motion", false))
+	ProjectSettings.set_setting(SETTING_PATH, reduced)
+	motion_preference_changed.emit(reduced)
+	return OK
 
 
 func set_reduced_motion_for_tests(reduced: bool) -> void:

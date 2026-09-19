@@ -106,6 +106,20 @@ func test_number_ticker_reaches_exact_target_and_handles_infinity() -> void:
 	assert_false(ticker._showing_infinity)
 
 
+func test_number_ticker_snaps_when_reduced_motion_changes_mid_count() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var ticker := AnimatedNumberLabel.new()
+	add_child_autofree(ticker)
+	ticker.set_number(10, "%d", false)
+	ticker.set_number(500)
+	assert_true(ticker._number_tween.is_running())
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	assert_eq(ticker.text, "500")
+	assert_eq(int(ticker.displayed_value), 500)
+	assert_null(ticker._number_tween)
+	MotionPolicy.set_reduced_motion_for_tests(false)
+
+
 func test_primary_spin_button_has_a_restrained_idle_breath() -> void:
 	var spin := SlotSpinButton.new()
 	spin.size = Vector2(140, 110)

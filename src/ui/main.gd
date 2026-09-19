@@ -25,6 +25,8 @@ var _menu_attract_tween: Tween
 var _menu_attract_elapsed: float = 0.0
 var _menu_first_breath: bool = true
 var _message_tween: Tween
+var _bank_feedback_tween: Tween
+var _contract_feedback_tween: Tween
 
 
 func _ready() -> void:
@@ -45,9 +47,9 @@ func _ready() -> void:
 	MotionPolicy.motion_preference_changed.connect(_on_motion_preference_changed)
 	if error != OK:
 		_present_message(tr("SAVE_INCOMPATIBLE"))
-	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: _refresh_hud())
+	Wallet.balance_changed.connect(_on_balance_changed)
 	Economy.debt_changed.connect(func(_debt: int) -> void: _refresh_hud())
-	Economy.contracts_changed.connect(_refresh_hud)
+	Economy.contracts_changed.connect(_on_contracts_changed)
 	Economy.contract_completed.connect(_show_contract_completed)
 	SceneRouter.session_changed.connect(_refresh_hud)
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: _refresh_menu())
@@ -77,6 +79,7 @@ func _build_hud() -> void:
 	_hud_layer.layer = 10
 	add_child(_hud_layer)
 	_bank_panel = _panel(Vector2(18, 16), Vector2(168, 52), Color("17161af2"), Color("c8a34b"))
+	_bank_panel.pivot_offset = _bank_panel.size * 0.5
 	_hud_layer.add_child(_bank_panel)
 	_chip_icon = CreditChipIcon.new()
 	_chip_icon.position = Vector2(28, 25)
@@ -113,6 +116,7 @@ func _build_hud() -> void:
 	_contracts_panel = _panel(
 		Vector2(594, 16), Vector2(348, 80), Color("17161ae8"), Color("6e5225")
 	)
+	_contracts_panel.pivot_offset = _contracts_panel.size * 0.5
 	_hud_layer.add_child(_contracts_panel)
 	_contracts = Label.new()
 	_contracts.add_theme_font_override("font", Typography.UI_FONT)
@@ -355,7 +359,11 @@ func _refresh_hud() -> void:
 	if Wallet.test_mode_enabled and Economy.debt > 0:
 		_hud.text += "  /  " + str(Economy.debt)
 	if _contracts != null:
-		var on_floor: bool = _is_playing and SceneRouter.session == null
+		var on_floor: bool = (
+			_is_playing
+			and SceneRouter.session == null
+			and (_floor == null or not _floor._cashier_open)
+		)
 		_bank_panel.visible = on_floor
 		_chip_icon.visible = on_floor
 		_credit_caption.visible = on_floor
@@ -363,6 +371,50 @@ func _refresh_hud() -> void:
 		_contracts.visible = on_floor
 		_contracts_panel.visible = _contracts.visible
 		_contracts.text = tr("CONTRACTS_HEADING") + "\n" + "\n".join(Economy.contract_lines())
+
+
+func _on_balance_changed(old_balance: int, new_balance: int) -> void:
+	_refresh_hud()
+	_chip_icon.play_transaction(new_balance - old_balance)
+	if _bank_feedback_tween != null:
+		_bank_feedback_tween.kill()
+	_bank_panel.scale = Vector2.ONE
+	_hud.modulate = Color.WHITE
+	if MotionPolicy.is_reduced():
+		return
+	_bank_feedback_tween = create_tween().set_parallel(true)
+	_bank_feedback_tween.tween_property(_bank_panel, "scale", Vector2(1.035, 1.035), 0.10).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+	_bank_feedback_tween.tween_property(_hud, "modulate", Color("fff0a0"), 0.10)
+	_bank_feedback_tween.chain().tween_property(_bank_panel, "scale", Vector2.ONE, 0.16).set_trans(
+		Tween.TRANS_BACK
+	).set_ease(Tween.EASE_OUT)
+	_bank_feedback_tween.parallel().tween_property(_hud, "modulate", Color.WHITE, 0.16)
+
+
+func _on_contracts_changed() -> void:
+	_refresh_hud()
+	if _contract_feedback_tween != null:
+		_contract_feedback_tween.kill()
+	_contracts_panel.scale = Vector2.ONE
+	_contracts.modulate = Color.WHITE
+	_contracts.position.x = 610.0
+	if MotionPolicy.is_reduced() or not _contracts.visible:
+		return
+	_contracts.position.x = 622.0
+	_contracts.modulate.a = 0.62
+	_contract_feedback_tween = create_tween().set_parallel(true)
+	_contract_feedback_tween.tween_property(_contracts, "position:x", 610.0, 0.18).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+	_contract_feedback_tween.tween_property(_contracts, "modulate:a", 1.0, 0.16)
+	_contract_feedback_tween.tween_property(
+		_contracts_panel, "scale", Vector2(1.015, 1.015), 0.10
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_contract_feedback_tween.chain().tween_property(
+		_contracts_panel, "scale", Vector2.ONE, 0.14
+	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func _start_playing() -> void:
@@ -386,6 +438,7 @@ func _show_floor_now() -> void:
 	if _floor == null:
 		_floor = preload("res://src/floor/floor.tscn").instantiate() as FloorController
 		add_child(_floor)
+		_floor.cashier_visibility_changed.connect(func(_is_open: bool) -> void: _refresh_hud())
 	_floor.show()
 	_floor.set_physics_process(true)
 	_floor.set_process_unhandled_input(true)

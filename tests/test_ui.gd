@@ -7,12 +7,17 @@ const VAULT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/minefie
 var _original_platform: PlatformServices
 var _original_test_mode: bool
 var _original_reduced_motion: bool
+var _original_motion_path: String
+var _original_motion_persistence: bool
 
 
 func before_each() -> void:
 	_original_platform = SaveService.platform
 	_original_test_mode = Wallet.test_mode_enabled
 	_original_reduced_motion = bool(ProjectSettings.get_setting(MotionPolicy.SETTING_PATH, false))
+	_original_motion_path = MotionPolicy.preference_path
+	_original_motion_persistence = MotionPolicy.persistence_enabled
+	MotionPolicy.persistence_enabled = false
 	SaveService.platform = LocalPlatform.new("user://tests/ui_%s" % Time.get_ticks_usec())
 	SaveService.new_game(20260918)
 
@@ -21,6 +26,8 @@ func after_each() -> void:
 	SaveService.platform = _original_platform
 	Wallet.set_test_mode(_original_test_mode)
 	MotionPolicy.set_reduced_motion(_original_reduced_motion)
+	MotionPolicy.preference_path = _original_motion_path
+	MotionPolicy.persistence_enabled = _original_motion_persistence
 	SaveService.new_game(20260918)
 
 
@@ -107,6 +114,34 @@ func test_hud_messages_have_bounded_reveal_and_dismiss_motion() -> void:
 	assert_false(main._message_panel.visible)
 	assert_false(main._message.visible)
 	assert_eq(main._message.text, "")
+
+
+func test_global_hud_reacts_to_balance_and_contract_changes() -> void:
+	MotionPolicy.set_reduced_motion(false)
+	var main := MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	main._is_playing = true
+	main._refresh_hud()
+	main._on_balance_changed(100, 125)
+	assert_gt(main._chip_icon.transaction_time, 0.0)
+	assert_eq(main._chip_icon.transaction_direction, 1)
+	assert_not_null(main._bank_feedback_tween)
+	main._on_contracts_changed()
+	assert_not_null(main._contract_feedback_tween)
+	assert_lt(main._contracts.position.x, 623.0)
+
+
+func test_reduced_motion_hud_keeps_static_transaction_feedback() -> void:
+	MotionPolicy.set_reduced_motion(true)
+	var main := MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	main._is_playing = true
+	main._refresh_hud()
+	main._on_balance_changed(50, 40)
+	assert_eq(main._bank_panel.scale, Vector2.ONE)
+	assert_null(main._bank_feedback_tween)
+	assert_eq(main._chip_icon.transaction_direction, -1)
+	assert_gt(main._chip_icon.transaction_time, 0.0)
 
 
 func test_stakes_move_between_casino_denominations() -> void:
@@ -372,6 +407,16 @@ func test_main_menu_motion_shortcut_works_for_keyboard_and_controller_action() -
 	main._unhandled_input(shortcut)
 	assert_true(MotionPolicy.is_reduced())
 	assert_string_contains(main._menu_motion_button.text, InputRouter.glyph("secondary"))
+
+
+func test_reduced_motion_preference_persists_and_reloads() -> void:
+	var test_path := "user://tests/motion_%s.cfg" % Time.get_ticks_usec()
+	MotionPolicy.preference_path = test_path
+	MotionPolicy.persistence_enabled = true
+	MotionPolicy.set_reduced_motion(true)
+	ProjectSettings.set_setting(MotionPolicy.SETTING_PATH, false)
+	assert_eq(MotionPolicy.load_preference(), OK)
+	assert_true(MotionPolicy.is_reduced())
 
 
 func test_walk_atlas_has_four_phases_per_eight_directions_and_transparency() -> void:
