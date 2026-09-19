@@ -82,7 +82,7 @@ func confirm_leave() -> void:
 	if not is_open:
 		return
 	is_open = false
-	visible = false
+	_play_dismiss()
 	leave_confirmed.emit()
 
 
@@ -104,16 +104,16 @@ func _play_reveal() -> void:
 	_dialog.modulate.a = 0.0
 	_dialog.position = Vector2(250, 154)
 	_dialog.pivot_offset = _dialog.size * 0.5
-	_dialog.scale = Vector2(0.97, 0.97)
+	_dialog.scale = Vector2(0.98, 0.98)
 	_transition = create_tween().set_parallel(true)
-	_transition.tween_property(_blocker, "modulate:a", 1.0, 0.14)
+	_transition.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	_transition.tween_property(_blocker, "modulate:a", 1.0, 0.12)
 	_transition.tween_property(_dialog, "modulate:a", 1.0, 0.16)
 	_transition.tween_property(_dialog, "position:y", 146.0, 0.18).set_trans(
-		Tween.TRANS_QUAD
+		Tween.TRANS_CUBIC
 	).set_ease(Tween.EASE_OUT)
-	_transition.tween_property(_dialog, "scale", Vector2.ONE, 0.18).set_trans(
-		Tween.TRANS_BACK
-	).set_ease(Tween.EASE_OUT)
+	_transition.tween_property(_dialog, "scale", Vector2.ONE, 0.18)
+	_transition.finished.connect(func() -> void: _transition = null)
 
 
 func _play_dismiss() -> void:
@@ -125,13 +125,16 @@ func _play_dismiss() -> void:
 		return
 	_blocker.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_transition = create_tween().set_parallel(true)
+	_transition.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
 	_transition.tween_property(_blocker, "modulate:a", 0.0, 0.12)
 	_transition.tween_property(_dialog, "modulate:a", 0.0, 0.12)
-	_transition.tween_property(_dialog, "position:y", 152.0, 0.12).set_trans(Tween.TRANS_QUAD)
+	_transition.tween_property(_dialog, "position:y", 154.0, 0.12)
+	_transition.tween_property(_dialog, "scale", Vector2(0.98, 0.98), 0.12)
 	_transition.finished.connect(
 		func() -> void:
 			visible = false
 			_reset_visual_state()
+			_transition = null
 	)
 
 

@@ -44,9 +44,13 @@ var _win_flash: Control
 var _stake_selector: StakeSelector
 var _help_button: Button
 var _help_overlay: Control
+var _help_shade: ColorRect
+var _help_modal: Panel
 var _help_title: Label
 var _help_rules: Label
 var _help_controls: Label
+var _help_reveal_items: Array[Control] = []
+var _help_rest_positions: Dictionary = {}
 var help_open: bool = false
 var _focus_before_help: Control
 var _help_tween: Tween
@@ -113,9 +117,6 @@ const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
 const BLACKJACK_TABLE := preload("res://assets/production/blackjack/blackjack_table.png")
 const VAULT_BACKDROP := preload("res://assets/production/vault/vault_backdrop.png")
-const VAULT_TILE_HIDDEN := preload("res://assets/drafts/m2/tile_unrevealed.png")
-const VAULT_TILE_SAFE := preload("res://assets/drafts/m2/tile_safe_revealed.png")
-const VAULT_TILE_MINE := preload("res://assets/drafts/m2/tile_mine_revealed.png")
 const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 const BLACKJACK_BET_STACK := preload("res://src/ui/blackjack_bet_stack.gd")
 const CABINET_WIN_FLASH_SCRIPT := preload("res://src/ui/cabinet_win_flash.gd")
@@ -346,46 +347,52 @@ func toggle_help() -> void:
 func set_help_open(open: bool) -> void:
 	if _help_tween != null:
 		_help_tween.kill()
+		_help_tween = null
 	if open:
 		_focus_before_help = get_viewport().gui_get_focus_owner()
 	help_open = open
 	if open and _help_overlay != null:
 		_help_overlay.visible = true
 		_help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-		_help_overlay.modulate.a = 0.0
-		var modal := _help_overlay.get_child(1) as Control
-		modal.pivot_offset = modal.size * 0.5
-		modal.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(0.96, 0.96)
-		_help_tween = create_tween().set_parallel(true)
-		_help_tween.tween_property(
-			_help_overlay, "modulate:a", 1.0, MotionPolicy.finite_duration(0.15)
-		)
+		_reset_help_visual_state()
 		if not MotionPolicy.is_reduced():
-			_help_tween.tween_property(modal, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
+			_prepare_help_reveal()
+			_help_tween = create_tween().set_parallel(true)
+			_help_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+			_help_tween.tween_property(_help_shade, "modulate:a", 1.0, 0.12)
+			_help_tween.tween_property(_help_modal, "modulate:a", 1.0, 0.16)
+			_help_tween.tween_property(_help_modal, "position:y", 64.0, 0.18)
+			_help_tween.tween_property(_help_modal, "scale", Vector2.ONE, 0.18)
+			for index: int in range(_help_reveal_items.size()):
+				var item := _help_reveal_items[index]
+				var delay := 0.02 + index * 0.012
+				_help_tween.tween_property(item, "modulate:a", 1.0, 0.12).set_delay(delay)
+				_help_tween.tween_property(
+					item, "position:y", (_help_rest_positions[item] as Vector2).y, 0.14
+				).set_delay(delay)
+			_help_tween.finished.connect(func() -> void: _help_tween = null)
 		var close_button := _help_overlay.find_child("HelpClose", true, false) as Button
 		if close_button != null:
 			close_button.grab_focus()
 	elif not open and _help_overlay != null:
 		if is_instance_valid(_focus_before_help):
 			_focus_before_help.grab_focus()
-		var modal := _help_overlay.get_child(1) as Control
 		if MotionPolicy.is_reduced():
 			_help_overlay.hide()
-			_help_overlay.modulate = Color.WHITE
-			modal.scale = Vector2.ONE
+			_reset_help_visual_state()
 		else:
 			_help_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			_help_tween = create_tween().set_parallel(true)
-			_help_tween.tween_property(_help_overlay, "modulate:a", 0.0, 0.14)
-			_help_tween.tween_property(modal, "scale", Vector2(0.98, 0.98), 0.14).set_trans(
-				Tween.TRANS_QUAD
-			).set_ease(Tween.EASE_IN)
+			_help_tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			_help_tween.tween_property(_help_shade, "modulate:a", 0.0, 0.14)
+			_help_tween.tween_property(_help_modal, "modulate:a", 0.0, 0.12)
+			_help_tween.tween_property(_help_modal, "position:y", 70.0, 0.14)
+			_help_tween.tween_property(_help_modal, "scale", Vector2(0.98, 0.98), 0.14)
 			_help_tween.finished.connect(
 				func() -> void:
 					_help_overlay.hide()
-					_help_overlay.modulate = Color.WHITE
-					_help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-					modal.scale = Vector2.ONE
+					_reset_help_visual_state()
+					_help_tween = null
 			)
 	if _slot_spin_label != null:
 		_slot_spin_label.disabled = open or cabinet.is_round_active
@@ -414,27 +421,30 @@ func _build_help_ui() -> void:
 	_help_overlay.z_index = 100
 	_help_overlay.visible = false
 	add_child(_help_overlay)
-	var shade := ColorRect.new()
-	shade.size = Vector2(960, 540)
-	shade.color = Color("080708d9")
-	shade.mouse_filter = Control.MOUSE_FILTER_STOP
-	_help_overlay.add_child(shade)
-	var modal := Panel.new()
-	modal.position = Vector2(170, 64)
-	modal.size = Vector2(620, 412)
-	modal.add_theme_stylebox_override("panel", _panel_style(Color("17161af7"), Color("c8a34b"), 8))
-	_help_overlay.add_child(modal)
-	_help_title = _help_label(modal, Vector2(32, 20), Vector2(470, 42), 28, Color("f1e8d8"))
-	var rules_heading := _help_label(modal, Vector2(32, 76), Vector2(326, 24), 14, Color("c8a34b"))
+	_help_shade = ColorRect.new()
+	_help_shade.name = "HelpShade"
+	_help_shade.size = Vector2(960, 540)
+	_help_shade.color = Color("080708d9")
+	_help_shade.mouse_filter = Control.MOUSE_FILTER_STOP
+	_help_overlay.add_child(_help_shade)
+	_help_modal = Panel.new()
+	_help_modal.name = "HelpModal"
+	_help_modal.position = Vector2(170, 64)
+	_help_modal.size = Vector2(620, 412)
+	_help_modal.pivot_offset = _help_modal.size * 0.5
+	_help_modal.add_theme_stylebox_override("panel", _panel_style(Color("17161af7"), Color("c8a34b"), 8))
+	_help_overlay.add_child(_help_modal)
+	_help_title = _help_label(_help_modal, Vector2(32, 20), Vector2(470, 42), 28, Color("f1e8d8"))
+	var rules_heading := _help_label(_help_modal, Vector2(32, 76), Vector2(326, 24), 14, Color("c8a34b"))
 	rules_heading.text = tr("HELP_RULES")
-	_help_rules = _help_label(modal, Vector2(32, 108), Vector2(326, 238), 16, Color("f1e8d8"))
+	_help_rules = _help_label(_help_modal, Vector2(32, 108), Vector2(326, 238), 16, Color("f1e8d8"))
 	_help_rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var controls_heading := _help_label(modal, Vector2(388, 76), Vector2(194, 24), 14, Color("c8a34b"))
+	var controls_heading := _help_label(_help_modal, Vector2(388, 76), Vector2(194, 24), 14, Color("c8a34b"))
 	controls_heading.text = tr("HELP_CONTROLS")
-	_help_controls = _help_label(modal, Vector2(388, 108), Vector2(194, 238), 15, Color("f1e8d8"))
+	_help_controls = _help_label(_help_modal, Vector2(388, 108), Vector2(194, 238), 15, Color("f1e8d8"))
 	_help_controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	var footer := _help_label(
-		modal, Vector2(32, 366), Vector2(420, 24), Typography.BODY_MIN, Color("b8ad9c")
+		_help_modal, Vector2(32, 366), Vector2(420, 24), Typography.BODY_MIN, Color("b8ad9c")
 	)
 	footer.text = tr("HELP_CLOSE_HINT") % InputRouter.glyph("help")
 	var close := Button.new()
@@ -447,8 +457,37 @@ func _build_help_ui() -> void:
 	close.add_theme_stylebox_override("normal", _panel_style(Color("252126"), Color("6e5225"), 6))
 	close.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
 	close.pressed.connect(func() -> void: set_help_open(false))
-	modal.add_child(close)
+	_help_modal.add_child(close)
 	ButtonFeedback.attach(close)
+	_help_reveal_items.assign(
+		[_help_title, rules_heading, _help_rules, controls_heading, _help_controls, footer, close]
+	)
+	for item: Control in _help_reveal_items:
+		_help_rest_positions[item] = item.position
+
+
+func _prepare_help_reveal() -> void:
+	_help_shade.modulate.a = 0.0
+	_help_modal.modulate.a = 0.0
+	_help_modal.position.y = 70.0
+	_help_modal.scale = Vector2(0.98, 0.98)
+	for item: Control in _help_reveal_items:
+		item.modulate.a = 0.0
+		item.position = (_help_rest_positions[item] as Vector2) + Vector2(0, 6)
+
+
+func _reset_help_visual_state() -> void:
+	if _help_shade == null or _help_modal == null:
+		return
+	_help_overlay.modulate = Color.WHITE
+	_help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	_help_shade.modulate = Color.WHITE
+	_help_modal.modulate = Color.WHITE
+	_help_modal.position = Vector2(170, 64)
+	_help_modal.scale = Vector2.ONE
+	for item: Control in _help_reveal_items:
+		item.modulate = Color.WHITE
+		item.position = _help_rest_positions[item] as Vector2
 
 
 func _refresh_help() -> void:
