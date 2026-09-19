@@ -36,6 +36,15 @@ Blackjack: X stands, Y doubles. Vault:
 up/down chooses mines before betting, directional input selects boxes during a
 round, X cashes out. The cashier is at the lower right of the floor.
 
+The floor is layered: a 4K background with guests painted into unreachable
+furniture zones, the player, and a transparent foreground of object fronts
+(lamps, plants, rails, the cashier cage) sorted by where each object meets the
+floor. Collision follows the visible rug and platform borders. In debug builds
+F1 on the floor opens developer locations, including the separate High Roller
+Salon and VIP Penthouse preview rooms (Escape / B or the on-screen control
+returns to the Main Floor). F2 toggles the collision overlay. Room data lives in
+`data/floors/*.json`; see `docs/art/FLOOR-LAYOUT-FORMAT.md`.
+
 The current test build enables an unlimited `TEST BANK` without writing the test
 balance into the player's save. Set `house_rules/testing/unlimited_bankroll=false`
 in `project.godot` to exercise the normal economy. New games otherwise start with
@@ -60,6 +69,13 @@ Install `tools/requirements-dev.txt` for `gdformat --check src tests` and
 rounds per cabinet, and uploads JSON evidence even on failure. The current release
 gate passes **241/241 tests and 3,505 assertions**. All three fixed-seed million-round
 RTP measurements pass AC-027; see `tests/results/rtp.json`.
+
+Capture the floor composition (player around every furniture group, collision
+overlay, both preview rooms) with:
+
+```powershell
+& 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --path . res://tools/capture_floor.tscn -- --capture-dir=floor_fhd --capture-size=1920x1080
+```
 
 Capture a deterministic rendered journey plus authentic slot start/mid/result
 frames and outcome proof with:
@@ -121,8 +137,9 @@ are retained under `assets/source/`, `assets/drafts/` and `tools/art/`.
 The 960×540 logical canvas renders UI directly at FHD/ROG Ally X, QHD and 4K
 output resolution with no QHD letterboxing; see `docs/DISPLAY-VALIDATION.md`.
 Automated tests cannot replace the final physical-device pass for OS DPI,
-sunlight readability, controller firmware and display safe margins. High-Roller
-and VIP wings remain visibly locked because their rooms are v2 scope.
+sunlight readability, controller firmware and display safe margins. The
+High-Roller and VIP wings stay roped off in play; their rooms are
+preview-only destinations reachable from the debug locations menu.
 
 Fractional payouts round down once to whole chips. This affects low-stake vault
 and odd-stake blackjack RTP; the simulation records its actual stake and strategy.

@@ -407,9 +407,11 @@ func test_redesigned_shell_uses_high_resolution_production_environments() -> voi
 	var menu_art: Texture2D = load(
 		"res://assets/production/environments/casino_menu_hall.png"
 	)
-	var floor_art: Texture2D = load("res://assets/production/environments/casino_floor.png")
+	var floor_art: Texture2D = load(
+		"res://assets/production/environments/casino_floor_background_v2.png"
+	)
 	assert_gte(menu_art.get_width(), 1280)
-	assert_gte(floor_art.get_width(), 1280)
+	assert_eq(floor_art.get_width(), 3840, "Floor master is sharp at UHD")
 
 
 func test_main_menu_exposes_a_focusable_reduced_motion_setting() -> void:
@@ -619,7 +621,7 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 	assert_eq(vault_panel._vault_tiles.size(), 25)
 	assert_eq(vault_panel._vault_tiles[0].size, Vector2(56, 56))
 	assert_eq(vault_panel._vault_tiles[1].position.x - vault_panel._vault_tiles[0].position.x, 60.0)
-	assert_eq(vault_panel._vault_cashout_meter.position, Vector2(650, 258))
+	assert_eq(vault_panel._vault_cashout_meter.position, Vector2(48, 284))
 	var vault_backdrop: Texture2D = load("res://assets/production/vault/vault_backdrop.png")
 	assert_gte(vault_backdrop.get_width(), 3840, "Vault backdrop retains a native 4K master")
 	assert_not_null(vault_panel.find_child("VaultControlDeck", true, false))

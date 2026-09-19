@@ -171,12 +171,10 @@ func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
 	await wait_seconds(0.18)
 	assert_eq(_floor._prompt.position, _floor._join_dialog_position(definition.id))
 	assert_eq(_floor._prompt.size, FloorController.JOIN_DIALOG_SIZE)
-	var cashier_label := Rect2(
-		FloorController.CASHIER_POSITION + Vector2(-46, -61), Vector2(92, 20)
-	)
+	var cashier_cage := Rect2(700, 300, 260, 200)
 	assert_false(
-		Rect2(_floor._prompt.position, _floor._prompt.size).intersects(cashier_label),
-		"The contextual join card does not cover the cashier identity"
+		Rect2(_floor._prompt.position, _floor._prompt.size).intersects(cashier_cage),
+		"The contextual join card does not cover the cashier"
 	)
 	var back := InputEventAction.new()
 	back.action = "back"

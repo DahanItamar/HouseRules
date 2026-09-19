@@ -94,6 +94,24 @@
       "zones": [
         "zone_reception"
       ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/sign_hr_title_a7df4433.png",
+      "crop": [
+        330,
+        0,
+        300,
+        169
+      ],
+      "zones": [],
+      "extra_rects": [
+        [
+          425,
+          28,
+          536,
+          58
+        ]
+      ]
     }
   ]
 }

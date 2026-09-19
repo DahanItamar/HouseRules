@@ -63,18 +63,6 @@
       ]
     },
     {
-      "edited": "assets/source/layered_v2/paint_in/stairs_edit_0d7e1b5f.png",
-      "crop": [
-        40,
-        140,
-        224,
-        126
-      ],
-      "zones": [
-        "GrandStaircase"
-      ]
-    },
-    {
       "edited": "assets/source/layered_v2/paint_in/elevator_edit_872ba6ee.png",
       "crop": [
         776,
@@ -84,6 +72,97 @@
       ],
       "zones": [
         "ElevatorLobby"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/join_inlays_f7cc4745.png",
+      "crop": [
+        216,
+        190,
+        528,
+        226
+      ],
+      "zones": [],
+      "extra_rects": [
+        [
+          252,
+          210,
+          742,
+          350
+        ]
+      ],
+      "feather": 24
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/sign_main_top_ee1d2d9d.png",
+      "crop": [
+        252,
+        0,
+        512,
+        219
+      ],
+      "zones": [],
+      "extra_rects": [
+        [
+          460,
+          36,
+          542,
+          64
+        ],
+        [
+          308,
+          192,
+          368,
+          214
+        ],
+        [
+          476,
+          192,
+          534,
+          214
+        ],
+        [
+          645,
+          192,
+          704,
+          214
+        ]
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/sign_main_cashier_db30144b.png",
+      "crop": [
+        700,
+        262,
+        256,
+        256
+      ],
+      "zones": [
+        "CashierCage"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/sign_main_elevator_422aed2e.png",
+      "crop": [
+        768,
+        96,
+        192,
+        108
+      ],
+      "zones": [
+        "ElevatorLobby"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/zone_stairs_edit_a47ce2e9.png",
+      "crop": [
+        0,
+        52,
+        260,
+        208
+      ],
+      "zones": [
+        "GrandStaircase"
       ]
     }
   ]

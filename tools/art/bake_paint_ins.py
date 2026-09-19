@@ -11,7 +11,8 @@ matched to the clean master before a feathered paste:
 
 SPEC: {"source": clean upscale png, "output": production background png,
 "layout": room layout json, "patches": [{"edited": edit png, "crop": [x, y, w,
-h] virtual px, "zones": [solid names], "extra_rects": [[x0, y0, x1, y1]]}]}.
+h] virtual px, "zones": [solid names], "extra_rects": [[x0, y0, x1, y1]],
+"feather": master px (optional)}]}.
 """
 
 from __future__ import annotations
@@ -30,14 +31,23 @@ FEATHER = 5.0
 
 
 def _fit_colour(edited: np.ndarray, original: np.ndarray, sample: np.ndarray) -> np.ndarray:
-    """Undo global colour drift; a misregistered edit yields an implausible fit,
-    in which case the edit is left untouched rather than washed out."""
-    fits = [np.polyfit(edited[..., c][sample], original[..., c][sample], 1) for c in range(3)]
-    if any(not 0.8 <= gain <= 1.25 or abs(offset) > 0.08 for gain, offset in fits):
-        print("  colour fit rejected", [tuple(round(float(v), 3) for v in fit) for fit in fits])
+    """Undo the edit model's global colour drift with a per-channel linear fit.
+
+    A misregistered edit decorrelates from the master; then the fit is
+    meaningless, so the edit is left untouched rather than washed out.
+    """
+    fits = []
+    for channel in range(3):
+        x = edited[..., channel][sample]
+        y = original[..., channel][sample]
+        correlation = float(np.corrcoef(x, y)[0, 1])
+        gain, offset = np.polyfit(x, y, 1)
+        fits.append((gain, offset, correlation))
+    if any(r < 0.85 or not 0.4 <= g <= 2.0 for g, _o, r in fits):
+        print("  colour fit rejected", [tuple(round(float(v), 3) for v in f) for f in fits])
         return edited
     result = edited.copy()
-    for channel, (gain, offset) in enumerate(fits):
+    for channel, (gain, offset, _r) in enumerate(fits):
         result[..., channel] = np.clip(edited[..., channel] * gain + offset, 0.0, 1.0)
     return result
 
@@ -86,8 +96,9 @@ def main(argv: list[str]) -> int:
         dx, dy = _best_shift(edited[small], original[small], outside[small])
         edited = np.roll(np.roll(edited, dy * 4, 0), dx * 4, 1)
         edited = _fit_colour(edited, original, outside)
+        # Carpet patches take a wider feather so the woven pattern never seams.
         feather = mask_image.filter(ImageFilter.MinFilter(3)).filter(
-            ImageFilter.GaussianBlur(FEATHER))
+            ImageFilter.GaussianBlur(float(patch.get("feather", FEATHER))))
         alpha = (np.asarray(feather, dtype=np.float32) / 255.0)[..., None]
         canvas[y0:y0 + size[1], x0:x0 + size[0]] = edited * alpha + original * (1.0 - alpha)
         print(f"baked {patch['edited']} shift=({dx * 4},{dy * 4}) zones={patch['zones']}")

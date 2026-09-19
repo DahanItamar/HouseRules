@@ -26,7 +26,9 @@ const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
 const MACHINE_ZONE_RADIUS: float = 50.0
-const MACHINE_ZONE_SCALE := Vector2(1.25, 0.82)
+## The join zone matches the brass diamond inlay painted in front of each island.
+const MACHINE_ZONE_SCALE := Vector2(1.28, 0.62)
+const INLAY_HIGHLIGHT := Color("f2c84b")
 const JOIN_DIALOG_SIZE := Vector2(286, 70)
 const JOIN_DIALOG_OFFSET := Vector2(-143, 40)
 const CAMERA_CENTER := Vector2(480, 270)
@@ -37,9 +39,9 @@ const HUD_BAND_HEIGHT: float = 72.0
 const DEV_BUTTON_SIZE := Vector2(190, 44)
 const DEV_TARGETS: Array[Dictionary] = [
 	{"id": &"spawn", "label": "SPAWN", "position": Vector2(480, 408)},
-	{"id": &"slot_classic", "label": "SLOTS", "position": Vector2(334, 254)},
-	{"id": &"blackjack", "label": "BLACKJACK", "position": Vector2(504, 252)},
-	{"id": &"minefield_vault", "label": "VAULT", "position": Vector2(680, 254)},
+	{"id": &"slot_classic", "label": "SLOTS", "position": Vector2(324, 246)},
+	{"id": &"blackjack", "label": "BLACKJACK", "position": Vector2(493, 246)},
+	{"id": &"minefield_vault", "label": "VAULT", "position": Vector2(671, 246)},
 	{"id": &"cashier", "label": "CASHIER", "position": CASHIER_POSITION},
 	{"id": &"main_floor", "label": "MAIN FLOOR", "position": Vector2(480, 408)},
 	{"id": &"high_roller", "label": "HIGH ROLLER SALON", "position": Vector2(150, 274)},
@@ -53,9 +55,9 @@ var nearby_definition: CabinetDefinition
 var nearby_wing: StringName = &""
 var nearby_exit: bool = false
 var cabinet_positions: Dictionary = {
-	&"slot_classic": Vector2(334, 254),
-	&"blackjack": Vector2(504, 252),
-	&"minefield_vault": Vector2(680, 254),
+	&"slot_classic": Vector2(324, 246),
+	&"blackjack": Vector2(493, 246),
+	&"minefield_vault": Vector2(671, 246),
 }
 var definitions: Dictionary = {}
 var _background: Texture2D
@@ -101,7 +103,6 @@ var _dev_open: bool = false
 var _floor_foreground: Node2D
 var _collision_overlay: Node2D
 var _room_layer: CanvasLayer
-var _room_title: Label
 var _room_status: Label
 var _room_back: Button
 
@@ -590,20 +591,13 @@ func _build_room_hud() -> void:
 	_room_layer.name = "RoomHud"
 	_room_layer.layer = 8
 	add_child(_room_layer)
-	_room_title = Label.new()
-	_room_title.name = "RoomTitle"
-	_room_title.position = Vector2(300, 14)
-	_room_title.size = Vector2(360, 40)
-	_room_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_room_title.add_theme_font_override("font", Typography.DISPLAY_FONT)
-	_room_title.add_theme_font_size_override("font_size", Typography.DISPLAY)
-	_room_title.add_theme_color_override("font_color", IVORY)
-	_room_layer.add_child(_room_title)
 	_room_status = Label.new()
 	_room_status.name = "RoomStatus"
-	_room_status.position = Vector2(260, 52)
-	_room_status.size = Vector2(440, 20)
-	_room_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# The room's name is painted into its architecture; this line only says the
+	# room is a preview, next to the way back.
+	_room_status.position = Vector2(50, 426)
+	_room_status.size = Vector2(420, 22)
+	_room_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_room_status.add_theme_font_override("font", Typography.UI_FONT)
 	_room_status.add_theme_font_size_override("font_size", Typography.SUPPORTING)
 	_room_status.add_theme_color_override("font_color", BRASS)
@@ -631,7 +625,6 @@ func _build_room_hud() -> void:
 func _refresh_room_hud() -> void:
 	if _room_layer == null:
 		return
-	_room_title.text = room.label
 	_room_status.text = tr("ROOM_PREVIEW_ONLY") if room.preview_only else ""
 	_room_back.text = tr("ROOM_BACK_BUTTON") % InputRouter.glyph("back")
 	_sync_overlay_layers()
@@ -869,15 +862,6 @@ func _draw() -> void:
 				(sin(phase) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
 			)
 			_draw_machine_zone(id, at, is_near, pulse)
-		draw_string(
-			ThemeDB.fallback_font,
-			CASHIER_POSITION + Vector2(-46, -45),
-			tr("CASHIER_NAME"),
-			HORIZONTAL_ALIGNMENT_CENTER,
-			92,
-			Typography.CRITICAL,
-			IVORY
-		)
 	if _prompt != null and _prompt.visible:
 		var prompt_rect := Rect2(_prompt.position - Vector2(12, 8), _prompt.size + Vector2(24, 16))
 		var join_dialog := nearby_definition != null and _dismissed_game != nearby_definition.id
@@ -898,28 +882,16 @@ func _draw() -> void:
 
 
 func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float) -> void:
-	var accent := _machine_accent(id)
-	var ring_color := Color(accent, 0.20 + pulse * 0.06)
-	var ring_width := 1.5
-	if is_near and _dismissed_game != id:
-		ring_color = Color(CYAN, 0.76 + pulse * 0.18)
-		ring_width = 3.0
-	draw_set_transform(at, 0.0, MACHINE_ZONE_SCALE)
-	if is_near and _dismissed_game != id:
-		draw_circle(Vector2.ZERO, MACHINE_ZONE_RADIUS - 2.0, Color(accent, 0.075))
-	draw_arc(Vector2.ZERO, MACHINE_ZONE_RADIUS, 0.0, TAU, 64, ring_color, ring_width, true)
-	if is_near and _dismissed_game != id:
-		draw_arc(
-			Vector2.ZERO,
-			MACHINE_ZONE_RADIUS + 5.0 + pulse * 2.0,
-			0.0,
-			TAU,
-			64,
-			Color(CYAN, 0.24),
-			1.5,
-			true
-		)
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# The inlay itself is painted into the carpet. Only when the player stands
+	# on it does a thin brass line trace its rim, so the floor stays clean.
+	if not is_near or _dismissed_game == id:
+		return
+	var half := Vector2(MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.x, MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.y)
+	var rim := PackedVector2Array([
+		at + Vector2(-half.x, 0), at + Vector2(0, -half.y),
+		at + Vector2(half.x, 0), at + Vector2(0, half.y), at + Vector2(-half.x, 0),
+	])
+	draw_polyline(rim, Color(INLAY_HIGHLIGHT, 0.55 + pulse * 0.35), 2.0, true)
 
 
 func _machine_accent(id: StringName) -> Color:
