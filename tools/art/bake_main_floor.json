@@ -1,0 +1,90 @@
+{
+  "source": "assets/source/layered_v2/casino_floor_upscale_5c5ddfac.png",
+  "output": "assets/production/environments/casino_floor_background_v2.png",
+  "layout": "data/floors/main_floor.json",
+  "patches": [
+    {
+      "edited": "assets/source/layered_v2/paint_in/lounges_edit_aab0f031.png",
+      "crop": [
+        0,
+        280,
+        240,
+        240
+      ],
+      "zones": [
+        "LoungeDais"
+      ],
+      "extra_rects": [
+        [
+          78,
+          288,
+          146,
+          384
+        ]
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/islands_left_edit_e12f3dda.png",
+      "crop": [
+        252,
+        36,
+        320,
+        180
+      ],
+      "zones": [
+        "SlotIsland",
+        "IslandCorridorWest",
+        "BlackjackIsland"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/islands_right_edit_8512742b.png",
+      "crop": [
+        580,
+        36,
+        320,
+        180
+      ],
+      "zones": [
+        "VaultIsland",
+        "ElevatorLobby"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/cashier_edit_972868c3.png",
+      "crop": [
+        700,
+        262,
+        256,
+        256
+      ],
+      "zones": [
+        "CashierCage"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/stairs_edit_0d7e1b5f.png",
+      "crop": [
+        40,
+        140,
+        224,
+        126
+      ],
+      "zones": [
+        "GrandStaircase"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/elevator_edit_872ba6ee.png",
+      "crop": [
+        776,
+        96,
+        192,
+        108
+      ],
+      "zones": [
+        "ElevatorLobby"
+      ]
+    }
+  ]
+}

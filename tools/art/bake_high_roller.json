@@ -1,0 +1,99 @@
+{
+  "source": "assets/source/layered_v2/high_roller_upscale_280a7aef.png",
+  "output": "assets/production/environments/high_roller_background_v2.png",
+  "layout": "data/floors/high_roller.json",
+  "patches": [
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_table_edit_57a47ce8_aligned.png",
+      "crop": [
+        336,
+        96,
+        288,
+        162
+      ],
+      "zones": [
+        "zone_table_rug"
+      ],
+      "extra_rects": [
+        [
+          455,
+          96,
+          506,
+          116
+        ]
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_slotL_edit_03b62a4a.png",
+      "crop": [
+        234,
+        6,
+        128,
+        128
+      ],
+      "zones": [
+        "zone_slot_left_alcove"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_slotR_edit_7edfb3ac.png",
+      "crop": [
+        604,
+        6,
+        128,
+        128
+      ],
+      "zones": [
+        "zone_slot_right_alcove"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_ul_edit_db96b06e.png",
+      "crop": [
+        0,
+        14,
+        200,
+        200
+      ],
+      "zones": [
+        "zone_ul_booth"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_ll_edit_c2102db5.png",
+      "crop": [
+        0,
+        294,
+        230,
+        230
+      ],
+      "zones": [
+        "zone_ll_booth"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_lr_edit_9386c85f.png",
+      "crop": [
+        735,
+        295,
+        225,
+        225
+      ],
+      "zones": [
+        "zone_lr_lounge"
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_rec_edit_6136874f.png",
+      "crop": [
+        750,
+        48,
+        210,
+        210
+      ],
+      "zones": [
+        "zone_reception"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,75 @@
 # M1 asset generation report
 
+## 2026-09-19 layered casino pass (Claude Code with Claude agents)
+
+All generation in this pass went through the connected **Higgsfield MCP**
+(claude.ai connector). The account started at 544.25 credits; see the release
+notes for the closing balance. Raw outputs live under `assets/source/layered_v2/`
+and are never overwritten. Production files are derived from them by the scripts
+named below. Discarded experiments are kept only locally in
+`assets/source/layered_v2/_rejected/` (git-ignored) and are listed here by job ID.
+
+### Environments (3840×2160 masters)
+
+| Room | Upscale job (`bytedance_image_upscale`, 4K) | Source |
+| --- | --- | --- |
+| Main Floor | `5c5ddfac-6548-427c-8dc4-979701144298` | `casino_floor_upscale_5c5ddfac.png` |
+| High Roller Salon | `280a7aef-b153-443b-8a2d-4b0df079bf72` | `high_roller_upscale_280a7aef.png` |
+| VIP Penthouse | `6e623fe9-129e-4c1c-a10f-6dbe5cfca649` | `vip_upscale_6e623fe9.png` |
+
+Each upscale is aligned to its 1344–1672 px original (mean absolute difference
+2–3/255, zero shift) and resized with Lanczos to exactly 3840×2160.
+
+### Guests painted into blocked zones
+
+The design decision, directed by the user: every furniture group is one blocked
+collision zone that follows its visible rug, platform or rail border. Guests
+exist only inside those zones, painted into crops of the clean master with
+`nano_banana_pro` image edits, then baked with `tools/art/bake_paint_ins.py`
+using the specs `tools/art/bake_main_floor.json`, `bake_high_roller.json` and
+`bake_vip.json`. Only pixels inside the named zone polygons change. The player
+can never walk behind or among these guests, so they need no runtime depth.
+This supersedes the brief's "never bake people" rule for unreachable areas.
+
+| Room | Edit jobs (used) |
+| --- | --- |
+| Main Floor | lounges `aab0f031-cd41-41eb-91bd-055bae870f03`, slot/blackjack islands `e12f3dda-6c5a-4664-a194-e56049bbed3f`, roulette island + elevator group `8512742b-3c1f-4274-867d-79ef86657839`, cashier `972868c3-a9fe-4ff6-afca-ef267fcbb308`, staircase lock `0d7e1b5f-b4b6-4e4a-be30-b9d0dc462718`, elevator lock `872ba6ee-c5b1-4bc8-899f-371049fc161c` |
+| High Roller | table `57a47ce8`, slot alcoves `03b62a4a` and `7edfb3ac`, booths `db96b06e` and `c2102db5`, lounge `9386c85f`, reception `6136874f` |
+| VIP | poker `6e2038aa`, roulette `7a659116`, bar `ff4582cf`, lounges `1f5fbc57` and `de3a5c95` |
+
+`_aligned` copies register an edit to its crop (the 16:9 4K edits return
+5504×3072, not exactly 16:9). The bake colour fit rejects implausible gains, so
+a misregistered edit is never washed out.
+
+### Cabinet hosts (1392×2080 transparent masters)
+
+`gpt_image_2_5` (quality high, 2k, `background: transparent`) created each
+adult host. Pose variants are image edits of the same master.
+`tools/art/prepare_characters.py tools/art/characters_v2.json` cleans the alpha,
+bleeds edge colour under transparent texels, pads a clear border and aligns
+variants to the master's head.
+
+| Host | Master | Poses |
+| --- | --- | --- |
+| Slot hostess (blonde, champagne gown) | `c1d5b6ff-8146-4e6a-8175-6816f12a41fd` | reels `ad4e9f7c`→cutout `fa067838`, player `b4bdfda3`→`090526c4`, anticipation `f6897e09`→`fb0bc395`, win `6eafd364`→`2e4b5e79` (`nano_banana_pro` + `remove_background`) |
+| Blackjack dealer (burgundy waistcoat) | `8b0c895c-dce2-4033-9546-0cda188c9b23` | player `eba148e9`, deal `ba374f5e`, reveal `1ca04e09` |
+| Vault attendant (navy concierge uniform) | `870301bb-f92f-4d72-9963-3fab7371f4c4` | idle `ffd07bc1`, cash-out `31e592a8`, warning `948a58ac` |
+
+The content filter blocked four hostess edits made with `gpt_image_2_5`
+(`c41440ee`, `ffc3ba3b`, `18b86989`, `b8622eb3`). The hostess poses were redone
+with `nano_banana_pro` on a grey background and cut out.
+
+### Rejected or superseded (local only)
+
+- Cut-out floor guest sprites (19 jobs) and the separate lock-sign prop
+  `ae3480a8`. They were replaced by guests and signs painted into blocked zones,
+  because the cut-outs read as pasted onto the furniture.
+- Cut-out experiments: green screen `be5e4aad`, mattes `03daabcb`, `09af776d`
+  and `cd67791e`.
+- Retries: High Roller slot `a1397ab9` (guest too large), VIP roulette
+  `47647776` (couple outside the platform). Alternate host masters `974f8058`
+  and `b660239c`.
+
 ## 2026-09-19 character motion correction
 
 The runtime floor guest now uses `assets/production/characters/casino_guest_walk_32.png`,

@@ -10,3 +10,5 @@ tools/uv/
 tools/uv.zip
 tests/results/screenshots/session_*/
 tests/results/*.log
+assets/source/layered_v2/_rejected/
+tools/art/__pycache__/

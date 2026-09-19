@@ -1,0 +1,12 @@
+{
+  "source": "assets/source/layered_v2/vip_upscale_6e623fe9.png",
+  "output": "assets/production/environments/vip_background_v2.png",
+  "layout": "data/floors/vip.json",
+  "patches": [
+    {"edited": "assets/source/layered_v2/paint_in/vip_poker_edit_6e2038aa_aligned.png", "crop": [86, 66, 224, 126], "zones": ["zone_poker"]},
+    {"edited": "assets/source/layered_v2/paint_in/vip_roulette_edit_7a659116_aligned.png", "crop": [345, 80, 272, 153], "zones": ["zone_roulette"]},
+    {"edited": "assets/source/layered_v2/paint_in/vip_bar_edit_ff4582cf_aligned.png", "crop": [688, 60, 272, 153], "zones": ["zone_bar"], "extra_rects": [[848, 60, 874, 72]]},
+    {"edited": "assets/source/layered_v2/paint_in/vip_lounge_l_edit_1f5fbc57_aligned.png", "crop": [0, 280, 224, 224], "zones": ["zone_lounge_l"], "extra_rects": [[94, 285, 106, 292]]},
+    {"edited": "assets/source/layered_v2/paint_in/vip_lounge_r_edit_de3a5c95_aligned.png", "crop": [736, 280, 224, 224], "zones": ["zone_lounge_r"]}
+  ]
+}

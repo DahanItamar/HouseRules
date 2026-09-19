@@ -11,6 +11,18 @@ The adopted definitions were fetched from commit `ad9264e309bd5e5422c04784372d78
 | Reality Checker | `testing/testing-reality-checker.md` | `tools/agency-agents/testing-reality-checker.md` | QA agent: headless GUT tests, acceptance checks, million-round simulations, honest failure reporting and CI verification. |
 | Image Prompt Engineer | `design/design-image-prompt-engineer.md` | `tools/agency-agents/design-image-prompt-engineer.md` | Asset agent: translate ASSET-SPECS briefs into Higgsfield generation requests, preserve generation provenance, and distinguish drafts from accepted production assets. |
 
+The layered casino pass (2026-09-19, Claude Code with Claude agents) pinned these
+additional definitions from the same commit:
+
+| Adopted definition | Local copy | Execution responsibility |
+| --- | --- | --- |
+| Level Designer | `tools/agency-agents/level-designer.md` | Tracing blocked zones, occluders and anchors for the three rooms. |
+| Technical Artist | `tools/agency-agents/technical-artist.md` | Layer builds, paint-in bakes and host pose masters. |
+| Inclusive Visuals Specialist | `tools/agency-agents/design-inclusive-visuals-specialist.md` | Varied adult guests across age, skin tone, body type and presentation. |
+| UI Finish Gate Reviewer | `tools/agency-agents/design-ui-finish-gate-reviewer.md` | Blackjack table and HUD composition review. |
+| Evidence Collector | `tools/agency-agents/testing-evidence-collector.md` | Screenshot evidence at FHD, QHD and UHD. |
+| Test Automation Engineer | `tools/agency-agents/testing-test-automation-engineer.md` | Floor composition and collision regression suite. |
+
 Source links resolve against [the pinned tree](https://github.com/msitarzewski/agency-agents/tree/ad9264e309bd5e5422c04784372d7841b1e5d604). These personas supply working practices; they do not supersede the project's locked specification or confer additional tools or permissions.
 
 ## Project adaptations
