@@ -46,12 +46,14 @@ func _capture() -> void:
 	await get_tree().create_timer(0.25).timeout
 	await _snapshot("02_cashier_menu")
 	main._floor._close_cashier()
+	await get_tree().create_timer(0.18).timeout
 	wallet.call("set_test_mode", true)
 	wallet.call("reset", 200)
 	economy.set("debt", 0)
 	main._floor.avatar_position = main._floor.cabinet_positions[&"slot_classic"]
 	main._floor._avatar_visual.position = main._floor.avatar_position
 	main._floor.refresh_proximity()
+	await get_tree().create_timer(0.18).timeout
 	await _snapshot("02_floor_join")
 	router.enter_cabinet(load("res://data/cabinets/slot_classic.tres"))
 	await get_tree().create_timer(0.55).timeout

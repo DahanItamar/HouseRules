@@ -1,6 +1,8 @@
 class_name FloorController
 extends Node2D
 
+signal cashier_visibility_changed(is_open: bool)
+
 const SPEED: float = 88.0
 const INTERACTION_RADIUS: float = 76.0
 const CASHIER_POSITION := Vector2(660, 410)
@@ -10,6 +12,7 @@ const FLOOR_ART := preload("res://assets/production/environments/casino_floor.pn
 const FLOOR_AVATAR_SCRIPT := preload("res://src/floor/floor_avatar.gd")
 const CASINO_PATRON_SCRIPT := preload("res://src/floor/casino_patron.gd")
 const CASHIER_WAYPOINT_SCRIPT := preload("res://src/floor/cashier_waypoint.gd")
+const MACHINE_ATTRACT_SCRIPT := preload("res://src/floor/machine_attract.gd")
 const ANIMATED_PAIR_LABEL_SCRIPT := preload("res://src/ui/animated_pair_label.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
@@ -22,6 +25,7 @@ const JOIN_DIALOG_OFFSET := Vector2(-160, 30)
 const CAMERA_CENTER := Vector2(480, 270)
 const CAMERA_FOCUS_ZOOM := Vector2(1.03, 1.03)
 const CAMERA_FOCUS_OFFSET: float = 9.0
+const CASHIER_NO_DIRECTION: int = -1
 const PATRON_LAYOUT: Array[Dictionary] = [
 	{"position": Vector2(102, 151), "profile": 0, "phase": 0.0},
 	{"position": Vector2(856, 152), "profile": 1, "phase": 1.15},
@@ -50,6 +54,7 @@ var _prompt: Label
 var _cashier_open: bool = false
 var _avatar_visual: Node2D
 var _cashier_panel: Panel
+var _cashier_scrim: ColorRect
 var _cashier_balance: AnimatedNumberLabel
 var _cashier_debt: AnimatedNumberLabel
 var _cashier_amount: AnimatedNumberLabel
@@ -69,6 +74,7 @@ var _cashier_is_closing: bool = false
 var _cashier_transfer_layer: Control
 var _cashier_summary_flash: ColorRect
 var _machine_labels: Dictionary = {}
+var _machine_attracts: Dictionary = {}
 var _patrons: Array[Node2D] = []
 var _floor_camera: Camera2D
 var _camera_tween: Tween
@@ -94,6 +100,7 @@ func _ready() -> void:
 	_build_dust()
 	_build_patrons()
 	_build_machine_labels()
+	_build_machine_attracts()
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 	_apply_motion_preference(MotionPolicy.is_reduced())
 	_avatar_visual = FLOOR_AVATAR_SCRIPT.new()
@@ -180,6 +187,7 @@ func refresh_proximity() -> void:
 			nearby_definition = null
 			nearby_wing = id
 	var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
+	_update_machine_attracts(current_game)
 	_update_camera_focus(current_game)
 	if current_game != _last_nearby_game:
 		_dismissed_game = &""
@@ -204,6 +212,7 @@ func interact() -> bool:
 		return false
 	if avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_cashier_open = true
+		cashier_visibility_changed.emit(true)
 		_cashier_repay_amount = mini(10, _cashier_repayment_limit())
 		AudioService.play(&"confirm")
 		_update_prompt()
@@ -239,8 +248,11 @@ func _unhandled_input(event: InputEvent) -> void:
 		event.is_action_pressed("back")
 		or event.is_action_pressed("interact")
 		or event.is_action_pressed("secondary")
+		or (_cashier_open and _cashier_direction(event) != CASHIER_NO_DIRECTION)
 	):
 		get_viewport().set_input_as_handled()
+	if _cashier_is_closing:
+		return
 	if _cashier_open:
 		if event.is_action_pressed("back"):
 			_close_cashier()
@@ -248,6 +260,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			var focused := get_viewport().gui_get_focus_owner()
 			if focused is Button and _cashier_panel.is_ancestor_of(focused):
 				(focused as Button).pressed.emit()
+		else:
+			_move_cashier_focus(_cashier_direction(event))
 		return
 	if event.is_action_pressed("back"):
 		if _cashier_open:
@@ -269,7 +283,9 @@ func _update_prompt() -> void:
 	_prompt.position = Vector2(56, 454)
 	_prompt.size = Vector2(848, 54)
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	if _cashier_open:
+	if _cashier_is_closing:
+		_prompt.text = ""
+	elif _cashier_open:
 		_prompt.position = Vector2(56, 486)
 		_prompt.size = Vector2(848, 42)
 		_refresh_cashier_menu()
@@ -447,6 +463,35 @@ func _build_machine_labels() -> void:
 		_machine_labels[id] = label
 
 
+func _build_machine_attracts() -> void:
+	var machine_ids: Array = cabinet_positions.keys()
+	for index: int in range(machine_ids.size()):
+		var id: StringName = machine_ids[index]
+		var attract := MACHINE_ATTRACT_SCRIPT.new() as MachineAttract
+		attract.name = "MachineAttract_%s" % id
+		attract.position = cabinet_positions[id]
+		attract.z_index = 2
+		attract.configure(_machine_attract_kind(id), float(index) / float(machine_ids.size()))
+		add_child(attract)
+		_machine_attracts[id] = attract
+
+
+func _machine_attract_kind(id: StringName) -> MachineAttract.Kind:
+	match id:
+		&"slot_classic":
+			return MachineAttract.Kind.SLOT
+		&"blackjack":
+			return MachineAttract.Kind.BLACKJACK
+		_:
+			return MachineAttract.Kind.VAULT
+
+
+func _update_machine_attracts(nearby_id: StringName) -> void:
+	for id: StringName in _machine_attracts:
+		var attract: MachineAttract = _machine_attracts[id]
+		attract.set_near(id == nearby_id)
+
+
 func _update_camera_focus(game_id: StringName) -> void:
 	if _floor_camera == null or game_id == _camera_focus_id:
 		return
@@ -489,6 +534,8 @@ func _apply_motion_preference(reduced: bool) -> void:
 		_camera_focus_id = &""
 		var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
 		_update_camera_focus(current_game)
+	for attract: MachineAttract in _machine_attracts.values():
+		attract.apply_motion_preference(reduced)
 	queue_redraw()
 
 
@@ -584,6 +631,15 @@ func _machine_accent(id: StringName) -> Color:
 
 
 func _build_cashier_menu() -> void:
+	_cashier_scrim = ColorRect.new()
+	_cashier_scrim.name = "CashierScrim"
+	_cashier_scrim.position = Vector2.ZERO
+	_cashier_scrim.size = Vector2(960, 540)
+	_cashier_scrim.color = Color("09070acc")
+	_cashier_scrim.mouse_filter = Control.MOUSE_FILTER_STOP
+	_cashier_scrim.z_index = 29
+	_cashier_scrim.visible = false
+	add_child(_cashier_scrim)
 	_cashier_panel = Panel.new()
 	_cashier_panel.name = "CashierMenu"
 	_cashier_panel.position = Vector2(250, 56)
@@ -763,6 +819,8 @@ func _refresh_cashier_menu() -> void:
 		_cashier_panel.scale = Vector2.ONE
 	_cashier_panel.visible = true
 	_cashier_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	_cashier_scrim.visible = true
+	_cashier_scrim.modulate.a = 1.0
 	if opening:
 		_cashier_panel.pivot_offset = _cashier_panel.size * 0.5
 		_cashier_panel.modulate.a = 0.0
@@ -852,6 +910,7 @@ func _cashier_initial_focus() -> Button:
 
 func _close_cashier() -> void:
 	_cashier_open = false
+	cashier_visibility_changed.emit(false)
 	var focused := get_viewport().gui_get_focus_owner()
 	if focused is Control and _cashier_panel.is_ancestor_of(focused):
 		(focused as Control).release_focus()
@@ -876,6 +935,7 @@ func _animate_cashier_close() -> void:
 	_cashier_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if MotionPolicy.is_reduced():
 		_cashier_panel.visible = false
+		_cashier_scrim.visible = false
 		_cashier_panel.modulate = Color.WHITE
 		_cashier_panel.scale = Vector2.ONE
 		_cashier_is_closing = false
@@ -888,13 +948,42 @@ func _animate_cashier_close() -> void:
 	_cashier_tween.tween_property(_cashier_panel, "scale", Vector2(0.97, 0.97), 0.14).set_trans(
 		Tween.TRANS_QUAD
 	).set_ease(Tween.EASE_IN)
+	_cashier_tween.tween_property(_cashier_scrim, "modulate:a", 0.0, 0.14)
 	_cashier_tween.chain().tween_callback(
 		func() -> void:
 			_cashier_panel.visible = false
+			_cashier_scrim.visible = false
+			_cashier_scrim.modulate.a = 1.0
 			_cashier_panel.modulate = Color.WHITE
 			_cashier_panel.scale = Vector2.ONE
 			_cashier_is_closing = false
+			_update_prompt()
 	)
+
+
+func _cashier_direction(event: InputEvent) -> int:
+	if event.is_action_pressed("move_left"):
+		return Side.SIDE_LEFT
+	if event.is_action_pressed("move_right"):
+		return Side.SIDE_RIGHT
+	if event.is_action_pressed("move_up"):
+		return Side.SIDE_TOP
+	if event.is_action_pressed("move_down"):
+		return Side.SIDE_BOTTOM
+	return CASHIER_NO_DIRECTION
+
+
+func _move_cashier_focus(direction: int) -> void:
+	if direction == CASHIER_NO_DIRECTION:
+		return
+	var focused := get_viewport().gui_get_focus_owner() as Control
+	if focused == null or not _cashier_panel.is_ancestor_of(focused):
+		_cashier_initial_focus().grab_focus()
+		return
+	var next := focused.find_valid_focus_neighbor(direction)
+	if next != null and _cashier_panel.is_ancestor_of(next):
+		next.grab_focus()
+		AudioService.play(&"move")
 
 
 func _play_cashier_transaction(amount: int, borrowing: bool) -> void:

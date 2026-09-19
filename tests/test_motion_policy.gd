@@ -80,6 +80,13 @@ func test_reduced_floor_stops_dust_patrons_and_camera_emphasis() -> void:
 	patron.call("_process", 0.4)
 	assert_eq(float(patron.get("elapsed")), 0.0)
 	assert_eq(float(patron.get("gesture_strength")), 0.0)
+	for attract: MachineAttract in floor._machine_attracts.values():
+		assert_true(attract.reduced_motion)
+		assert_false(attract.is_processing(), "Machine attract loops hold a stable reduced frame")
+		var stable_phase := attract.visual_phase()
+		attract._process(0.4)
+		assert_eq(attract.elapsed, 0.0)
+		assert_eq(attract.visual_phase(), stable_phase)
 	floor.avatar_position = floor.cabinet_positions[&"slot_classic"]
 	floor.refresh_proximity()
 	assert_eq(floor._floor_camera.position, FloorController.CAMERA_CENTER)

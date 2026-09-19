@@ -153,12 +153,39 @@ func test_floor_machine_rings_have_concise_persistent_identity_labels() -> void:
 		assert_gt(label.z_index, 0, "Machine identity stays readable above floor characters")
 
 
+func test_floor_machines_have_distinct_staggered_attract_loops() -> void:
+	assert_eq(_floor._machine_attracts.size(), _floor.cabinet_positions.size())
+	var slot: MachineAttract = _floor._machine_attracts[&"slot_classic"]
+	var blackjack: MachineAttract = _floor._machine_attracts[&"blackjack"]
+	var vault: MachineAttract = _floor._machine_attracts[&"minefield_vault"]
+	assert_eq(slot.kind, MachineAttract.Kind.SLOT)
+	assert_eq(blackjack.kind, MachineAttract.Kind.BLACKJACK)
+	assert_eq(vault.kind, MachineAttract.Kind.VAULT)
+	assert_ne(slot.phase_offset, blackjack.phase_offset)
+	assert_ne(blackjack.phase_offset, vault.phase_offset)
+	assert_ne(slot._period(), blackjack._period())
+	assert_ne(blackjack._period(), vault._period())
+	var phase_before := slot.visual_phase()
+	slot._process(0.2)
+	assert_ne(slot.visual_phase(), phase_before, "Full-motion machine faces stay visibly alive")
+
+
+func test_nearby_machine_heightens_only_its_attract_loop() -> void:
+	_floor.avatar_position = _floor.cabinet_positions[&"blackjack"]
+	_floor.refresh_proximity()
+	for id: StringName in _floor._machine_attracts:
+		var attract: MachineAttract = _floor._machine_attracts[id]
+		assert_eq(attract.is_near, id == &"blackjack")
+		assert_eq(attract.emphasis(), 1.45 if id == &"blackjack" else 1.0)
+
+
 func test_cashier_opens_a_real_focusable_menu() -> void:
 	Economy.debt = 50
 	_floor.avatar_position = _floor.CASHIER_POSITION
 	_floor.refresh_proximity()
 	assert_true(_floor.interact())
 	assert_true(_floor._cashier_panel.visible)
+	assert_true(_floor._cashier_scrim.visible)
 	assert_not_null(_floor._cashier_panel.get_node("TakeMarker"))
 	assert_not_null(_floor._cashier_panel.get_node("RepayDebt"))
 	assert_not_null(_floor._cashier_panel.get_node("CloseCashier"))
@@ -168,6 +195,20 @@ func test_cashier_opens_a_real_focusable_menu() -> void:
 		_floor._cashier_repay,
 		"The enabled repayment confirmation receives controller focus"
 	)
+
+
+func test_cashier_wasd_actions_move_focus_inside_modal() -> void:
+	Economy.debt = 50
+	_floor.avatar_position = _floor.CASHIER_POSITION
+	_floor.refresh_proximity()
+	assert_true(_floor.interact())
+	await wait_process_frames(1)
+	_floor._cashier_marker.grab_focus()
+	var move_right := InputEventAction.new()
+	move_right.action = &"move_right"
+	move_right.pressed = true
+	_floor._unhandled_input(move_right)
+	assert_eq(get_viewport().gui_get_focus_owner(), _floor._cashier_repay)
 
 
 func test_cashier_repayment_picker_clamps_previews_and_confirms_selected_amount() -> void:
