@@ -13,6 +13,10 @@
       "motion_full/02_cashier_menu.png",
       "motion_full/02_cashier_transaction.png"
     ],
+    "cashier_idle": [
+      "motion_full/02_cashier_idle_a.png",
+      "motion_full/02_cashier_idle_b.png"
+    ],
     "help_reveal": [
       "motion_full/03_help_reveal_start.png",
       "motion_full/03_help_reveal_mid.png"
@@ -74,6 +78,15 @@
         "hit_reflow": [
           "motion_full/05_blackjack_hit_start.png",
           "motion_full/05_blackjack_hit_mid.png"
+        ]
+      }
+    },
+    "cashier_ambient_strip": {
+      "rect": [500, 600, 920, 220],
+      "sequences": {
+        "idle": [
+          "motion_full/02_cashier_idle_a.png",
+          "motion_full/02_cashier_idle_b.png"
         ]
       }
     }

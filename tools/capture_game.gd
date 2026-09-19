@@ -64,6 +64,10 @@ func _capture() -> void:
 	main._floor.interact()
 	await get_tree().create_timer(0.25).timeout
 	await _snapshot("02_cashier_menu")
+	await get_tree().create_timer(0.35).timeout
+	await _snapshot("02_cashier_idle_a")
+	await get_tree().create_timer(0.30).timeout
+	await _snapshot("02_cashier_idle_b")
 	main._floor._cashier_repay_amount = 10
 	main._floor._confirm_cashier_repayment()
 	await get_tree().create_timer(0.10).timeout

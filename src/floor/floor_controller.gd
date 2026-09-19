@@ -564,6 +564,13 @@ func _apply_motion_preference(reduced: bool) -> void:
 		_dust.visible = not reduced
 	if reduced:
 		_ambient_time = 0.0
+		if _prompt_tween != null:
+			_prompt_tween.kill()
+			_prompt_tween = null
+		if _prompt != null:
+			_update_prompt()
+			_prompt.modulate = Color.WHITE
+			_prompt.scale = Vector2.ONE
 		if _camera_tween != null:
 			_camera_tween.kill()
 		if _floor_camera != null:

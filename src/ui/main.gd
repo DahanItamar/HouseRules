@@ -384,6 +384,15 @@ func _on_motion_preference_changed(reduced: bool) -> void:
 		if _message_tween != null:
 			_message_tween.kill()
 		_apply_message_final_state()
+		if _bank_feedback_tween != null:
+			_bank_feedback_tween.kill()
+		_bank_panel.scale = Vector2.ONE
+		_hud.modulate = Color.WHITE
+		if _contract_feedback_tween != null:
+			_contract_feedback_tween.kill()
+		_contracts_panel.scale = Vector2.ONE
+		_contracts.position.x = 610.0
+		_contracts.modulate = Color.WHITE
 	elif _menu != null and _menu.visible:
 		_play_menu_reveal()
 

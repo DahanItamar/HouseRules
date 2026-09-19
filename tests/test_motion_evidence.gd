@@ -77,10 +77,24 @@ func test_blackjack_player_lane_changes_during_live_hand_reflow() -> void:
 	)
 
 
+func test_cashier_ledger_and_chip_strip_remains_alive_after_entry_settles() -> void:
+	var evidence: Dictionary = _manifest().regions_of_interest.cashier_ambient_strip
+	var values: Array = evidence.rect
+	var region := Rect2i(int(values[0]), int(values[1]), int(values[2]), int(values[3]))
+	var frames: Array = evidence.sequences.idle
+	var first := _load_evidence_image(String(frames[0])).get_region(region)
+	var second := _load_evidence_image(String(frames[1])).get_region(region)
+	assert_ne(
+		first.get_data(),
+		second.get_data(),
+		"The settled cashier keeps a restrained ledger and chip-tray motion"
+	)
+
+
 func test_high_value_alive_flows_have_named_temporal_evidence() -> void:
 	var full: Dictionary = _manifest().full_motion
 	for sequence_key: String in [
-		"floor_practical_lights", "help_reveal", "help_dismiss", "exit_reveal",
+		"floor_practical_lights", "cashier_idle", "help_reveal", "help_dismiss", "exit_reveal",
 		"exit_cancel", "exit_confirm",
 		"blackjack_deal", "blackjack_hit", "blackjack_reveal", "vault_hazard",
 	]:

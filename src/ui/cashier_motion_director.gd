@@ -7,12 +7,14 @@ extends Node
 const ENTRY_OFFSET := Vector2(0, 7)
 const ENTRY_DURATION := 0.16
 const STAGGER := 0.025
+const CASHIER_AMBIENT_SCRIPT := preload("res://src/ui/cashier_ambient.gd")
 var _floor: Node
 var _panel: Control
 var _controls: Array[Control] = []
 var _rest_positions: Dictionary = {}
 var _reveal_tween: Tween
 var _target_open: bool = false
+var _ambient
 
 
 func bind(floor: Node) -> void:
@@ -20,6 +22,7 @@ func bind(floor: Node) -> void:
 		_floor.disconnect("cashier_visibility_changed", _on_visibility_changed)
 	_floor = floor
 	_panel = floor.get("_cashier_panel") as Control
+	_build_ambient()
 	_collect_controls()
 	if not _floor.is_connected("cashier_visibility_changed", _on_visibility_changed):
 		_floor.connect("cashier_visibility_changed", _on_visibility_changed)
@@ -35,9 +38,23 @@ func has_active_motion() -> bool:
 	return _reveal_tween != null and _reveal_tween.is_valid() and _reveal_tween.is_running()
 
 
+func has_active_ambient_motion() -> bool:
+	return _ambient != null and _ambient.is_animating()
+
+
+func ambient_visual_sample() -> Vector2:
+	return _ambient.visual_sample() if _ambient != null else Vector2.ZERO
+
+
+func ambient_rest_sample() -> Vector2:
+	return _ambient.rest_sample() if _ambient != null else Vector2.ZERO
+
+
 func play_open() -> void:
 	_kill_reveal()
 	_apply_final_state()
+	if _ambient != null:
+		_ambient.set_active(true)
 	if MotionPolicy.is_reduced() or _panel == null:
 		return
 	for index: int in range(_controls.size()):
@@ -61,7 +78,10 @@ func _collect_controls() -> void:
 		return
 	for child: Node in _panel.get_children():
 		var control := child as Control
-		if control == null or control.name in [&"TransactionFlash", &"ChipTransferLayer"]:
+		if (
+			control == null
+			or control.name in [&"TransactionFlash", &"ChipTransferLayer", &"CashierAmbient"]
+		):
 			continue
 		_controls.append(control)
 		_rest_positions[control] = control.position
@@ -80,6 +100,8 @@ func _on_visibility_changed(is_open: bool) -> void:
 		_play_open_if_still_visible.call_deferred()
 	else:
 		_kill_reveal()
+		if _ambient != null:
+			_ambient.set_active(false)
 		_apply_final_state()
 
 
@@ -92,6 +114,20 @@ func _on_motion_preference_changed(reduced: bool) -> void:
 	if reduced:
 		_kill_reveal()
 		_apply_final_state()
+
+
+func _build_ambient() -> void:
+	if _panel == null:
+		return
+	var existing: Node = _panel.get_node_or_null("CashierAmbient")
+	if existing != null:
+		_ambient = existing
+		return
+	_ambient = CASHIER_AMBIENT_SCRIPT.new()
+	_ambient.name = "CashierAmbient"
+	_ambient.size = _panel.size
+	_ambient.z_index = 1
+	_panel.add_child(_ambient)
 
 
 func _kill_reveal() -> void:
@@ -109,6 +145,8 @@ func _apply_final_state() -> void:
 
 func _exit_tree() -> void:
 	_kill_reveal()
+	if _ambient != null:
+		_ambient.set_active(false)
 	if _floor != null and _floor.is_connected("cashier_visibility_changed", _on_visibility_changed):
 		_floor.disconnect("cashier_visibility_changed", _on_visibility_changed)
 	if MotionPolicy.motion_preference_changed.is_connected(_on_motion_preference_changed):

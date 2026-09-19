@@ -105,3 +105,92 @@ func test_main_shell_connects_cashier_visibility_to_the_content_director() -> vo
 	await get_tree().process_frame
 	assert_true(main._cashier_motion_director.has_active_motion())
 	assert_gt(main._cashier_motion_director.tracked_control_count(), 10)
+
+
+func test_open_cashier_keeps_a_bounded_ambient_visual_alive_after_entry_settles() -> void:
+	var floor := FloorController.new()
+	add_child_autofree(floor)
+	floor.set_physics_process(false)
+	var director := CASHIER_MOTION_DIRECTOR_SCRIPT.new()
+	add_child_autofree(director)
+	director.bind(floor)
+	floor.avatar_position = FloorController.CASHIER_POSITION
+	floor.refresh_proximity()
+	assert_true(floor.interact())
+	await wait_seconds(0.58)
+	assert_false(director.has_active_motion(), "The finite content reveal has settled")
+	assert_true(
+		director.has_active_ambient_motion(),
+		"The open cashier retains one quiet, presentation-only ambient loop"
+	)
+	var first_sample: Variant = director.ambient_visual_sample()
+	await wait_seconds(0.27)
+	var second_sample: Variant = director.ambient_visual_sample()
+	assert_ne(
+		second_sample,
+		first_sample,
+		"The ambient loop changes an observable visual after the entry choreography"
+	)
+
+
+func test_reduced_motion_stops_cashier_ambient_and_holds_its_exact_rest_sample() -> void:
+	var floor := FloorController.new()
+	add_child_autofree(floor)
+	floor.set_physics_process(false)
+	var director := CASHIER_MOTION_DIRECTOR_SCRIPT.new()
+	add_child_autofree(director)
+	director.bind(floor)
+	floor.avatar_position = FloorController.CASHIER_POSITION
+	floor.refresh_proximity()
+	assert_true(floor.interact())
+	await wait_seconds(0.20)
+	assert_true(director.has_active_ambient_motion())
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	assert_false(director.has_active_motion())
+	assert_false(director.has_active_ambient_motion())
+	var rest_sample: Variant = director.ambient_visual_sample()
+	assert_eq(rest_sample, director.ambient_rest_sample())
+	await wait_seconds(0.27)
+	assert_eq(
+		director.ambient_visual_sample(),
+		rest_sample,
+		"Reduced motion holds the cashier accent at a byte-stable visual state"
+	)
+
+
+func test_reduced_motion_settles_an_active_join_dialog_to_its_canonical_pose() -> void:
+	var floor := FloorController.new()
+	add_child_autofree(floor)
+	floor.set_physics_process(false)
+	floor.avatar_position = floor.cabinet_positions[&"slot_classic"]
+	floor.refresh_proximity()
+	var expected_position := floor._join_dialog_position(&"slot_classic")
+	assert_true(floor._prompt_tween.is_running())
+	assert_ne(floor._prompt.position, expected_position)
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	assert_eq(floor._prompt.position, expected_position)
+	assert_eq(floor._prompt.modulate, Color.WHITE)
+	assert_true(floor._prompt.visible)
+	assert_true(floor._prompt_tween == null or not floor._prompt_tween.is_running())
+
+
+func test_reduced_motion_settles_active_hud_feedback_to_exact_rest_state() -> void:
+	var main := MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	main._show_floor_now()
+	main._on_balance_changed(100, 90)
+	main._on_contracts_changed()
+	assert_true(main._bank_feedback_tween.is_running())
+	assert_true(main._contract_feedback_tween.is_running())
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	assert_eq(main._bank_panel.scale, Vector2.ONE)
+	assert_eq(main._hud.modulate, Color.WHITE)
+	assert_eq(main._contracts_panel.scale, Vector2.ONE)
+	assert_eq(main._contracts.position.x, 610.0)
+	assert_eq(main._contracts.modulate, Color.WHITE)
+	assert_true(
+		main._bank_feedback_tween == null or not main._bank_feedback_tween.is_running()
+	)
+	assert_true(
+		main._contract_feedback_tween == null or not main._contract_feedback_tween.is_running()
+	)
