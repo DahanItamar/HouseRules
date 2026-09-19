@@ -37,6 +37,10 @@
       "motion_full/05_blackjack_deal_start.png",
       "motion_full/05_blackjack_deal_mid.png"
     ],
+    "blackjack_hit": [
+      "motion_full/05_blackjack_hit_start.png",
+      "motion_full/05_blackjack_hit_mid.png"
+    ],
     "blackjack_reveal": [
       "motion_full/05_blackjack_reveal_start.png",
       "motion_full/05_blackjack_reveal_mid.png"
@@ -61,6 +65,15 @@
         "reveal": [
           "motion_full/05_blackjack_reveal_start.png",
           "motion_full/05_blackjack_reveal_mid.png"
+        ]
+      }
+    },
+    "blackjack_player_lane": {
+      "rect": [620, 540, 920, 400],
+      "sequences": {
+        "hit_reflow": [
+          "motion_full/05_blackjack_hit_start.png",
+          "motion_full/05_blackjack_hit_mid.png"
         ]
       }
     }

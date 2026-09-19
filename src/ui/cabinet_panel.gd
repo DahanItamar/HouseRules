@@ -64,6 +64,8 @@ var _blackjack_dealt: bool = false
 var _blackjack_pending_motions: int = 0
 var _blackjack_preparing: bool = false
 var _blackjack_cards: Array[PlayingCard] = []
+var _blackjack_card_tweens: Dictionary = {}
+var _blackjack_layout_targets: Dictionary = {}
 var _blackjack_dealer_total: AnimatedNumberLabel
 var _blackjack_player_total: AnimatedNumberLabel
 var _blackjack_credit_value: AnimatedNumberLabel
@@ -1094,14 +1096,26 @@ func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], 
 		_blackjack_dealt = true
 	var cards_before := _blackjack_cards.size()
 	var deal_index: int = 0
+	var initial_deal := cards_before == 0
+	# Keep the stable dealer-then-player node order used by result presentation,
+	# while assigning initial travel delays in physical P/D/P/D order.
 	for index: int in range(dealer_cards.size()):
-		_sync_playing_card(
-			dealer_cards[index], index, dealer_cards.size(), true, hide_hole and index == 1, deal_index
-		)
-		deal_index += 1
+		var dealer_stagger := index * 2 + 1 if initial_deal else deal_index
+		if _sync_playing_card(
+			dealer_cards[index],
+			index,
+			dealer_cards.size(),
+			true,
+			hide_hole and index == 1,
+			dealer_stagger
+		) and not initial_deal:
+			deal_index += 1
 	for index: int in range(player_cards.size()):
-		_sync_playing_card(player_cards[index], index, player_cards.size(), false, false, deal_index)
-		deal_index += 1
+		var player_stagger := index * 2 if initial_deal else deal_index
+		if _sync_playing_card(
+			player_cards[index], index, player_cards.size(), false, false, player_stagger
+		) and not initial_deal:
+			deal_index += 1
 	var newly_dealt := _blackjack_cards.size() - cards_before
 	if newly_dealt > 0 and _blackjack_dealer_presenter != null:
 		_blackjack_dealer_presenter.play_deal(newly_dealt)
@@ -1112,6 +1126,7 @@ func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], 
 
 func prepare_blackjack_round() -> void:
 	_reset_blackjack_result_feedback_for_round()
+	_settle_blackjack_card_motions()
 	_blackjack_dealt = false
 	_blackjack_preparing = true
 	_blackjack_pending_motions = 1
@@ -1122,28 +1137,123 @@ func blackjack_input_ready() -> bool:
 
 
 func _clear_blackjack_cards() -> void:
+	for card_id: int in _blackjack_card_tweens.keys():
+		_cancel_blackjack_card_motion(card_id)
 	for card: PlayingCard in _blackjack_cards:
 		if is_instance_valid(card):
 			card.queue_free()
 	_blackjack_cards.clear()
+	_blackjack_layout_targets.clear()
 
 
 func _sync_playing_card(
 	rank: int, hand_index: int, hand_size: int, dealer_hand: bool, hidden: bool, deal_index: int
-) -> void:
+) -> bool:
 	var card_name := ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
 	for card: PlayingCard in _blackjack_cards:
 		if card.name == card_name:
+			_reflow_blackjack_card(card, _blackjack_card_layout(hand_index, hand_size, dealer_hand))
 			var tracks_flip := card.face_down and not hidden and card.is_inside_tree()
 			if tracks_flip:
 				_blackjack_pending_motions += 1
-				card.flip_completed.connect(_on_blackjack_flip_completed, CONNECT_ONE_SHOT)
+				card.flip_completed.connect(
+					_on_blackjack_flip_completed.bind(card.get_instance_id()), CONNECT_ONE_SHOT
+				)
 				AudioService.play(&"card_flip")
 				if _blackjack_dealer_presenter != null:
 					_blackjack_dealer_presenter.play_reveal()
 			card.set_face_down(hidden, card.face_down and not hidden)
-			return
+			return false
 	_add_playing_card(rank, hand_index, hand_size, dealer_hand, hidden, deal_index)
+	return true
+
+
+func _blackjack_card_layout(hand_index: int, hand_size: int, dealer_hand: bool) -> Dictionary:
+	var safe_hand_size := maxi(hand_size, 1)
+	var card_size := (
+		Vector2(76, 108)
+		if safe_hand_size >= 6
+		else (Vector2(82, 116) if safe_hand_size == 5 else Vector2(88, 124))
+	)
+	var card_pitch := minf(70.0, (480.0 - card_size.x) / maxf(safe_hand_size - 1, 1))
+	var hand_width := card_size.x + maxi(safe_hand_size - 1, 0) * card_pitch
+	var fan_center := float(safe_hand_size - 1) * 0.5
+	return {
+		"size": card_size,
+		"position": Vector2(
+			470.0 - hand_width * 0.5 + hand_index * card_pitch,
+			158.0 if dealer_hand else 310.0
+		),
+		"rotation": (float(hand_index) - fan_center) * 0.025,
+	}
+
+
+func _reflow_blackjack_card(card: PlayingCard, layout: Dictionary) -> void:
+	var card_id := card.get_instance_id()
+	var previous: Dictionary = _blackjack_layout_targets.get(card_id, {})
+	_blackjack_layout_targets[card_id] = layout
+	if (
+		previous.get("size", Vector2.ZERO) == layout.size
+		and previous.get("position", Vector2.ZERO) == layout.position
+		and is_equal_approx(float(previous.get("rotation", INF)), float(layout.rotation))
+	):
+		return
+	_cancel_blackjack_card_motion(card_id)
+	if MotionPolicy.is_reduced() or not card.is_inside_tree():
+		_apply_blackjack_card_layout(card, layout)
+		return
+	_blackjack_pending_motions += 1
+	var reflow := create_tween().set_parallel(true)
+	_blackjack_card_tweens[card_id] = reflow
+	reflow.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	reflow.tween_property(card, "position", layout.position, 0.20)
+	reflow.tween_property(card, "size", layout.size, 0.20)
+	reflow.tween_property(card, "rotation", layout.rotation, 0.20)
+	reflow.finished.connect(_finish_blackjack_card_motion.bind(card_id))
+
+
+func _apply_blackjack_card_layout(card: PlayingCard, layout: Dictionary) -> void:
+	card.position = layout.position
+	card.size = layout.size
+	card.rotation = layout.rotation
+	card.pivot_offset = card.size * 0.5
+
+
+func _cancel_blackjack_card_motion(card_id: int) -> void:
+	var motion: Tween = _blackjack_card_tweens.get(card_id)
+	if motion == null:
+		return
+	if motion.is_valid():
+		motion.kill()
+	_blackjack_card_tweens.erase(card_id)
+	_complete_blackjack_motion()
+
+
+func _finish_blackjack_card_motion(card_id: int) -> void:
+	var card := _blackjack_card_for_id(card_id)
+	var layout: Dictionary = _blackjack_layout_targets.get(card_id, {})
+	if is_instance_valid(card) and not layout.is_empty():
+		_apply_blackjack_card_layout(card, layout)
+		card.modulate.a = 1.0
+	_blackjack_card_tweens.erase(card_id)
+	_complete_blackjack_motion()
+
+
+func _blackjack_card_for_id(card_id: int) -> PlayingCard:
+	for card: PlayingCard in _blackjack_cards:
+		if card.get_instance_id() == card_id:
+			return card
+	return null
+
+
+func _settle_blackjack_card_motions() -> void:
+	for card_id: int in _blackjack_card_tweens.keys():
+		var card := _blackjack_card_for_id(card_id)
+		var layout: Dictionary = _blackjack_layout_targets.get(card_id, {})
+		_cancel_blackjack_card_motion(card_id)
+		if is_instance_valid(card) and not layout.is_empty():
+			_apply_blackjack_card_layout(card, layout)
+			card.modulate.a = 1.0
 
 
 func _add_playing_card(
@@ -1151,42 +1261,31 @@ func _add_playing_card(
 ) -> void:
 	var card := PlayingCard.new()
 	card.name = ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
-	card.size = (
-		Vector2(76, 108)
-		if hand_size >= 6
-		else (Vector2(82, 116) if hand_size == 5 else Vector2(88, 124))
-	)
+	var layout := _blackjack_card_layout(hand_index, hand_size, dealer_hand)
+	card.size = layout.size
 	card.configure(rank, rank + hand_index + (0 if dealer_hand else 2), hidden)
-	var card_pitch := minf(70.0, (480.0 - card.size.x) / maxf(hand_size - 1, 1))
-	var hand_width := card.size.x + maxi(hand_size - 1, 0) * card_pitch
-	var destination := Vector2(
-		470.0 - hand_width * 0.5 + hand_index * card_pitch,
-		158.0 if dealer_hand else 310.0
-	)
 	card.position = Vector2(804, 144)
 	card.rotation = 0.08
 	card.modulate.a = 0.0
 	if MotionPolicy.is_reduced():
-		card.position = destination
-		card.rotation = (hand_index - 1) * 0.025
+		_apply_blackjack_card_layout(card, layout)
+		card.modulate.a = 1.0
 	_art_root.add_child(card)
 	_blackjack_cards.append(card)
+	_blackjack_layout_targets[card.get_instance_id()] = layout
 	AudioService.play(&"card_deal")
+	if MotionPolicy.is_reduced():
+		return
 	_blackjack_pending_motions += 1
 	var deal := create_tween().set_parallel(true)
-	var deal_delay := MotionPolicy.finite_duration(deal_index * 0.08)
-	if not MotionPolicy.is_reduced():
-		deal.tween_property(card, "position", destination, 0.26).set_delay(deal_delay)
-		deal.tween_property(card, "rotation", (hand_index - 1) * 0.025, 0.26).set_delay(
-			deal_delay
-		)
-	deal.tween_property(
-		card, "modulate:a", 1.0, MotionPolicy.finite_duration(0.12)
-	).set_delay(deal_delay)
-	deal.finished.connect(_complete_blackjack_motion)
-	if dealer_hand and not hidden and hand_index == 1 and not MotionPolicy.is_reduced():
-		card.scale.x = 0.05
-		create_tween().tween_property(card, "scale:x", 1.0, 0.14).set_delay(0.18)
+	var deal_delay := deal_index * 0.08
+	deal.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	deal.tween_property(card, "position", layout.position, 0.26).set_delay(deal_delay)
+	deal.tween_property(card, "rotation", layout.rotation, 0.26).set_delay(deal_delay)
+	deal.tween_property(card, "modulate:a", 1.0, 0.12).set_delay(deal_delay)
+	var card_id := card.get_instance_id()
+	_blackjack_card_tweens[card_id] = deal
+	deal.finished.connect(_finish_blackjack_card_motion.bind(card_id))
 
 
 func _complete_blackjack_motion() -> void:
@@ -1194,7 +1293,11 @@ func _complete_blackjack_motion() -> void:
 	_try_complete_result_reveal()
 
 
-func _on_blackjack_flip_completed() -> void:
+func _on_blackjack_flip_completed(card_id: int) -> void:
+	var card := _blackjack_card_for_id(card_id)
+	var layout: Dictionary = _blackjack_layout_targets.get(card_id, {})
+	if is_instance_valid(card) and not layout.is_empty():
+		_apply_blackjack_card_layout(card, layout)
 	_complete_blackjack_motion()
 
 
@@ -1443,6 +1546,7 @@ func _settle_action_control(button: BaseButton) -> void:
 func _apply_live_feedback_motion_preference(reduced: bool) -> void:
 	if not reduced:
 		return
+	_settle_blackjack_card_motions()
 	for control_id: int in _state_feedback_tweens.keys():
 		_stop_state_feedback(control_id)
 	for control: Control in _state_controls.values():

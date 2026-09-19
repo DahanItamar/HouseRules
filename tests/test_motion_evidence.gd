@@ -63,12 +63,26 @@ func test_blackjack_dealer_lane_itself_changes_during_each_articulated_gesture()
 		)
 
 
+func test_blackjack_player_lane_changes_during_live_hand_reflow() -> void:
+	var evidence: Dictionary = _manifest().regions_of_interest.blackjack_player_lane
+	var values: Array = evidence.rect
+	var region := Rect2i(int(values[0]), int(values[1]), int(values[2]), int(values[3]))
+	var frames: Array = evidence.sequences.hit_reflow
+	var first := _load_evidence_image(String(frames[0])).get_region(region)
+	var second := _load_evidence_image(String(frames[1])).get_region(region)
+	assert_ne(
+		first.get_data(),
+		second.get_data(),
+		"Hit choreography visibly refans cards inside the player table lane"
+	)
+
+
 func test_high_value_alive_flows_have_named_temporal_evidence() -> void:
 	var full: Dictionary = _manifest().full_motion
 	for sequence_key: String in [
 		"floor_practical_lights", "help_reveal", "help_dismiss", "exit_reveal",
 		"exit_cancel", "exit_confirm",
-		"blackjack_deal", "blackjack_reveal", "vault_hazard",
+		"blackjack_deal", "blackjack_hit", "blackjack_reveal", "vault_hazard",
 	]:
 		assert_true(full.has(sequence_key), "%s is represented in the manifest" % sequence_key)
 		assert_eq((full[sequence_key] as Array).size(), 2)

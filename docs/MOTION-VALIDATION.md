@@ -4,7 +4,7 @@ House Rules captures temporal presentation evidence from the running Godot build
 not from mocked UI states. The deterministic capture journey uses seed
 `20260918`, a 1920x1080 output, and the real menu, floor practical-light loop,
 cashier transaction, help reveal/dismiss, live-wager exit cancel/confirm,
-blackjack deal/reveal, and vault safe/hazard reveal paths.
+blackjack deal/live-hand reflow/reveal, and vault safe/hazard reveal paths.
 
 The curated full-motion frames live in
 `tests/results/screenshots/motion_full/`. Every before/mid pair has a distinct
@@ -20,6 +20,9 @@ dimensions, requires each full-motion pair to change, and checks the reduced men
 pair against its recorded byte-stable SHA-256 digest.
 It also checks the blackjack dealer lane independently, so card movement elsewhere
 on the table cannot masquerade as evidence of the dealer's deal and reveal gestures.
+The player-table ROI separately proves that a Hit refans the existing hand while
+the new card travels in; this deterministic presentation fixture is restored to
+the authoritative hand before the capture journey performs its real Stand action.
 The exit-confirm pair ends on the floor, proving the destructive choice traverses
 the real cabinet-session route rather than only animating a detached dialog.
 The capture runner accepts `--reduced-motion` and resets its test override before

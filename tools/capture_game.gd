@@ -150,6 +150,24 @@ func _capture() -> void:
 	await _snapshot("05_blackjack_deal_mid")
 	await get_tree().create_timer(0.7).timeout
 	await _snapshot("05_blackjack")
+	# Exercise the same live-hand reflow path used by Hit without changing the
+	# deterministic round. Restore the authoritative hand before the real Stand.
+	var blackjack_game: Node = router.session.cabinet
+	var blackjack_panel: CabinetPanel = blackjack_game.panel
+	var blackjack_math: BlackjackMath = blackjack_game.get("math")
+	var authoritative_player: Array[int] = blackjack_math.player.duplicate()
+	var authoritative_dealer: Array[int] = blackjack_math.dealer.duplicate()
+	var hit_fixture: Array[int] = authoritative_player.duplicate()
+	hit_fixture.append(1)
+	blackjack_panel._render_blackjack_hand(hit_fixture, authoritative_dealer, true)
+	await _snapshot("05_blackjack_hit_start")
+	await get_tree().create_timer(0.10).timeout
+	await _snapshot("05_blackjack_hit_mid")
+	await get_tree().create_timer(0.42).timeout
+	blackjack_panel._clear_blackjack_cards()
+	blackjack_panel._blackjack_dealt = false
+	blackjack_panel._render_blackjack_hand(authoritative_player, authoritative_dealer, true)
+	await get_tree().create_timer(0.55).timeout
 	assert(router.session.cabinet.request_stand(), "Deterministic blackjack stand must resolve")
 	await _snapshot("05_blackjack_reveal_start")
 	await get_tree().create_timer(0.18).timeout
@@ -258,6 +276,10 @@ func _write_motion_proof() -> void:
 				"05_blackjack_deal_start.png",
 				"05_blackjack_deal_mid.png",
 				"05_blackjack.png",
+			],
+			"blackjack_hit": [
+				"05_blackjack_hit_start.png",
+				"05_blackjack_hit_mid.png",
 			],
 			"blackjack_reveal": [
 				"05_blackjack_reveal_start.png",

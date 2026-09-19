@@ -220,3 +220,123 @@ func test_long_hands_keep_cards_clear_of_wager_and_total_badges() -> void:
 		var card_bounds := Rect2(card.position, card.size)
 		assert_false(card_bounds.intersects(wager_bounds), "Long hands keep the wager lane clear")
 		assert_false(card_bounds.intersects(total_bounds), "Long hands keep totals readable")
+
+
+func test_player_hit_reflows_every_player_card_and_locks_input_until_settled() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	panel._clear_blackjack_cards()
+	panel._render_blackjack_hand([10, 7], [9, 8], true)
+	await wait_seconds(0.62)
+	assert_eq(panel._blackjack_pending_motions, 0)
+
+	var player_zero := panel.find_child("PlayerCard0", true, false) as PlayingCard
+	var player_one := panel.find_child("PlayerCard1", true, false) as PlayingCard
+	var previous_zero_position := player_zero.position
+	var previous_one_position := player_one.position
+	panel._render_blackjack_hand([10, 7, 2], [9, 8], true)
+
+	var player_two := panel.find_child("PlayerCard2", true, false) as PlayingCard
+	assert_not_null(player_two)
+	assert_gt(panel._blackjack_pending_motions, 0, "Hit deal and hand reflow lock decisions")
+	assert_false(panel.blackjack_input_ready())
+	await wait_seconds(0.05)
+	assert_ne(player_zero.position, previous_zero_position, "First card begins moving into the wider fan")
+	assert_ne(player_one.position, previous_one_position, "Second card begins moving into the wider fan")
+
+	await wait_seconds(0.62)
+	for index: int in range(3):
+		var card := panel.find_child("PlayerCard%d" % index, true, false) as PlayingCard
+		var expected: Dictionary = panel._blackjack_card_layout(index, 3, false)
+		assert_eq(card.position, expected.position, "Player card reaches its exact fan position")
+		assert_eq(card.size, expected.size, "Player card reaches its exact fan size")
+		assert_almost_eq(card.rotation, float(expected.rotation), 0.001)
+	assert_eq(panel._blackjack_pending_motions, 0)
+	assert_true(panel.blackjack_input_ready())
+
+
+func test_dealer_multi_card_draw_reflows_the_complete_dealer_hand() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	panel._clear_blackjack_cards()
+	panel._render_blackjack_hand([10, 7], [9, 8], true)
+	await wait_seconds(0.62)
+	var previous_first_position := (
+		panel.find_child("DealerCard0", true, false) as PlayingCard
+	).position
+
+	panel._render_blackjack_hand([10, 7], [9, 8, 2, 3], false)
+	assert_gt(panel._blackjack_pending_motions, 0)
+	assert_false(panel.blackjack_input_ready())
+	await wait_seconds(0.05)
+	assert_ne(
+		(panel.find_child("DealerCard0", true, false) as PlayingCard).position,
+		previous_first_position,
+		"Existing dealer cards visibly reflow for the larger hand"
+	)
+
+	await wait_seconds(0.82)
+	for index: int in range(4):
+		var card := panel.find_child("DealerCard%d" % index, true, false) as PlayingCard
+		var expected: Dictionary = panel._blackjack_card_layout(index, 4, true)
+		assert_eq(card.position, expected.position, "Dealer card reaches its exact fan position")
+		assert_eq(card.size, expected.size, "Dealer card reaches its exact fan size")
+		assert_almost_eq(card.rotation, float(expected.rotation), 0.001)
+	assert_eq(panel._blackjack_pending_motions, 0)
+	assert_true(panel.blackjack_input_ready())
+
+
+func test_reduced_motion_snaps_blackjack_reflow_without_pending_motion() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	panel._clear_blackjack_cards()
+
+	panel._render_blackjack_hand([10, 7], [9, 8], true)
+	panel._render_blackjack_hand([10, 7, 2], [9, 8], true)
+	for index: int in range(3):
+		var card := panel.find_child("PlayerCard%d" % index, true, false) as PlayingCard
+		var expected: Dictionary = panel._blackjack_card_layout(index, 3, false)
+		assert_eq(card.position, expected.position)
+		assert_eq(card.size, expected.size)
+		assert_almost_eq(card.rotation, float(expected.rotation), 0.001)
+	assert_eq(
+		panel._blackjack_pending_motions,
+		0,
+		"Reduced motion reaches the exact final fan without a lingering input lock"
+	)
+	assert_true(panel.blackjack_input_ready())
+
+
+func test_enabling_reduced_motion_settles_an_active_hand_reflow_exactly() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	panel._clear_blackjack_cards()
+	panel._render_blackjack_hand([10, 7], [9, 8], true)
+	await wait_seconds(0.62)
+
+	panel._render_blackjack_hand([10, 7, 2], [9, 8], true)
+	await wait_seconds(0.05)
+	assert_gt(panel._blackjack_card_tweens.size(), 0)
+	assert_false(panel.blackjack_input_ready())
+	MotionPolicy.set_reduced_motion_for_tests(true)
+
+	assert_true(panel._blackjack_card_tweens.is_empty())
+	assert_eq(panel._blackjack_pending_motions, 0)
+	for index: int in range(3):
+		var card := panel.find_child("PlayerCard%d" % index, true, false) as PlayingCard
+		var expected: Dictionary = panel._blackjack_card_layout(index, 3, false)
+		assert_eq(card.position, expected.position)
+		assert_eq(card.size, expected.size)
+		assert_almost_eq(card.rotation, float(expected.rotation), 0.001)

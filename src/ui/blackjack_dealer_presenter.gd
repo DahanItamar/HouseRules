@@ -91,13 +91,13 @@ func play_deal(card_count: int = 1) -> void:
 	_gesture_tween = create_tween()
 	for _index: int in range(clampi(card_count, 1, 4)):
 		_gesture_tween.tween_callback(_prime_deal_card)
-		_gesture_tween.tween_property(_hand_anchor, "position", DEAL_HAND_EXTENDED, 0.10).set_trans(
+		_gesture_tween.tween_property(_hand_anchor, "position", DEAL_HAND_EXTENDED, 0.12).set_trans(
 			Tween.TRANS_QUAD
 		).set_ease(Tween.EASE_OUT)
-		_gesture_tween.parallel().tween_property(_sprite, "position", Vector2(0, 1), 0.10)
-		_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.004, 0.10)
+		_gesture_tween.parallel().tween_property(_sprite, "position", Vector2(0, 1), 0.12)
+		_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.004, 0.12)
 		_gesture_tween.parallel().tween_property(
-			_motion_trace, "default_color:a", 0.42, 0.10
+			_motion_trace, "default_color:a", 0.42, 0.12
 		)
 		# The hand recoils first; the released card continues along the table lane.
 		_gesture_tween.tween_property(_hand_anchor, "position", DEAL_HAND_REST, 0.13).set_trans(
