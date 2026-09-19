@@ -84,8 +84,13 @@ var _result_reveal_callback: Callable
 var _result_reveal_active: bool = false
 var _result_reveal_beat: Tween
 var _vault_pending_reveals: int = 0
+var _result_impact_tween: Tween
+var _last_result_impact_tier: ResultImpactTier = ResultImpactTier.NONE
 
 const RESULT_READABLE_BEAT: float = 0.22
+const BIG_WIN_MULTIPLE: float = 5.0
+
+enum ResultImpactTier { NONE, WIN, BIG_WIN }
 
 const SLOT_BODY := preload("res://assets/production/slot/symbols/slot_fullscreen_bezel.png")
 const SLOT_SYMBOL_COUNT: int = 6
@@ -193,12 +198,11 @@ func show_result(result: RoundResult) -> void:
 	refresh()
 	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
 	AudioService.play(_result_audio_cue(result))
+	_play_result_impact(result)
 	if result.payout > result.stake:
 		var win_multiple := float(result.payout) / maxf(result.stake, 1.0)
 		_celebration.burst(Vector2(480, 300), 32 if win_multiple >= 10.0 else (20 if win_multiple >= 5.0 else 12))
 		_pulse_slot_win(result)
-		if win_multiple >= 5.0:
-			_shake_stage(6.0 if win_multiple >= 10.0 else 3.0, 0.28 if win_multiple >= 10.0 else 0.18)
 	if cabinet.context.definition.id == &"slot_classic":
 		_animate_slot_result(result.payout)
 	elif cabinet.context.definition.id == &"blackjack":
@@ -1274,6 +1278,7 @@ func has_active_motion() -> bool:
 		or (_cursor_tween != null and _cursor_tween.is_running())
 		or (_blackjack_fx_tween != null and _blackjack_fx_tween.is_running())
 		or (_vault_fx_tween != null and _vault_fx_tween.is_running())
+		or (_result_impact_tween != null and _result_impact_tween.is_running())
 		or _result_reveal_active
 	)
 
@@ -1550,22 +1555,70 @@ func _animate_vault_result(result: RoundResult) -> void:
 	_vault_fx_tween.tween_property(_vault_cursor, "scale", Vector2.ONE, 0.32).set_trans(Tween.TRANS_BACK)
 
 
+func _result_impact_tier(result: RoundResult) -> ResultImpactTier:
+	if result == null or result.payout <= result.stake:
+		return ResultImpactTier.NONE
+	var win_multiple := float(result.payout) / maxf(float(result.stake), 1.0)
+	return ResultImpactTier.BIG_WIN if win_multiple >= BIG_WIN_MULTIPLE else ResultImpactTier.WIN
+
+
+func _play_result_impact(result: RoundResult) -> void:
+	## Starts on the same frame as the semantic result cue in show_result(). This is
+	## presentation-only: payout classification is read, never fed back into gameplay.
+	_last_result_impact_tier = _result_impact_tier(result)
+	if _result_impact_tween != null and _result_impact_tween.is_valid():
+		_result_impact_tween.kill()
+	_result_impact_tween = null
+	if _art_root == null:
+		return
+	_art_root.position = Vector2.ZERO
+	if _last_result_impact_tier == ResultImpactTier.NONE or not MotionPolicy.allows_camera_emphasis():
+		return
+	_result_impact_tween = create_tween()
+	if _last_result_impact_tier == ResultImpactTier.WIN:
+		# One compact cabinet-weight beat for ordinary wins, including blackjack's
+		# natural 2x ceiling. It reads as contact without becoming camera shake.
+		_result_impact_tween.tween_property(_art_root, "position", Vector2(0, 1.5), 0.045)
+		_result_impact_tween.tween_property(_art_root, "position", Vector2(0, -0.75), 0.045)
+		_result_impact_tween.tween_property(_art_root, "position", Vector2.ZERO, 0.08).set_trans(
+			Tween.TRANS_QUAD
+		).set_ease(Tween.EASE_OUT)
+		return
+	var impact_offsets: Array[Vector2] = [
+		Vector2(-6.0, -1.5),
+		Vector2(4.5, 1.0),
+		Vector2(-3.0, 0.75),
+		Vector2(1.5, -0.5),
+	]
+	for offset: Vector2 in impact_offsets:
+		_result_impact_tween.tween_property(_art_root, "position", offset, 0.045)
+	_result_impact_tween.tween_property(_art_root, "position", Vector2.ZERO, 0.08).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+
+
 func _shake_stage(intensity: float, duration: float) -> void:
+	## Mine reveals use the same tracked stage channel so overlapping impacts cannot
+	## leave the cabinet offset. Result impacts use _play_result_impact() above.
 	if _art_root == null or not MotionPolicy.allows_camera_emphasis():
 		return
-	var origin := Vector2.ZERO
-	var shake := create_tween()
+	if _result_impact_tween != null and _result_impact_tween.is_valid():
+		_result_impact_tween.kill()
+	_art_root.position = Vector2.ZERO
+	_result_impact_tween = create_tween()
 	var beats := maxi(2, int(duration / 0.045))
 	for index: int in range(beats):
 		var falloff := 1.0 - float(index) / float(beats)
 		var direction := -1.0 if index % 2 == 0 else 1.0
-		shake.tween_property(
+		_result_impact_tween.tween_property(
 			_art_root,
 			"position",
-			origin + Vector2(direction * intensity * falloff, 0),
+			Vector2(direction * intensity * falloff, 0),
 			duration / float(beats)
 		)
-	shake.tween_property(_art_root, "position", origin, 0.05).set_trans(Tween.TRANS_QUAD)
+	_result_impact_tween.tween_property(
+		_art_root, "position", Vector2.ZERO, 0.05
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _pulse_slot_win(result: RoundResult) -> void:
