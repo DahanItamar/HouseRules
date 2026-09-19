@@ -16,11 +16,11 @@ const CYAN := Color("48c5d5")
 const AVATAR_RADIUS: float = 15.0
 const MACHINE_ZONE_RADIUS: float = 38.0
 const MACHINE_LABEL_SIZE := Vector2(164, 24)
-const JOIN_DIALOG_SIZE := Vector2(360, 64)
-const JOIN_DIALOG_OFFSET := Vector2(-180, 34)
+const JOIN_DIALOG_SIZE := Vector2(320, 84)
+const JOIN_DIALOG_OFFSET := Vector2(-160, 30)
 const CAMERA_CENTER := Vector2(480, 270)
-const CAMERA_FOCUS_ZOOM := Vector2(1.015, 1.015)
-const CAMERA_FOCUS_OFFSET: float = 4.0
+const CAMERA_FOCUS_ZOOM := Vector2(1.03, 1.03)
+const CAMERA_FOCUS_OFFSET: float = 9.0
 const PATRON_LAYOUT: Array[Dictionary] = [
 	{"position": Vector2(102, 151), "profile": 0, "phase": 0.0},
 	{"position": Vector2(856, 152), "profile": 1, "phase": 1.15},
@@ -72,6 +72,7 @@ var _dust: CPUParticles2D
 var _cashier_waypoint: CashierWaypoint
 var _directions_layer: CanvasLayer
 var _floor_prompts_visible: bool = true
+var _has_moved: bool = false
 
 
 func _ready() -> void:
@@ -125,6 +126,8 @@ func move_avatar(direction: Vector2, delta: float) -> void:
 	if _avatar_visual != null:
 		_avatar_visual.position = avatar_position
 		_avatar_visual.call("set_motion", avatar_position - origin)
+	if not avatar_position.is_equal_approx(origin):
+		_has_moved = true
 	refresh_proximity()
 	queue_redraw()
 
@@ -206,7 +209,7 @@ func interact() -> bool:
 func set_prompt_visible(is_visible: bool) -> void:
 	_floor_prompts_visible = is_visible
 	if _prompt != null:
-		_prompt.visible = is_visible
+		_update_prompt()
 	_update_cashier_waypoint()
 	queue_redraw()
 
@@ -309,10 +312,13 @@ func _update_prompt() -> void:
 		_prompt.position = Vector2(350, 472)
 		_prompt.size = Vector2(260, 44)
 		_prompt.text = tr("CASHIER_PROMPT") % InputRouter.glyph("interact")
-	else:
+	elif not _has_moved:
 		_prompt.position = Vector2(330, 486)
 		_prompt.size = Vector2(300, 34)
 		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
+	else:
+		_prompt.text = ""
+	_prompt.visible = _floor_prompts_visible and not _prompt.text.is_empty()
 	_animate_prompt_change()
 	queue_redraw()
 
@@ -332,19 +338,21 @@ func _animate_prompt_change() -> void:
 		_prompt_tween.kill()
 	_prompt.modulate.a = 0.25
 	_prompt.pivot_offset = _prompt.size * 0.5
-	_prompt.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(0.98, 0.98)
+	var final_position := _prompt.position
+	_prompt.position = final_position if MotionPolicy.is_reduced() else final_position + Vector2(0, 8)
+	_prompt.scale = Vector2.ONE
 	_prompt_tween = create_tween().set_parallel(true)
-	var duration := MotionPolicy.finite_duration(0.16)
+	var duration := MotionPolicy.finite_duration(0.15)
 	_prompt_tween.tween_property(_prompt, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_QUAD)
 	if not MotionPolicy.is_reduced():
-		_prompt_tween.tween_property(_prompt, "scale", Vector2.ONE, duration).set_trans(Tween.TRANS_BACK)
+		_prompt_tween.tween_property(_prompt, "position", final_position, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _build_dust() -> void:
 	_dust = CPUParticles2D.new()
 	_dust.name = "CasinoDust"
 	_dust.position = Vector2(480, 270)
-	_dust.amount = 32
+	_dust.amount = 42
 	_dust.lifetime = 6.5
 	_dust.preprocess = 6.5
 	_dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
@@ -356,7 +364,7 @@ func _build_dust() -> void:
 	_dust.gravity = Vector2.ZERO
 	_dust.scale_amount_min = 0.8
 	_dust.scale_amount_max = 2.2
-	_dust.color = Color("f2d58d24")
+	_dust.color = Color("f2d58d32")
 	_dust.z_index = 1
 	add_child(_dust)
 
@@ -488,7 +496,8 @@ func _draw() -> void:
 	for id: StringName in cabinet_positions:
 		var at: Vector2 = cabinet_positions[id]
 		var is_near: bool = nearby_definition != null and nearby_definition.id == id
-		var phase := _ambient_time * 1.8 + float(cabinet_positions.keys().find(id)) * 1.9
+		var cadence := 1.15 if is_near else 3.2
+		var phase := _ambient_time * TAU / cadence + float(cabinet_positions.keys().find(id)) * 1.9
 		var pulse := (sin(phase) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
 		_draw_machine_zone(id, at, is_near, pulse)
 	draw_string(
@@ -518,7 +527,7 @@ func _draw() -> void:
 
 func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float) -> void:
 	var accent := _machine_accent(id)
-	var ring_color := Color(accent, 0.42)
+	var ring_color := Color(accent, 0.32 + pulse * 0.10)
 	var ring_width := 2.0
 	if is_near and _dismissed_game != id:
 		ring_color = Color(CYAN, 0.72 + pulse * 0.22)
@@ -546,14 +555,14 @@ func _draw_floor_lighting() -> void:
 			Vector2(278 + drift, 88), Vector2(354 + drift, 88),
 			Vector2(438 + drift, 444), Vector2(314 + drift, 444),
 		]),
-		Color("d9b44a0a")
+		Color("d9b44a12")
 	)
 	draw_colored_polygon(
 		PackedVector2Array([
 			Vector2(610 - drift, 88), Vector2(680 - drift, 88),
 			Vector2(648 - drift, 444), Vector2(526 - drift, 444),
 		]),
-		Color("8fb8c70a")
+		Color("8fb8c712")
 	)
 	draw_rect(Rect2(0, 88, 960, 10), Color("09070a42"))
 	draw_rect(Rect2(0, 436, 960, 16), Color("09070a4d"))

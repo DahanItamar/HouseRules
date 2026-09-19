@@ -104,6 +104,7 @@ func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
 	assert_string_contains(_floor._prompt.text, tr(definition.name_key))
 	assert_string_contains(_floor._prompt.text, "JOIN")
 	assert_string_contains(_floor._prompt.text, "CLOSE")
+	await wait_seconds(0.18)
 	assert_eq(_floor._prompt.position, _floor._join_dialog_position(definition.id))
 	assert_eq(_floor._prompt.size, FloorController.JOIN_DIALOG_SIZE)
 	assert_lt(
@@ -125,6 +126,20 @@ func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
 	_floor.avatar_position = _floor.cabinet_positions[definition.id]
 	_floor.refresh_proximity()
 	assert_true(_floor.interact(), "Re-entering the ring restores the join action")
+
+
+func test_floor_movement_help_yields_after_the_player_moves() -> void:
+	_floor.avatar_position = Vector2(480, 360)
+	_floor.refresh_proximity()
+	assert_true(_floor._prompt.visible)
+	assert_string_contains(_floor._prompt.text, InputRouter.glyph("move"))
+	_floor.move_avatar(Vector2.RIGHT, 0.05)
+	assert_true(_floor._has_moved)
+	assert_false(_floor._prompt.visible, "Persistent tutorial chrome clears after first movement")
+	_floor.avatar_position = _floor.cabinet_positions[&"blackjack"]
+	_floor.refresh_proximity()
+	assert_true(_floor._prompt.visible, "Contextual machine join card still appears")
+	assert_string_contains(_floor._prompt.text, "JOIN")
 
 
 func test_floor_machine_rings_have_concise_persistent_identity_labels() -> void:

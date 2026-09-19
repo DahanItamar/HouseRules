@@ -15,6 +15,14 @@ var _contracts_panel: Panel
 var _is_playing: bool = false
 var _message_serial: int = 0
 var _menu_transitioning: bool = false
+var _menu_background: TextureRect
+var _menu_title: Label
+var _menu_prompt_panel: Panel
+var _menu_prompt: Label
+var _menu_reveal_tween: Tween
+var _menu_attract_tween: Tween
+var _menu_attract_elapsed: float = 0.0
+var _menu_first_breath: bool = true
 
 
 func _ready() -> void:
@@ -32,6 +40,7 @@ func _ready() -> void:
 	var error: Error = SaveService.load_game()
 	Wallet.set_test_mode(bool(ProjectSettings.get_setting("house_rules/testing/unlimited_bankroll", false)))
 	_build_menu()
+	MotionPolicy.motion_preference_changed.connect(_on_motion_preference_changed)
 	if error != OK:
 		_message.text = tr("SAVE_INCOMPATIBLE")
 	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: _refresh_hud())
@@ -42,6 +51,23 @@ func _ready() -> void:
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: _refresh_menu())
 	_refresh_hud()
 	_refresh_menu()
+
+
+func _process(delta: float) -> void:
+	if (
+		_menu == null
+		or not _menu.visible
+		or not MotionPolicy.allows_continuous_motion()
+		or _menu_prompt_panel == null
+	):
+		return
+	_menu_attract_elapsed += delta
+	var cadence := 2.0 if _menu_first_breath else 6.0
+	if _menu_attract_elapsed < cadence:
+		return
+	_menu_attract_elapsed = 0.0
+	_menu_first_breath = false
+	_play_menu_breath()
 
 
 func _build_hud() -> void:
@@ -99,14 +125,14 @@ func _build_menu() -> void:
 	_menu = CanvasLayer.new()
 	_menu.layer = 6
 	add_child(_menu)
-	var background := TextureRect.new()
-	background.name = "CasinoHallArt"
-	background.texture = preload("res://assets/production/environments/casino_menu_hall.png")
-	background.size = Vector2(960, 540)
-	background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-	background.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	_menu.add_child(background)
+	_menu_background = TextureRect.new()
+	_menu_background.name = "CasinoHallArt"
+	_menu_background.texture = preload("res://assets/production/environments/casino_menu_hall.png")
+	_menu_background.size = Vector2(960, 540)
+	_menu_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_menu_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	_menu_background.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_menu.add_child(_menu_background)
 	var lighting := CasinoLighting.new()
 	lighting.name = "MenuLighting"
 	lighting.size = Vector2(960, 540)
@@ -135,14 +161,14 @@ func _build_menu() -> void:
 	kicker.add_theme_font_size_override("font_size", Typography.SUPPORTING)
 	kicker.add_theme_color_override("font_color", Color("c8a34b"))
 	_menu.add_child(kicker)
-	var title := Label.new()
-	title.add_theme_font_override("font", Typography.DISPLAY_FONT)
-	title.name = "Title"
-	title.position = Vector2(66, 140)
-	title.add_theme_font_size_override("font_size", 58)
-	title.add_theme_color_override("font_color", Color("f1e8d8"))
-	title.text = tr("GAME_TITLE")
-	_menu.add_child(title)
+	_menu_title = Label.new()
+	_menu_title.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_menu_title.name = "Title"
+	_menu_title.position = Vector2(66, 140)
+	_menu_title.add_theme_font_size_override("font_size", 58)
+	_menu_title.add_theme_color_override("font_color", Color("f1e8d8"))
+	_menu_title.text = tr("GAME_TITLE")
+	_menu.add_child(_menu_title)
 	var subtitle := Label.new()
 	subtitle.add_theme_font_override("font", Typography.UI_FONT)
 	subtitle.position = Vector2(72, 222)
@@ -152,18 +178,20 @@ func _build_menu() -> void:
 	subtitle.add_theme_font_size_override("font_size", 18)
 	subtitle.add_theme_color_override("font_color", Color("b8ad9c"))
 	_menu.add_child(subtitle)
-	var prompt_panel := _panel(
+	_menu_prompt_panel = _panel(
 		Vector2(70, 320), Vector2(360, 104), Color("17161af2"), Color("c8a34b")
 	)
-	_menu.add_child(prompt_panel)
-	var prompt := Label.new()
-	prompt.add_theme_font_override("font", Typography.DISPLAY_FONT)
-	prompt.name = "Prompt"
-	prompt.position = Vector2(92, 339)
-	prompt.size = Vector2(316, 70)
-	prompt.add_theme_font_size_override("font_size", Typography.PROMINENT)
-	prompt.add_theme_color_override("font_color", Color("f1e8d8"))
-	_menu.add_child(prompt)
+	_menu_prompt_panel.name = "PromptPanel"
+	_menu.add_child(_menu_prompt_panel)
+	_menu_prompt = Label.new()
+	_menu_prompt.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_menu_prompt.name = "Prompt"
+	_menu_prompt.position = Vector2(92, 339)
+	_menu_prompt.size = Vector2(316, 70)
+	_menu_prompt.add_theme_font_size_override("font_size", Typography.PROMINENT)
+	_menu_prompt.add_theme_color_override("font_color", Color("f1e8d8"))
+	_menu.add_child(_menu_prompt)
+	_play_menu_reveal()
 
 
 func _panel(at: Vector2, dimensions: Vector2, fill: Color, border: Color) -> Panel:
@@ -183,9 +211,67 @@ func _panel(at: Vector2, dimensions: Vector2, fill: Color, border: Color) -> Pan
 
 
 func _refresh_menu() -> void:
-	(_menu.get_node("Prompt") as Label).text = (
+	_menu_prompt.text = (
 		tr("MENU_CONTROLS") % [InputRouter.glyph("interact"), InputRouter.glyph("back")]
 	)
+
+
+func _play_menu_reveal() -> void:
+	_menu_attract_elapsed = 0.0
+	_menu_first_breath = true
+	if _menu_reveal_tween != null:
+		_menu_reveal_tween.kill()
+	if MotionPolicy.is_reduced() or DisplayServer.get_name() == "headless":
+		_apply_menu_final_state()
+		return
+	_menu_background.modulate.a = 0.0
+	_menu_title.modulate.a = 0.0
+	_menu_title.position = Vector2(66, 148)
+	_menu_prompt_panel.modulate.a = 0.0
+	_menu_prompt.modulate.a = 0.0
+	_menu_prompt_panel.pivot_offset = _menu_prompt_panel.size * 0.5
+	_menu_prompt_panel.scale = Vector2(0.98, 0.98)
+	_menu_reveal_tween = create_tween().set_parallel(true)
+	_menu_reveal_tween.tween_property(_menu_background, "modulate:a", 1.0, 0.24)
+	_menu_reveal_tween.tween_property(_menu_title, "modulate:a", 1.0, 0.18).set_delay(0.08)
+	_menu_reveal_tween.tween_property(_menu_title, "position:y", 140.0, 0.18).set_delay(0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_menu_reveal_tween.tween_property(_menu_prompt_panel, "modulate:a", 1.0, 0.18).set_delay(0.16)
+	_menu_reveal_tween.tween_property(_menu_prompt, "modulate:a", 1.0, 0.18).set_delay(0.16)
+	_menu_reveal_tween.tween_property(_menu_prompt_panel, "scale", Vector2.ONE, 0.18).set_delay(0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _play_menu_breath() -> void:
+	if _menu_attract_tween != null and _menu_attract_tween.is_valid():
+		_menu_attract_tween.kill()
+	_menu_prompt_panel.pivot_offset = _menu_prompt_panel.size * 0.5
+	_menu_attract_tween = create_tween().set_parallel(true)
+	_menu_attract_tween.tween_property(_menu_prompt_panel, "scale", Vector2(1.018, 1.018), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_menu_attract_tween.tween_property(_menu_prompt, "modulate", Color("fff4d8"), 0.16)
+	_menu_attract_tween.chain().set_parallel(true)
+	_menu_attract_tween.tween_property(_menu_prompt_panel, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	_menu_attract_tween.tween_property(_menu_prompt, "modulate", Color.WHITE, 0.24)
+
+
+func _apply_menu_final_state() -> void:
+	if _menu_background == null:
+		return
+	_menu_background.modulate.a = 1.0
+	_menu_title.modulate.a = 1.0
+	_menu_title.position = Vector2(66, 140)
+	_menu_prompt_panel.modulate.a = 1.0
+	_menu_prompt_panel.scale = Vector2.ONE
+	_menu_prompt.modulate = Color.WHITE
+
+
+func _on_motion_preference_changed(reduced: bool) -> void:
+	if reduced:
+		if _menu_reveal_tween != null:
+			_menu_reveal_tween.kill()
+		if _menu_attract_tween != null:
+			_menu_attract_tween.kill()
+		_apply_menu_final_state()
+	elif _menu != null and _menu.visible:
+		_play_menu_reveal()
 
 
 func _refresh_hud() -> void:
@@ -268,6 +354,7 @@ func _show_menu_now() -> void:
 		_floor.set_physics_process(false)
 		_floor.set_process_unhandled_input(false)
 	_menu.show()
+	_play_menu_reveal()
 	AudioService.stop_ambient()
 	_refresh_hud()
 

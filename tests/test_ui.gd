@@ -311,6 +311,12 @@ func test_redesigned_shell_uses_high_resolution_production_environments() -> voi
 	var main := MAIN_SCENE.instantiate()
 	add_child_autofree(main)
 	assert_not_null(main._menu.get_node_or_null("CasinoHallArt"))
+	assert_not_null(main._menu.get_node_or_null("PromptPanel"))
+	assert_not_null(main._menu.find_child("MenuLighting", true, false))
+	assert_not_null(main._menu.find_child("MenuAmbient", true, false))
+	main._process(2.1)
+	assert_false(main._menu_first_breath, "The main CTA has a bounded idle attract beat")
+	assert_not_null(main._menu_attract_tween)
 	var menu_art: Texture2D = load(
 		"res://assets/production/environments/casino_menu_hall.png"
 	)
@@ -321,11 +327,15 @@ func test_redesigned_shell_uses_high_resolution_production_environments() -> voi
 
 func test_walk_atlas_has_four_phases_per_eight_directions_and_transparency() -> void:
 	var atlas: Texture2D = load(
-		"res://assets/production/characters/casino_guest_walk_32.png"
+		"res://assets/production/characters/casino_guest_walk_integer.png"
 	)
 	assert_not_null(atlas)
-	assert_eq(atlas.get_size(), Vector2(1774, 887))
-	assert_eq(atlas.get_width(), atlas.get_height() * 2, "Atlas retains eight square columns by four rows")
+	assert_eq(atlas.get_size(), Vector2(1920, 960))
+	assert_eq(
+		atlas.get_width(),
+		atlas.get_height() * 2,
+		"Atlas retains eight integer square columns by four rows"
+	)
 	assert_eq(atlas.get_image().get_pixel(0, 0).a, 0.0)
 
 
@@ -479,7 +489,9 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 	var vault_panel: CabinetPanel = vault_session.cabinet.panel
 	assert_eq(vault_panel._frame.size, Vector2(960, 540))
 	assert_eq(vault_panel._vault_tiles.size(), 25)
-	assert_eq(vault_panel._vault_tiles[0].size, Vector2(48, 48))
+	assert_eq(vault_panel._vault_tiles[0].size, Vector2(56, 56))
+	assert_eq(vault_panel._vault_tiles[1].position.x - vault_panel._vault_tiles[0].position.x, 60.0)
+	assert_eq(vault_panel._vault_cashout_meter.position, Vector2(650, 258))
 	var vault_backdrop: Texture2D = load("res://assets/production/vault/vault_backdrop.png")
 	assert_gte(vault_backdrop.get_width(), 3840, "Vault backdrop retains a native 4K master")
 	assert_not_null(vault_panel.find_child("VaultControlDeck", true, false))
@@ -523,7 +535,10 @@ func test_vault_uses_physical_tiles_with_flip_reveals() -> void:
 	var game: MiniGame = session.cabinet
 	assert_true(game.start_round(10))
 	assert_eq(game.panel._vault_tiles.size(), 25)
+	var onboarding_text: String = game.panel._status.text
 	game.get("math").reveal(0)
 	game.panel.refresh()
 	assert_true(game.panel._vault_tiles[0].is_flipping, "Newly revealed box starts its flip")
 	assert_true(game.panel._vault_revealed.has(0))
+	assert_ne(game.panel._status.text, onboarding_text, "First choice clears the persistent instruction")
+	assert_eq(game.panel._status.text, game.panel._detail.text, "In-round status becomes live telemetry")
