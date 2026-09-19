@@ -1,5 +1,7 @@
 extends Node
 
+const CASHIER_MOTION_DIRECTOR_SCRIPT := preload("res://src/ui/cashier_motion_director.gd")
+
 var _guard := InstanceGuard.new()
 var _floor: FloorController
 var _menu: CanvasLayer
@@ -16,10 +18,14 @@ var _is_playing: bool = false
 var _message_serial: int = 0
 var _menu_transitioning: bool = false
 var _menu_background: TextureRect
+var _menu_kicker: Label
+var _menu_rule: ColorRect
 var _menu_title: Label
+var _menu_subtitle: Label
 var _menu_prompt_panel: Panel
 var _menu_prompt: Label
 var _menu_motion_button: Button
+var _cashier_motion_director: Node
 var _menu_reveal_tween: Tween
 var _menu_attract_tween: Tween
 var _menu_attract_elapsed: float = 0.0
@@ -156,18 +162,20 @@ func _build_menu() -> void:
 	readability.size = Vector2(548, 540)
 	readability.color = Color("0c0b0dcc")
 	_menu.add_child(readability)
-	var brass_rule := ColorRect.new()
-	brass_rule.position = Vector2(70, 116)
-	brass_rule.size = Vector2(72, 3)
-	brass_rule.color = Color("c8a34b")
-	_menu.add_child(brass_rule)
-	var kicker := Label.new()
-	kicker.add_theme_font_override("font", Typography.DISPLAY_FONT)
-	kicker.position = Vector2(70, 82)
-	kicker.text = tr("MENU_KICKER")
-	kicker.add_theme_font_size_override("font_size", Typography.SUPPORTING)
-	kicker.add_theme_color_override("font_color", Color("c8a34b"))
-	_menu.add_child(kicker)
+	_menu_rule = ColorRect.new()
+	_menu_rule.name = "BrassRule"
+	_menu_rule.position = Vector2(70, 116)
+	_menu_rule.size = Vector2(72, 3)
+	_menu_rule.color = Color("c8a34b")
+	_menu.add_child(_menu_rule)
+	_menu_kicker = Label.new()
+	_menu_kicker.name = "Kicker"
+	_menu_kicker.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_menu_kicker.position = Vector2(70, 82)
+	_menu_kicker.text = tr("MENU_KICKER")
+	_menu_kicker.add_theme_font_size_override("font_size", Typography.SUPPORTING)
+	_menu_kicker.add_theme_color_override("font_color", Color("c8a34b"))
+	_menu.add_child(_menu_kicker)
 	_menu_title = Label.new()
 	_menu_title.add_theme_font_override("font", Typography.DISPLAY_FONT)
 	_menu_title.name = "Title"
@@ -176,15 +184,16 @@ func _build_menu() -> void:
 	_menu_title.add_theme_color_override("font_color", Color("f1e8d8"))
 	_menu_title.text = tr("GAME_TITLE")
 	_menu.add_child(_menu_title)
-	var subtitle := Label.new()
-	subtitle.add_theme_font_override("font", Typography.UI_FONT)
-	subtitle.position = Vector2(72, 222)
-	subtitle.size = Vector2(380, 60)
-	subtitle.text = tr("MENU_SUBTITLE")
-	subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	subtitle.add_theme_font_size_override("font_size", 18)
-	subtitle.add_theme_color_override("font_color", Color("b8ad9c"))
-	_menu.add_child(subtitle)
+	_menu_subtitle = Label.new()
+	_menu_subtitle.name = "Subtitle"
+	_menu_subtitle.add_theme_font_override("font", Typography.UI_FONT)
+	_menu_subtitle.position = Vector2(72, 222)
+	_menu_subtitle.size = Vector2(380, 60)
+	_menu_subtitle.text = tr("MENU_SUBTITLE")
+	_menu_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_menu_subtitle.add_theme_font_size_override("font_size", 18)
+	_menu_subtitle.add_theme_color_override("font_color", Color("b8ad9c"))
+	_menu.add_child(_menu_subtitle)
 	_menu_prompt_panel = _panel(
 		Vector2(70, 320), Vector2(360, 104), Color("17161af2"), Color("c8a34b")
 	)
@@ -294,19 +303,43 @@ func _play_menu_reveal() -> void:
 		_apply_menu_final_state()
 		return
 	_menu_background.modulate.a = 0.0
+	_menu_kicker.modulate.a = 0.0
+	_menu_rule.modulate.a = 0.0
+	_menu_rule.scale.x = 0.25
 	_menu_title.modulate.a = 0.0
 	_menu_title.position = Vector2(66, 148)
+	_menu_subtitle.modulate.a = 0.0
+	_menu_subtitle.position.y = 230.0
 	_menu_prompt_panel.modulate.a = 0.0
 	_menu_prompt.modulate.a = 0.0
+	_menu_motion_button.modulate.a = 0.0
+	_menu_motion_button.position.y = 452.0
 	_menu_prompt_panel.pivot_offset = _menu_prompt_panel.size * 0.5
 	_menu_prompt_panel.scale = Vector2(0.98, 0.98)
 	_menu_reveal_tween = create_tween().set_parallel(true)
 	_menu_reveal_tween.tween_property(_menu_background, "modulate:a", 1.0, 0.24)
+	_menu_reveal_tween.tween_property(_menu_kicker, "modulate:a", 1.0, 0.14).set_delay(0.04)
+	_menu_reveal_tween.tween_property(_menu_rule, "modulate:a", 1.0, 0.14).set_delay(0.06)
+	_menu_reveal_tween.tween_property(
+		_menu_rule, "scale:x", 1.0, 0.18
+	).set_delay(0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	_menu_reveal_tween.tween_property(_menu_title, "modulate:a", 1.0, 0.18).set_delay(0.08)
-	_menu_reveal_tween.tween_property(_menu_title, "position:y", 140.0, 0.18).set_delay(0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_menu_reveal_tween.tween_property(_menu_prompt_panel, "modulate:a", 1.0, 0.18).set_delay(0.16)
-	_menu_reveal_tween.tween_property(_menu_prompt, "modulate:a", 1.0, 0.18).set_delay(0.16)
-	_menu_reveal_tween.tween_property(_menu_prompt_panel, "scale", Vector2.ONE, 0.18).set_delay(0.16).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_menu_reveal_tween.tween_property(
+		_menu_title, "position:y", 140.0, 0.18
+	).set_delay(0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_menu_reveal_tween.tween_property(_menu_subtitle, "modulate:a", 1.0, 0.16).set_delay(0.13)
+	_menu_reveal_tween.tween_property(
+		_menu_subtitle, "position:y", 222.0, 0.18
+	).set_delay(0.13).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_menu_reveal_tween.tween_property(_menu_prompt_panel, "modulate:a", 1.0, 0.18).set_delay(0.18)
+	_menu_reveal_tween.tween_property(_menu_prompt, "modulate:a", 1.0, 0.18).set_delay(0.18)
+	_menu_reveal_tween.tween_property(
+		_menu_prompt_panel, "scale", Vector2.ONE, 0.18
+	).set_delay(0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_menu_reveal_tween.tween_property(_menu_motion_button, "modulate:a", 1.0, 0.16).set_delay(0.23)
+	_menu_reveal_tween.tween_property(
+		_menu_motion_button, "position:y", 444.0, 0.18
+	).set_delay(0.23).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 
 func _play_menu_breath() -> void:
@@ -325,11 +358,18 @@ func _apply_menu_final_state() -> void:
 	if _menu_background == null:
 		return
 	_menu_background.modulate.a = 1.0
+	_menu_kicker.modulate = Color.WHITE
+	_menu_rule.modulate = Color.WHITE
+	_menu_rule.scale = Vector2.ONE
 	_menu_title.modulate.a = 1.0
 	_menu_title.position = Vector2(66, 140)
+	_menu_subtitle.modulate = Color.WHITE
+	_menu_subtitle.position.y = 222.0
 	_menu_prompt_panel.modulate.a = 1.0
 	_menu_prompt_panel.scale = Vector2.ONE
 	_menu_prompt.modulate = Color.WHITE
+	_menu_motion_button.modulate = Color.WHITE
+	_menu_motion_button.position.y = 444.0
 
 
 func _on_motion_preference_changed(reduced: bool) -> void:
@@ -438,6 +478,10 @@ func _show_floor_now() -> void:
 	if _floor == null:
 		_floor = preload("res://src/floor/floor.tscn").instantiate() as FloorController
 		add_child(_floor)
+		_cashier_motion_director = CASHIER_MOTION_DIRECTOR_SCRIPT.new()
+		_cashier_motion_director.name = "CashierMotionDirector"
+		add_child(_cashier_motion_director)
+		_cashier_motion_director.bind(_floor)
 		_floor.cashier_visibility_changed.connect(func(_is_open: bool) -> void: _refresh_hud())
 	_floor.show()
 	_floor.set_physics_process(true)
