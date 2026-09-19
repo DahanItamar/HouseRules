@@ -451,7 +451,7 @@ func _build_help_ui() -> void:
 	close.name = "HelpClose"
 	close.position = Vector2(548, 16)
 	close.size = Vector2(44, 44)
-	close.text = "×"
+	close.text = String.chr(0x00D7)
 	close.add_theme_font_override("font", Typography.UI_FONT)
 	close.add_theme_font_size_override("font_size", 24)
 	close.add_theme_stylebox_override("normal", _panel_style(Color("252126"), Color("6e5225"), 6))

@@ -1,6 +1,7 @@
 extends Node
 
 const CASHIER_MOTION_DIRECTOR_SCRIPT := preload("res://src/ui/cashier_motion_director.gd")
+const HUD_DEBT_SEPARATOR := "  /  "
 
 var _guard := InstanceGuard.new()
 var _floor: FloorController
@@ -393,11 +394,11 @@ func _refresh_hud() -> void:
 	else:
 		var balance_format := "%d"
 		if Economy.debt > 0:
-			balance_format += "  /  " + str(Economy.debt)
+			balance_format += HUD_DEBT_SEPARATOR + str(Economy.debt)
 		_hud.set_number(Wallet.balance, balance_format)
 	_credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	if Wallet.test_mode_enabled and Economy.debt > 0:
-		_hud.text += "  /  " + str(Economy.debt)
+		_hud.text += HUD_DEBT_SEPARATOR + str(Economy.debt)
 	if _contracts != null:
 		var on_floor: bool = (
 			_is_playing
