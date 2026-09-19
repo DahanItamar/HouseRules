@@ -4,6 +4,7 @@ extends Node
 
 var _button: Button
 var _motion: Tween
+var _focus_time: float = 0.0
 
 
 static func attach(button: Button) -> ButtonFeedback:
@@ -24,11 +25,23 @@ func _bind(button: Button) -> void:
 	_button.mouse_exited.connect(_hover_out)
 	_button.focus_entered.connect(_hover_in)
 	_button.focus_exited.connect(_hover_out)
+	_button.focus_entered.connect(_begin_focus_idle)
+	_button.focus_exited.connect(_end_focus_idle)
 	_button.button_down.connect(_press)
 	_button.button_up.connect(_release)
 	_button.resized.connect(func() -> void: _button.pivot_offset = _button.size * 0.5)
 	MotionPolicy.motion_preference_changed.connect(_on_motion_preference_changed)
 	_on_motion_preference_changed(MotionPolicy.is_reduced())
+
+
+func _process(delta: float) -> void:
+	if _button == null or not _button.has_focus() or MotionPolicy.is_reduced():
+		return
+	_focus_time = fmod(_focus_time + delta, 2.4)
+	var breath := (sin(_focus_time * TAU / 2.4) + 1.0) * 0.5
+	# Only the current keyboard/controller decision breathes. The 8% warm tint
+	# reads as an active affordance without competing with semantic button color.
+	_button.self_modulate = Color.WHITE.lerp(Color("fff4dd"), breath * 0.08)
 
 
 func _hover_in() -> void:
@@ -59,6 +72,18 @@ func _release() -> void:
 	).set_trans(Tween.TRANS_QUAD)
 
 
+func _begin_focus_idle() -> void:
+	_focus_time = 0.0
+	set_process(not MotionPolicy.is_reduced())
+
+
+func _end_focus_idle() -> void:
+	_focus_time = 0.0
+	set_process(false)
+	if _button != null:
+		_button.self_modulate = Color.WHITE
+
+
 func _animate_to(target: Vector2, duration: float, transition: Tween.TransitionType, ease: Tween.EaseType) -> void:
 	if MotionPolicy.is_reduced():
 		_reset_scale()
@@ -74,6 +99,9 @@ func _animate_to(target: Vector2, duration: float, transition: Tween.TransitionT
 func _on_motion_preference_changed(reduced: bool) -> void:
 	if reduced:
 		_reset_scale()
+		_end_focus_idle()
+	else:
+		set_process(_button != null and _button.has_focus())
 
 
 func _reset_scale() -> void:
@@ -82,3 +110,4 @@ func _reset_scale() -> void:
 		_motion = null
 	if _button != null:
 		_button.scale = Vector2.ONE
+		_button.self_modulate = Color.WHITE

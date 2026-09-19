@@ -113,7 +113,27 @@ func test_reduced_button_feedback_keeps_controls_still() -> void:
 	feedback._press()
 	feedback._release()
 	assert_eq(button.scale, Vector2.ONE, "Focus and press feedback never scale the control")
+	assert_eq(button.self_modulate, Color.WHITE)
+	assert_false(feedback.is_processing(), "Focused idle animation stays disabled")
 	assert_null(feedback._motion)
+
+
+func test_full_motion_focus_has_one_restrained_living_cue() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var button := Button.new()
+	button.size = Vector2(180, 54)
+	button.focus_mode = Control.FOCUS_ALL
+	add_child_autofree(button)
+	var feedback := ButtonFeedback.attach(button)
+	button.grab_focus()
+	await wait_seconds(0.11)
+	feedback._process(0.55)
+	assert_true(feedback.is_processing())
+	assert_ne(button.self_modulate, Color.WHITE)
+	assert_eq(button.scale, Vector2(1.025, 1.025), "Existing bounded focus scale remains authoritative")
+	button.release_focus()
+	assert_eq(button.self_modulate, Color.WHITE)
+	assert_false(feedback.is_processing())
 
 
 func test_reduced_ambient_and_lighting_are_static_but_keep_event_feedback() -> void:
