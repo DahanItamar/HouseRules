@@ -1,0 +1,33 @@
+{
+  "capture_size": "1920x1080",
+  "full_motion": {
+    "menu": [
+      "motion_full/01_menu_motion_a.png",
+      "motion_full/01_menu.png"
+    ],
+    "cashier": [
+      "motion_full/02_cashier_menu.png",
+      "motion_full/02_cashier_transaction.png"
+    ],
+    "blackjack_deal": [
+      "motion_full/05_blackjack_deal_start.png",
+      "motion_full/05_blackjack_deal_mid.png"
+    ],
+    "blackjack_reveal": [
+      "motion_full/05_blackjack_reveal_start.png",
+      "motion_full/05_blackjack_reveal_mid.png"
+    ],
+    "vault_reveal": [
+      "motion_full/06_vault_reveal_start.png",
+      "motion_full/06_vault_reveal_mid.png"
+    ]
+  },
+  "reduced_motion": {
+    "menu": [
+      "motion_reduced/01_menu_motion_a.png",
+      "motion_reduced/01_menu.png"
+    ],
+    "sha256": "232DFB0A7939FAC5D5830995A0DBC5CA403CC0E3BC2F578C1B65C6B112CDE1B6"
+  },
+  "seed": 20260918
+}

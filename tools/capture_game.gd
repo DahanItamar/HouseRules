@@ -4,6 +4,7 @@ extends Node
 const OUTPUT := "res://tests/results/screenshots"
 var _output := OUTPUT
 var _requested_size := Vector2i.ZERO
+var _reduced_motion := false
 
 
 func _ready() -> void:
@@ -14,6 +15,8 @@ func _ready() -> void:
 			var dimensions := argument.trim_prefix("--capture-size=").split("x")
 			if dimensions.size() == 2:
 				_requested_size = Vector2i(int(dimensions[0]), int(dimensions[1]))
+		elif argument == "--reduced-motion":
+			_reduced_motion = true
 	if _requested_size.x > 0 and _requested_size.y > 0:
 		get_window().mode = Window.MODE_WINDOWED
 		get_window().borderless = true
@@ -27,6 +30,8 @@ func _capture() -> void:
 	var router: Node = scene_root.get_node("SceneRouter")
 	var wallet: Node = scene_root.get_node("Wallet")
 	var economy: Node = scene_root.get_node("Economy")
+	var motion_policy: Node = scene_root.get_node("MotionPolicy")
+	motion_policy.call("set_reduced_motion_for_tests", _reduced_motion)
 	var isolated := _output.path_join("session_" + str(OS.get_process_id()))
 	DirAccess.make_dir_recursive_absolute(isolated)
 	saves.platform = LocalPlatform.new(isolated)
@@ -35,6 +40,9 @@ func _capture() -> void:
 	scene_root.add_child(main)
 	saves.new_game(20260918)
 	main._refresh_hud()
+	await get_tree().create_timer(0.16).timeout
+	await _snapshot("01_menu_motion_a")
+	await get_tree().create_timer(0.39).timeout
 	await get_tree().create_timer(0.55).timeout
 	await _snapshot("01_menu")
 	main._start_playing()
@@ -54,6 +62,12 @@ func _capture() -> void:
 	main._floor.interact()
 	await get_tree().create_timer(0.25).timeout
 	await _snapshot("02_cashier_menu")
+	main._floor._cashier_repay_amount = 10
+	main._floor._confirm_cashier_repayment()
+	await get_tree().create_timer(0.10).timeout
+	await _snapshot("02_cashier_transaction")
+	await get_tree().create_timer(0.55).timeout
+	await _snapshot("02_cashier_settled")
 	main._floor._close_cashier()
 	await get_tree().create_timer(0.18).timeout
 	wallet.call("set_test_mode", true)
@@ -101,8 +115,17 @@ func _capture() -> void:
 	await get_tree().create_timer(0.55).timeout
 	router.session.cabinet.selected_stake = 10
 	router.session.cabinet.start_round(10)
+	await _snapshot("05_blackjack_deal_start")
+	await get_tree().create_timer(0.24).timeout
+	await _snapshot("05_blackjack_deal_mid")
 	await get_tree().create_timer(0.7).timeout
 	await _snapshot("05_blackjack")
+	assert(router.session.cabinet.request_stand(), "Deterministic blackjack stand must resolve")
+	await _snapshot("05_blackjack_reveal_start")
+	await get_tree().create_timer(0.18).timeout
+	await _snapshot("05_blackjack_reveal_mid")
+	await get_tree().create_timer(0.72).timeout
+	await _snapshot("05_blackjack_result")
 	router.return_to_floor()
 	await get_tree().create_timer(0.55).timeout
 	router.enter_cabinet(load("res://data/cabinets/minefield_vault.tres"))
@@ -115,11 +138,16 @@ func _capture() -> void:
 	var safe_index: int = 0
 	while safe_index in (vault_math.get("mines") as Array):
 		safe_index += 1
-	vault_math.call("reveal", safe_index)
-	(vault_game.get("panel") as CanvasLayer).call("refresh")
-	await get_tree().create_timer(0.3).timeout
+	vault_game.get("snap_cursor").set("index", safe_index)
+	assert(vault_game.call("request_open"), "Deterministic safe vault reveal must start")
+	await _snapshot("06_vault_reveal_start")
+	await get_tree().create_timer(0.12).timeout
+	await _snapshot("06_vault_reveal_mid")
+	await get_tree().create_timer(0.38).timeout
 	await _snapshot("06_vault_reveal")
+	_write_motion_proof()
 	router.return_to_floor()
+	motion_policy.call("clear_test_override")
 	main._quit_game()
 
 
@@ -167,3 +195,37 @@ func _write_slot_motion_proof(expected: Array[int], observed: Array[int]) -> voi
 	assert(file != null, "Slot motion proof write failed")
 	file.store_string(JSON.stringify(proof, "\t") + "\n")
 	print("SLOT MOTION PROOF ", proof)
+
+
+func _write_motion_proof() -> void:
+	var proof := {
+		"seed": 20260918,
+		"reduced_motion": _reduced_motion,
+		"sequences": {
+			"menu": ["01_menu_motion_a.png", "01_menu.png"],
+			"cashier": [
+				"02_cashier_menu.png",
+				"02_cashier_transaction.png",
+				"02_cashier_settled.png",
+			],
+			"blackjack_deal": [
+				"05_blackjack_deal_start.png",
+				"05_blackjack_deal_mid.png",
+				"05_blackjack.png",
+			],
+			"blackjack_reveal": [
+				"05_blackjack_reveal_start.png",
+				"05_blackjack_reveal_mid.png",
+				"05_blackjack_result.png",
+			],
+			"vault_reveal": [
+				"06_vault_reveal_start.png",
+				"06_vault_reveal_mid.png",
+				"06_vault_reveal.png",
+			],
+		},
+	}
+	var file := FileAccess.open(_output.path_join("motion_proof.json"), FileAccess.WRITE)
+	assert(file != null, "Motion proof write failed")
+	file.store_string(JSON.stringify(proof, "\t") + "\n")
+	print("MOTION PROOF ", proof)

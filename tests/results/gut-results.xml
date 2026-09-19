@@ -1,359 +1,375 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="GutTests" failures="0" tests="159" >
-  <testsuite name="tests/test_audio.gd" tests="6" failures="0" skipped="0" time="0.251777" >
-      <testcase name="test_m5_audio_cues_are_deterministic_pcm" assertions="5" status="pass" classname="tests/test_audio.gd" time="0.00468" >
+<testsuites name="GutTests" failures="0" tests="166" >
+  <testsuite name="tests/test_audio.gd" tests="6" failures="0" skipped="0" time="0.245673" >
+      <testcase name="test_m5_audio_cues_are_deterministic_pcm" assertions="5" status="pass" classname="tests/test_audio.gd" time="0.004704" >
       </testcase>
-      <testcase name="test_m5_audio_events_emit_even_when_output_is_disabled" assertions="1" status="pass" classname="tests/test_audio.gd" time="0.000194" >
+      <testcase name="test_m5_audio_events_emit_even_when_output_is_disabled" assertions="1" status="pass" classname="tests/test_audio.gd" time="0.000202" >
       </testcase>
-      <testcase name="test_casino_cue_palette_is_distinct_cached_pcm" assertions="39" status="pass" classname="tests/test_audio.gd" time="0.051437" >
+      <testcase name="test_casino_cue_palette_is_distinct_cached_pcm" assertions="39" status="pass" classname="tests/test_audio.gd" time="0.051102" >
       </testcase>
-      <testcase name="test_floor_ambience_is_looped_and_has_idempotent_lifecycle" assertions="5" status="pass" classname="tests/test_audio.gd" time="0.194869" >
+      <testcase name="test_floor_ambience_is_looped_and_has_idempotent_lifecycle" assertions="5" status="pass" classname="tests/test_audio.gd" time="0.189135" >
       </testcase>
-      <testcase name="test_mute_keeps_semantic_events_without_creating_players" assertions="2" status="pass" classname="tests/test_audio.gd" time="0.000309" >
+      <testcase name="test_mute_keeps_semantic_events_without_creating_players" assertions="2" status="pass" classname="tests/test_audio.gd" time="0.000282" >
       </testcase>
-      <testcase name="test_each_cabinet_maps_results_to_its_own_audio_language" assertions="6" status="pass" classname="tests/test_audio.gd" time="0.000288" >
-      </testcase>
-      </testsuite>
-  <testsuite name="tests/test_blackjack_presentation.gd" tests="8" failures="0" skipped="0" time="1.344133" >
-      <testcase name="test_totals_are_badged_beside_the_cards_and_actions_stay_controller_ready" assertions="15" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.043552" >
-      </testcase>
-      <testcase name="test_dealer_idle_and_deal_gesture_are_presentation_only" assertions="4" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.078101" >
-      </testcase>
-      <testcase name="test_dealer_marks_the_hole_card_reveal_with_a_distinct_gesture" assertions="4" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.959418" >
-      </testcase>
-      <testcase name="test_reduced_dealer_uses_a_bounded_static_cue_and_stable_pose" assertions="6" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.248223" >
-      </testcase>
-      <testcase name="test_live_stake_places_a_readable_wager_stack_on_the_felt" assertions="5" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.004092" >
-      </testcase>
-      <testcase name="test_result_feedback_has_a_static_reduced_motion_end_state" assertions="8" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.003666" >
-      </testcase>
-      <testcase name="test_preparing_next_round_clears_result_fx_and_replays_wager_placement" assertions="8" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.003615" >
-      </testcase>
-      <testcase name="test_long_hands_keep_cards_clear_of_wager_and_total_badges" assertions="16" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.003466" >
+      <testcase name="test_each_cabinet_maps_results_to_its_own_audio_language" assertions="6" status="pass" classname="tests/test_audio.gd" time="0.000248" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_cashier_presentation.gd" tests="4" failures="0" skipped="0" time="0.868153" >
-      <testcase name="test_cashier_financial_values_tick_and_repayment_launches_chips" assertions="15" status="pass" classname="tests/test_cashier_presentation.gd" time="0.633879" >
+  <testsuite name="tests/test_blackjack_presentation.gd" tests="8" failures="0" skipped="0" time="1.359362" >
+      <testcase name="test_totals_are_badged_beside_the_cards_and_actions_stay_controller_ready" assertions="15" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.044159" >
       </testcase>
-      <testcase name="test_cashier_close_animates_then_releases_focus_and_hides" assertions="13" status="pass" classname="tests/test_cashier_presentation.gd" time="0.185843" >
+      <testcase name="test_dealer_idle_and_deal_gesture_are_presentation_only" assertions="4" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.085564" >
       </testcase>
-      <testcase name="test_reduced_cashier_feedback_keeps_final_state_without_chip_travel" assertions="8" status="pass" classname="tests/test_cashier_presentation.gd" time="0.004134" >
+      <testcase name="test_dealer_marks_the_hole_card_reveal_with_a_distinct_gesture" assertions="4" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.966273" >
       </testcase>
-      <testcase name="test_pair_ticker_snaps_to_authoritative_values_when_reduced_mid_animation" assertions="6" status="pass" classname="tests/test_cashier_presentation.gd" time="0.044297" >
+      <testcase name="test_reduced_dealer_uses_a_bounded_static_cue_and_stable_pose" assertions="6" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.24827" >
       </testcase>
-      </testsuite>
-  <testsuite name="tests/test_character_atlas.gd" tests="4" failures="0" skipped="0" time="0.007772" >
-      <testcase name="test_atlas_uses_exact_integer_cells_with_transparent_gutters" assertions="97" status="pass" classname="tests/test_character_atlas.gd" time="0.003141" >
+      <testcase name="test_live_stake_places_a_readable_wager_stack_on_the_felt" assertions="5" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.004142" >
       </testcase>
-      <testcase name="test_all_direction_and_phase_regions_have_unique_pixels" assertions="65" status="pass" classname="tests/test_character_atlas.gd" time="0.004005" >
+      <testcase name="test_result_feedback_has_a_static_reduced_motion_end_state" assertions="8" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.003853" >
       </testcase>
-      <testcase name="test_direction_mapping_preserves_all_eight_compass_facings" assertions="16" status="pass" classname="tests/test_character_atlas.gd" time="0.000309" >
+      <testcase name="test_preparing_next_round_clears_result_fx_and_replays_wager_placement" assertions="8" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.00365" >
       </testcase>
-      <testcase name="test_avatar_advances_real_leg_frames_without_anchor_sliding" assertions="10" status="pass" classname="tests/test_character_atlas.gd" time="0.000317" >
+      <testcase name="test_long_hands_keep_cards_clear_of_wager_and_total_badges" assertions="16" status="pass" classname="tests/test_blackjack_presentation.gd" time="0.003451" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_domain.gd" tests="6" failures="0" skipped="0" time="0.041968" >
-      <testcase name="test_slot_shipped_paytable_exhaustive_symbol_combinations" assertions="217" status="pass" classname="tests/test_domain.gd" time="0.003336" >
+  <testsuite name="tests/test_cashier_presentation.gd" tests="4" failures="0" skipped="0" time="0.868471" >
+      <testcase name="test_cashier_financial_values_tick_and_repayment_launches_chips" assertions="15" status="pass" classname="tests/test_cashier_presentation.gd" time="0.634116" >
       </testcase>
-      <testcase name="test_ac014_seed_and_inputs_reproduce_all_three_cabinets" assertions="600" status="pass" classname="tests/test_domain.gd" time="0.037821" >
+      <testcase name="test_cashier_close_animates_then_releases_focus_and_hides" assertions="13" status="pass" classname="tests/test_cashier_presentation.gd" time="0.179012" >
       </testcase>
-      <testcase name="test_blackjack_ace_revaluation_and_soft_seventeen" assertions="6" status="pass" classname="tests/test_domain.gd" time="0.00023" >
+      <testcase name="test_reduced_cashier_feedback_keeps_final_state_without_chip_travel" assertions="8" status="pass" classname="tests/test_cashier_presentation.gd" time="0.003684" >
       </testcase>
-      <testcase name="test_blackjack_natural_and_double_return_integer_chips" assertions="7" status="pass" classname="tests/test_domain.gd" time="0.000177" >
-      </testcase>
-      <testcase name="test_vault_unique_fixed_mines_cashout_and_duplicate_reveal" assertions="12" status="pass" classname="tests/test_domain.gd" time="0.000288" >
-      </testcase>
-      <testcase name="test_vault_all_clear_and_cap" assertions="4" status="pass" classname="tests/test_domain.gd" time="0.000116" >
+      <testcase name="test_pair_ticker_snaps_to_authoritative_values_when_reduced_mid_animation" assertions="6" status="pass" classname="tests/test_cashier_presentation.gd" time="0.051659" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_floor_ambience.gd" tests="4" failures="0" skipped="0" time="0.549601" >
-      <testcase name="test_floor_builds_three_distinct_noninteractive_patrons" assertions="5" status="pass" classname="tests/test_floor_ambience.gd" time="0.002004" >
+  <testsuite name="tests/test_character_atlas.gd" tests="4" failures="0" skipped="0" time="0.008032" >
+      <testcase name="test_atlas_uses_exact_integer_cells_with_transparent_gutters" assertions="97" status="pass" classname="tests/test_character_atlas.gd" time="0.003357" >
       </testcase>
-      <testcase name="test_patrons_live_inside_existing_solid_furniture_zones" assertions="6" status="pass" classname="tests/test_floor_ambience.gd" time="0.001782" >
+      <testcase name="test_all_direction_and_phase_regions_have_unique_pixels" assertions="65" status="pass" classname="tests/test_character_atlas.gd" time="0.004018" >
       </testcase>
-      <testcase name="test_patron_gestures_are_phase_staggered_and_have_calm_cadences" assertions="5" status="pass" classname="tests/test_floor_ambience.gd" time="0.001683" >
+      <testcase name="test_direction_mapping_preserves_all_eight_compass_facings" assertions="16" status="pass" classname="tests/test_character_atlas.gd" time="0.000308" >
       </testcase>
-      <testcase name="test_camera_focus_is_bounded_and_recenters_after_leaving_machine" assertions="5" status="pass" classname="tests/test_floor_ambience.gd" time="0.544132" >
-      </testcase>
-      </testsuite>
-  <testsuite name="tests/test_gpu_vfx.gd" tests="3" failures="0" skipped="0" time="0.001569" >
-      <testcase name="test_impact_burst_selects_a_supported_particle_backend" assertions="5" status="pass" classname="tests/test_gpu_vfx.gd" time="0.000228" >
-      </testcase>
-      <testcase name="test_slot_symbol_installs_canvas_shader_without_changing_symbol_state" assertions="5" status="pass" classname="tests/test_gpu_vfx.gd" time="0.00079" >
-      </testcase>
-      <testcase name="test_slot_symbol_clamps_shader_velocity_parameter" assertions="4" status="pass" classname="tests/test_gpu_vfx.gd" time="0.000551" >
+      <testcase name="test_avatar_advances_real_leg_frames_without_anchor_sliding" assertions="10" status="pass" classname="tests/test_character_atlas.gd" time="0.000349" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_input.gd" tests="6" failures="0" skipped="0" time="0.156684" >
-      <testcase name="test_ac037_every_gameplay_action_has_a_gamepad_button" assertions="18" status="pass" classname="tests/test_input.gd" time="0.000151" >
+  <testsuite name="tests/test_domain.gd" tests="6" failures="0" skipped="0" time="0.043443" >
+      <testcase name="test_slot_shipped_paytable_exhaustive_symbol_combinations" assertions="217" status="pass" classname="tests/test_domain.gd" time="0.003506" >
+      </testcase>
+      <testcase name="test_ac014_seed_and_inputs_reproduce_all_three_cabinets" assertions="600" status="pass" classname="tests/test_domain.gd" time="0.039185" >
+      </testcase>
+      <testcase name="test_blackjack_ace_revaluation_and_soft_seventeen" assertions="6" status="pass" classname="tests/test_domain.gd" time="0.000214" >
+      </testcase>
+      <testcase name="test_blackjack_natural_and_double_return_integer_chips" assertions="7" status="pass" classname="tests/test_domain.gd" time="0.000145" >
+      </testcase>
+      <testcase name="test_vault_unique_fixed_mines_cashout_and_duplicate_reveal" assertions="12" status="pass" classname="tests/test_domain.gd" time="0.000286" >
+      </testcase>
+      <testcase name="test_vault_all_clear_and_cap" assertions="4" status="pass" classname="tests/test_domain.gd" time="0.000107" >
+      </testcase>
+      </testsuite>
+  <testsuite name="tests/test_floor_ambience.gd" tests="6" failures="0" skipped="0" time="0.553368" >
+      <testcase name="test_floor_builds_three_distinct_noninteractive_patrons" assertions="5" status="pass" classname="tests/test_floor_ambience.gd" time="0.002165" >
+      </testcase>
+      <testcase name="test_patrons_live_inside_existing_solid_furniture_zones" assertions="6" status="pass" classname="tests/test_floor_ambience.gd" time="0.001825" >
+      </testcase>
+      <testcase name="test_patron_gestures_are_phase_staggered_and_have_calm_cadences" assertions="5" status="pass" classname="tests/test_floor_ambience.gd" time="0.001692" >
+      </testcase>
+      <testcase name="test_patrons_cycle_through_authored_limb_poses_without_moving_the_root" assertions="3" status="pass" classname="tests/test_floor_ambience.gd" time="0.001697" >
+      </testcase>
+      <testcase name="test_reduced_motion_holds_every_patron_joint_in_a_stable_rest_pose" assertions="4" status="pass" classname="tests/test_floor_ambience.gd" time="0.001718" >
+      </testcase>
+      <testcase name="test_camera_focus_is_bounded_and_recenters_after_leaving_machine" assertions="5" status="pass" classname="tests/test_floor_ambience.gd" time="0.544271" >
+      </testcase>
+      </testsuite>
+  <testsuite name="tests/test_gpu_vfx.gd" tests="3" failures="0" skipped="0" time="0.001461" >
+      <testcase name="test_impact_burst_selects_a_supported_particle_backend" assertions="5" status="pass" classname="tests/test_gpu_vfx.gd" time="0.00026" >
+      </testcase>
+      <testcase name="test_slot_symbol_installs_canvas_shader_without_changing_symbol_state" assertions="5" status="pass" classname="tests/test_gpu_vfx.gd" time="0.000682" >
+      </testcase>
+      <testcase name="test_slot_symbol_clamps_shader_velocity_parameter" assertions="4" status="pass" classname="tests/test_gpu_vfx.gd" time="0.000519" >
+      </testcase>
+      </testsuite>
+  <testsuite name="tests/test_input.gd" tests="6" failures="0" skipped="0" time="0.157804" >
+      <testcase name="test_ac037_every_gameplay_action_has_a_gamepad_button" assertions="18" status="pass" classname="tests/test_input.gd" time="0.000167" >
       </testcase>
       <testcase name="test_ac037_movement_supports_the_left_stick_and_dpad" assertions="4" status="pass" classname="tests/test_input.gd" time="0.000097" >
       </testcase>
-      <testcase name="test_ac038_device_change_swaps_glyphs_and_live_floor_prompt" assertions="10" status="pass" classname="tests/test_input.gd" time="0.005879" >
+      <testcase name="test_ac038_device_change_swaps_glyphs_and_live_floor_prompt" assertions="10" status="pass" classname="tests/test_input.gd" time="0.005955" >
       </testcase>
-      <testcase name="test_gamepad_b_dismisses_join_and_a_reopens_before_joining" assertions="5" status="pass" classname="tests/test_input.gd" time="0.012527" >
+      <testcase name="test_gamepad_b_dismisses_join_and_a_reopens_before_joining" assertions="5" status="pass" classname="tests/test_input.gd" time="0.013641" >
       </testcase>
-      <testcase name="test_ac037_active_gamepad_disconnect_pauses_until_reconnect" assertions="8" status="pass" classname="tests/test_input.gd" time="0.13785" >
+      <testcase name="test_ac037_active_gamepad_disconnect_pauses_until_reconnect" assertions="8" status="pass" classname="tests/test_input.gd" time="0.137704" >
       </testcase>
-      <testcase name="test_ac039_dpad_and_left_stick_move_a_wrapping_snap_cursor" assertions="6" status="pass" classname="tests/test_input.gd" time="0.00018" >
-      </testcase>
-      </testsuite>
-  <testsuite name="tests/test_motion_components.gd" tests="13" failures="0" skipped="0" time="2.304855" >
-      <testcase name="test_slot_spin_strength_is_clamped_and_presentation_only" assertions="3" status="pass" classname="tests/test_motion_components.gd" time="0.000692" >
-      </testcase>
-      <testcase name="test_playing_card_uses_real_suit_glyphs_and_logical_state_updates_immediately" assertions="5" status="pass" classname="tests/test_motion_components.gd" time="0.000454" >
-      </testcase>
-      <testcase name="test_vault_reveal_exposes_a_presentation_effect_hook" assertions="5" status="pass" classname="tests/test_motion_components.gd" time="0.226295" >
-      </testcase>
-      <testcase name="test_vault_tile_uses_authored_faces_for_every_state" assertions="7" status="pass" classname="tests/test_motion_components.gd" time="0.000227" >
-      </testcase>
-      <testcase name="test_vault_safe_reveal_finishes_with_a_pop_and_restored_scale" assertions="6" status="pass" classname="tests/test_motion_components.gd" time="0.489698" >
-      </testcase>
-      <testcase name="test_vault_reveal_has_physical_press_and_readable_mine_anticipation" assertions="4" status="pass" classname="tests/test_motion_components.gd" time="0.303317" >
-      </testcase>
-      <testcase name="test_vault_safe_effect_uses_procedural_diamond_shards" assertions="8" status="pass" classname="tests/test_motion_components.gd" time="0.000363" >
-      </testcase>
-      <testcase name="test_vault_mine_effect_layers_shockwave_debris_and_smoke" assertions="6" status="pass" classname="tests/test_motion_components.gd" time="0.00024" >
-      </testcase>
-      <testcase name="test_number_ticker_reaches_exact_target_and_handles_infinity" assertions="6" status="pass" classname="tests/test_motion_components.gd" time="0.648076" >
-      </testcase>
-      <testcase name="test_number_ticker_snaps_when_reduced_motion_changes_mid_count" assertions="4" status="pass" classname="tests/test_motion_components.gd" time="0.000334" >
-      </testcase>
-      <testcase name="test_primary_spin_button_has_a_restrained_idle_breath" assertions="2" status="pass" classname="tests/test_motion_components.gd" time="0.000385" >
-      </testcase>
-      <testcase name="test_win_burst_uses_integer_gutter_safe_regions" assertions="15" status="pass" classname="tests/test_motion_components.gd" time="0.000398" >
-      </testcase>
-      <testcase name="test_blackjack_input_unlocks_from_completed_deal_motion" assertions="5" status="pass" classname="tests/test_motion_components.gd" time="0.634376" >
+      <testcase name="test_ac039_dpad_and_left_stick_move_a_wrapping_snap_cursor" assertions="6" status="pass" classname="tests/test_input.gd" time="0.00024" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_motion_policy.gd" tests="15" failures="0" skipped="0" time="0.926248" >
-      <testcase name="test_project_defaults_to_full_motion" assertions="4" status="pass" classname="tests/test_motion_policy.gd" time="0.000144" >
+  <testsuite name="tests/test_menu_cashier_motion.gd" tests="5" failures="0" skipped="0" time="1.100294" >
+      <testcase name="test_menu_reveal_stages_the_information_hierarchy_then_settles_exactly" assertions="11" status="pass" classname="tests/test_menu_cashier_motion.gd" time="0.500702" >
       </testcase>
-      <testcase name="test_reduced_override_disables_persistent_and_camera_motion" assertions="4" status="pass" classname="tests/test_motion_policy.gd" time="0.000137" >
+      <testcase name="test_reduced_menu_reveal_is_immediately_complete" assertions="6" status="pass" classname="tests/test_menu_cashier_motion.gd" time="0.00312" >
       </testcase>
-      <testcase name="test_reduced_card_reveal_reaches_final_state_and_keeps_finite_feedback" assertions="4" status="pass" classname="tests/test_motion_policy.gd" time="0.233002" >
+      <testcase name="test_cashier_content_reveal_is_bounded_and_restores_every_control" assertions="35" status="pass" classname="tests/test_menu_cashier_motion.gd" time="0.580042" >
       </testcase>
-      <testcase name="test_reduced_vault_reveal_completes_callbacks_in_headless" assertions="5" status="pass" classname="tests/test_motion_policy.gd" time="0.283288" >
+      <testcase name="test_reduced_motion_cancels_cashier_travel_at_authoritative_final_state" assertions="32" status="pass" classname="tests/test_menu_cashier_motion.gd" time="0.002876" >
       </testcase>
-      <testcase name="test_reduced_vault_effect_keeps_static_acknowledgement_without_smoke" assertions="5" status="pass" classname="tests/test_motion_policy.gd" time="0.000337" >
-      </testcase>
-      <testcase name="test_reduced_floor_stops_dust_patrons_and_camera_emphasis" assertions="17" status="pass" classname="tests/test_motion_policy.gd" time="0.002298" >
-      </testcase>
-      <testcase name="test_reduced_spin_button_has_static_but_responsive_visual_state" assertions="2" status="pass" classname="tests/test_motion_policy.gd" time="0.000236" >
-      </testcase>
-      <testcase name="test_reduced_button_feedback_keeps_controls_still" assertions="2" status="pass" classname="tests/test_motion_policy.gd" time="0.000246" >
-      </testcase>
-      <testcase name="test_reduced_ambient_and_lighting_are_static_but_keep_event_feedback" assertions="6" status="pass" classname="tests/test_motion_policy.gd" time="0.175846" >
-      </testcase>
-      <testcase name="test_reduced_symbol_disables_idle_shader_motion_without_changing_spin_state" assertions="4" status="pass" classname="tests/test_motion_policy.gd" time="0.00058" >
-      </testcase>
-      <testcase name="test_reduced_value_changes_reach_exact_final_state_without_ticking" assertions="7" status="pass" classname="tests/test_motion_policy.gd" time="0.00031" >
-      </testcase>
-      <testcase name="test_reduced_avatar_keeps_directional_walk_frames_without_body_bob" assertions="5" status="pass" classname="tests/test_motion_policy.gd" time="0.00022" >
-      </testcase>
-      <testcase name="test_reduced_win_feedback_is_compact_and_self_clearing" assertions="5" status="pass" classname="tests/test_motion_policy.gd" time="0.21972" >
-      </testcase>
-      <testcase name="test_reduced_slot_keeps_bounded_reel_feedback_and_exact_outcome" assertions="7" status="pass" classname="tests/test_motion_policy.gd" time="0.008947" >
-      </testcase>
-      <testcase name="test_reduced_overlays_use_immediate_static_end_states" assertions="8" status="pass" classname="tests/test_motion_policy.gd" time="0.000937" >
+      <testcase name="test_main_shell_connects_cashier_visibility_to_the_content_director" assertions="3" status="pass" classname="tests/test_menu_cashier_motion.gd" time="0.013554" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_presentation_boundary.gd" tests="2" failures="0" skipped="0" time="0.010263" >
-      <testcase name="test_domain_layer_has_no_presentation_dependencies" assertions="99" status="pass" classname="tests/test_presentation_boundary.gd" time="0.00254" >
+  <testsuite name="tests/test_motion_components.gd" tests="13" failures="0" skipped="0" time="2.299379" >
+      <testcase name="test_slot_spin_strength_is_clamped_and_presentation_only" assertions="3" status="pass" classname="tests/test_motion_components.gd" time="0.000548" >
       </testcase>
-      <testcase name="test_each_slot_reel_emits_a_stop_impact_without_changing_its_symbol" assertions="2" status="pass" classname="tests/test_presentation_boundary.gd" time="0.007723" >
+      <testcase name="test_playing_card_uses_real_suit_glyphs_and_logical_state_updates_immediately" assertions="5" status="pass" classname="tests/test_motion_components.gd" time="0.000319" >
       </testcase>
-      </testsuite>
-  <testsuite name="tests/test_result_impact.gd" tests="3" failures="0" skipped="0" time="0.362606" >
-      <testcase name="test_each_game_starts_a_bounded_win_impact_with_its_result_sound" assertions="12" status="pass" classname="tests/test_result_impact.gd" time="0.018027" >
+      <testcase name="test_vault_reveal_exposes_a_presentation_effect_hook" assertions="5" status="pass" classname="tests/test_motion_components.gd" time="0.231426" >
       </testcase>
-      <testcase name="test_big_win_shake_is_bounded_and_returns_the_stage_to_origin" assertions="7" status="pass" classname="tests/test_result_impact.gd" time="0.336865" >
+      <testcase name="test_vault_tile_uses_authored_faces_for_every_state" assertions="7" status="pass" classname="tests/test_motion_components.gd" time="0.000218" >
       </testcase>
-      <testcase name="test_reduced_motion_keeps_result_audio_but_removes_stage_displacement" assertions="4" status="pass" classname="tests/test_result_impact.gd" time="0.007714" >
+      <testcase name="test_vault_safe_reveal_finishes_with_a_pop_and_restored_scale" assertions="6" status="pass" classname="tests/test_motion_components.gd" time="0.483149" >
       </testcase>
-      </testsuite>
-  <testsuite name="tests/test_result_timeline.gd" tests="2" failures="0" skipped="0" time="1.627646" >
-      <testcase name="test_blackjack_reveal_and_readable_beat_precede_single_settlement" assertions="17" status="pass" classname="tests/test_result_timeline.gd" time="1.206763" >
+      <testcase name="test_vault_reveal_has_physical_press_and_readable_mine_anticipation" assertions="4" status="pass" classname="tests/test_motion_components.gd" time="0.299723" >
       </testcase>
-      <testcase name="test_reduced_motion_vault_flip_still_finishes_before_single_settlement" assertions="13" status="pass" classname="tests/test_result_timeline.gd" time="0.420883" >
+      <testcase name="test_vault_safe_effect_uses_procedural_diamond_shards" assertions="8" status="pass" classname="tests/test_motion_components.gd" time="0.000367" >
       </testcase>
-      </testsuite>
-  <testsuite name="tests/test_rtp_harness.gd" tests="1" failures="0" skipped="0" time="16.442308" >
-      <testcase name="test_million_rounds_per_cabinet" assertions="7" status="pass" classname="tests/test_rtp_harness.gd" time="16.442308" >
+      <testcase name="test_vault_mine_effect_layers_shockwave_debris_and_smoke" assertions="6" status="pass" classname="tests/test_motion_components.gd" time="0.000256" >
       </testcase>
-      </testsuite>
-  <testsuite name="tests/test_services.gd" tests="8" failures="0" skipped="0" time="0.031953" >
-      <testcase name="test_developer_bankroll_is_unlimited_without_polluting_the_save" assertions="7" status="pass" classname="tests/test_services.gd" time="0.008877" >
+      <testcase name="test_number_ticker_reaches_exact_target_and_handles_infinity" assertions="6" status="pass" classname="tests/test_motion_components.gd" time="0.649419" >
       </testcase>
-      <testcase name="test_ac010_through_ac012_wallet_atomic_signals_and_rejection" assertions="12" status="pass" classname="tests/test_services.gd" time="0.000587" >
+      <testcase name="test_number_ticker_snaps_when_reduced_motion_changes_mid_count" assertions="4" status="pass" classname="tests/test_motion_components.gd" time="0.000326" >
       </testcase>
-      <testcase name="test_ac013_named_rng_streams_are_independent" assertions="3" status="pass" classname="tests/test_services.gd" time="0.000195" >
+      <testcase name="test_primary_spin_button_has_a_restrained_idle_breath" assertions="2" status="pass" classname="tests/test_motion_components.gd" time="0.000389" >
       </testcase>
-      <testcase name="test_ac015_through_ac022_save_roundtrip_and_atomic_replacement" assertions="10" status="pass" classname="tests/test_services.gd" time="0.00943" >
+      <testcase name="test_win_burst_uses_integer_gutter_safe_regions" assertions="15" status="pass" classname="tests/test_motion_components.gd" time="0.000341" >
       </testcase>
-      <testcase name="test_corrupt_save_preserved_and_newer_save_never_overwritten" assertions="8" status="pass" classname="tests/test_services.gd" time="0.003644" >
-      </testcase>
-      <testcase name="test_schema_zero_migrates_in_sequence" assertions="6" status="pass" classname="tests/test_services.gd" time="0.00342" >
-      </testcase>
-      <testcase name="test_malformed_nested_save_recovers_without_runtime_errors" assertions="9" status="pass" classname="tests/test_services.gd" time="0.003863" >
-      </testcase>
-      <testcase name="test_zero_byte_existing_save_is_preserved_as_corrupt" assertions="4" status="pass" classname="tests/test_services.gd" time="0.001937" >
+      <testcase name="test_blackjack_input_unlocks_from_completed_deal_motion" assertions="5" status="pass" classname="tests/test_motion_components.gd" time="0.632898" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_session.gd" tests="26" failures="0" skipped="0" time="1.60479" >
-      <testcase name="test_ac001_constant_speed_in_eight_directions" assertions="16" status="pass" classname="tests/test_session.gd" time="0.004345" >
+  <testsuite name="tests/test_motion_policy.gd" tests="15" failures="0" skipped="0" time="0.925579" >
+      <testcase name="test_project_defaults_to_full_motion" assertions="4" status="pass" classname="tests/test_motion_policy.gd" time="0.000092" >
       </testcase>
-      <testcase name="test_floor_avatar_animates_from_real_movement_and_keeps_facing" assertions="11" status="pass" classname="tests/test_session.gd" time="0.003106" >
+      <testcase name="test_reduced_override_disables_persistent_and_camera_motion" assertions="4" status="pass" classname="tests/test_motion_policy.gd" time="0.000106" >
       </testcase>
-      <testcase name="test_floor_avatar_uses_four_real_leg_phases_at_a_walking_pace" assertions="4" status="pass" classname="tests/test_session.gd" time="0.003721" >
+      <testcase name="test_reduced_card_reveal_reaches_final_state_and_keeps_finite_feedback" assertions="4" status="pass" classname="tests/test_motion_policy.gd" time="0.231947" >
       </testcase>
-      <testcase name="test_floor_join_dialog_is_contextual_and_can_be_dismissed" assertions="15" status="pass" classname="tests/test_session.gd" time="0.199656" >
+      <testcase name="test_reduced_vault_reveal_completes_callbacks_in_headless" assertions="5" status="pass" classname="tests/test_motion_policy.gd" time="0.283766" >
       </testcase>
-      <testcase name="test_floor_movement_help_yields_after_the_player_moves" assertions="9" status="pass" classname="tests/test_session.gd" time="0.138982" >
+      <testcase name="test_reduced_vault_effect_keeps_static_acknowledgement_without_smoke" assertions="5" status="pass" classname="tests/test_motion_policy.gd" time="0.000363" >
       </testcase>
-      <testcase name="test_floor_machine_rings_are_the_real_activation_zones" assertions="6" status="pass" classname="tests/test_session.gd" time="0.007152" >
+      <testcase name="test_reduced_floor_stops_dust_patrons_and_camera_emphasis" assertions="17" status="pass" classname="tests/test_motion_policy.gd" time="0.002658" >
       </testcase>
-      <testcase name="test_floor_machines_have_distinct_staggered_attract_loops" assertions="12" status="pass" classname="tests/test_session.gd" time="0.006881" >
+      <testcase name="test_reduced_spin_button_has_static_but_responsive_visual_state" assertions="2" status="pass" classname="tests/test_motion_policy.gd" time="0.000319" >
       </testcase>
-      <testcase name="test_nearby_machine_heightens_only_its_attract_loop" assertions="6" status="pass" classname="tests/test_session.gd" time="0.006872" >
+      <testcase name="test_reduced_button_feedback_keeps_controls_still" assertions="2" status="pass" classname="tests/test_motion_policy.gd" time="0.000232" >
       </testcase>
-      <testcase name="test_cashier_opens_a_real_focusable_menu" assertions="7" status="pass" classname="tests/test_session.gd" time="0.013842" >
+      <testcase name="test_reduced_ambient_and_lighting_are_static_but_keep_event_feedback" assertions="6" status="pass" classname="tests/test_motion_policy.gd" time="0.17925" >
       </testcase>
-      <testcase name="test_cashier_wasd_actions_move_focus_inside_modal" assertions="2" status="pass" classname="tests/test_session.gd" time="0.020722" >
+      <testcase name="test_reduced_symbol_disables_idle_shader_motion_without_changing_spin_state" assertions="4" status="pass" classname="tests/test_motion_policy.gd" time="0.00064" >
       </testcase>
-      <testcase name="test_cashier_repayment_picker_clamps_previews_and_confirms_selected_amount" assertions="13" status="pass" classname="tests/test_session.gd" time="0.63525" >
+      <testcase name="test_reduced_value_changes_reach_exact_final_state_without_ticking" assertions="7" status="pass" classname="tests/test_motion_policy.gd" time="0.00032" >
       </testcase>
-      <testcase name="test_cashier_marker_behavior_and_safe_focus_are_preserved" assertions="4" status="pass" classname="tests/test_session.gd" time="0.01455" >
+      <testcase name="test_reduced_avatar_keeps_directional_walk_frames_without_body_bob" assertions="5" status="pass" classname="tests/test_motion_policy.gd" time="0.000199" >
       </testcase>
-      <testcase name="test_insolvent_player_gets_a_safe_area_cashier_route_until_arrival" assertions="14" status="pass" classname="tests/test_session.gd" time="0.14485" >
+      <testcase name="test_reduced_win_feedback_is_compact_and_self_clearing" assertions="5" status="pass" classname="tests/test_motion_policy.gd" time="0.215502" >
       </testcase>
-      <testcase name="test_cashier_route_clears_as_soon_as_the_bankroll_recovers" assertions="2" status="pass" classname="tests/test_session.gd" time="0.1388" >
+      <testcase name="test_reduced_slot_keeps_bounded_reel_feedback_and_exact_outcome" assertions="7" status="pass" classname="tests/test_motion_policy.gd" time="0.009165" >
       </testcase>
-      <testcase name="test_cashier_route_never_leaks_over_a_cabinet_or_main_menu" assertions="4" status="pass" classname="tests/test_session.gd" time="0.145683" >
-      </testcase>
-      <testcase name="test_floor_collision_blocks_furniture_and_prevents_tunneling" assertions="16" status="pass" classname="tests/test_session.gd" time="0.007178" >
-      </testcase>
-      <testcase name="test_floor_collision_slides_along_furniture_edges" assertions="2" status="pass" classname="tests/test_session.gd" time="0.006841" >
-      </testcase>
-      <testcase name="test_ac002_through_ac008_floor_context_result_transaction_and_return" assertions="19" status="pass" classname="tests/test_session.gd" time="0.01797" >
-      </testcase>
-      <testcase name="test_ac004_unaffordable_cabinet_refuses_entry" assertions="3" status="pass" classname="tests/test_session.gd" time="0.00322" >
-      </testcase>
-      <testcase name="test_ac009_abandon_forfeits_once_and_saves" assertions="9" status="pass" classname="tests/test_session.gd" time="0.020272" >
-      </testcase>
-      <testcase name="test_back_during_live_round_requires_confirmation_and_cancel_preserves_round" assertions="10" status="pass" classname="tests/test_session.gd" time="0.012355" >
-      </testcase>
-      <testcase name="test_confirming_live_round_exit_forfeits_once_and_returns_to_floor" assertions="9" status="pass" classname="tests/test_session.gd" time="0.011883" >
-      </testcase>
-      <testcase name="test_ac015_return_to_menu_saves" assertions="2" status="pass" classname="tests/test_session.gd" time="0.008006" >
-      </testcase>
-      <testcase name="test_ac024_contract_reward_is_independent_of_round_outcome" assertions="7" status="pass" classname="tests/test_session.gd" time="0.011875" >
-      </testcase>
-      <testcase name="test_ac051_locked_wings_show_lifetime_wagered_thresholds" assertions="10" status="pass" classname="tests/test_session.gd" time="0.006848" >
-      </testcase>
-      <testcase name="test_back_input_exits_cabinet_without_also_leaving_floor" assertions="3" status="pass" classname="tests/test_session.gd" time="0.01393" >
+      <testcase name="test_reduced_overlays_use_immediate_static_end_states" assertions="8" status="pass" classname="tests/test_motion_policy.gd" time="0.00102" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_slot_win_cascade.gd" tests="5" failures="0" skipped="0" time="0.997327" >
-      <testcase name="test_win_sequence_targets_only_symbols_that_form_the_payout" assertions="2" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.000341" >
+  <testsuite name="tests/test_presentation_boundary.gd" tests="2" failures="0" skipped="0" time="0.012639" >
+      <testcase name="test_domain_layer_has_no_presentation_dependencies" assertions="99" status="pass" classname="tests/test_presentation_boundary.gd" time="0.003855" >
       </testcase>
-      <testcase name="test_slot_win_cascade_is_bounded_and_does_not_change_symbols" assertions="16" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.579591" >
-      </testcase>
-      <testcase name="test_third_reel_anticipation_appears_only_for_a_real_matching_setup" assertions="5" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.008404" >
-      </testcase>
-      <testcase name="test_reduced_motion_keeps_the_win_readable_without_particle_cascade" assertions="7" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.278098" >
-      </testcase>
-      <testcase name="test_new_spin_cancels_the_previous_result_ticker" assertions="4" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.130893" >
+      <testcase name="test_each_slot_reel_emits_a_stop_impact_without_changing_its_symbol" assertions="2" status="pass" classname="tests/test_presentation_boundary.gd" time="0.008784" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_ui.gd" tests="36" failures="0" skipped="0" time="1.343009" >
-      <testcase name="test_cashier_recovery_uses_floor_waypoint_not_a_global_game_banner" assertions="1" status="pass" classname="tests/test_ui.gd" time="0.007442" >
+  <testsuite name="tests/test_result_impact.gd" tests="3" failures="0" skipped="0" time="0.326611" >
+      <testcase name="test_each_game_starts_a_bounded_win_impact_with_its_result_sound" assertions="12" status="pass" classname="tests/test_result_impact.gd" time="0.021375" >
       </testcase>
-      <testcase name="test_ac042_all_runtime_labels_respect_the_body_text_floor" assertions="10" status="pass" classname="tests/test_ui.gd" time="0.002741" >
+      <testcase name="test_big_win_shake_is_bounded_and_returns_the_stage_to_origin" assertions="7" status="pass" classname="tests/test_result_impact.gd" time="0.297044" >
       </testcase>
-      <testcase name="test_casino_ui_uses_bundled_msdf_ready_fonts" assertions="6" status="pass" classname="tests/test_ui.gd" time="0.007296" >
-      </testcase>
-      <testcase name="test_ac042_chips_stake_and_multiplier_use_critical_text" assertions="3" status="pass" classname="tests/test_ui.gd" time="0.006138" >
-      </testcase>
-      <testcase name="test_each_game_has_chip_stakes_and_contextual_help" assertions="21" status="pass" classname="tests/test_ui.gd" time="0.480439" >
-      </testcase>
-      <testcase name="test_hud_messages_have_bounded_reveal_and_dismiss_motion" assertions="6" status="pass" classname="tests/test_ui.gd" time="0.165474" >
-      </testcase>
-      <testcase name="test_global_hud_reacts_to_balance_and_contract_changes" assertions="5" status="pass" classname="tests/test_ui.gd" time="0.003109" >
-      </testcase>
-      <testcase name="test_reduced_motion_hud_keeps_static_transaction_feedback" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.002683" >
-      </testcase>
-      <testcase name="test_stakes_move_between_casino_denominations" assertions="5" status="pass" classname="tests/test_ui.gd" time="0.007664" >
-      </testcase>
-      <testcase name="test_shared_bet_console_applies_exact_add_and_multiplier_operations" assertions="17" status="pass" classname="tests/test_ui.gd" time="0.012303" >
-      </testcase>
-      <testcase name="test_shared_bet_console_respects_balance_and_locks_during_rounds" assertions="13" status="pass" classname="tests/test_ui.gd" time="0.004464" >
-      </testcase>
-      <testcase name="test_every_game_exposes_six_semantic_bet_buttons_and_total_readout" assertions="27" status="pass" classname="tests/test_ui.gd" time="0.014496" >
-      </testcase>
-      <testcase name="test_bet_buttons_apply_their_operation_and_show_active_feedback" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.007219" >
-      </testcase>
-      <testcase name="test_each_machine_has_distinct_ambient_motion" assertions="3" status="pass" classname="tests/test_ui.gd" time="0.013454" >
-      </testcase>
-      <testcase name="test_slot_anticipation_only_extends_a_genuine_matching_setup" assertions="2" status="pass" classname="tests/test_ui.gd" time="0.00731" >
-      </testcase>
-      <testcase name="test_cabinet_controls_stay_inside_horizontal_tv_safe_area" assertions="24" status="pass" classname="tests/test_ui.gd" time="0.013205" >
-      </testcase>
-      <testcase name="test_primary_controller_focus_and_help_focus_restore" assertions="3" status="pass" classname="tests/test_ui.gd" time="0.009115" >
-      </testcase>
-      <testcase name="test_m5_each_cabinet_integrates_its_generated_art" assertions="3" status="pass" classname="tests/test_ui.gd" time="0.013598" >
-      </testcase>
-      <testcase name="test_display_targets_render_canvas_items_at_native_resolution" assertions="11" status="pass" classname="tests/test_ui.gd" time="0.000284" >
-      </testcase>
-      <testcase name="test_reference_captures_keep_a_full_16_by_9_frame" assertions="9" status="pass" classname="tests/test_ui.gd" time="0.007104" >
-      </testcase>
-      <testcase name="test_exact_fhd_qhd_and_uhd_game_captures_are_native_resolution" assertions="18" status="pass" classname="tests/test_ui.gd" time="0.459193" >
-      </testcase>
-      <testcase name="test_redesigned_shell_uses_high_resolution_production_environments" assertions="8" status="pass" classname="tests/test_ui.gd" time="0.003299" >
-      </testcase>
-      <testcase name="test_main_menu_exposes_a_focusable_reduced_motion_setting" assertions="10" status="pass" classname="tests/test_ui.gd" time="0.002797" >
-      </testcase>
-      <testcase name="test_main_menu_motion_shortcut_works_for_keyboard_and_controller_action" assertions="2" status="pass" classname="tests/test_ui.gd" time="0.002576" >
-      </testcase>
-      <testcase name="test_reduced_motion_preference_persists_and_reloads" assertions="2" status="pass" classname="tests/test_ui.gd" time="0.001447" >
-      </testcase>
-      <testcase name="test_walk_atlas_has_four_phases_per_eight_directions_and_transparency" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.000239" >
-      </testcase>
-      <testcase name="test_shared_scene_transition_and_lighting_layers_exist" assertions="5" status="pass" classname="tests/test_ui.gd" time="0.004077" >
-      </testcase>
-      <testcase name="test_m5_cabinet_motion_runs_in_engine" assertions="6" status="pass" classname="tests/test_ui.gd" time="0.010957" >
-      </testcase>
-      <testcase name="test_higgsfield_win_effect_is_sharp_and_transparent" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.014664" >
-      </testcase>
-      <testcase name="test_slot_reels_spin_independently_and_gate_settlement" assertions="7" status="pass" classname="tests/test_ui.gd" time="0.009559" >
-      </testcase>
-      <testcase name="test_higgsfield_slot_symbols_are_high_resolution_and_transparent" assertions="24" status="pass" classname="tests/test_ui.gd" time="0.018237" >
-      </testcase>
-      <testcase name="test_slot_uses_a_full_screen_sharp_higgsfield_stage" assertions="22" status="pass" classname="tests/test_ui.gd" time="0.007266" >
-      </testcase>
-      <testcase name="test_slot_deck_exposes_bet_multiplier_and_return" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.007271" >
-      </testcase>
-      <testcase name="test_blackjack_and_vault_use_distinct_full_screen_stages" assertions="19" status="pass" classname="tests/test_ui.gd" time="0.007414" >
-      </testcase>
-      <testcase name="test_blackjack_uses_dealt_cards_and_a_revealing_hole_card" assertions="9" status="pass" classname="tests/test_ui.gd" time="0.004435" >
-      </testcase>
-      <testcase name="test_vault_uses_physical_tiles_with_flip_reveals" assertions="6" status="pass" classname="tests/test_ui.gd" time="0.00404" >
+      <testcase name="test_reduced_motion_keeps_result_audio_but_removes_stage_displacement" assertions="4" status="pass" classname="tests/test_result_impact.gd" time="0.008192" >
       </testcase>
       </testsuite>
-  <testsuite name="tests/test_vault_cashout_meter.gd" tests="7" failures="0" skipped="0" time="0.504366" >
-      <testcase name="test_meter_sets_exact_values_without_motion" assertions="5" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000242" >
+  <testsuite name="tests/test_result_timeline.gd" tests="2" failures="0" skipped="0" time="1.624913" >
+      <testcase name="test_blackjack_reveal_and_readable_beat_precede_single_settlement" assertions="17" status="pass" classname="tests/test_result_timeline.gd" time="1.208195" >
       </testcase>
-      <testcase name="test_meter_interpolates_and_finishes_on_exact_targets" assertions="13" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.502468" >
+      <testcase name="test_reduced_motion_vault_flip_still_finishes_before_single_settlement" assertions="13" status="pass" classname="tests/test_result_timeline.gd" time="0.416718" >
       </testcase>
-      <testcase name="test_meter_clamps_invalid_presentation_inputs" assertions="4" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000272" >
+      </testsuite>
+  <testsuite name="tests/test_rtp_harness.gd" tests="1" failures="0" skipped="0" time="16.453814" >
+      <testcase name="test_million_rounds_per_cabinet" assertions="7" status="pass" classname="tests/test_rtp_harness.gd" time="16.453814" >
       </testcase>
-      <testcase name="test_meter_exposes_distinct_ready_and_disabled_states" assertions="5" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000196" >
+      </testsuite>
+  <testsuite name="tests/test_services.gd" tests="8" failures="0" skipped="0" time="0.03356" >
+      <testcase name="test_developer_bankroll_is_unlimited_without_polluting_the_save" assertions="7" status="pass" classname="tests/test_services.gd" time="0.006127" >
       </testcase>
-      <testcase name="test_ready_meter_keeps_a_bounded_idle_pulse_and_respects_reduced_motion" assertions="3" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000207" >
+      <testcase name="test_ac010_through_ac012_wallet_atomic_signals_and_rejection" assertions="12" status="pass" classname="tests/test_services.gd" time="0.000741" >
       </testcase>
-      <testcase name="test_enabling_reduced_motion_snaps_an_active_value_tween_to_its_target" assertions="7" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000733" >
+      <testcase name="test_ac013_named_rng_streams_are_independent" assertions="3" status="pass" classname="tests/test_services.gd" time="0.000247" >
       </testcase>
-      <testcase name="test_meter_tracks_decreasing_value_with_a_bounded_direction_cue" assertions="3" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000248" >
+      <testcase name="test_ac015_through_ac022_save_roundtrip_and_atomic_replacement" assertions="10" status="pass" classname="tests/test_services.gd" time="0.014026" >
+      </testcase>
+      <testcase name="test_corrupt_save_preserved_and_newer_save_never_overwritten" assertions="8" status="pass" classname="tests/test_services.gd" time="0.003645" >
+      </testcase>
+      <testcase name="test_schema_zero_migrates_in_sequence" assertions="6" status="pass" classname="tests/test_services.gd" time="0.003074" >
+      </testcase>
+      <testcase name="test_malformed_nested_save_recovers_without_runtime_errors" assertions="9" status="pass" classname="tests/test_services.gd" time="0.003834" >
+      </testcase>
+      <testcase name="test_zero_byte_existing_save_is_preserved_as_corrupt" assertions="4" status="pass" classname="tests/test_services.gd" time="0.001866" >
+      </testcase>
+      </testsuite>
+  <testsuite name="tests/test_session.gd" tests="26" failures="0" skipped="0" time="1.838845" >
+      <testcase name="test_ac001_constant_speed_in_eight_directions" assertions="16" status="pass" classname="tests/test_session.gd" time="0.004363" >
+      </testcase>
+      <testcase name="test_floor_avatar_animates_from_real_movement_and_keeps_facing" assertions="11" status="pass" classname="tests/test_session.gd" time="0.003418" >
+      </testcase>
+      <testcase name="test_floor_avatar_uses_four_real_leg_phases_at_a_walking_pace" assertions="4" status="pass" classname="tests/test_session.gd" time="0.013279" >
+      </testcase>
+      <testcase name="test_floor_join_dialog_is_contextual_and_can_be_dismissed" assertions="15" status="pass" classname="tests/test_session.gd" time="0.196998" >
+      </testcase>
+      <testcase name="test_floor_movement_help_yields_after_the_player_moves" assertions="9" status="pass" classname="tests/test_session.gd" time="0.150644" >
+      </testcase>
+      <testcase name="test_floor_machine_rings_are_the_real_activation_zones" assertions="6" status="pass" classname="tests/test_session.gd" time="0.016964" >
+      </testcase>
+      <testcase name="test_floor_machines_have_distinct_staggered_attract_loops" assertions="12" status="pass" classname="tests/test_session.gd" time="0.016645" >
+      </testcase>
+      <testcase name="test_nearby_machine_heightens_only_its_attract_loop" assertions="6" status="pass" classname="tests/test_session.gd" time="0.016615" >
+      </testcase>
+      <testcase name="test_cashier_opens_a_real_focusable_menu" assertions="7" status="pass" classname="tests/test_session.gd" time="0.033331" >
+      </testcase>
+      <testcase name="test_cashier_wasd_actions_move_focus_inside_modal" assertions="2" status="pass" classname="tests/test_session.gd" time="0.049994" >
+      </testcase>
+      <testcase name="test_cashier_repayment_picker_clamps_previews_and_confirms_selected_amount" assertions="13" status="pass" classname="tests/test_session.gd" time="0.650849" >
+      </testcase>
+      <testcase name="test_cashier_marker_behavior_and_safe_focus_are_preserved" assertions="4" status="pass" classname="tests/test_session.gd" time="0.033785" >
+      </testcase>
+      <testcase name="test_insolvent_player_gets_a_safe_area_cashier_route_until_arrival" assertions="14" status="pass" classname="tests/test_session.gd" time="0.150018" >
+      </testcase>
+      <testcase name="test_cashier_route_clears_as_soon_as_the_bankroll_recovers" assertions="2" status="pass" classname="tests/test_session.gd" time="0.150461" >
+      </testcase>
+      <testcase name="test_cashier_route_never_leaks_over_a_cabinet_or_main_menu" assertions="4" status="pass" classname="tests/test_session.gd" time="0.150548" >
+      </testcase>
+      <testcase name="test_floor_collision_blocks_furniture_and_prevents_tunneling" assertions="16" status="pass" classname="tests/test_session.gd" time="0.016958" >
+      </testcase>
+      <testcase name="test_floor_collision_slides_along_furniture_edges" assertions="2" status="pass" classname="tests/test_session.gd" time="0.016619" >
+      </testcase>
+      <testcase name="test_ac002_through_ac008_floor_context_result_transaction_and_return" assertions="19" status="pass" classname="tests/test_session.gd" time="0.023119" >
+      </testcase>
+      <testcase name="test_ac004_unaffordable_cabinet_refuses_entry" assertions="3" status="pass" classname="tests/test_session.gd" time="0.010372" >
+      </testcase>
+      <testcase name="test_ac009_abandon_forfeits_once_and_saves" assertions="9" status="pass" classname="tests/test_session.gd" time="0.016831" >
+      </testcase>
+      <testcase name="test_back_during_live_round_requires_confirmation_and_cancel_preserves_round" assertions="10" status="pass" classname="tests/test_session.gd" time="0.017071" >
+      </testcase>
+      <testcase name="test_confirming_live_round_exit_forfeits_once_and_returns_to_floor" assertions="9" status="pass" classname="tests/test_session.gd" time="0.016647" >
+      </testcase>
+      <testcase name="test_ac015_return_to_menu_saves" assertions="2" status="pass" classname="tests/test_session.gd" time="0.016541" >
+      </testcase>
+      <testcase name="test_ac024_contract_reward_is_independent_of_round_outcome" assertions="7" status="pass" classname="tests/test_session.gd" time="0.016791" >
+      </testcase>
+      <testcase name="test_ac051_locked_wings_show_lifetime_wagered_thresholds" assertions="10" status="pass" classname="tests/test_session.gd" time="0.016538" >
+      </testcase>
+      <testcase name="test_back_input_exits_cabinet_without_also_leaving_floor" assertions="3" status="pass" classname="tests/test_session.gd" time="0.033446" >
+      </testcase>
+      </testsuite>
+  <testsuite name="tests/test_slot_win_cascade.gd" tests="5" failures="0" skipped="0" time="0.983544" >
+      <testcase name="test_win_sequence_targets_only_symbols_that_form_the_payout" assertions="2" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.000274" >
+      </testcase>
+      <testcase name="test_slot_win_cascade_is_bounded_and_does_not_change_symbols" assertions="16" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.567128" >
+      </testcase>
+      <testcase name="test_third_reel_anticipation_appears_only_for_a_real_matching_setup" assertions="5" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.008653" >
+      </testcase>
+      <testcase name="test_reduced_motion_keeps_the_win_readable_without_particle_cascade" assertions="7" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.274636" >
+      </testcase>
+      <testcase name="test_new_spin_cancels_the_previous_result_ticker" assertions="4" status="pass" classname="tests/test_slot_win_cascade.gd" time="0.132853" >
+      </testcase>
+      </testsuite>
+  <testsuite name="tests/test_ui.gd" tests="36" failures="0" skipped="0" time="1.332556" >
+      <testcase name="test_cashier_recovery_uses_floor_waypoint_not_a_global_game_banner" assertions="1" status="pass" classname="tests/test_ui.gd" time="0.003552" >
+      </testcase>
+      <testcase name="test_ac042_all_runtime_labels_respect_the_body_text_floor" assertions="10" status="pass" classname="tests/test_ui.gd" time="0.002617" >
+      </testcase>
+      <testcase name="test_casino_ui_uses_bundled_msdf_ready_fonts" assertions="6" status="pass" classname="tests/test_ui.gd" time="0.007938" >
+      </testcase>
+      <testcase name="test_ac042_chips_stake_and_multiplier_use_critical_text" assertions="3" status="pass" classname="tests/test_ui.gd" time="0.006015" >
+      </testcase>
+      <testcase name="test_each_game_has_chip_stakes_and_contextual_help" assertions="21" status="pass" classname="tests/test_ui.gd" time="0.48161" >
+      </testcase>
+      <testcase name="test_hud_messages_have_bounded_reveal_and_dismiss_motion" assertions="6" status="pass" classname="tests/test_ui.gd" time="0.165291" >
+      </testcase>
+      <testcase name="test_global_hud_reacts_to_balance_and_contract_changes" assertions="5" status="pass" classname="tests/test_ui.gd" time="0.003048" >
+      </testcase>
+      <testcase name="test_reduced_motion_hud_keeps_static_transaction_feedback" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.002802" >
+      </testcase>
+      <testcase name="test_stakes_move_between_casino_denominations" assertions="5" status="pass" classname="tests/test_ui.gd" time="0.007956" >
+      </testcase>
+      <testcase name="test_shared_bet_console_applies_exact_add_and_multiplier_operations" assertions="17" status="pass" classname="tests/test_ui.gd" time="0.012275" >
+      </testcase>
+      <testcase name="test_shared_bet_console_respects_balance_and_locks_during_rounds" assertions="13" status="pass" classname="tests/test_ui.gd" time="0.004408" >
+      </testcase>
+      <testcase name="test_every_game_exposes_six_semantic_bet_buttons_and_total_readout" assertions="27" status="pass" classname="tests/test_ui.gd" time="0.014954" >
+      </testcase>
+      <testcase name="test_bet_buttons_apply_their_operation_and_show_active_feedback" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.007594" >
+      </testcase>
+      <testcase name="test_each_machine_has_distinct_ambient_motion" assertions="3" status="pass" classname="tests/test_ui.gd" time="0.014192" >
+      </testcase>
+      <testcase name="test_slot_anticipation_only_extends_a_genuine_matching_setup" assertions="2" status="pass" classname="tests/test_ui.gd" time="0.007533" >
+      </testcase>
+      <testcase name="test_cabinet_controls_stay_inside_horizontal_tv_safe_area" assertions="24" status="pass" classname="tests/test_ui.gd" time="0.014208" >
+      </testcase>
+      <testcase name="test_primary_controller_focus_and_help_focus_restore" assertions="3" status="pass" classname="tests/test_ui.gd" time="0.009303" >
+      </testcase>
+      <testcase name="test_m5_each_cabinet_integrates_its_generated_art" assertions="3" status="pass" classname="tests/test_ui.gd" time="0.014367" >
+      </testcase>
+      <testcase name="test_display_targets_render_canvas_items_at_native_resolution" assertions="11" status="pass" classname="tests/test_ui.gd" time="0.000288" >
+      </testcase>
+      <testcase name="test_reference_captures_keep_a_full_16_by_9_frame" assertions="9" status="pass" classname="tests/test_ui.gd" time="0.007108" >
+      </testcase>
+      <testcase name="test_exact_fhd_qhd_and_uhd_game_captures_are_native_resolution" assertions="18" status="pass" classname="tests/test_ui.gd" time="0.445913" >
+      </testcase>
+      <testcase name="test_redesigned_shell_uses_high_resolution_production_environments" assertions="8" status="pass" classname="tests/test_ui.gd" time="0.003324" >
+      </testcase>
+      <testcase name="test_main_menu_exposes_a_focusable_reduced_motion_setting" assertions="10" status="pass" classname="tests/test_ui.gd" time="0.002793" >
+      </testcase>
+      <testcase name="test_main_menu_motion_shortcut_works_for_keyboard_and_controller_action" assertions="2" status="pass" classname="tests/test_ui.gd" time="0.002586" >
+      </testcase>
+      <testcase name="test_reduced_motion_preference_persists_and_reloads" assertions="2" status="pass" classname="tests/test_ui.gd" time="0.001362" >
+      </testcase>
+      <testcase name="test_walk_atlas_has_four_phases_per_eight_directions_and_transparency" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.00023" >
+      </testcase>
+      <testcase name="test_shared_scene_transition_and_lighting_layers_exist" assertions="5" status="pass" classname="tests/test_ui.gd" time="0.004177" >
+      </testcase>
+      <testcase name="test_m5_cabinet_motion_runs_in_engine" assertions="6" status="pass" classname="tests/test_ui.gd" time="0.011134" >
+      </testcase>
+      <testcase name="test_higgsfield_win_effect_is_sharp_and_transparent" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.014808" >
+      </testcase>
+      <testcase name="test_slot_reels_spin_independently_and_gate_settlement" assertions="7" status="pass" classname="tests/test_ui.gd" time="0.010133" >
+      </testcase>
+      <testcase name="test_higgsfield_slot_symbols_are_high_resolution_and_transparent" assertions="24" status="pass" classname="tests/test_ui.gd" time="0.018918" >
+      </testcase>
+      <testcase name="test_slot_uses_a_full_screen_sharp_higgsfield_stage" assertions="22" status="pass" classname="tests/test_ui.gd" time="0.007532" >
+      </testcase>
+      <testcase name="test_slot_deck_exposes_bet_multiplier_and_return" assertions="4" status="pass" classname="tests/test_ui.gd" time="0.007294" >
+      </testcase>
+      <testcase name="test_blackjack_and_vault_use_distinct_full_screen_stages" assertions="19" status="pass" classname="tests/test_ui.gd" time="0.006888" >
+      </testcase>
+      <testcase name="test_blackjack_uses_dealt_cards_and_a_revealing_hole_card" assertions="9" status="pass" classname="tests/test_ui.gd" time="0.004413" >
+      </testcase>
+      <testcase name="test_vault_uses_physical_tiles_with_flip_reveals" assertions="6" status="pass" classname="tests/test_ui.gd" time="0.003992" >
+      </testcase>
+      </testsuite>
+  <testsuite name="tests/test_vault_cashout_meter.gd" tests="7" failures="0" skipped="0" time="0.60204" >
+      <testcase name="test_meter_sets_exact_values_without_motion" assertions="5" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000186" >
+      </testcase>
+      <testcase name="test_meter_interpolates_and_finishes_on_exact_targets" assertions="13" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.600379" >
+      </testcase>
+      <testcase name="test_meter_clamps_invalid_presentation_inputs" assertions="4" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000251" >
+      </testcase>
+      <testcase name="test_meter_exposes_distinct_ready_and_disabled_states" assertions="5" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000165" >
+      </testcase>
+      <testcase name="test_ready_meter_keeps_a_bounded_idle_pulse_and_respects_reduced_motion" assertions="3" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000202" >
+      </testcase>
+      <testcase name="test_enabling_reduced_motion_snaps_an_active_value_tween_to_its_target" assertions="7" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000628" >
+      </testcase>
+      <testcase name="test_meter_tracks_decreasing_value_with_a_bounded_direction_cue" assertions="3" status="pass" classname="tests/test_vault_cashout_meter.gd" time="0.000229" >
       </testcase>
       </testsuite>
   </testsuites>

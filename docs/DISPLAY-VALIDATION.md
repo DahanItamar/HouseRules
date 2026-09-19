@@ -19,6 +19,9 @@ Godot directly to a 3840×2160 borderless output target using the native
 `canvas_items` path and 4× scale; it is not an upscaled screenshot. Physical
 panel validation remains separate because it also covers OS DPI and hardware.
 
+Temporal menu and game-action evidence, including the byte-stable reduced-motion
+path, is documented in [MOTION-VALIDATION.md](MOTION-VALIDATION.md).
+
 The previous integer-only viewport enlarged one 960×540 frame and forced QHD
 into a 1920×1080 letterboxed area. The current configuration draws UI, fonts and
 high-resolution art at the output resolution while retaining stable logical
