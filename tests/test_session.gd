@@ -107,11 +107,18 @@ func test_floor_avatar_uses_four_real_leg_phases_at_a_walking_pace() -> void:
 	assert_lte(FloorController.SPEED, 120.0, "Floor traversal stays at a natural walking pace")
 
 
-func test_developer_floor_tools_warp_and_open_distinct_room_views() -> void:
-	assert_true(_floor._dev_tools_enabled)
+func test_developer_floor_tools_warp_and_switch_whole_rooms() -> void:
+	assert_true(_floor._dev_tools_enabled, "Headless test runs are debug builds")
 	assert_not_null(_floor._dev_panel)
+	assert_false(_floor._dev_open, "Developer tools never open over the game by themselves")
 	_floor._toggle_dev_floor_tools(true)
 	assert_true(_floor._dev_open)
+	for button: Button in _floor._dev_buttons:
+		assert_gte(button.size.y, 44.0, "Developer controls keep a 44 px target")
+		var inside := Rect2(Vector2.ZERO, _floor._dev_panel.size).encloses(
+			Rect2(button.position, button.size)
+		)
+		assert_true(inside, "%s stays inside its panel" % button.name)
 	_floor._dev_warp_to(&"slot_classic")
 	assert_eq(_floor.avatar_position, _floor.cabinet_positions[&"slot_classic"])
 	assert_eq(_floor.nearby_definition.id, &"slot_classic")
@@ -119,34 +126,41 @@ func test_developer_floor_tools_warp_and_open_distinct_room_views() -> void:
 	_floor._dev_warp_to(&"cashier")
 	assert_eq(_floor.avatar_position, FloorController.CASHIER_POSITION)
 	assert_null(_floor.nearby_definition)
-	_floor._dev_warp_to(&"high_roller")
-	assert_not_null(_floor._active_dev_room)
-	assert_eq(_floor._active_dev_room.get("room_id"), &"high_roller")
-	assert_eq((_floor._active_dev_room.get("_title") as Label).text, "HIGH ROLLER SALON")
-	var high_roller_art := _floor._active_dev_room.get_node("RoomEnvironment") as TextureRect
-	assert_string_contains(high_roller_art.texture.resource_path, "high_roller_room.png")
-	assert_gte(high_roller_art.texture.get_width(), 1500)
-	assert_false(_floor._dev_open)
-	assert_eq(_floor.avatar_position, FloorController.CASHIER_POSITION)
-	_floor._dev_warp_to(&"vip")
-	assert_not_null(_floor._active_dev_room)
-	assert_eq(_floor._active_dev_room.get("room_id"), &"vip")
-	assert_eq((_floor._active_dev_room.get("_title") as Label).text, "VIP PENTHOUSE")
-	var vip_art := _floor._active_dev_room.get_node("RoomEnvironment") as TextureRect
-	assert_string_contains(vip_art.texture.resource_path, "vip_room.png")
-	assert_ne(vip_art.texture.resource_path, high_roller_art.texture.resource_path)
-	assert_gte(vip_art.texture.get_width(), 1500)
-	assert_ne((_floor._active_dev_room.get("_title") as Label).text, "HIGH ROLLER SALON")
-	_floor._exit_dev_room()
-	assert_null(_floor._active_dev_room)
-	assert_null(_floor._dev_room_layer)
+	var balance_before := Wallet.balance
+	var avatar := _floor._avatar_visual
+	for room_id: StringName in [FloorController.HIGH_ROLLER, FloorController.VIP]:
+		_floor._dev_warp_to(room_id)
+		assert_eq(_floor.room.id, room_id, "The whole environment switches")
+		assert_true(_floor.room.preview_only)
+		assert_string_contains(_floor.room.background_path, "%s_background_v2.png" % room_id)
+		assert_eq(_floor.avatar_position, _floor.room.spawn)
+		assert_same(_floor._avatar_visual, avatar, "Room switching never creates a second player")
+		assert_true(_floor._room_layer.visible, "Preview rooms say so and offer a way back")
+		assert_eq(_floor._room_status.text, tr("ROOM_PREVIEW_ONLY"))
+		assert_null(_floor.nearby_definition, "Preview rooms expose no playable controls")
+		assert_true(_floor._is_walkable(_floor.room.spawn))
+		_floor._room_back.pressed.emit()
+		assert_eq(_floor.room.id, FloorController.MAIN_FLOOR)
+		assert_eq(_floor.avatar_position, FloorController.WING_POSITIONS[room_id])
+		assert_false(_floor._room_layer.visible)
+	assert_eq(Wallet.balance, balance_before, "Room switching preserves the wallet")
 	for target: Dictionary in FloorController.DEV_TARGETS:
-		if target.id == &"high_roller" or target.id == &"vip":
+		if target.id in FloorController.ROOM_IDS:
 			continue
 		assert_true(
 			_floor._is_walkable(target.position),
 			"Developer destination %s must never place the avatar in furniture" % target.id
 		)
+
+
+func test_back_input_leaves_a_preview_room_safely() -> void:
+	_floor.enter_room(FloorController.VIP)
+	var back := InputEventAction.new()
+	back.action = &"back"
+	back.pressed = true
+	_floor._unhandled_input(back)
+	assert_eq(_floor.room.id, FloorController.MAIN_FLOOR)
+	assert_eq(_floor.avatar_position, FloorController.WING_POSITIONS[FloorController.VIP])
 
 
 func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
@@ -157,9 +171,11 @@ func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
 	await wait_seconds(0.18)
 	assert_eq(_floor._prompt.position, _floor._join_dialog_position(definition.id))
 	assert_eq(_floor._prompt.size, FloorController.JOIN_DIALOG_SIZE)
-	assert_lt(
-		_floor._prompt.position.y + _floor._prompt.size.y,
-		FloorController.CASHIER_POSITION.y - 45.0,
+	var cashier_label := Rect2(
+		FloorController.CASHIER_POSITION + Vector2(-46, -61), Vector2(92, 20)
+	)
+	assert_false(
+		Rect2(_floor._prompt.position, _floor._prompt.size).intersects(cashier_label),
 		"The contextual join card does not cover the cashier identity"
 	)
 	var back := InputEventAction.new()
@@ -214,33 +230,15 @@ func test_floor_machine_rings_are_the_real_activation_zones() -> void:
 		)
 
 
-func test_floor_machines_have_distinct_staggered_attract_loops() -> void:
-	assert_eq(_floor._machine_attracts.size(), _floor.cabinet_positions.size())
-	var slot: MachineAttract = _floor._machine_attracts[&"slot_classic"]
-	var blackjack: MachineAttract = _floor._machine_attracts[&"blackjack"]
-	var vault: MachineAttract = _floor._machine_attracts[&"minefield_vault"]
-	assert_eq(slot.kind, MachineAttract.Kind.SLOT)
-	assert_eq(blackjack.kind, MachineAttract.Kind.BLACKJACK)
-	assert_eq(vault.kind, MachineAttract.Kind.VAULT)
-	assert_eq(slot.z_index, 0, "Cabinet attract art stays behind the player")
-	assert_eq(blackjack.z_index, 0, "Table attract art stays behind the player")
-	assert_eq(vault.z_index, 0, "Vault attract art stays behind the player")
-	assert_ne(slot.phase_offset, blackjack.phase_offset)
-	assert_ne(blackjack.phase_offset, vault.phase_offset)
-	assert_ne(slot._period(), blackjack._period())
-	assert_ne(blackjack._period(), vault._period())
-	var phase_before := slot.visual_phase()
-	slot._process(0.2)
-	assert_ne(slot.visual_phase(), phase_before, "Full-motion machine faces stay visibly alive")
-
-
-func test_nearby_machine_heightens_only_its_attract_loop() -> void:
+func test_floor_uses_join_rings_without_floating_machine_icons() -> void:
+	for node: Node in _floor.find_children("*", "", true, false):
+		assert_false(
+			String(node.name).begins_with("MachineAttract"),
+			"Machine identity comes from the cabinet art and join ring, not a floating icon"
+		)
 	_floor.avatar_position = _floor.cabinet_positions[&"blackjack"]
 	_floor.refresh_proximity()
-	for id: StringName in _floor._machine_attracts:
-		var attract: MachineAttract = _floor._machine_attracts[id]
-		assert_eq(attract.is_near, id == &"blackjack")
-		assert_eq(attract.emphasis(), 1.45 if id == &"blackjack" else 1.0)
+	assert_eq(_floor.nearby_definition.id, &"blackjack", "The join ring still activates")
 
 
 func test_cashier_opens_a_real_focusable_menu() -> void:
@@ -408,8 +406,18 @@ func test_floor_collision_blocks_furniture_and_prevents_tunneling() -> void:
 
 	_floor.avatar_position = Vector2(504, 280)
 	_floor.move_avatar(Vector2.UP, 0.5)
+	assert_almost_eq(
+		_floor.avatar_position.y,
+		280.0 - FloorController.SPEED * FloorController.MAX_FRAME_DELTA,
+		0.01,
+		"A hitch is clamped instead of teleporting the player"
+	)
+	for _hitch: int in range(6):
+		_floor.move_avatar(Vector2.UP, 0.5)
 	assert_true(_floor._is_walkable(_floor.avatar_position))
-	assert_gte(_floor.avatar_position.y, 230.0, "A large frame cannot tunnel through machines")
+	# The Blackjack rug border is y 202; the foot ellipse (ry 6) stops
+	# against it instead of tunnelling into the machines.
+	assert_between(_floor.avatar_position.y, 206.0, 210.0, "A large frame cannot tunnel")
 
 
 func test_floor_collision_slides_along_furniture_edges() -> void:

@@ -110,7 +110,9 @@ func _move_floor_with_axis(
 ) -> void:
 	_hold_axis(axis, value)
 	await get_tree().process_frame
-	floor._physics_process(duration)
+	# Real 60 Hz steps: one giant frame is clamped by the tunnelling guard.
+	for _frame: int in range(ceili(duration * 60.0)):
+		floor._physics_process(1.0 / 60.0)
 	_release_axis(axis)
 	await get_tree().process_frame
 	_release_axis(axis)
