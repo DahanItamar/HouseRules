@@ -23,17 +23,18 @@ CELL = 240
 GUTTER = 9
 FOOT_LINE = CELL // 2 + 110
 TARGET_HEIGHT = 200
-# column -> (sheet, grid columns, grid rows, two stride frames, gait)
-# The generated sheets rarely move the legs between frames, so the cycle is
-# synthesised from their strides: "depth" gaits (walking toward or away from
-# the camera) swap the forward foot by mirroring the legs and level the feet
-# for the passing beat; "lateral" gaits pull both feet in under the hips for
-# the passing beat. Every beat therefore moves both legs.
+# column -> (sheet, grid columns, grid rows, frame indices, gait)
+# "authored" gaits come from the biomechanical walk sheets (contact, passing,
+# contact, passing picked by hand; their "down" frames came out as crouches).
+# The straight-on front walk was drawn turned sideways, so it is synthesised
+# from an older front stride: "depth" mirrors the legs to put the other foot
+# forward and levels the feet for the passing beats; "lateral" pulls both feet
+# in under the hips. Every beat moves both legs.
 SHEETS = {
-    0: ("walk_north_1d559697.png", 4, 1, [0, 0], "depth"),
-    1: ("walk_northeast_485daf1c.png", 4, 1, [1, 3], "lateral"),
-    2: ("walk_east_919bbe86.png", 4, 2, [0, 3], "lateral"),
-    3: ("walk_southeast_6fb1a3c6.png", 4, 1, [0, 2], "lateral"),
+    0: ("gait_back_1d78e945.png", 4, 2, [0, 1, 3, 2], "authored"),
+    1: ("gait_back34_baacd1d6.png", 4, 2, [0, 2, 3, 6], "authored"),
+    2: ("gait_side_f150f73b.png", 4, 2, [0, 1, 3, 2], "authored"),
+    3: ("gait_front34_18d33ca1.png", 4, 2, [0, 2, 3, 6], "authored"),
     4: ("walk_south_1fda4226.png", 4, 1, [0, 0], "depth"),
 }
 MIRRORS = {5: 3, 6: 2, 7: 1}
@@ -138,6 +139,8 @@ def lift(rgba: np.ndarray, fraction: float) -> np.ndarray:
 
 
 def cycle(frames: list[np.ndarray], gait: str) -> list[np.ndarray]:
+    if gait == "authored":
+        return frames
     stride_a, stride_b = frames
     if gait == "depth":
         other = mirror_legs(stride_a)
@@ -180,7 +183,8 @@ def frames_for(sheet: str, cols: int, rows: int, order: list[int]) -> list[np.nd
     frames = []
     for index in order:
         gx, gy = index % cols, index // cols
-        cell = image[gy * ch:(gy + 1) * ch, gx * cw:(gx + 1) * cw]
+        inset = 14  # drop any grid lines the model drew between frames
+        cell = image[gy * ch + inset:(gy + 1) * ch - inset, gx * cw + inset:(gx + 1) * cw - inset]
         frames.append(largest_figure(key_out(cell)))
     return frames
 

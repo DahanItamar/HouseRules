@@ -638,3 +638,17 @@ The old burgundy player blended into the burgundy carpet, and its atlas had no l
 | Passing-pose edit of five strides (rejected: legs came back unchanged) | `ad10073b-ff91-43ae-ac64-854eb828684e`, input upload `d91ba4d9-fb13-4c58-bb21-63385e19ded7` | `nano_banana_pro` edit, 21:9, 2k | 2 |
 
 The generated sheets barely move the legs between frames, so `tools/art/build_player_walk.py` synthesises the cycle from their stride frames so that both legs move on every beat: for the front and back walks it mirrors the legs below the jacket hem to put the other foot forward and levels the feet for the passing beats; for the side and diagonal walks it slides each leg in under the hips (shoes keep their shape) for the passing beats. Passing beats rise by 1.2% of the figure height. It keys out the flat grey, scales each sheet once, puts the lowest foot on the atlas foot line and mirrors the east-side columns for the west. It writes `assets/production/characters/player_walk_v2.png` (8 x 4 cells of 240 px with a 9 px transparent gutter). Uploaded reference crops (`ref_*.png`) and the raw sheets are in `assets/source/layered_v2/walk_v2/`. In-engine proof: `tests/results/screenshots/walk_fhd/` (`walk_sheet.png`, a real-time `walk_loop.gif` from `tools/capture_walk.tscn`, and `walk_cycles.gif`, a close-up of every direction's four beats).
+
+### Biomechanical gait sheets (second pass)
+
+The first stride sheets still read as sliding, so each view was regenerated with an explicit gait brief: 8 phases (right heel-strike contact, down, passing with the swing knee bent about 60 degrees and the foot lifted, toe-off, then the same on the left), alternating arms, heel-to-toe roll, a vertical bob that is lowest at "down" and highest at "passing", and depth cues for the front and back views (a satin trouser stripe and a left-wrist watch let the model tell the legs apart). The master `fdd4d071` was the reference each time; `nano_banana_pro` (served as `nano_banana_2`), 16:9, 2k, 2 credits each.
+
+| View | Job | Used frames (contact, passing, contact, passing) |
+| --- | --- | --- |
+| Back (walking away) | `1d78e945-9228-4cf4-923b-ac1ea24e06ea` | 1, 2, 4, 3 |
+| 3/4 back (upper right) | `baacd1d6-86b3-4bb0-afe8-23a7a442aae6` | 1, 3, 4, 7 |
+| Side profile (right) | `f150f73b-df03-4431-b9cb-41d524fe6a61` | 1, 2, 4, 3 |
+| 3/4 front (lower right) | `18d33ca1-15ac-4aca-b999-b98b1f996e2e` | 1, 3, 4, 7 |
+| Front (toward camera) | `a7dded37-6385-4426-8600-d38f2746626d` | not used: the body came out turned sideways and the "down" frames as crouches |
+
+In every sheet the model drew the "down" phase as a crouching lunge and repeated the first row in the second, so the atlas keeps four beats per direction taken from the contact and passing frames. The straight-on front walk stays synthesised from the earlier front stride (`walk_south_1fda4226.png`) as described above. Raw sheets: `assets/source/layered_v2/walk_v2/gait_*.png`.
