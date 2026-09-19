@@ -9,14 +9,15 @@ oversampling and MSDF; production raster art uses linear filtering and mipmaps.
 | --- | ---: | ---: | --- |
 | 1920×1080 FHD / ROG Ally X | 2× | 1920×1080 | Exact engine capture committed |
 | 2560×1440 QHD (“2K”) | 2.667× | 2560×1440 | Exact fullscreen engine capture committed |
-| 3840×2160 4K UHD | 4× | 3840×2160 | Configuration and aspect tests pass; physical-panel capture pending |
+| 3840×2160 4K UHD | 4× | 3840×2160 | Exact engine capture committed; physical-panel pass pending |
 
-Evidence for Slot, Blackjack, and Vault lives in `tests/results/screenshots/fhd/`
-and `tests/results/screenshots/qhd_exact/`. Tests assert all six captures at their
-exact pixel dimensions. Each cabinet now also ships a 3840×2160 runtime master.
-The 4K target uses the same native `canvas_items` path and 4× scale, but the
-current 2560×1440 monitor cannot produce an honest physical 4K capture, so the
-repository does not mislabel an upscaled or clamped image as 4K.
+Evidence for Slot, Blackjack, and Vault lives in `tests/results/screenshots/fhd/`,
+`tests/results/screenshots/qhd_exact/`, and `tests/results/screenshots/uhd/`.
+Tests decode all nine captures and assert their exact pixel dimensions. Each
+cabinet also ships a 3840×2160 runtime master. The 4K evidence was rendered by
+Godot directly to a 3840×2160 borderless output target using the native
+`canvas_items` path and 4× scale; it is not an upscaled screenshot. Physical
+panel validation remains separate because it also covers OS DPI and hardware.
 
 The previous integer-only viewport enlarged one 960×540 frame and forced QHD
 into a 1920×1080 letterboxed area. The current configuration draws UI, fonts and

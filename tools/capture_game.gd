@@ -3,12 +3,21 @@ extends Node
 
 const OUTPUT := "res://tests/results/screenshots"
 var _output := OUTPUT
+var _requested_size := Vector2i.ZERO
 
 
 func _ready() -> void:
 	for argument: String in OS.get_cmdline_user_args():
 		if argument.begins_with("--capture-dir="):
 			_output = OUTPUT.path_join(argument.trim_prefix("--capture-dir="))
+		elif argument.begins_with("--capture-size="):
+			var dimensions := argument.trim_prefix("--capture-size=").split("x")
+			if dimensions.size() == 2:
+				_requested_size = Vector2i(int(dimensions[0]), int(dimensions[1]))
+	if _requested_size.x > 0 and _requested_size.y > 0:
+		get_window().mode = Window.MODE_WINDOWED
+		get_window().borderless = true
+		get_window().size = _requested_size
 	call_deferred("_capture")
 
 
@@ -81,6 +90,9 @@ func _capture() -> void:
 		"Settled reel symbols must match the evaluated outcome: expected %s, got %s"
 		% [expected_symbols, observed_symbols]
 	)
+	# Earlier frames prove the number ticker is alive; the result frame must show
+	# the authoritative final payout so visual QA never reads as contradictory.
+	await get_tree().create_timer(0.85).timeout
 	await _snapshot("04_slot_result")
 	_write_slot_motion_proof(expected_symbols, observed_symbols)
 	router.return_to_floor()
