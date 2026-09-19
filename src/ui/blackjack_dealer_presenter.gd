@@ -15,6 +15,7 @@ var _cue: ColorRect
 var _gesture_tween: Tween
 var _idle_time: float = 0.0
 var _gesture_active: bool = false
+var last_gesture: StringName = &"idle"
 
 
 func _ready() -> void:
@@ -48,6 +49,7 @@ func _process(delta: float) -> void:
 
 
 func play_deal(card_count: int = 1) -> void:
+	last_gesture = &"deal"
 	_begin_gesture(Color("d9b44a"))
 	if MotionPolicy.is_reduced():
 		_play_reduced_cue()
@@ -67,7 +69,28 @@ func play_deal(card_count: int = 1) -> void:
 	_gesture_tween.finished.connect(_finish_gesture)
 
 
+func play_reveal() -> void:
+	last_gesture = &"reveal"
+	_begin_gesture(Color("48c5d5"))
+	if MotionPolicy.is_reduced():
+		_play_reduced_cue()
+		return
+	_gesture_active = true
+	_gesture_tween = create_tween()
+	_gesture_tween.tween_property(_sprite, "position", Vector2(5, -2), 0.11).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+	_gesture_tween.parallel().tween_property(_sprite, "rotation", -0.012, 0.11)
+	_gesture_tween.tween_property(_sprite, "position", Vector2.ZERO, 0.18).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN_OUT)
+	_gesture_tween.parallel().tween_property(_sprite, "rotation", 0.0, 0.18)
+	_gesture_tween.parallel().tween_property(_cue, "modulate:a", REST_CUE_ALPHA, 0.18)
+	_gesture_tween.finished.connect(_finish_gesture)
+
+
 func play_result(color: Color, positive: bool) -> void:
+	last_gesture = &"result_win" if positive else &"result_loss"
 	_begin_gesture(color)
 	if MotionPolicy.is_reduced():
 		_play_reduced_cue()
@@ -90,6 +113,7 @@ func play_result(color: Color, positive: bool) -> void:
 
 func reset_feedback() -> void:
 	_stop_gesture()
+	last_gesture = &"idle"
 	_set_rest_pose()
 	if _cue != null:
 		_cue.color = Color("8a682f")

@@ -63,6 +63,23 @@ func test_dealer_idle_and_deal_gesture_are_presentation_only() -> void:
 	assert_ne(dealer._sprite.position, Vector2.ZERO, "Deal beat briefly reaches toward the table")
 
 
+func test_dealer_marks_the_hole_card_reveal_with_a_distinct_gesture() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	panel._render_blackjack_hand([10, 7], [9, 8], true)
+	await wait_seconds(0.82)
+	panel._render_blackjack_hand([10, 7], [9, 8], false)
+	var dealer := panel._blackjack_dealer_presenter
+	assert_eq(dealer.last_gesture, &"reveal")
+	assert_eq(dealer._cue.color, Color("48c5d5"))
+	assert_true(dealer.has_active_gesture())
+	await wait_seconds(0.13)
+	assert_gt(dealer._sprite.position.x, 0.0, "Reveal beat leans toward the hole card")
+
+
 func test_reduced_dealer_uses_a_bounded_static_cue_and_stable_pose() -> void:
 	MotionPolicy.set_reduced_motion_for_tests(true)
 	var session := CabinetSession.new()

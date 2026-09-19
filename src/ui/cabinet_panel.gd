@@ -1069,6 +1069,8 @@ func _sync_playing_card(
 				_blackjack_pending_motions += 1
 				card.flip_completed.connect(_on_blackjack_flip_completed, CONNECT_ONE_SHOT)
 				AudioService.play(&"card_flip")
+				if _blackjack_dealer_presenter != null:
+					_blackjack_dealer_presenter.play_reveal()
 			card.set_face_down(hidden, card.face_down and not hidden)
 			return
 	_add_playing_card(rank, hand_index, hand_size, dealer_hand, hidden, deal_index)
