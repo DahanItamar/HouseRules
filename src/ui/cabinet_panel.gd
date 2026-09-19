@@ -70,6 +70,7 @@ var _blackjack_dealer_total_panel: Panel
 var _blackjack_player_total_panel: Panel
 var _blackjack_result_banner: Panel
 var _blackjack_result_text: Label
+var _blackjack_dealer_presenter: BlackjackDealerPresenter
 var _vault_credit_value: AnimatedNumberLabel
 var _vault_open: Button
 var _vault_cash_out: Button
@@ -96,7 +97,6 @@ const VAULT_GRID_ORIGIN := Vector2(342, 122)
 const VAULT_GRID_PITCH: float = 60.0
 const VAULT_TILE_SIZE: float = 56.0
 const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
-const BLACKJACK_DEALER := preload("res://assets/drafts/m2/dealer.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
 const BLACKJACK_TABLE := preload("res://assets/production/blackjack/blackjack_table.png")
 const VAULT_BACKDROP := preload("res://assets/production/vault/vault_backdrop.png")
@@ -909,6 +909,11 @@ func _build_blackjack_art() -> void:
 	_art_root.add_child(
 		_texture("BlackjackTableArt", BLACKJACK_TABLE, Vector2.ZERO, Vector2(960, 540))
 	)
+	_blackjack_dealer_presenter = BlackjackDealerPresenter.new()
+	_blackjack_dealer_presenter.name = "BlackjackDealerPresenter"
+	_blackjack_dealer_presenter.position = Vector2(24, 126)
+	_blackjack_dealer_presenter.z_index = 1
+	_art_root.add_child(_blackjack_dealer_presenter)
 	for label_data: Array in [
 		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(768, 158)],
 		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(768, 310)],
@@ -1013,6 +1018,7 @@ func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], 
 	if not _blackjack_dealt and not player_cards.is_empty():
 		_clear_blackjack_cards()
 		_blackjack_dealt = true
+	var cards_before := _blackjack_cards.size()
 	var deal_index: int = 0
 	for index: int in range(dealer_cards.size()):
 		_sync_playing_card(
@@ -1022,6 +1028,9 @@ func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], 
 	for index: int in range(player_cards.size()):
 		_sync_playing_card(player_cards[index], index, player_cards.size(), false, false, deal_index)
 		deal_index += 1
+	var newly_dealt := _blackjack_cards.size() - cards_before
+	if newly_dealt > 0 and _blackjack_dealer_presenter != null:
+		_blackjack_dealer_presenter.play_deal(newly_dealt)
 	if _blackjack_preparing:
 		_blackjack_preparing = false
 		_complete_blackjack_motion()
@@ -1488,6 +1497,8 @@ func _animate_blackjack_result(result: RoundResult) -> void:
 		_blackjack_result_banner.pivot_offset = _blackjack_result_banner.size * 0.5
 	if _blackjack_bet_stack != null:
 		_blackjack_bet_stack.place_wager(result.stake, false)
+	if _blackjack_dealer_presenter != null:
+		_blackjack_dealer_presenter.play_result(color, result.payout > result.stake)
 	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
 		label.pivot_offset = label.size * 0.5
 		label.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(1.18, 1.18)
@@ -1522,6 +1533,8 @@ func _reset_blackjack_result_feedback_for_round() -> void:
 			label.add_theme_color_override("font_color", Color("f1e8d8"))
 	if _blackjack_bet_stack != null:
 		_blackjack_bet_stack.clear_wager(false)
+	if _blackjack_dealer_presenter != null:
+		_blackjack_dealer_presenter.reset_feedback()
 
 
 func _animate_vault_result(result: RoundResult) -> void:

@@ -34,6 +34,55 @@ func test_totals_are_badged_beside_the_cards_and_actions_stay_controller_ready()
 	assert_eq(panel._blackjack_double.focus_mode, Control.FOCUS_ALL)
 	assert_gte(panel._blackjack_primary.size.x, 44.0)
 	assert_gte(panel._blackjack_primary.size.y, 44.0)
+	assert_not_null(panel._blackjack_dealer_presenter)
+	var portrait := panel.find_child("DealerPortrait", true, false) as Sprite2D
+	assert_not_null(portrait)
+	assert_gte(portrait.texture.get_width(), 1024, "Dealer uses the sharp production master")
+	assert_ne(portrait.texture.get_image().detect_alpha(), Image.ALPHA_NONE)
+	assert_null(portrait.material, "Transparent production art needs no chroma-key shader")
+	assert_lte(
+		panel._blackjack_dealer_presenter.visual_bounds().end.x,
+		230.0,
+		"Dealer stays in a dedicated side lane outside the card layout"
+	)
+
+
+func test_dealer_idle_and_deal_gesture_are_presentation_only() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	var dealer := panel._blackjack_dealer_presenter
+	dealer._process(0.9)
+	assert_ne(dealer._sprite.position.y, 0.0, "Dealer has a restrained one-pixel idle breath")
+	panel._render_blackjack_hand([10, 7], [9, 8], true)
+	assert_true(dealer.has_active_gesture())
+	assert_eq(dealer._cue.color, Color("d9b44a"))
+	await wait_seconds(0.10)
+	assert_ne(dealer._sprite.position, Vector2.ZERO, "Deal beat briefly reaches toward the table")
+
+
+func test_reduced_dealer_uses_a_bounded_static_cue_and_stable_pose() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(BLACKJACK_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	var dealer := panel._blackjack_dealer_presenter
+	assert_false(dealer.is_processing())
+	panel._render_blackjack_hand([10, 7], [9, 8], true)
+	assert_eq(dealer._sprite.position, Vector2.ZERO)
+	assert_eq(dealer._sprite.rotation, 0.0)
+	assert_eq(dealer._sprite.scale, BlackjackDealerPresenter.DISPLAY_SCALE)
+	assert_eq(dealer._cue.modulate.a, 1.0, "Color cue acknowledges the deal immediately")
+	await wait_seconds(0.24)
+	assert_almost_eq(
+		dealer._cue.modulate.a,
+		BlackjackDealerPresenter.REST_CUE_ALPHA,
+		0.02,
+		"Reduced cue settles instead of looping"
+	)
 
 
 func test_live_stake_places_a_readable_wager_stack_on_the_felt() -> void:
@@ -75,6 +124,8 @@ func test_result_feedback_has_a_static_reduced_motion_end_state() -> void:
 	assert_eq(panel._blackjack_result_banner.scale, Vector2.ONE)
 	assert_eq(panel._blackjack_result_text.text, tr("ROUND_RESULT") % [10, 20])
 	assert_eq(panel._blackjack_bet_stack.wager, 10)
+	assert_eq(panel._blackjack_dealer_presenter._cue.color, Color("3fc276"))
+	assert_eq(panel._blackjack_dealer_presenter._sprite.position, Vector2.ZERO)
 	assert_false(panel._blackjack_fx_tween != null and panel._blackjack_fx_tween.is_running())
 
 
