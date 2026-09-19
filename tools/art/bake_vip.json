@@ -96,6 +96,26 @@
           424
         ]
       ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/staff_ponytail_vip_bar_e24eeabe.png",
+      "crop": [
+        688,
+        40,
+        272,
+        272
+      ],
+      "zones": [
+        "zone_bar"
+      ],
+      "clip_rects": [
+        [
+          871,
+          100,
+          913,
+          210
+        ]
+      ]
     }
   ]
 }

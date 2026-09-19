@@ -1,7 +1,7 @@
 {
   "id": "high_roller",
   "label": "HIGH ROLLER SALON",
-  "preview_only": true,
+  "preview_only": false,
   "background": "res://assets/production/environments/high_roller_background_v2.png",
   "foreground": "res://assets/production/environments/high_roller_foreground_v2.png",
   "collision_reference": "res://assets/production/environments/high_roller_collision_v2.png",
@@ -43,9 +43,13 @@
   ],
   "anchors": {
     "exit": [480, 493],
-    "table_view": [480, 266]
+    "baccarat": [480, 268],
+    "match_point": [290, 141]
   },
   "patrons": [],
   "preview_actors": [],
-  "cabinets": []
+  "cabinets": [
+    "baccarat",
+    "match_point"
+  ]
 }

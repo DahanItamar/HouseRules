@@ -112,6 +112,98 @@
           58
         ]
       ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/staff_corset_hr_lounge_3f416a97.png",
+      "crop": [
+        735,
+        280,
+        225,
+        225
+      ],
+      "zones": [
+        "zone_lr_lounge"
+      ],
+      "clip_rects": [
+        [
+          850,
+          328,
+          912,
+          448
+        ]
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/staff_burgundy_hr_reception_d7cebfb7.png",
+      "crop": [
+        750,
+        40,
+        210,
+        210
+      ],
+      "zones": [
+        "zone_reception"
+      ],
+      "clip_rects": [
+        [
+          792,
+          88,
+          886,
+          214
+        ]
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_games/hr_baccarat_table_4ea2298f.png",
+      "crop": [
+        336,
+        96,
+        288,
+        192
+      ],
+      "zones": [
+        "zone_table_rug"
+      ],
+      "extra_rects": [
+        [
+          452,
+          96,
+          510,
+          118
+        ],
+        [
+          452,
+          253,
+          510,
+          276
+        ]
+      ]
+    },
+    {
+      "edited": "assets/source/layered_v2/paint_in/hr_games/hr_match_point_alcove_451f28bd.png",
+      "crop": [
+        214,
+        0,
+        160,
+        160
+      ],
+      "zones": [
+        "zone_slot_left_alcove"
+      ],
+      "extra_rects": [
+        [
+          264,
+          0,
+          326,
+          100
+        ],
+        [
+          266,
+          128,
+          314,
+          154
+        ]
+      ]
     }
   ]
 }

@@ -12,7 +12,9 @@ matched to the clean master before a feathered paste:
 SPEC: {"source": clean upscale png, "output": production background png,
 "layout": room layout json, "patches": [{"edited": edit png, "crop": [x, y, w,
 h] virtual px, "zones": [solid names], "extra_rects": [[x0, y0, x1, y1]],
-"feather": master px (optional)}]}.
+"feather": master px (optional), "clip_rects": [[x0, y0, x1, y1]] virtual px
+(optional; the mask is intersected with these, e.g. to take one added figure
+from an edit and keep every existing guest from the master)}]}.
 """
 
 from __future__ import annotations
@@ -88,6 +90,16 @@ def main(argv: list[str]) -> int:
         for rx0, ry0, rx1, ry1 in patch.get("extra_rects", []):
             draw.rectangle([(rx0 - cx) * SCALE, (ry0 - cy) * SCALE,
                             (rx1 - cx) * SCALE, (ry1 - cy) * SCALE], fill=255)
+        clips = patch.get("clip_rects", [])
+        if clips:
+            # A single added figure keeps the rest of the zone from the master,
+            # so the edit model's redraw of nearby guests is never baked in.
+            clip_image = Image.new("L", size, 0)
+            clip_draw = ImageDraw.Draw(clip_image)
+            for rx0, ry0, rx1, ry1 in clips:
+                clip_draw.rectangle([(rx0 - cx) * SCALE, (ry0 - cy) * SCALE,
+                                     (rx1 - cx) * SCALE, (ry1 - cy) * SCALE], fill=255)
+            mask_image = Image.fromarray(np.minimum(np.asarray(mask_image), np.asarray(clip_image)))
         hard = np.asarray(mask_image) > 0
         outside = ~np.asarray(mask_image.filter(ImageFilter.MaxFilter(41))).astype(bool)
         if outside.sum() < 1000:

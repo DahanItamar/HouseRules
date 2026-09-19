@@ -441,6 +441,52 @@ the canvas. Its lower cut is closest to the deck (2050 of 2063 source px). The
 celebrate pose turns her torso toward the viewer, so the cross-fade from the
 watch pose changes silhouette more than the other beats.
 
+## 2026-09-19 Staff paint-ins (cocktail waitresses)
+
+Four original adult staff characters are painted into the blocked furniture
+zones, using the same method as the guests: a crop of the current production
+background, a `nano_banana_pro` edit (2k, 1:1, served as `nano_banana_2`) with
+the crop and the approved concept job as image references, then the bake in
+`tools/art/bake_paint_ins.py`. The player can never enter these zones, so none
+of the staff need runtime depth. Each patch uses the new optional `clip_rects`
+key: the bake intersects the zone mask with a rectangle around the added woman,
+so everyone else in the zone stays exactly as the master had them, with no
+redrawn guests. All four aligned at shift (0,0).
+
+Concept jobs (approved, `assets/source/layered_v2/waitress/`):
+
+| Staff | Concept job | Look |
+| --- | --- | --- |
+| Espresso waitress | `78079b0d-00f6-4668-a5fa-ea7bb452c2a1` | espresso waves with curtain bangs, black satin corset vest over a white shirt, black pencil mini skirt, champagne tray |
+| Ponytail server | `2f18427a-467e-48cd-a306-2ad9ace1d3f4` | jet-black high ponytail, black silk shirt, black leather mini skirt, notepad |
+| Corset server | `a5fefa1e-6e30-4026-a49a-62222ee3eb76` | black leather corset over an ivory satin blouse, short leather skirt, cocktail tray; hair changed in the edit from copper-red to dark black-cherry auburn so she is not confused with the red-haired roulette croupier |
+| Burgundy hostess | `4a329a00-868a-4573-9dff-4a4946d86a2a` | platinum bob, burgundy leather wrap mini dress, clutch |
+| Option 2 (not used) | `b01e4296-b758-4fba-9832-56679eda6143` | vinyl dress concept, not placed |
+
+Edits (2 credits each, 8 credits in total; every edit was accepted on its first
+attempt, so none were redone):
+
+| Staff | Edit job | Crop media | Room / zone / crop (virtual px) | clip_rects | Placement |
+| --- | --- | --- | --- | --- | --- |
+| Espresso | `a3fc2dd8-f44d-4fa3-be49-4805f964ae4c` | `da59fbce-9b89-4c23-ac81-1ab7a8399e75` | Main Floor `LoungeDais`, `[0,300,240,240]` | `[158,385,212,494]` | stands inside the brass rail to the right of the lower lounge group and offers champagne flutes to the man in the navy suit |
+| Ponytail | `e24eeabe-3647-4b40-933b-3ab2d512560a` | `c00e5661-8b85-460a-9bdf-eff7ab0c8939` | VIP `zone_bar`, `[688,40,272,272]` | `[871,100,913,210]` | stands on the marble ring at the service end of the bar and writes an order on her notepad, facing the counter and bartender |
+| Corset | `3f416a97-6616-413c-a1ff-43d0232b320f` | `22c8ddcb-0dad-4687-b46b-2999b36f49c1` | High Roller `zone_lr_lounge`, `[735,280,225,225]` | `[850,328,912,448]` | walks between the lamp table and the globe console, behind the balustrade, serving two martinis to the seated couple |
+| Burgundy | `d7cebfb7-d12d-45eb-97d7-7fd61c4a9273` | `e770ad0a-2b14-43d4-9f13-eb66e4d11f96` | High Roller `zone_reception`, `[750,40,210,210]` | `[792,88,886,214]` | stands at the left corner of the reception desk with one hand on it, talking to the concierge |
+
+Outputs are saved as `assets/source/layered_v2/paint_in/staff_<name>_<room>_<job8>.png`.
+The High Roller centre table, both slot alcoves and the Main Floor cashier/office
+area are untouched. After the bake, `floor_layers.py build` regenerated the
+foreground, collision and preview for all three rooms. Only the High Roller
+foreground changed: the `lr_plant_a` and `lr_rail` occluders overlap the corset
+server, and they are cut from the same background pixels. `check` passes for all
+three rooms. Before/after crops at 1:1 and full-room previews are in
+`tests/results/screenshots/staff_paint_ins/`.
+
+Scale note: every figure matches the painted guests in her own group (lounge
+guests are drawn larger than the island guests near the back wall). The corset
+server (about 108 virtual px tall) and the espresso waitress (about 97 px) are
+the tallest standing figures in their rooms.
+
 ## 2026-09-19 Velvet Baccarat (Punto Banco, High Roller Salon)
 
 New playable cabinet `baccarat`. The hostess is an original adult woman built from
@@ -498,4 +544,15 @@ Known art caveats: the idle edit turns her side-on, so the slit and ruching are 
 view in that pose, and her hips sit a few px left of the other poses under the rail.
 A faint light rim remains on a few hair strands of the idle pose after un-matting. It
 is about half a virtual pixel at game scale.
+
+## 2026-09-19 High Roller Salon goes playable (Baccarat table and Match Point alcove)
+
+The Salon's painted blackjack dealer and left slot alcove are repainted so that the room shows the two cabinets it now hosts. Both are `nano_banana_pro` edits (the server runs them as `nano_banana_2`) of 4x crops of the current `high_roller_background_v2.png`, baked by `tools/art/bake_paint_ins.py` (patches appended to `tools/art/bake_high_roller.json`).
+
+| Patch | Edit job | Crop upload | References | Crop (virtual px) | Bake clip | Credits |
+| --- | --- | --- | --- | --- | --- | --- |
+| Baccarat table: violet hostess replaces the male dealer, baccarat felt and walnut shoe, brass join diamond below the rug | `4ea2298f-bc6e-43f9-be35-39ac30bfc530` | `70cbd9bf-9cd4-4748-a50a-7d3e8ab47641` | baccarat hostess master `4d76e701-d06e-4c18-959a-bb33bded4f4f` | [336,96,288,192] | `zone_table_rug` + head rect [452,96,510,118] + inlay rect [452,253,510,276] | 2 |
+| Match Point alcove: green-and-cream tennis ball-drop cabinet, empty stool, brass join diamond | `451f28bd-1218-4e19-b5ed-cffc51fcf9d6` | `d150a99d-1e15-494a-a18b-d952b1423b37` | Match Point backdrop `f1f01d22-372d-4fdc-a31c-366d17cb2ac9` for palette | [214,0,160,160] | `zone_slot_left_alcove` + crest rect [264,0,326,100] + inlay rect [266,128,314,154] | 2 |
+
+Both colour fits were rejected by the correlation guard (the content changed by design), so the raw paint is baked; it already matches the room palette. The edit's extra wall sconces fall outside the clip and are not baked. Raw outputs: `assets/source/layered_v2/paint_in/hr_games/`. Layout: `data/floors/high_roller.json` now lists `baccarat` at [480,268] and `match_point` at [290,141], `preview_only: false`.
 
