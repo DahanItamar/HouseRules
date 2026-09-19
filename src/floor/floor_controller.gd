@@ -204,8 +204,6 @@ func refresh_proximity() -> void:
 func interact() -> bool:
 	if nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
-			_dismissed_game = &""
-			_update_prompt()
 			return false
 		if Wallet.balance < nearby_definition.min_bet:
 			return false
@@ -305,12 +303,7 @@ func _update_prompt() -> void:
 		)
 	elif nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
-			_prompt.position = nearby_definition_position() + Vector2(-130, 54)
-			_prompt.size = Vector2(260, 34)
-			_prompt.text = (
-				tr("FLOOR_MACHINE_CLOSED")
-				% [InputRouter.glyph("interact"), InputRouter.glyph("back")]
-			)
+			_prompt.text = ""
 		elif Wallet.balance < nearby_definition.min_bet:
 			_prompt.position = _join_dialog_position(nearby_definition.id)
 			_prompt.size = JOIN_DIALOG_SIZE
@@ -635,10 +628,10 @@ func _draw() -> void:
 
 func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float) -> void:
 	var accent := _machine_accent(id)
-	var ring_color := Color(accent, 0.32 + pulse * 0.10)
-	var ring_width := 2.0
+	var ring_color := Color(accent, 0.20 + pulse * 0.06)
+	var ring_width := 1.5
 	if is_near and _dismissed_game != id:
-		ring_color = Color(CYAN, 0.72 + pulse * 0.22)
+		ring_color = Color(CYAN, 0.76 + pulse * 0.18)
 		ring_width = 3.0
 	draw_set_transform(at, 0.0, MACHINE_ZONE_SCALE)
 	if is_near and _dismissed_game != id:

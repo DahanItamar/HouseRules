@@ -117,17 +117,19 @@ func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
 	back.pressed = true
 	_floor._unhandled_input(back)
 	assert_eq(_floor._dismissed_game, definition.id)
-	assert_false(_floor._prompt.text.contains("JOIN"))
-	assert_string_contains(_floor._prompt.text, "VIEW GAME")
-	assert_false(_floor.interact(), "The first Enter reopens a dismissed card without a hidden join")
-	assert_eq(_floor._dismissed_game, &"")
-	assert_string_contains(_floor._prompt.text, "JOIN")
+	assert_false(_floor._prompt_target_visible, "Close removes all contextual dialog chrome")
+	assert_false(_floor.interact(), "A dismissed dialog cannot trigger a hidden join action")
+	assert_eq(_floor._dismissed_game, definition.id)
 	assert_null(SceneRouter.session)
+	await wait_seconds(0.14)
+	assert_false(_floor._prompt.visible, "The dismissed join dialog finishes its exit fade")
 	_floor.avatar_position += Vector2(0, FloorController.INTERACTION_RADIUS + 20.0)
 	_floor.refresh_proximity()
 	assert_eq(_floor._dismissed_game, &"", "Leaving the machine resets the dismissed card")
 	_floor.avatar_position = _floor.cabinet_positions[definition.id]
 	_floor.refresh_proximity()
+	assert_true(_floor._prompt.visible, "Approaching again restores the contextual join dialog")
+	assert_string_contains(_floor._prompt.text, "JOIN")
 	assert_true(_floor.interact(), "Re-entering the ring restores the join action")
 
 

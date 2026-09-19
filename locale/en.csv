@@ -32,7 +32,6 @@ FLOOR_PROMPT,"%s\n%d–%d chips  [%s] Play"
 FLOOR_UNAVAILABLE,"%s\nNeeds %d chips"
 FLOOR_HELP,Move with %s.  [%s] Menu
 FLOOR_JOIN_DIALOG,"%s  ·  BET %d–%d CHIPS\n[%s] JOIN    [%s] CLOSE"
-FLOOR_MACHINE_CLOSED,[%s] VIEW GAME    [%s] MENU
 CASHIER_NAME,CASHIER
 CASHIER_PROMPT,[%s] Visit cashier
 CASHIER_WAYPOINT,CASHIER  ·  100-CHIP MARKER
