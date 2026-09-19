@@ -46,6 +46,40 @@ func test_reduced_motion_menu_holds_a_byte_stable_final_composition() -> void:
 	assert_eq(first_hash.to_upper(), String(reduced.sha256).to_upper())
 
 
+func test_blackjack_dealer_lane_itself_changes_during_each_articulated_gesture() -> void:
+	var dealer_evidence: Dictionary = _manifest().regions_of_interest.blackjack_dealer_lane
+	var values: Array = dealer_evidence.rect
+	assert_eq(values.size(), 4)
+	var region := Rect2i(int(values[0]), int(values[1]), int(values[2]), int(values[3]))
+	for sequence_key: String in dealer_evidence.sequences:
+		var frames: Array = dealer_evidence.sequences[sequence_key]
+		assert_eq(frames.size(), 2)
+		var first := _load_evidence_image(String(frames[0])).get_region(region)
+		var second := _load_evidence_image(String(frames[1])).get_region(region)
+		assert_ne(
+			first.get_data(),
+			second.get_data(),
+			"%s gesture changes pixels inside the dealer lane" % sequence_key
+		)
+
+
+func test_high_value_alive_flows_have_named_temporal_evidence() -> void:
+	var full: Dictionary = _manifest().full_motion
+	for sequence_key: String in [
+		"floor_practical_lights", "help_reveal", "help_dismiss", "exit_reveal",
+		"exit_cancel", "exit_confirm",
+		"blackjack_deal", "blackjack_reveal", "vault_hazard",
+	]:
+		assert_true(full.has(sequence_key), "%s is represented in the manifest" % sequence_key)
+		assert_eq((full[sequence_key] as Array).size(), 2)
+
+
+func _load_evidence_image(relative_path: String) -> Image:
+	var image := Image.load_from_file(ProjectSettings.globalize_path(ROOT + relative_path))
+	assert_false(image.is_empty(), "%s decodes" % relative_path)
+	return image
+
+
 func _manifest() -> Dictionary:
 	assert_true(FileAccess.file_exists(MANIFEST_PATH), "Motion manifest exists")
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(MANIFEST_PATH))

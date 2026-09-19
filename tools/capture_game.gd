@@ -47,6 +47,8 @@ func _capture() -> void:
 	await _snapshot("01_menu")
 	main._start_playing()
 	await get_tree().create_timer(0.55).timeout
+	await _snapshot("02_floor_motion_a")
+	await get_tree().create_timer(0.80).timeout
 	await _snapshot("02_floor")
 	wallet.call("set_test_mode", false)
 	wallet.call("reset", 10)
@@ -85,6 +87,19 @@ func _capture() -> void:
 	await _snapshot("03_slot_idle")
 	var slot_game: Node = router.session.cabinet
 	var slot_panel: CabinetPanel = slot_game.panel
+	# Overlay motion is captured on a real cabinet so evidence includes the
+	# composition it blocks and the focusable content a player actually sees.
+	slot_panel.set_help_open(true)
+	await _snapshot("03_help_reveal_start")
+	await get_tree().create_timer(0.08).timeout
+	await _snapshot("03_help_reveal_mid")
+	await get_tree().create_timer(0.16).timeout
+	await _snapshot("03_help_open")
+	slot_panel.set_help_open(false)
+	await get_tree().create_timer(0.07).timeout
+	await _snapshot("03_help_dismiss_mid")
+	await get_tree().create_timer(0.10).timeout
+	await _snapshot("03_help_dismissed")
 	assert(slot_game.start_round(10), "Deterministic slot round must start")
 	var expected_symbols: Array[int] = []
 	for symbol: int in slot_panel._slot_spin_targets:
@@ -95,8 +110,16 @@ func _capture() -> void:
 	await get_tree().create_timer(0.45).timeout
 	await _snapshot("04_slot_spin_progress")
 	slot_game.exit_confirmation.present(10)
+	await _snapshot("04_exit_reveal_start")
+	await get_tree().create_timer(0.08).timeout
+	await _snapshot("04_exit_reveal_mid")
+	await get_tree().create_timer(0.14).timeout
 	await _snapshot("04_exit_confirmation")
 	slot_game.exit_confirmation.cancel()
+	await get_tree().create_timer(0.06).timeout
+	await _snapshot("04_exit_cancel_mid")
+	await get_tree().create_timer(0.09).timeout
+	await _snapshot("04_exit_cancelled")
 	await _wait_for_slot_settle(slot_game, slot_panel)
 	var observed_symbols := _slot_center_symbols(slot_panel)
 	assert(
@@ -109,8 +132,15 @@ func _capture() -> void:
 	await get_tree().create_timer(0.85).timeout
 	await _snapshot("04_slot_result")
 	_write_slot_motion_proof(expected_symbols, observed_symbols)
-	router.return_to_floor()
+	# A second live wager proves the destructive confirmation route all the way
+	# back to the floor. This is isolated from the settled outcome above.
+	assert(slot_game.start_round(10), "Exit-confirmation proof round must start")
+	slot_game.exit_confirmation.present(10)
+	await get_tree().create_timer(0.20).timeout
+	await _snapshot("04_exit_confirm_ready")
+	slot_game.exit_confirmation.confirm_leave()
 	await get_tree().create_timer(0.55).timeout
+	await _snapshot("04_exit_confirmed_floor")
 	router.enter_cabinet(load("res://data/cabinets/blackjack.tres"))
 	await get_tree().create_timer(0.55).timeout
 	router.session.cabinet.selected_stake = 10
@@ -145,6 +175,16 @@ func _capture() -> void:
 	await _snapshot("06_vault_reveal_mid")
 	await get_tree().create_timer(0.38).timeout
 	await _snapshot("06_vault_reveal")
+	var mine_index: int = (vault_math.get("mines") as Array)[0]
+	vault_game.get("snap_cursor").set("index", mine_index)
+	assert(vault_game.call("request_open"), "Deterministic vault hazard reveal must start")
+	await _snapshot("06_vault_hazard_start")
+	await get_tree().create_timer(0.10).timeout
+	await _snapshot("06_vault_hazard_warning")
+	await get_tree().create_timer(0.09).timeout
+	await _snapshot("06_vault_hazard_impact")
+	await get_tree().create_timer(0.35).timeout
+	await _snapshot("06_vault_hazard_result")
 	_write_motion_proof()
 	router.return_to_floor()
 	motion_policy.call("clear_test_override")
@@ -203,6 +243,12 @@ func _write_motion_proof() -> void:
 		"reduced_motion": _reduced_motion,
 		"sequences": {
 			"menu": ["01_menu_motion_a.png", "01_menu.png"],
+			"floor_practical_lights": ["02_floor_motion_a.png", "02_floor.png"],
+			"help_reveal": ["03_help_reveal_start.png", "03_help_reveal_mid.png"],
+			"help_dismiss": ["03_help_open.png", "03_help_dismiss_mid.png"],
+			"exit_reveal": ["04_exit_reveal_start.png", "04_exit_reveal_mid.png"],
+			"exit_cancel": ["04_exit_confirmation.png", "04_exit_cancel_mid.png"],
+			"exit_confirm": ["04_exit_confirm_ready.png", "04_exit_confirmed_floor.png"],
 			"cashier": [
 				"02_cashier_menu.png",
 				"02_cashier_transaction.png",
@@ -222,6 +268,11 @@ func _write_motion_proof() -> void:
 				"06_vault_reveal_start.png",
 				"06_vault_reveal_mid.png",
 				"06_vault_reveal.png",
+			],
+			"vault_hazard": [
+				"06_vault_hazard_warning.png",
+				"06_vault_hazard_impact.png",
+				"06_vault_hazard_result.png",
 			],
 		},
 	}

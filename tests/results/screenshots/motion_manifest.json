@@ -5,9 +5,33 @@
       "motion_full/01_menu_motion_a.png",
       "motion_full/01_menu.png"
     ],
+    "floor_practical_lights": [
+      "motion_full/02_floor_motion_a.png",
+      "motion_full/02_floor.png"
+    ],
     "cashier": [
       "motion_full/02_cashier_menu.png",
       "motion_full/02_cashier_transaction.png"
+    ],
+    "help_reveal": [
+      "motion_full/03_help_reveal_start.png",
+      "motion_full/03_help_reveal_mid.png"
+    ],
+    "help_dismiss": [
+      "motion_full/03_help_open.png",
+      "motion_full/03_help_dismiss_mid.png"
+    ],
+    "exit_reveal": [
+      "motion_full/04_exit_reveal_start.png",
+      "motion_full/04_exit_reveal_mid.png"
+    ],
+    "exit_cancel": [
+      "motion_full/04_exit_confirmation.png",
+      "motion_full/04_exit_cancel_mid.png"
+    ],
+    "exit_confirm": [
+      "motion_full/04_exit_confirm_ready.png",
+      "motion_full/04_exit_confirmed_floor.png"
     ],
     "blackjack_deal": [
       "motion_full/05_blackjack_deal_start.png",
@@ -20,7 +44,26 @@
     "vault_reveal": [
       "motion_full/06_vault_reveal_start.png",
       "motion_full/06_vault_reveal_mid.png"
+    ],
+    "vault_hazard": [
+      "motion_full/06_vault_hazard_warning.png",
+      "motion_full/06_vault_hazard_impact.png"
     ]
+  },
+  "regions_of_interest": {
+    "blackjack_dealer_lane": {
+      "rect": [0, 180, 520, 600],
+      "sequences": {
+        "deal": [
+          "motion_full/05_blackjack_deal_start.png",
+          "motion_full/05_blackjack_deal_mid.png"
+        ],
+        "reveal": [
+          "motion_full/05_blackjack_reveal_start.png",
+          "motion_full/05_blackjack_reveal_mid.png"
+        ]
+      }
+    }
   },
   "reduced_motion": {
     "menu": [
