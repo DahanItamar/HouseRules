@@ -13,6 +13,7 @@ const FLOOR_AVATAR_SCRIPT := preload("res://src/floor/floor_avatar.gd")
 const CASINO_PATRON_SCRIPT := preload("res://src/floor/casino_patron.gd")
 const CASHIER_WAYPOINT_SCRIPT := preload("res://src/floor/cashier_waypoint.gd")
 const MACHINE_ATTRACT_SCRIPT := preload("res://src/floor/machine_attract.gd")
+const PRACTICAL_LIGHT_RIG_SCRIPT := preload("res://src/floor/practical_light_rig.gd")
 const ANIMATED_PAIR_LABEL_SCRIPT := preload("res://src/ui/animated_pair_label.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
@@ -80,6 +81,7 @@ var _floor_camera: Camera2D
 var _camera_tween: Tween
 var _camera_focus_id: StringName = &""
 var _dust: CPUParticles2D
+var _practical_lights: Node2D
 var _cashier_waypoint: CashierWaypoint
 var _directions_layer: CanvasLayer
 var _floor_prompts_visible: bool = true
@@ -98,6 +100,7 @@ func _ready() -> void:
 		definitions[id] = definition
 	_build_camera()
 	_build_dust()
+	_build_practical_lights()
 	_build_patrons()
 	_build_machine_attracts()
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
@@ -456,6 +459,13 @@ func _build_camera() -> void:
 	_floor_camera.position_smoothing_enabled = false
 	_floor_camera.enabled = true
 	add_child(_floor_camera)
+
+
+func _build_practical_lights() -> void:
+	_practical_lights = PRACTICAL_LIGHT_RIG_SCRIPT.new() as Node2D
+	_practical_lights.name = "PracticalLightRig"
+	_practical_lights.z_index = 1
+	add_child(_practical_lights)
 
 
 func _build_cashier_waypoint() -> void:
