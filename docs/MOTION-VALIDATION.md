@@ -14,6 +14,9 @@ byte-identical with SHA-256
 proving the accessibility path reaches and holds its stable final composition.
 
 `tests/results/screenshots/motion_manifest.json` records the selected frame pairs.
+`tests/test_motion_evidence.gd` decodes every referenced frame, verifies exact FHD
+dimensions, requires each full-motion pair to change, and checks the reduced menu
+pair against its recorded byte-stable SHA-256 digest.
 The capture runner accepts `--reduced-motion` and resets its test override before
 exit so the preference cannot leak into another run.
 
