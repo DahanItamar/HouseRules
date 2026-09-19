@@ -3,6 +3,7 @@ extends Node
 
 signal balance_changed(previous: int, current: int)
 signal transaction_rejected(stake: int, payout: int)
+signal test_mode_changed(enabled: bool)
 
 const MAX_CHIPS: int = 9007199254740991
 const TEST_BANKROLL: int = 999_999_999
@@ -50,6 +51,7 @@ func set_test_mode(enabled: bool) -> void:
 	test_mode_enabled = enabled
 	if previous != balance:
 		balance_changed.emit(previous, balance)
+	test_mode_changed.emit(enabled)
 
 
 func persistent_balance() -> int:

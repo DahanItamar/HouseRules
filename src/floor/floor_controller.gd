@@ -942,7 +942,12 @@ func _refresh_cashier_menu() -> void:
 			remaining_debt,
 			tr("CASHIER_PREVIEW")
 		)
-	_cashier_marker.disabled = not Economy.is_below_solvency_floor()
+	_cashier_marker.disabled = not Economy.can_take_marker()
+	_cashier_marker.text = (
+		tr("CASHIER_ADD_TEST_MARKER")
+		if Wallet.test_mode_enabled
+		else tr("CASHIER_TAKE_MARKER")
+	)
 	_cashier_repay.disabled = repayment_limit <= 0
 	_cashier_repay.text = tr("CASHIER_CONFIRM_REPAY") % _cashier_repay_amount
 	for button_name: String in ["RepayMinusTen", "RepayMinusOne"]:
@@ -958,7 +963,7 @@ func _refresh_cashier_menu() -> void:
 
 
 func _cashier_repayment_limit() -> int:
-	return mini(Wallet.balance, Economy.debt)
+	return Economy.repayment_limit()
 
 
 func _adjust_cashier_repayment(delta: int) -> void:

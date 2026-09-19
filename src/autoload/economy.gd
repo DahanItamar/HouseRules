@@ -25,13 +25,40 @@ const INITIAL_CONTRACTS: Array[StringName] = [
 	&"slot_rounds", &"blackjack_wins", &"vault_safe_eight"
 ]
 var debt: int = 0
+var _persistent_debt: int = 0
 var lifetime_wagered: int = 0
 var active_contracts: Array[Dictionary] = []
 var contract_completions: int = 0
 
 
+func _ready() -> void:
+	Wallet.test_mode_changed.connect(_on_test_mode_changed)
+
+
 func is_below_solvency_floor() -> bool:
 	return Wallet.balance < SOLVENCY_FLOOR
+
+
+func can_take_marker() -> bool:
+	return (
+		debt <= Wallet.MAX_CHIPS - MARKER_STIPEND
+		and (is_below_solvency_floor() or Wallet.test_mode_enabled)
+	)
+
+
+func repayment_limit() -> int:
+	return debt if Wallet.test_mode_enabled else mini(Wallet.balance, debt)
+
+
+func persistent_debt() -> int:
+	return _persistent_debt if Wallet.test_mode_enabled else debt
+
+
+func load_debt(amount: int) -> void:
+	_persistent_debt = maxi(amount, 0)
+	if not Wallet.test_mode_enabled:
+		debt = _persistent_debt
+	debt_changed.emit(debt)
 
 
 func reset_contracts(saved: Array = [], completed: int = 0) -> void:
@@ -99,19 +126,21 @@ func record_round(cabinet_id: StringName, result: RoundResult) -> void:
 
 
 func take_marker() -> bool:
-	if not is_below_solvency_floor() or debt > Wallet.MAX_CHIPS - MARKER_STIPEND:
+	if not can_take_marker():
 		return false
 	debt += MARKER_STIPEND
 	if not Wallet.try_apply(0, MARKER_STIPEND):
 		debt -= MARKER_STIPEND
 		return false
 	debt_changed.emit(debt)
-	SaveService.save()
+	if not Wallet.test_mode_enabled:
+		_persistent_debt = debt
+		SaveService.save()
 	return true
 
 
 func repay_debt(amount: int) -> bool:
-	var repaid: int = mini(amount, mini(Wallet.balance, debt))
+	var repaid: int = mini(amount, repayment_limit())
 	if repaid <= 0:
 		return false
 	debt -= repaid
@@ -119,8 +148,19 @@ func repay_debt(amount: int) -> bool:
 		debt += repaid
 		return false
 	debt_changed.emit(debt)
-	SaveService.save()
+	if not Wallet.test_mode_enabled:
+		_persistent_debt = debt
+		SaveService.save()
 	return true
+
+
+func _on_test_mode_changed(enabled: bool) -> void:
+	if enabled:
+		_persistent_debt = debt
+		debt = 0
+	else:
+		debt = _persistent_debt
+	debt_changed.emit(debt)
 
 
 func _progress_for(

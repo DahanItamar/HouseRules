@@ -25,7 +25,7 @@ func save() -> Error:
 		new_game()
 	# Developer bankroll never leaks into the player's persistent economy.
 	state.chips = Wallet.persistent_balance()
-	state.debt = Economy.debt
+	state.debt = Economy.persistent_debt()
 	state.lifetime_wagered = Economy.lifetime_wagered
 	state.active_contracts = Economy.contract_snapshot()
 	state.contract_completions = Economy.contract_completions
@@ -71,13 +71,12 @@ func load_game() -> Error:
 
 func _apply_state() -> void:
 	Wallet.reset(state.chips)
-	Economy.debt = state.debt
+	Economy.load_debt(state.debt)
 	Economy.lifetime_wagered = state.lifetime_wagered
 	RNGService.reset(state.rng_seed)
 	RNGService.restore(state.rng_states)
 	Economy.reset_contracts(state.active_contracts, state.contract_completions)
 	platform.achievements = state.achievements.duplicate()
-	Economy.debt_changed.emit(Economy.debt)
 
 
 func _recover_corrupt() -> Error:

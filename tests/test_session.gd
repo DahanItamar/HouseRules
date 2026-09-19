@@ -266,6 +266,22 @@ func test_cashier_marker_behavior_and_safe_focus_are_preserved() -> void:
 	assert_eq(Economy.debt, Economy.MARKER_STIPEND)
 
 
+func test_developer_cashier_enables_marker_and_repayment_with_infinite_funds() -> void:
+	Wallet.set_test_mode(true)
+	_floor.avatar_position = FloorController.CASHIER_POSITION
+	_floor.refresh_proximity()
+	assert_true(_floor.interact())
+	assert_false(_floor._cashier_marker.disabled)
+	assert_eq(_floor._cashier_marker.text, tr("CASHIER_ADD_TEST_MARKER"))
+	_floor._cashier_marker.pressed.emit()
+	assert_eq(Economy.debt, Economy.MARKER_STIPEND)
+	assert_false(_floor._cashier_repay.disabled)
+	_floor._maximize_cashier_repayment()
+	_floor._cashier_repay.pressed.emit()
+	assert_eq(Economy.debt, 0)
+	assert_eq(Wallet.balance, Wallet.TEST_BANKROLL)
+
+
 func test_insolvent_player_gets_a_safe_area_cashier_route_until_arrival() -> void:
 	Wallet.reset(Economy.SOLVENCY_FLOOR - 1)
 	_floor.avatar_position = Vector2(300, 300)

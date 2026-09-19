@@ -35,6 +35,29 @@ func test_developer_bankroll_is_unlimited_without_polluting_the_save() -> void:
 	assert_eq(Wallet.balance, 321)
 
 
+func test_developer_cashier_debt_is_exercisable_and_sandboxed() -> void:
+	Wallet.reset(321)
+	Economy.debt = 40
+	Wallet.set_test_mode(true)
+	assert_eq(Economy.debt, 0, "Developer cashier starts with a clean test ledger")
+	assert_true(Economy.can_take_marker())
+	assert_true(Economy.take_marker())
+	assert_eq(Economy.debt, Economy.MARKER_STIPEND)
+	assert_eq(Wallet.balance, Wallet.TEST_BANKROLL)
+	assert_eq(Economy.repayment_limit(), Economy.MARKER_STIPEND)
+	assert_eq(SaveService.save(), OK)
+	var data: Dictionary = JSON.parse_string(
+		SaveService.platform.read_save(&"qa").get_string_from_utf8()
+	)
+	assert_eq(int(data.debt), 40, "Test debt never pollutes the production save")
+	assert_true(Economy.repay_debt(Economy.MARKER_STIPEND))
+	assert_eq(Economy.debt, 0)
+	assert_eq(Wallet.balance, Wallet.TEST_BANKROLL)
+	Wallet.set_test_mode(false)
+	assert_eq(Economy.debt, 40, "Leaving dev mode restores the production debt")
+	assert_eq(Wallet.balance, 321)
+
+
 func test_ac010_through_ac012_wallet_atomic_signals_and_rejection() -> void:
 	watch_signals(Wallet)
 	assert_eq(Wallet.balance, 200)
