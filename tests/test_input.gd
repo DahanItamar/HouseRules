@@ -80,7 +80,7 @@ func test_ac038_device_change_swaps_glyphs_and_live_floor_prompt() -> void:
 	assert_string_contains(floor._prompt.text, "[%s] CLOSE" % tr("INPUT_ESCAPE"))
 
 
-func test_gamepad_b_dismisses_join_and_a_stays_blocked_until_reentry() -> void:
+func test_gamepad_b_dismisses_join_and_a_reopens_before_joining() -> void:
 	var floor := FloorController.new()
 	add_child_autofree(floor)
 	floor.set_physics_process(false)
@@ -97,14 +97,11 @@ func test_gamepad_b_dismisses_join_and_a_stays_blocked_until_reentry() -> void:
 	accept.button_index = JOY_BUTTON_A
 	accept.pressed = true
 	floor._unhandled_input(accept)
-	assert_null(SceneRouter.session, "A cannot trigger the hidden join action after B dismisses it")
-
-	floor.avatar_position += Vector2(0, FloorController.INTERACTION_RADIUS + 20.0)
-	floor.refresh_proximity()
-	floor.avatar_position = floor.cabinet_positions[&"slot_classic"]
-	floor.refresh_proximity()
+	assert_null(SceneRouter.session, "A reopens the card instead of triggering a hidden join action")
+	assert_eq(floor._dismissed_game, &"")
+	assert_string_contains(floor._prompt.text, "JOIN")
 	floor._unhandled_input(accept)
-	assert_not_null(SceneRouter.session, "Leaving and re-entering restores gamepad join")
+	assert_not_null(SceneRouter.session, "A joins only after the card is visible again")
 	SceneRouter.return_to_floor()
 	await get_tree().process_frame
 

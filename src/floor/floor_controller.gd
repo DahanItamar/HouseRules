@@ -18,10 +18,10 @@ const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
 const AVATAR_RADIUS: float = 15.0
-const MACHINE_ZONE_RADIUS: float = 38.0
-const MACHINE_LABEL_SIZE := Vector2(164, 24)
-const JOIN_DIALOG_SIZE := Vector2(320, 84)
-const JOIN_DIALOG_OFFSET := Vector2(-160, 30)
+const MACHINE_ZONE_RADIUS: float = 50.0
+const MACHINE_ZONE_SCALE := Vector2(1.48, 0.96)
+const JOIN_DIALOG_SIZE := Vector2(286, 70)
+const JOIN_DIALOG_OFFSET := Vector2(-143, 42)
 const CAMERA_CENTER := Vector2(480, 270)
 const CAMERA_FOCUS_ZOOM := Vector2(1.03, 1.03)
 const CAMERA_FOCUS_OFFSET: float = 9.0
@@ -74,7 +74,6 @@ var _cashier_transaction_tween: Tween
 var _cashier_is_closing: bool = false
 var _cashier_transfer_layer: Control
 var _cashier_summary_flash: ColorRect
-var _machine_labels: Dictionary = {}
 var _machine_attracts: Dictionary = {}
 var _patrons: Array[Node2D] = []
 var _floor_camera: Camera2D
@@ -100,7 +99,6 @@ func _ready() -> void:
 	_build_camera()
 	_build_dust()
 	_build_patrons()
-	_build_machine_labels()
 	_build_machine_attracts()
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 	_apply_motion_preference(MotionPolicy.is_reduced())
@@ -175,18 +173,19 @@ func _circle_hits_polygon(center: Vector2, radius: float, polygon: PackedVector2
 func refresh_proximity() -> void:
 	nearby_definition = null
 	nearby_wing = &""
-	var nearest: float = INTERACTION_RADIUS
+	var nearest_score: float = INF
 	for id: StringName in cabinet_positions:
-		var distance: float = avatar_position.distance_to(cabinet_positions[id])
-		if distance <= nearest:
-			nearest = distance
+		var score := _machine_proximity_score(avatar_position, cabinet_positions[id])
+		if score <= 1.0 and score <= nearest_score:
+			nearest_score = score
 			nearby_definition = definitions.get(id)
-	for id: StringName in WING_POSITIONS:
-		var distance: float = avatar_position.distance_to(WING_POSITIONS[id])
-		if distance <= nearest:
-			nearest = distance
-			nearby_definition = null
-			nearby_wing = id
+	if nearby_definition == null:
+		var nearest_wing_distance: float = INTERACTION_RADIUS
+		for id: StringName in WING_POSITIONS:
+			var distance: float = avatar_position.distance_to(WING_POSITIONS[id])
+			if distance <= nearest_wing_distance:
+				nearest_wing_distance = distance
+				nearby_wing = id
 	var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
 	_update_machine_attracts(current_game)
 	_update_camera_focus(current_game)
@@ -202,6 +201,8 @@ func refresh_proximity() -> void:
 func interact() -> bool:
 	if nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
+			_dismissed_game = &""
+			_update_prompt()
 			return false
 		if Wallet.balance < nearby_definition.min_bet:
 			return false
@@ -301,12 +302,15 @@ func _update_prompt() -> void:
 		)
 	elif nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
-			_prompt.position = Vector2(330, 486)
-			_prompt.size = Vector2(300, 34)
-			_prompt.text = tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")]
+			_prompt.position = nearby_definition_position() + Vector2(-130, 54)
+			_prompt.size = Vector2(260, 34)
+			_prompt.text = (
+				tr("FLOOR_MACHINE_CLOSED")
+				% [InputRouter.glyph("interact"), InputRouter.glyph("back")]
+			)
 		elif Wallet.balance < nearby_definition.min_bet:
-			_prompt.position = Vector2(260, 354)
-			_prompt.size = Vector2(440, 92)
+			_prompt.position = _join_dialog_position(nearby_definition.id)
+			_prompt.size = JOIN_DIALOG_SIZE
 			_prompt.text = (
 				tr("FLOOR_UNAVAILABLE")
 				% [tr(nearby_definition.name_key), nearby_definition.min_bet]
@@ -354,7 +358,25 @@ func _update_prompt() -> void:
 func _join_dialog_position(game_id: StringName) -> Vector2:
 	var machine_position: Vector2 = cabinet_positions.get(game_id, CAMERA_CENTER)
 	var intended := machine_position + JOIN_DIALOG_OFFSET
-	return Vector2(clampf(intended.x, 24.0, 960.0 - JOIN_DIALOG_SIZE.x - 24.0), intended.y)
+	return Vector2(
+		clampf(intended.x, 24.0, 960.0 - JOIN_DIALOG_SIZE.x - 24.0),
+		clampf(intended.y, 104.0, 540.0 - JOIN_DIALOG_SIZE.y - 24.0)
+	)
+
+
+func nearby_definition_position() -> Vector2:
+	if nearby_definition == null:
+		return CAMERA_CENTER
+	return cabinet_positions.get(nearby_definition.id, CAMERA_CENTER)
+
+
+func _machine_proximity_score(point: Vector2, machine_position: Vector2) -> float:
+	var delta := point - machine_position
+	var radii := Vector2(
+		MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.x,
+		MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.y
+	)
+	return Vector2(delta.x / radii.x, delta.y / radii.y).length()
 
 
 func _animate_prompt_change() -> void:
@@ -475,39 +497,16 @@ func _build_patrons() -> void:
 		_patrons.append(patron)
 
 
-func _build_machine_labels() -> void:
-	for id: StringName in cabinet_positions:
-		var definition: CabinetDefinition = definitions[id]
-		var label := Label.new()
-		label.name = "MachineLabel_%s" % id
-		label.text = tr(definition.name_key)
-		label.position = cabinet_positions[id] + Vector2(-MACHINE_LABEL_SIZE.x * 0.5, -82)
-		label.size = MACHINE_LABEL_SIZE
-		label.z_index = 3
-		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-		label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		label.add_theme_font_override("font", Typography.DISPLAY_FONT)
-		label.add_theme_font_size_override("font_size", Typography.SUPPORTING)
-		label.add_theme_color_override("font_color", IVORY)
-		var plaque := StyleBoxFlat.new()
-		plaque.bg_color = Color("100d11c9")
-		plaque.border_color = Color(_machine_accent(id), 0.7)
-		plaque.set_border_width_all(1)
-		plaque.set_corner_radius_all(5)
-		label.add_theme_stylebox_override("normal", plaque)
-		add_child(label)
-		_machine_labels[id] = label
-
-
 func _build_machine_attracts() -> void:
 	var machine_ids: Array = cabinet_positions.keys()
 	for index: int in range(machine_ids.size()):
 		var id: StringName = machine_ids[index]
 		var attract := MACHINE_ATTRACT_SCRIPT.new() as MachineAttract
 		attract.name = "MachineAttract_%s" % id
-		attract.position = cabinet_positions[id]
-		attract.z_index = 2
+		# The small live identity now sits on the cabinet surface rather than
+		# floating in the player's walking space.
+		attract.position = cabinet_positions[id] + Vector2(0, -44)
+		attract.z_index = 0
 		attract.configure(_machine_attract_kind(id), float(index) / float(machine_ids.size()))
 		add_child(attract)
 		_machine_attracts[id] = attract
@@ -614,8 +613,12 @@ func _draw() -> void:
 				Rect2(prompt_rect.position + Vector2(6, 7), prompt_rect.size),
 				Color("05040570") * Color(1, 1, 1, prompt_alpha)
 			)
-		var surface := Color("17161ad4") if join_dialog else Color("17161af0")
-		var border := CYAN if join_dialog else Color("6e5225")
+		var surface := Color("17161ab8") if join_dialog else Color("17161ae8")
+		var border := (
+			_machine_accent(nearby_definition.id)
+			if join_dialog and nearby_definition != null
+			else Color("6e5225")
+		)
 		draw_rect(prompt_rect, surface * Color(1, 1, 1, prompt_alpha))
 		draw_rect(prompt_rect, border * Color(1, 1, 1, prompt_alpha), false, 2.0)
 
@@ -627,7 +630,9 @@ func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float
 	if is_near and _dismissed_game != id:
 		ring_color = Color(CYAN, 0.72 + pulse * 0.22)
 		ring_width = 3.0
-	draw_set_transform(at, 0.0, Vector2(1.65, 0.62))
+	draw_set_transform(at, 0.0, MACHINE_ZONE_SCALE)
+	if is_near and _dismissed_game != id:
+		draw_circle(Vector2.ZERO, MACHINE_ZONE_RADIUS - 2.0, Color(accent, 0.075))
 	draw_arc(Vector2.ZERO, MACHINE_ZONE_RADIUS, 0.0, TAU, 64, ring_color, ring_width, true)
 	if is_near and _dismissed_game != id:
 		draw_arc(

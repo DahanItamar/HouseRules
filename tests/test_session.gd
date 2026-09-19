@@ -118,7 +118,10 @@ func test_floor_join_dialog_is_contextual_and_can_be_dismissed() -> void:
 	_floor._unhandled_input(back)
 	assert_eq(_floor._dismissed_game, definition.id)
 	assert_false(_floor._prompt.text.contains("JOIN"))
-	assert_false(_floor.interact(), "A dismissed join card disables its hidden join action")
+	assert_string_contains(_floor._prompt.text, "VIEW GAME")
+	assert_false(_floor.interact(), "The first Enter reopens a dismissed card without a hidden join")
+	assert_eq(_floor._dismissed_game, &"")
+	assert_string_contains(_floor._prompt.text, "JOIN")
 	assert_null(SceneRouter.session)
 	_floor.avatar_position += Vector2(0, FloorController.INTERACTION_RADIUS + 20.0)
 	_floor.refresh_proximity()
@@ -146,15 +149,17 @@ func test_floor_movement_help_yields_after_the_player_moves() -> void:
 	assert_string_contains(_floor._prompt.text, "JOIN")
 
 
-func test_floor_machine_rings_have_concise_persistent_identity_labels() -> void:
-	assert_eq(_floor._machine_labels.size(), _floor.cabinet_positions.size())
+func test_floor_machine_rings_are_the_real_activation_zones() -> void:
 	for id: StringName in _floor.cabinet_positions:
-		var label: Label = _floor._machine_labels[id]
-		var definition: CabinetDefinition = _floor.definitions[id]
-		assert_true(label.visible)
-		assert_eq(label.text, tr(definition.name_key))
-		assert_eq(label.size, FloorController.MACHINE_LABEL_SIZE)
-		assert_gt(label.z_index, 0, "Machine identity stays readable above floor characters")
+		var center: Vector2 = _floor.cabinet_positions[id]
+		assert_lte(_floor._machine_proximity_score(center, center), 1.0)
+		assert_gt(
+			_floor._machine_proximity_score(
+				center + Vector2(FloorController.MACHINE_ZONE_RADIUS * 1.6, 0), center
+			),
+			1.0,
+			"The visible ring and the activation boundary share the same footprint"
+		)
 
 
 func test_floor_machines_have_distinct_staggered_attract_loops() -> void:
@@ -165,6 +170,9 @@ func test_floor_machines_have_distinct_staggered_attract_loops() -> void:
 	assert_eq(slot.kind, MachineAttract.Kind.SLOT)
 	assert_eq(blackjack.kind, MachineAttract.Kind.BLACKJACK)
 	assert_eq(vault.kind, MachineAttract.Kind.VAULT)
+	assert_eq(slot.z_index, 0, "Cabinet attract art stays behind the player")
+	assert_eq(blackjack.z_index, 0, "Table attract art stays behind the player")
+	assert_eq(vault.z_index, 0, "Vault attract art stays behind the player")
 	assert_ne(slot.phase_offset, blackjack.phase_offset)
 	assert_ne(blackjack.phase_offset, vault.phase_offset)
 	assert_ne(slot._period(), blackjack._period())
