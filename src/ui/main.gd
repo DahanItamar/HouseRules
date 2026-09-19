@@ -23,6 +23,7 @@ var _menu_reveal_tween: Tween
 var _menu_attract_tween: Tween
 var _menu_attract_elapsed: float = 0.0
 var _menu_first_breath: bool = true
+var _message_tween: Tween
 
 
 func _ready() -> void:
@@ -42,7 +43,7 @@ func _ready() -> void:
 	_build_menu()
 	MotionPolicy.motion_preference_changed.connect(_on_motion_preference_changed)
 	if error != OK:
-		_message.text = tr("SAVE_INCOMPATIBLE")
+		_present_message(tr("SAVE_INCOMPATIBLE"))
 	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: _refresh_hud())
 	Economy.debt_changed.connect(func(_debt: int) -> void: _refresh_hud())
 	Economy.contracts_changed.connect(_refresh_hud)
@@ -106,6 +107,7 @@ func _build_hud() -> void:
 	_message.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_message.add_theme_font_size_override("font_size", Typography.BODY_MIN)
 	_message.add_theme_color_override("font_color", Color("f1e8d8"))
+	_message.visible = false
 	_hud_layer.add_child(_message)
 	_contracts_panel = _panel(
 		Vector2(594, 16), Vector2(348, 80), Color("17161ae8"), Color("6e5225")
@@ -221,7 +223,7 @@ func _play_menu_reveal() -> void:
 	_menu_first_breath = true
 	if _menu_reveal_tween != null:
 		_menu_reveal_tween.kill()
-	if MotionPolicy.is_reduced() or DisplayServer.get_name() == "headless":
+	if MotionPolicy.is_reduced():
 		_apply_menu_final_state()
 		return
 	_menu_background.modulate.a = 0.0
@@ -270,6 +272,9 @@ func _on_motion_preference_changed(reduced: bool) -> void:
 		if _menu_attract_tween != null:
 			_menu_attract_tween.kill()
 		_apply_menu_final_state()
+		if _message_tween != null:
+			_message_tween.kill()
+		_apply_message_final_state()
 	elif _menu != null and _menu.visible:
 		_play_menu_reveal()
 
@@ -361,19 +366,80 @@ func _show_menu_now() -> void:
 
 func _show_message(key: String) -> void:
 	if _message != null:
-		_message.text = tr(key)
-		_message_panel.visible = not _message.text.is_empty()
+		_present_message(tr(key))
 
 
 func _show_contract_completed(title_key: String, reward: int) -> void:
-	_message.text = tr("CONTRACT_COMPLETE") % [tr(title_key), reward]
-	_message_panel.visible = true
 	_message_serial += 1
 	var serial := _message_serial
+	_present_message(tr("CONTRACT_COMPLETE") % [tr(title_key), reward])
 	await get_tree().create_timer(3.2).timeout
 	if serial == _message_serial:
+		_dismiss_message()
+
+
+func _present_message(text_value: String) -> void:
+	if _message_tween != null:
+		_message_tween.kill()
+	_message.text = text_value
+	if text_value.is_empty():
+		_message_panel.hide()
+		_message.hide()
+		return
+	_message_panel.show()
+	_message.show()
+	_apply_message_final_state()
+	if MotionPolicy.is_reduced():
+		return
+	_message_panel.modulate.a = 0.0
+	_message.modulate.a = 0.0
+	_message_panel.position.y = 98.0
+	_message.position.y = 105.0
+	_message_tween = create_tween().set_parallel(true)
+	_message_tween.tween_property(_message_panel, "modulate:a", 1.0, 0.15)
+	_message_tween.tween_property(_message, "modulate:a", 1.0, 0.15)
+	_message_tween.tween_property(_message_panel, "position:y", 104.0, 0.17).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+	_message_tween.tween_property(_message, "position:y", 111.0, 0.17).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+
+
+func _dismiss_message() -> void:
+	if _message_tween != null:
+		_message_tween.kill()
+	if MotionPolicy.is_reduced() or DisplayServer.get_name() == "headless":
 		_message.text = ""
-		_message_panel.visible = false
+		_message_panel.hide()
+		_message.hide()
+		_apply_message_final_state()
+		return
+	_message_tween = create_tween().set_parallel(true)
+	_message_tween.tween_property(_message_panel, "modulate:a", 0.0, 0.14)
+	_message_tween.tween_property(_message, "modulate:a", 0.0, 0.14)
+	_message_tween.tween_property(_message_panel, "position:y", 98.0, 0.14).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN)
+	_message_tween.tween_property(_message, "position:y", 105.0, 0.14).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN)
+	_message_tween.finished.connect(
+		func() -> void:
+			_message.text = ""
+			_message_panel.hide()
+			_message.hide()
+			_apply_message_final_state()
+	)
+
+
+func _apply_message_final_state() -> void:
+	if _message_panel == null or _message == null:
+		return
+	_message_panel.modulate = Color.WHITE
+	_message.modulate = Color.WHITE
+	_message_panel.position.y = 104.0
+	_message.position.y = 111.0
 
 
 func _unhandled_input(event: InputEvent) -> void:

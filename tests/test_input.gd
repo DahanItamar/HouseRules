@@ -122,10 +122,12 @@ func test_ac037_active_gamepad_disconnect_pauses_until_reconnect() -> void:
 	assert_true(InputRouter.is_gamepad_disconnected)
 	assert_true(overlay.visible)
 	assert_true(get_tree().paused)
+	assert_not_null(overlay._motion, "Disconnect overlay enters with pause-safe motion")
 
 	InputRouter._on_joy_connection_changed(9, true)
 	assert_false(InputRouter.is_gamepad_disconnected)
 	assert_eq(InputRouter.active_gamepad_device, 9)
+	await wait_seconds(0.16)
 	assert_false(overlay.visible)
 	assert_false(get_tree().paused)
 

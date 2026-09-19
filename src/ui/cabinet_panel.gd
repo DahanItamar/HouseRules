@@ -38,6 +38,7 @@ var _slot_payline: ColorRect
 var _slot_credit_value: AnimatedNumberLabel
 var _slot_result_value: Label
 var _slot_result_formula: Label
+var _slot_result_tween: Tween
 var _celebration: WinCelebration
 var _stake_selector: StakeSelector
 var _help_button: Button
@@ -47,6 +48,7 @@ var _help_rules: Label
 var _help_controls: Label
 var help_open: bool = false
 var _focus_before_help: Control
+var _help_tween: Tween
 var _vault_tiles: Array[VaultTile] = []
 var _vault_cursor: Node2D
 var _art_id: StringName = &""
@@ -257,6 +259,8 @@ func _process(delta: float) -> void:
 			_slot_finish_callback = Callable()
 			callback.call()
 func set_status(key: String) -> void:
+	if key == "ROUND_SPINNING":
+		_reset_slot_result_ticker()
 	_status_key = key
 	_result = null
 	_detail.text = ""
@@ -270,6 +274,7 @@ func set_status(key: String) -> void:
 
 
 func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
+	_reset_slot_result_ticker()
 	_reset_slot_win_feedback()
 	_slot_spin_targets.clear()
 	_slot_stop_times = [1.05, 1.32, 1.59]
@@ -297,27 +302,49 @@ func toggle_help() -> void:
 
 
 func set_help_open(open: bool) -> void:
+	if _help_tween != null:
+		_help_tween.kill()
 	if open:
 		_focus_before_help = get_viewport().gui_get_focus_owner()
 	help_open = open
-	if _help_overlay != null:
-		_help_overlay.visible = open
 	if open and _help_overlay != null:
+		_help_overlay.visible = true
+		_help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 		_help_overlay.modulate.a = 0.0
 		var modal := _help_overlay.get_child(1) as Control
 		modal.pivot_offset = modal.size * 0.5
 		modal.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(0.96, 0.96)
-		var reveal := create_tween().set_parallel(true)
-		reveal.tween_property(
+		_help_tween = create_tween().set_parallel(true)
+		_help_tween.tween_property(
 			_help_overlay, "modulate:a", 1.0, MotionPolicy.finite_duration(0.15)
 		)
 		if not MotionPolicy.is_reduced():
-			reveal.tween_property(modal, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
+			_help_tween.tween_property(modal, "scale", Vector2.ONE, 0.18).set_trans(Tween.TRANS_BACK)
 		var close_button := _help_overlay.find_child("HelpClose", true, false) as Button
 		if close_button != null:
 			close_button.grab_focus()
-	elif not open and is_instance_valid(_focus_before_help):
-		_focus_before_help.grab_focus()
+	elif not open and _help_overlay != null:
+		if is_instance_valid(_focus_before_help):
+			_focus_before_help.grab_focus()
+		var modal := _help_overlay.get_child(1) as Control
+		if MotionPolicy.is_reduced():
+			_help_overlay.hide()
+			_help_overlay.modulate = Color.WHITE
+			modal.scale = Vector2.ONE
+		else:
+			_help_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			_help_tween = create_tween().set_parallel(true)
+			_help_tween.tween_property(_help_overlay, "modulate:a", 0.0, 0.14)
+			_help_tween.tween_property(modal, "scale", Vector2(0.98, 0.98), 0.14).set_trans(
+				Tween.TRANS_QUAD
+			).set_ease(Tween.EASE_IN)
+			_help_tween.finished.connect(
+				func() -> void:
+					_help_overlay.hide()
+					_help_overlay.modulate = Color.WHITE
+					_help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+					modal.scale = Vector2.ONE
+			)
 	if _slot_spin_label != null:
 		_slot_spin_label.disabled = open or cabinet.is_round_active
 		_slot_spin_label.queue_redraw()
@@ -883,8 +910,8 @@ func _build_blackjack_art() -> void:
 		_texture("BlackjackTableArt", BLACKJACK_TABLE, Vector2.ZERO, Vector2(960, 540))
 	)
 	for label_data: Array in [
-		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(650, 158)],
-		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(650, 310)],
+		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(768, 158)],
+		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(768, 310)],
 	]:
 		var hand_label := Label.new()
 		hand_label.name = label_data[0]
@@ -896,7 +923,7 @@ func _build_blackjack_art() -> void:
 		_art_root.add_child(hand_label)
 	_blackjack_dealer_total_panel = Panel.new()
 	_blackjack_dealer_total_panel.name = "DealerTotalBadge"
-	_blackjack_dealer_total_panel.position = Vector2(642, 181)
+	_blackjack_dealer_total_panel.position = Vector2(760, 181)
 	_blackjack_dealer_total_panel.size = Vector2(150, 38)
 	_blackjack_dealer_total_panel.z_index = 5
 	_blackjack_dealer_total_panel.add_theme_stylebox_override(
@@ -912,7 +939,7 @@ func _build_blackjack_art() -> void:
 	_blackjack_dealer_total.z_index = 6
 	_blackjack_player_total_panel = Panel.new()
 	_blackjack_player_total_panel.name = "PlayerTotalBadge"
-	_blackjack_player_total_panel.position = Vector2(642, 333)
+	_blackjack_player_total_panel.position = Vector2(760, 333)
 	_blackjack_player_total_panel.size = Vector2(150, 38)
 	_blackjack_player_total_panel.z_index = 5
 	_blackjack_player_total_panel.add_theme_stylebox_override(
@@ -928,7 +955,7 @@ func _build_blackjack_art() -> void:
 	_blackjack_player_total.z_index = 6
 	_blackjack_bet_stack = BLACKJACK_BET_STACK.new()
 	_blackjack_bet_stack.name = "BlackjackBetStack"
-	_blackjack_bet_stack.position = Vector2(286, 354)
+	_blackjack_bet_stack.position = BlackjackBetStack.TABLE_POSITION
 	_blackjack_bet_stack.size = Vector2(92, 62)
 	_blackjack_bet_stack.z_index = 8
 	_blackjack_bet_stack.hide()
@@ -1001,6 +1028,7 @@ func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], 
 
 
 func prepare_blackjack_round() -> void:
+	_reset_blackjack_result_feedback_for_round()
 	_blackjack_dealt = false
 	_blackjack_preparing = true
 	_blackjack_pending_motions = 1
@@ -1038,13 +1066,17 @@ func _add_playing_card(
 ) -> void:
 	var card := PlayingCard.new()
 	card.name = ("DealerCard" if dealer_hand else "PlayerCard") + str(hand_index)
-	card.size = Vector2(88, 124)
+	card.size = (
+		Vector2(76, 108)
+		if hand_size >= 6
+		else (Vector2(82, 116) if hand_size == 5 else Vector2(88, 124))
+	)
 	card.configure(rank, rank + hand_index + (0 if dealer_hand else 2), hidden)
-	var card_pitch := minf(70.0, 432.0 / maxf(hand_size - 1, 1))
-	var hand_width := 88.0 + maxi(hand_size - 1, 0) * card_pitch
+	var card_pitch := minf(70.0, (480.0 - card.size.x) / maxf(hand_size - 1, 1))
+	var hand_width := card.size.x + maxi(hand_size - 1, 0) * card_pitch
 	var destination := Vector2(
-		480.0 - hand_width * 0.5 + hand_index * card_pitch,
-		154.0 if dealer_hand else 306.0
+		470.0 - hand_width * 0.5 + hand_index * card_pitch,
+		158.0 if dealer_hand else 310.0
 	)
 	card.position = Vector2(804, 144)
 	card.rotation = 0.08
@@ -1441,6 +1473,9 @@ func _add_ambient(color: Color) -> void:
 
 
 func _animate_blackjack_result(result: RoundResult) -> void:
+	if _blackjack_fx_tween != null and _blackjack_fx_tween.is_valid():
+		_blackjack_fx_tween.kill()
+	_blackjack_fx_tween = null
 	var color := Color("3fc276") if result.payout > result.stake else Color("d55353")
 	if result.payout == result.stake:
 		color = Color("f2c84b")
@@ -1471,6 +1506,22 @@ func _animate_blackjack_result(result: RoundResult) -> void:
 	for index: int in range(_blackjack_cards.size()):
 		var card := _blackjack_cards[index]
 		_blackjack_fx_tween.tween_property(card, "rotation", (index - 1) * 0.045, 0.28).set_trans(Tween.TRANS_BACK)
+
+
+func _reset_blackjack_result_feedback_for_round() -> void:
+	if _blackjack_fx_tween != null and _blackjack_fx_tween.is_valid():
+		_blackjack_fx_tween.kill()
+	_blackjack_fx_tween = null
+	if _blackjack_result_banner != null:
+		_blackjack_result_banner.hide()
+		_blackjack_result_banner.modulate.a = 1.0
+		_blackjack_result_banner.scale = Vector2.ONE
+	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
+		if label != null:
+			label.scale = Vector2.ONE
+			label.add_theme_color_override("font_color", Color("f1e8d8"))
+	if _blackjack_bet_stack != null:
+		_blackjack_bet_stack.clear_wager(false)
 
 
 func _animate_vault_result(result: RoundResult) -> void:
@@ -1679,17 +1730,25 @@ func _reset_slot_win_feedback() -> void:
 func _animate_slot_result(payout: int) -> void:
 	if _slot_result_value == null:
 		return
+	_reset_slot_result_ticker()
 	if MotionPolicy.is_reduced():
 		_slot_result_value.text = tr("SLOT_RETURNED") % payout
 		return
 	_slot_result_value.text = tr("SLOT_RETURNED") % 0
-	create_tween().tween_method(
+	_slot_result_tween = create_tween()
+	_slot_result_tween.tween_method(
 		func(value: float) -> void:
 			_slot_result_value.text = tr("SLOT_RETURNED") % int(round(value)),
 		0.0,
 		float(payout),
 		clampf(0.35 + payout * 0.002, 0.35, 0.8)
 	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _reset_slot_result_ticker() -> void:
+	if _slot_result_tween != null and _slot_result_tween.is_valid():
+		_slot_result_tween.kill()
+	_slot_result_tween = null
 
 
 func _card_names(cards: Array[int]) -> String:

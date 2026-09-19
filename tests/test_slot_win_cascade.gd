@@ -105,3 +105,23 @@ func test_reduced_motion_keeps_the_win_readable_without_particle_cascade() -> vo
 	assert_eq(burst_count, 0, "Reduced motion removes the sequential particle cascade")
 	for symbol: SlotSymbol in panel._slot_symbols:
 		assert_almost_eq(symbol.scale.x, 1.0, 0.01)
+
+
+func test_new_spin_cancels_the_previous_result_ticker() -> void:
+	var session := CabinetSession.new()
+	add_child_autofree(session)
+	session.begin(SLOT_DEFINITION)
+	var panel: CabinetPanel = session.cabinet.panel
+	panel._animate_slot_result(190)
+	assert_true(panel._slot_result_tween.is_running())
+	session.cabinet.current_stake = 10
+	session.cabinet.is_round_active = true
+	panel.begin_slot_spin([1, 2, 3], func() -> void: pass)
+	assert_null(panel._slot_result_tween)
+	assert_eq(panel._slot_result_value.text, tr("ROUND_SPINNING"))
+	await wait_seconds(0.12)
+	assert_eq(
+		panel._slot_result_value.text,
+		tr("ROUND_SPINNING"),
+		"A stale payout tween cannot overwrite the next round status"
+	)

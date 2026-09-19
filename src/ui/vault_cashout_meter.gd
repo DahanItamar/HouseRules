@@ -131,6 +131,11 @@ func _apply_values(amount: float, multiplier: float, progress: float) -> void:
 func _apply_motion_preference(reduced: bool) -> void:
 	if reduced:
 		idle_time = 0.0
+		if _value_tween != null and _value_tween.is_valid() and _value_tween.is_running():
+			_value_tween.kill()
+			_value_tween = null
+			_apply_values(float(target_amount), target_multiplier, target_progress)
+			animation_finished.emit()
 	set_process(is_ready and not reduced)
 	queue_redraw()
 

@@ -206,3 +206,24 @@ func test_reduced_slot_keeps_bounded_reel_feedback_and_exact_outcome() -> void:
 	panel.set_help_open(true)
 	var modal := panel._help_overlay.get_child(1) as Control
 	assert_eq(modal.scale, Vector2.ONE, "Help opens without a zoom effect")
+
+
+func test_reduced_overlays_use_immediate_static_end_states() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	var disconnect := DisconnectPauseOverlay.new()
+	add_child_autofree(disconnect)
+	disconnect.set_gamepad_connected(false)
+	assert_true(disconnect.visible)
+	assert_eq(disconnect._message.position.y, 245.0)
+	assert_eq(disconnect._message.scale, Vector2.ONE)
+	assert_false(disconnect.is_processing())
+	disconnect.set_gamepad_connected(true)
+	assert_false(disconnect.visible)
+
+	var confirmation := CabinetExitConfirmation.new()
+	add_child_autofree(confirmation)
+	confirmation.present(25)
+	assert_eq(confirmation._dialog.position, Vector2(250, 146))
+	assert_eq(confirmation._dialog.scale, Vector2.ONE)
+	confirmation.cancel()
+	assert_false(confirmation.visible)

@@ -7,14 +7,23 @@ var target_value: int = 0
 var _format: String = "%d"
 var _number_tween: Tween
 var _initialized: bool = false
+var _showing_infinity: bool = false
 
 
 func set_number(value: int, format_text: String = "%d", animate: bool = true) -> void:
-	if _initialized and target_value == value and _format == format_text:
+	if _initialized and not _showing_infinity and target_value == value and _format == format_text:
 		return
+	var was_showing_infinity := _showing_infinity
+	_showing_infinity = false
 	_format = format_text
 	target_value = value
-	if not _initialized or not animate or not is_inside_tree() or MotionPolicy.is_reduced():
+	if (
+		was_showing_infinity
+		or not _initialized
+		or not animate
+		or not is_inside_tree()
+		or MotionPolicy.is_reduced()
+	):
 		_initialized = true
 		displayed_value = value
 		_apply_value(displayed_value)
@@ -31,8 +40,10 @@ func set_number(value: int, format_text: String = "%d", animate: bool = true) ->
 
 func set_infinity() -> void:
 	_initialized = true
+	_showing_infinity = true
 	if _number_tween != null:
 		_number_tween.kill()
+		_number_tween = null
 	text = "∞"
 
 

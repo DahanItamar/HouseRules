@@ -77,3 +77,19 @@ func test_ready_meter_keeps_a_bounded_idle_pulse_and_respects_reduced_motion() -
 	MotionPolicy.set_reduced_motion_for_tests(true)
 	assert_eq(meter.idle_time, 0.0)
 	assert_false(meter.is_processing(), "Reduced motion freezes the persistent meter pulse")
+
+
+func test_enabling_reduced_motion_snaps_an_active_value_tween_to_its_target() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+	var meter := VaultCashoutMeter.new()
+	add_child_autofree(meter)
+	meter.set_values(10, 1.1, 0.1, false)
+	watch_signals(meter)
+	meter.set_values(410, 4.25, 0.9)
+	assert_true(meter.has_active_motion())
+	MotionPolicy.set_reduced_motion_for_tests(true)
+	assert_false(meter.has_active_motion())
+	assert_eq(meter.amount_text(), "410")
+	assert_almost_eq(meter.displayed_multiplier, 4.25, 0.001)
+	assert_almost_eq(meter.displayed_progress, 0.9, 0.001)
+	assert_signal_emit_count(meter, "animation_finished", 1)

@@ -88,7 +88,22 @@ func test_each_game_has_chip_stakes_and_contextual_help() -> void:
 		assert_string_contains(panel._help_title.text, tr(definition.name_key))
 		assert_false(panel._help_rules.text.begins_with("HELP_"), "Rules are localized")
 		panel.set_help_open(false)
+		await wait_seconds(0.16)
 		assert_false(panel._help_overlay.visible)
+
+
+func test_hud_messages_have_bounded_reveal_and_dismiss_motion() -> void:
+	var main := MAIN_SCENE.instantiate()
+	add_child_autofree(main)
+	main._present_message("Contract complete")
+	assert_true(main._message_panel.visible)
+	assert_true(main._message.visible)
+	assert_not_null(main._message_tween)
+	main._dismiss_message()
+	await wait_seconds(0.16)
+	assert_false(main._message_panel.visible)
+	assert_false(main._message.visible)
+	assert_eq(main._message.text, "")
 
 
 func test_stakes_move_between_casino_denominations() -> void:

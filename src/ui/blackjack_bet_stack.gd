@@ -2,6 +2,9 @@ class_name BlackjackBetStack
 extends Control
 ## Presentation-only wager marker. The cabinet remains the source of truth for stake values.
 
+const SOURCE_POSITION := Vector2(365, 464)
+const TABLE_POSITION := Vector2(126, 354)
+
 var wager: int = 0
 var is_live: bool = false
 var _placement_tween: Tween
@@ -32,17 +35,17 @@ func place_wager(amount: int, animated: bool = true) -> void:
 	if _placement_tween != null and _placement_tween.is_valid():
 		_placement_tween.kill()
 	modulate = Color.WHITE
-	position = Vector2(365, 464) if animated and not was_live else Vector2(286, 354)
+	position = SOURCE_POSITION if animated and not was_live else TABLE_POSITION
 	rotation = -0.08 if animated and not was_live else 0.0
 	scale = Vector2(0.82, 0.82) if animated and not was_live else Vector2.ONE
 	queue_redraw()
 	if MotionPolicy.is_reduced() or not animated or was_live:
-		position = Vector2(286, 354)
+		position = TABLE_POSITION
 		rotation = 0.0
 		scale = Vector2.ONE
 		return
 	_placement_tween = create_tween().set_parallel(true)
-	_placement_tween.tween_property(self, "position", Vector2(286, 354), 0.26).set_trans(
+	_placement_tween.tween_property(self, "position", TABLE_POSITION, 0.26).set_trans(
 		Tween.TRANS_QUAD
 	).set_ease(Tween.EASE_OUT)
 	_placement_tween.tween_property(self, "rotation", 0.0, 0.22).set_trans(Tween.TRANS_QUAD)
@@ -78,7 +81,7 @@ func clear_wager(animated: bool = true) -> void:
 func _apply_motion_preference(reduced: bool) -> void:
 	if reduced and _placement_tween != null and _placement_tween.is_valid():
 		_placement_tween.kill()
-		position = Vector2(286, 354)
+		position = TABLE_POSITION
 		rotation = 0.0
 		scale = Vector2.ONE
 		modulate = Color.WHITE
