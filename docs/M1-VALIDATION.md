@@ -9,7 +9,7 @@ the final physical-device pass.
 - Godot 4.7.2 standard resource import completed without script errors.
 - `gdformat --check src tests` and `gdlint src tests` are part of the repository
   verification workflow.
-- GUT 9.5.0: **144 tests passing, 2,164 assertions** in the authoritative local
+- GUT 9.5.0: **153 tests passing, 2,229 assertions** in the authoritative local
   Windows release-gate run.
 - The suite ran locally on Windows using Godot 4.7.2. The repository also ships
   a GitHub Actions workflow; this document does not claim a remote run.
@@ -19,7 +19,7 @@ the final physical-device pass.
   shell-link APIs in `src/`. This is static evidence, not a network packet capture.
 
 The full machine-readable run is recorded in
-[gut-results_1789780615.376.xml](../tests/results/gut-results_1789780615.376.xml).
+[gut-results.xml](../tests/results/gut-results.xml).
 Dependency provenance and the required Godot compatibility patch are recorded
 in [GUT-PROVENANCE.md](../addons/GUT-PROVENANCE.md).
 
