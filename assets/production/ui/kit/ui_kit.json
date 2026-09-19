@@ -1,0 +1,122 @@
+{
+  "about": "Themed UI kit (Higgsfield gpt_image_2_5, 1k, transparent). Panels and buttons are nine-slice: use NinePatchRect with patch margins (px in the 1024 source) and the flat centre colour. Medallions are round with an empty centre for an icon drawn in code.",
+  "themes": {
+    "baccarat": {
+      "button": {
+        "path": "res://assets/production/ui/kit/button_baccarat.png",
+        "patch_margin": 128,
+        "centre_colour": "#570883"
+      },
+      "medallion": {
+        "path": "res://assets/production/ui/kit/medallion_baccarat.png"
+      },
+      "panel": {
+        "path": "res://assets/production/ui/kit/panel_baccarat.png",
+        "patch_margin": 80,
+        "centre_colour": "#310653"
+      }
+    },
+    "blackjack": {
+      "button": {
+        "path": "res://assets/production/ui/kit/button_blackjack.png",
+        "patch_margin": 90,
+        "centre_colour": "#012c12"
+      },
+      "medallion": {
+        "path": "res://assets/production/ui/kit/medallion_blackjack.png"
+      },
+      "panel": {
+        "path": "res://assets/production/ui/kit/panel_blackjack.png",
+        "patch_margin": 80,
+        "centre_colour": "#08100a"
+      }
+    },
+    "slot_classic": {
+      "button": {
+        "path": "res://assets/production/ui/kit/button_elven.png",
+        "patch_margin": 127,
+        "centre_colour": "#023415"
+      },
+      "medallion": {
+        "path": "res://assets/production/ui/kit/medallion_elven.png"
+      },
+      "panel": {
+        "path": "res://assets/production/ui/kit/panel_elven.png",
+        "patch_margin": 63,
+        "centre_colour": "#04140d"
+      }
+    },
+    "match_point": {
+      "button": {
+        "path": "res://assets/production/ui/kit/button_match_point.png",
+        "patch_margin": 118,
+        "centre_colour": "#063815"
+      },
+      "medallion": {
+        "path": "res://assets/production/ui/kit/medallion_match_point.png"
+      },
+      "panel": {
+        "path": "res://assets/production/ui/kit/panel_match_point.png",
+        "patch_margin": 96,
+        "centre_colour": "#023118"
+      }
+    },
+    "poker": {
+      "button": {
+        "path": "res://assets/production/ui/kit/button_poker.png",
+        "patch_margin": 126,
+        "centre_colour": "#01247b"
+      },
+      "medallion": {
+        "path": "res://assets/production/ui/kit/medallion_poker.png"
+      },
+      "panel": {
+        "path": "res://assets/production/ui/kit/panel_poker.png",
+        "patch_margin": 79,
+        "centre_colour": "#040716"
+      }
+    },
+    "roulette": {
+      "button": {
+        "path": "res://assets/production/ui/kit/button_roulette.png",
+        "patch_margin": 113,
+        "centre_colour": "#820109"
+      },
+      "medallion": {
+        "path": "res://assets/production/ui/kit/medallion_roulette.png"
+      },
+      "panel": {
+        "path": "res://assets/production/ui/kit/panel_roulette.png",
+        "patch_margin": 114,
+        "centre_colour": "#170004"
+      }
+    },
+    "minefield_vault": {
+      "button": {
+        "path": "res://assets/production/ui/kit/button_vault.png",
+        "patch_margin": 122,
+        "centre_colour": "#36035d"
+      },
+      "medallion": {
+        "path": "res://assets/production/ui/kit/medallion_vault.png"
+      },
+      "panel": {
+        "path": "res://assets/production/ui/kit/panel_vault.png",
+        "patch_margin": 14,
+        "centre_colour": "#1d162d"
+      }
+    }
+  },
+  "shared": {
+    "result_banner": {
+      "path": "res://assets/production/ui/kit/plaque_result_banner.png",
+      "patch_margin": 103,
+      "centre_colour": "#010100"
+    },
+    "score_badge": {
+      "path": "res://assets/production/ui/kit/plaque_score_badge.png",
+      "patch_margin": 90,
+      "centre_colour": "#060606"
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "about": "Controller glyph kit (Higgsfield gpt_image_2_5, 1k, transparent), built by tools/art/build_glyph_kit.py. All glyphs share a 512x512 canvas with a 8 px pad; the longer side of each shape fills the canvas. Round glyphs: draw the letter or symbol in code inside face_radius_fraction * half the drawn size, centred at face_centre. Nine-slice: NinePatchRect with patch_margin (px in this file) and the flat centre_colour.",
+  "canvas": 512,
+  "glyphs": {
+    "xbox_a": {
+      "path": "res://assets/production/ui/glyphs/xbox_a.png",
+      "kind": "round",
+      "source": "assets/source/layered_v2/ui_kit/glyph_xbox_a_8d8a7774.png",
+      "face_radius_fraction": 0.793,
+      "face_centre": [
+        0.498,
+        0.499
+      ],
+      "circularity": 0.972
+    },
+    "xbox_b": {
+      "path": "res://assets/production/ui/glyphs/xbox_b.png",
+      "kind": "round",
+      "source": "assets/source/layered_v2/ui_kit/glyph_xbox_b_1a9bf708.png",
+      "face_radius_fraction": 0.789,
+      "face_centre": [
+        0.498,
+        0.499
+      ],
+      "circularity": 0.978
+    },
+    "xbox_x": {
+      "path": "res://assets/production/ui/glyphs/xbox_x.png",
+      "kind": "round",
+      "source": "assets/source/layered_v2/ui_kit/glyph_xbox_x_cefdd668.png",
+      "face_radius_fraction": 0.781,
+      "face_centre": [
+        0.498,
+        0.497
+      ],
+      "circularity": 0.98
+    },
+    "xbox_y": {
+      "path": "res://assets/production/ui/glyphs/xbox_y.png",
+      "kind": "round",
+      "source": "assets/source/layered_v2/ui_kit/glyph_xbox_y_79263493.png",
+      "face_radius_fraction": 0.797,
+      "face_centre": [
+        0.5,
+        0.497
+      ],
+      "circularity": 0.984
+    },
+    "ps_face": {
+      "path": "res://assets/production/ui/glyphs/ps_face.png",
+      "kind": "round",
+      "source": "assets/source/layered_v2/ui_kit/glyph_ps_face_74fff9b3.png",
+      "face_radius_fraction": 0.906,
+      "face_centre": [
+        0.498,
+        0.499
+      ],
+      "circularity": 0.979
+    },
+    "bumper": {
+      "path": "res://assets/production/ui/glyphs/bumper.png",
+      "kind": "nine_slice",
+      "source": "assets/source/layered_v2/ui_kit/glyph_bumper_de6ffec4.png",
+      "cap_left": 148,
+      "cap_right": 147,
+      "size": [
+        917,
+        456
+      ],
+      "centre_colour": "#26292c"
+    },
+    "keycap": {
+      "path": "res://assets/production/ui/glyphs/keycap.png",
+      "kind": "nine_slice",
+      "source": "assets/source/layered_v2/ui_kit/glyph_keycap_18b1b0e2.png",
+      "cap_left": 82,
+      "cap_right": 81,
+      "size": [
+        881,
+        889
+      ],
+      "centre_colour": "#f0e9dc"
+    },
+    "dpad": {
+      "path": "res://assets/production/ui/glyphs/dpad.png",
+      "kind": "icon",
+      "source": "assets/source/layered_v2/ui_kit/glyph_dpad_5272aab5.png"
+    }
+  }
+}
