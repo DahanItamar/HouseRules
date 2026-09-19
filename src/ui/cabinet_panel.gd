@@ -86,6 +86,13 @@ var _result_reveal_beat: Tween
 var _vault_pending_reveals: int = 0
 var _result_impact_tween: Tween
 var _last_result_impact_tier: ResultImpactTier = ResultImpactTier.NONE
+var _state_feedback_tweens: Dictionary = {}
+var _state_rest_positions: Dictionary = {}
+var _state_text_cache: Dictionary = {}
+var _state_controls: Dictionary = {}
+var _action_enable_tweens: Dictionary = {}
+var _action_disabled_cache: Dictionary = {}
+var _action_controls: Dictionary = {}
 
 const RESULT_READABLE_BEAT: float = 0.22
 const BIG_WIN_MULTIPLE: float = 5.0
@@ -159,6 +166,7 @@ func _ready() -> void:
 	add_child(_celebration)
 	_build_help_ui()
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh())
+	MotionPolicy.motion_preference_changed.connect(_apply_live_feedback_motion_preference)
 	refresh()
 
 
@@ -170,7 +178,6 @@ func refresh() -> void:
 	_stake.text = tr("CABINET_STAKE") % cabinet.selected_stake
 	_stake.hide()
 	_stake_selector.refresh_controls()
-	_status.text = tr(_status_key)
 	_controls.text = (
 		tr("CABINET_CONTROLS")
 		% [
@@ -186,8 +193,15 @@ func refresh() -> void:
 		_refresh_vault()
 	else:
 		_refresh_slot()
+	var next_status := tr(_status_key)
+	if id == &"minefield_vault":
+		var vault_math: MinefieldMath = cabinet.get("math")
+		if cabinet.is_round_active and not vault_math.revealed.is_empty():
+			next_status = _detail.text
+			_status.add_theme_color_override("font_color", Color("b8e5dc"))
 	if cabinet.selected_stake == 0 and not cabinet.is_round_active:
-		_status.text = tr("BET_NEED_CASHIER") % cabinet.context.definition.min_bet
+		next_status = tr("BET_NEED_CASHIER") % cabinet.context.definition.min_bet
+	_set_live_text(_status, next_status)
 	_refresh_help()
 
 
@@ -196,7 +210,7 @@ func show_result(result: RoundResult) -> void:
 	_result = result
 	_status_key = "ROUND_READY"
 	refresh()
-	_status.text = tr("ROUND_RESULT") % [result.stake, result.payout]
+	_set_live_text(_status, tr("ROUND_RESULT") % [result.stake, result.payout])
 	AudioService.play(_result_audio_cue(result))
 	_play_result_impact(result)
 	if result.payout > result.stake:
@@ -492,20 +506,25 @@ func _refresh_blackjack() -> void:
 					- (cabinet.current_stake if cabinet.is_round_active else 0)
 				)
 			)
-		_blackjack_primary.text = tr("ACTION_HIT") if cabinet.is_round_active else tr("ACTION_DEAL")
-		_blackjack_double.text = (
+		_set_live_text(
+			_blackjack_primary,
+			tr("ACTION_HIT") if cabinet.is_round_active else tr("ACTION_DEAL")
+		)
+		_set_live_text(_blackjack_double, (
 			tr("ACTION_DOUBLE_TO") % (cabinet.current_stake * 2)
 			if cabinet.is_round_active
 			else tr("ACTION_DOUBLE")
-		)
-		_blackjack_primary.disabled = (
+		))
+		_set_action_disabled(_blackjack_primary, (
 			cabinet.is_result_pending
 			or (not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance)
+		))
+		_set_action_disabled(
+			_blackjack_stand, not cabinet.is_round_active or cabinet.is_result_pending
 		)
-		_blackjack_stand.disabled = not cabinet.is_round_active or cabinet.is_result_pending
-		_blackjack_double.disabled = (
+		_set_action_disabled(_blackjack_double, (
 			cabinet.is_result_pending or not math.can_double(cabinet.context.balance)
-		)
+		))
 	if _blackjack_bet_stack != null:
 		var live_wager: int = cabinet.current_stake if cabinet.is_round_active else 0
 		if live_wager > 0:
@@ -550,11 +569,6 @@ func _refresh_vault() -> void:
 		else 0
 	)
 	_detail.text = tr("VAULT_GRID") % [cabinet.get("mine_count"), math.multiplier(), cash_out]
-	if cabinet.is_round_active and not math.revealed.is_empty():
-		# Replace the onboarding sentence with compact live round telemetry after
-		# the first choice. The cashout rail remains the primary hierarchy.
-		_status.text = _detail.text
-		_status.add_theme_color_override("font_color", Color("b8e5dc"))
 	if _vault_cashout_meter != null:
 		var can_cash_out := cabinet.is_round_active and math.safe_reveals > 0
 		var safe_target := maxi(1, 25 - cabinet.get("mine_count"))
@@ -577,7 +591,6 @@ func _refresh_vault() -> void:
 		]
 	)
 	if _vault_credit_value != null:
-		var cash_out_was_disabled := _vault_cash_out.disabled
 		if Wallet.test_mode_enabled:
 			_vault_credit_value.set_infinity()
 		else:
@@ -588,23 +601,17 @@ func _refresh_vault() -> void:
 					- (cabinet.current_stake if cabinet.is_round_active else 0)
 				)
 			)
-		_vault_open.text = tr("ACTION_OPEN") if cabinet.is_round_active else tr("ACTION_ENTER")
-		_vault_open.disabled = (
+		_set_live_text(
+			_vault_open,
+			tr("ACTION_OPEN") if cabinet.is_round_active else tr("ACTION_ENTER")
+		)
+		_set_action_disabled(_vault_open, (
 			cabinet.is_result_pending
 			or (not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance)
-		)
-		_vault_cash_out.disabled = (
+		))
+		_set_action_disabled(_vault_cash_out, (
 			cabinet.is_result_pending or not cabinet.is_round_active or math.revealed.is_empty()
-		)
-		if cash_out_was_disabled and not _vault_cash_out.disabled:
-			_vault_cash_out.pivot_offset = _vault_cash_out.size * 0.5
-			if MotionPolicy.is_reduced():
-				_vault_cash_out.scale = Vector2.ONE
-			else:
-				_vault_cash_out.scale = Vector2(1.045, 1.045)
-				create_tween().tween_property(
-					_vault_cash_out, "scale", Vector2.ONE, 0.3
-				).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		))
 
 
 func _ensure_art() -> void:
@@ -1254,22 +1261,139 @@ func _refresh_slot() -> void:
 		_slot_credit_value.set_number(displayed_credit)
 	if _result != null:
 		var multiplier: int = _result.payout / maxi(_result.stake, 1)
-		_slot_result_value.text = tr("SLOT_RETURNED") % _result.payout
-		_slot_result_formula.text = (
+		_set_live_text(_slot_result_value, tr("SLOT_RETURNED") % _result.payout)
+		_set_live_text(_slot_result_formula, (
 			tr("SLOT_RESULT_FORMULA") % [_result.stake, multiplier, _result.payout]
-		)
+		))
 	elif cabinet.is_round_active:
-		_slot_result_value.text = tr("ROUND_SPINNING")
-		_slot_result_formula.text = tr("SLOT_BET_IN_PLAY") % cabinet.current_stake
+		_set_live_text(_slot_result_value, tr("ROUND_SPINNING"))
+		_set_live_text(_slot_result_formula, tr("SLOT_BET_IN_PLAY") % cabinet.current_stake)
 	else:
-		_slot_result_value.text = tr("SLOT_RETURNED") % 0
-		_slot_result_formula.text = tr("SLOT_IDLE_FORMULA") % cabinet.selected_stake
-	_slot_spin_label.disabled = (
+		_set_live_text(_slot_result_value, tr("SLOT_RETURNED") % 0)
+		_set_live_text(_slot_result_formula, tr("SLOT_IDLE_FORMULA") % cabinet.selected_stake)
+	_set_action_disabled(_slot_spin_label, (
 		cabinet.is_round_active
 		or help_open
 		or cabinet.selected_stake > cabinet.context.balance
-	)
+	))
 	_slot_spin_label.queue_redraw()
+
+
+func _set_live_text(control: Control, next_text: String) -> void:
+	## Presentation-only semantic handoff. Gameplay state is already authoritative
+	## before this method is called; this only makes the new state readable.
+	if control == null:
+		return
+	var control_id := control.get_instance_id()
+	_state_controls[control_id] = control
+	if not _state_rest_positions.has(control_id):
+		_state_rest_positions[control_id] = control.position
+	var previous_text := String(control.get("text"))
+	var has_previous_state := _state_text_cache.has(control_id)
+	_state_text_cache[control_id] = next_text
+	if previous_text == next_text:
+		return
+	control.set("text", next_text)
+	_stop_state_feedback(control_id)
+	_settle_state_control(control)
+	if not has_previous_state or MotionPolicy.is_reduced() or not control.is_inside_tree():
+		return
+	var rest_position: Vector2 = _state_rest_positions[control_id]
+	control.position = rest_position + Vector2(0.0, 4.0)
+	control.modulate.a = 0.56
+	var tween := create_tween().set_parallel(true)
+	_state_feedback_tweens[control_id] = tween
+	tween.tween_property(control, "position", rest_position, 0.18).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_OUT)
+	tween.tween_property(control, "modulate:a", 1.0, 0.15).set_trans(Tween.TRANS_QUAD)
+	tween.finished.connect(_finish_state_feedback.bind(control_id))
+
+
+func _set_action_disabled(button: BaseButton, disabled: bool) -> void:
+	if button == null:
+		return
+	var control_id := button.get_instance_id()
+	_action_controls[control_id] = button
+	var had_previous_state := _action_disabled_cache.has(control_id)
+	var was_disabled := bool(_action_disabled_cache.get(control_id, button.disabled))
+	_action_disabled_cache[control_id] = disabled
+	button.disabled = disabled
+	if not had_previous_state or was_disabled == disabled:
+		return
+	_stop_action_enable_feedback(control_id)
+	_settle_action_control(button)
+	if disabled or MotionPolicy.is_reduced() or not button.is_inside_tree():
+		return
+	button.pivot_offset = button.size * 0.5
+	button.scale = Vector2(0.955, 0.955)
+	button.modulate = Color("fff0cf")
+	var tween := create_tween().set_parallel(true)
+	_action_enable_tweens[control_id] = tween
+	tween.tween_property(button, "scale", Vector2.ONE, 0.22).set_trans(
+		Tween.TRANS_BACK
+	).set_ease(Tween.EASE_OUT)
+	tween.tween_property(button, "modulate", Color.WHITE, 0.18).set_trans(Tween.TRANS_QUAD)
+	tween.finished.connect(_finish_action_enable_feedback.bind(control_id))
+
+
+func _stop_state_feedback(control_id: int) -> void:
+	var tween: Tween = _state_feedback_tweens.get(control_id)
+	if tween != null and tween.is_valid():
+		tween.kill()
+	_state_feedback_tweens.erase(control_id)
+
+
+func _finish_state_feedback(control_id: int) -> void:
+	var control: Control = _state_controls.get(control_id)
+	if is_instance_valid(control):
+		_settle_state_control(control)
+	_state_feedback_tweens.erase(control_id)
+
+
+func _settle_state_control(control: Control) -> void:
+	var control_id := control.get_instance_id()
+	if _state_rest_positions.has(control_id):
+		control.position = _state_rest_positions[control_id]
+	control.modulate.a = 1.0
+
+
+func _stop_action_enable_feedback(control_id: int) -> void:
+	var tween: Tween = _action_enable_tweens.get(control_id)
+	if tween != null and tween.is_valid():
+		tween.kill()
+	_action_enable_tweens.erase(control_id)
+
+
+func _finish_action_enable_feedback(control_id: int) -> void:
+	var control: BaseButton = _action_controls.get(control_id)
+	if is_instance_valid(control):
+		_settle_action_control(control)
+	_action_enable_tweens.erase(control_id)
+
+
+func _settle_action_control(button: BaseButton) -> void:
+	button.scale = Vector2.ONE
+	button.modulate = Color.WHITE
+
+
+func _apply_live_feedback_motion_preference(reduced: bool) -> void:
+	if not reduced:
+		return
+	for control_id: int in _state_feedback_tweens.keys():
+		_stop_state_feedback(control_id)
+	for control: Control in _state_controls.values():
+		if is_instance_valid(control):
+			_settle_state_control(control)
+	for control_id: int in _action_enable_tweens.keys():
+		_stop_action_enable_feedback(control_id)
+	for button: BaseButton in _action_controls.values():
+		if is_instance_valid(button):
+			_settle_action_control(button)
+
+
+func has_live_state_feedback() -> bool:
+	return not _state_feedback_tweens.is_empty() or not _action_enable_tweens.is_empty()
 
 
 func has_active_motion() -> bool:
@@ -1281,6 +1405,7 @@ func has_active_motion() -> bool:
 		or (_blackjack_fx_tween != null and _blackjack_fx_tween.is_running())
 		or (_vault_fx_tween != null and _vault_fx_tween.is_running())
 		or (_result_impact_tween != null and _result_impact_tween.is_running())
+		or has_live_state_feedback()
 		or _result_reveal_active
 	)
 
