@@ -193,6 +193,7 @@ func test_cashier_repayment_picker_clamps_previews_and_confirms_selected_amount(
 	assert_eq(Wallet.balance, 12)
 	assert_eq(Economy.debt, 0)
 	assert_true(_floor._cashier_repay.disabled)
+	await wait_seconds(0.65)
 	assert_string_contains(_floor._cashier_preview.text, "DEBT 0")
 
 

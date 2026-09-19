@@ -10,6 +10,7 @@ const FLOOR_ART := preload("res://assets/production/environments/casino_floor.pn
 const FLOOR_AVATAR_SCRIPT := preload("res://src/floor/floor_avatar.gd")
 const CASINO_PATRON_SCRIPT := preload("res://src/floor/casino_patron.gd")
 const CASHIER_WAYPOINT_SCRIPT := preload("res://src/floor/cashier_waypoint.gd")
+const ANIMATED_PAIR_LABEL_SCRIPT := preload("res://src/ui/animated_pair_label.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
@@ -49,9 +50,9 @@ var _prompt: Label
 var _cashier_open: bool = false
 var _avatar_visual: Node2D
 var _cashier_panel: Panel
-var _cashier_balance: Label
-var _cashier_debt: Label
-var _cashier_amount: Label
+var _cashier_balance: AnimatedNumberLabel
+var _cashier_debt: AnimatedNumberLabel
+var _cashier_amount: AnimatedNumberLabel
 var _cashier_preview: Label
 var _cashier_marker: Button
 var _cashier_repay: Button
@@ -63,6 +64,10 @@ var _last_nearby_game: StringName = &""
 var _prompt_signature: String = ""
 var _prompt_tween: Tween
 var _cashier_tween: Tween
+var _cashier_transaction_tween: Tween
+var _cashier_is_closing: bool = false
+var _cashier_transfer_layer: Control
+var _cashier_summary_flash: ColorRect
 var _machine_labels: Dictionary = {}
 var _patrons: Array[Node2D] = []
 var _floor_camera: Camera2D
@@ -603,19 +608,21 @@ func _build_cashier_menu() -> void:
 	rule.size = Vector2(352, 2)
 	rule.color = BRASS
 	_cashier_panel.add_child(rule)
-	_cashier_balance = _cashier_label(
-		"", Vector2(32, 74), Vector2(396, 34), 22, Color("f2c84b")
+	_cashier_balance = _cashier_number_label(
+		Vector2(32, 74), Vector2(396, 34), 22, Color("f2c84b")
 	)
 	_cashier_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_cashier_debt = _cashier_label(
-		"", Vector2(32, 108), Vector2(396, 26), 16, Color("b8ad9c")
+	_cashier_debt = _cashier_number_label(
+		Vector2(32, 108), Vector2(396, 26), 16, Color("b8ad9c")
 	)
 	_cashier_debt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var amount_caption := _cashier_label(
 		tr("CASHIER_REPAY_AMOUNT"), Vector2(32, 142), Vector2(196, 24), 14, Color("b8ad9c")
 	)
 	amount_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_cashier_amount = _cashier_label("", Vector2(228, 138), Vector2(200, 32), 22, IVORY)
+	_cashier_amount = _cashier_number_label(
+		Vector2(228, 138), Vector2(200, 32), 22, IVORY
+	)
 	_cashier_amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var adjustment_specs: Array[Dictionary] = [
 		{
@@ -637,15 +644,33 @@ func _build_cashier_menu() -> void:
 		adjust.name = String(spec.name)
 		adjust.pressed.connect(spec.action as Callable)
 		adjustment_buttons.append(adjust)
-	_cashier_preview = _cashier_label(
-		"", Vector2(24, 232), Vector2(412, 26), 15, Color("b8ad9c")
-	)
+	_cashier_preview = ANIMATED_PAIR_LABEL_SCRIPT.new() as Label
+	_cashier_preview.position = Vector2(24, 232)
+	_cashier_preview.size = Vector2(412, 26)
+	_cashier_preview.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_cashier_preview.add_theme_font_size_override("font_size", 15)
+	_cashier_preview.add_theme_color_override("font_color", Color("b8ad9c"))
+	_cashier_panel.add_child(_cashier_preview)
 	_cashier_preview.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_cashier_summary_flash = ColorRect.new()
+	_cashier_summary_flash.name = "TransactionFlash"
+	_cashier_summary_flash.position = Vector2(24, 70)
+	_cashier_summary_flash.size = Vector2(412, 68)
+	_cashier_summary_flash.color = Color("58d68d00")
+	_cashier_summary_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cashier_summary_flash.z_index = 10
+	_cashier_panel.add_child(_cashier_summary_flash)
+	_cashier_transfer_layer = Control.new()
+	_cashier_transfer_layer.name = "ChipTransferLayer"
+	_cashier_transfer_layer.size = _cashier_panel.size
+	_cashier_transfer_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_cashier_transfer_layer.z_index = 20
+	_cashier_panel.add_child(_cashier_transfer_layer)
 	_cashier_marker = _cashier_button(
 		tr("CASHIER_TAKE_MARKER"), Vector2(20, 272), Vector2(200, 56)
 	)
 	_cashier_marker.name = "TakeMarker"
-	_cashier_marker.pressed.connect(func() -> void: Economy.take_marker(); _refresh_cashier_menu())
+	_cashier_marker.pressed.connect(_take_cashier_marker)
 	_cashier_repay = _cashier_button("", Vector2(240, 272), Vector2(200, 56))
 	_cashier_repay.name = "RepayDebt"
 	_cashier_repay.pressed.connect(_confirm_cashier_repayment)
@@ -684,6 +709,19 @@ func _cashier_label(
 	return label
 
 
+func _cashier_number_label(
+	at: Vector2, dimensions: Vector2, font_size: int, color: Color
+) -> AnimatedNumberLabel:
+	var label := AnimatedNumberLabel.new()
+	label.position = at
+	label.size = dimensions
+	label.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", color)
+	_cashier_panel.add_child(label)
+	return label
+
+
 func _cashier_button(text_value: String, at: Vector2, dimensions: Vector2) -> Button:
 	var button := Button.new()
 	button.text = text_value
@@ -713,8 +751,18 @@ func _cashier_button(text_value: String, at: Vector2, dimensions: Vector2) -> Bu
 func _refresh_cashier_menu() -> void:
 	if _cashier_panel == null:
 		return
-	var opening := _cashier_open and not _cashier_panel.visible
-	_cashier_panel.visible = _cashier_open
+	if not _cashier_open:
+		_animate_cashier_close()
+		return
+	var opening := not _cashier_panel.visible or _cashier_is_closing
+	if _cashier_is_closing:
+		_cashier_is_closing = false
+		if _cashier_tween != null and _cashier_tween.is_valid():
+			_cashier_tween.kill()
+		_cashier_panel.modulate = Color.WHITE
+		_cashier_panel.scale = Vector2.ONE
+	_cashier_panel.visible = true
+	_cashier_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	if opening:
 		_cashier_panel.pivot_offset = _cashier_panel.size * 0.5
 		_cashier_panel.modulate.a = 0.0
@@ -732,24 +780,23 @@ func _refresh_cashier_menu() -> void:
 	_cashier_repay_amount = (
 		clampi(_cashier_repay_amount, 1, repayment_limit) if repayment_limit > 0 else 0
 	)
-	_cashier_balance.text = (
-		tr("CASHIER_TEST_BANK")
-		if Wallet.test_mode_enabled
-		else tr("CASHIER_CHIPS") % Wallet.balance
-	)
-	_cashier_debt.text = (
-		tr("CASHIER_NO_DEBT") if Economy.debt == 0 else tr("CASHIER_DEBT") % Economy.debt
-	)
-	_cashier_amount.text = tr("CASHIER_REPAY_VALUE") % _cashier_repay_amount
+	if Wallet.test_mode_enabled:
+		_cashier_balance.set_infinity()
+		_cashier_balance.text = tr("CASHIER_TEST_BANK")
+	else:
+		_cashier_balance.set_number(Wallet.balance, tr("CASHIER_CHIPS"))
+	_cashier_debt.set_number(Economy.debt, tr("CASHIER_DEBT"))
+	_cashier_amount.set_number(_cashier_repay_amount, tr("CASHIER_REPAY_VALUE"))
 	var remaining_debt := maxi(Economy.debt - _cashier_repay_amount, 0)
-	_cashier_preview.text = (
-		tr("CASHIER_PREVIEW_TEST") % remaining_debt
-		if Wallet.test_mode_enabled
-		else (
+	if Wallet.test_mode_enabled:
+		_cashier_preview.call("set_literal", tr("CASHIER_PREVIEW_TEST") % remaining_debt)
+	else:
+		_cashier_preview.call(
+			"set_numbers",
+			maxi(Wallet.balance - _cashier_repay_amount, 0),
+			remaining_debt,
 			tr("CASHIER_PREVIEW")
-			% [maxi(Wallet.balance - _cashier_repay_amount, 0), remaining_debt]
 		)
-	)
 	_cashier_marker.disabled = not Economy.is_below_solvency_floor()
 	_cashier_repay.disabled = repayment_limit <= 0
 	_cashier_repay.text = tr("CASHIER_CONFIRM_REPAY") % _cashier_repay_amount
@@ -785,11 +832,13 @@ func _maximize_cashier_repayment() -> void:
 
 
 func _confirm_cashier_repayment() -> void:
-	if _cashier_repay_amount <= 0 or not Economy.repay_debt(_cashier_repay_amount):
+	var repaid := _cashier_repay_amount
+	if repaid <= 0 or not Economy.repay_debt(repaid):
 		return
 	AudioService.play(&"confirm")
 	_cashier_repay_amount = mini(10, _cashier_repayment_limit())
 	_refresh_cashier_menu()
+	_play_cashier_transaction(repaid, false)
 	_cashier_initial_focus().call_deferred("grab_focus")
 
 
@@ -803,5 +852,94 @@ func _cashier_initial_focus() -> Button:
 
 func _close_cashier() -> void:
 	_cashier_open = false
+	var focused := get_viewport().gui_get_focus_owner()
+	if focused is Control and _cashier_panel.is_ancestor_of(focused):
+		(focused as Control).release_focus()
 	_refresh_cashier_menu()
 	refresh_proximity()
+
+
+func _take_cashier_marker() -> void:
+	if not Economy.take_marker():
+		return
+	AudioService.play(&"confirm")
+	_refresh_cashier_menu()
+	_play_cashier_transaction(Economy.MARKER_STIPEND, true)
+	_cashier_initial_focus().call_deferred("grab_focus")
+
+
+func _animate_cashier_close() -> void:
+	if not _cashier_panel.visible:
+		return
+	if _cashier_tween != null and _cashier_tween.is_valid():
+		_cashier_tween.kill()
+	_cashier_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if MotionPolicy.is_reduced():
+		_cashier_panel.visible = false
+		_cashier_panel.modulate = Color.WHITE
+		_cashier_panel.scale = Vector2.ONE
+		_cashier_is_closing = false
+		return
+	_cashier_is_closing = true
+	_cashier_tween = create_tween().set_parallel(true)
+	_cashier_tween.tween_property(_cashier_panel, "modulate:a", 0.0, 0.14).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN)
+	_cashier_tween.tween_property(_cashier_panel, "scale", Vector2(0.97, 0.97), 0.14).set_trans(
+		Tween.TRANS_QUAD
+	).set_ease(Tween.EASE_IN)
+	_cashier_tween.chain().tween_callback(
+		func() -> void:
+			_cashier_panel.visible = false
+			_cashier_panel.modulate = Color.WHITE
+			_cashier_panel.scale = Vector2.ONE
+			_cashier_is_closing = false
+	)
+
+
+func _play_cashier_transaction(amount: int, borrowing: bool) -> void:
+	if _cashier_transaction_tween != null and _cashier_transaction_tween.is_valid():
+		_cashier_transaction_tween.kill()
+	for child: Node in _cashier_transfer_layer.get_children():
+		child.queue_free()
+	_cashier_summary_flash.color = Color("58d68d2e")
+	_cashier_preview.add_theme_color_override("font_color", Color("8ce9b2"))
+	_cashier_transaction_tween = create_tween().set_parallel(true)
+	_cashier_transaction_tween.tween_property(
+		_cashier_summary_flash, "color:a", 0.0, MotionPolicy.finite_duration(0.38)
+	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_cashier_transaction_tween.tween_method(
+		func(weight: float) -> void:
+			_cashier_preview.add_theme_color_override(
+				"font_color", Color("8ce9b2").lerp(Color("b8ad9c"), weight)
+			),
+		0.0,
+		1.0,
+		MotionPolicy.finite_duration(0.38)
+	)
+	if MotionPolicy.is_reduced():
+		return
+	var origin := Vector2(120, 282) if borrowing else Vector2(218, 92)
+	var destination := Vector2(218, 92) if borrowing else Vector2(338, 282)
+	var chip_count := clampi(ceili(float(amount) / 25.0), 2, 5)
+	for index: int in range(chip_count):
+		var chip := CreditChipIcon.new()
+		chip.name = "TransferChip%d" % index
+		chip.position = origin + Vector2(index * 5.0, -index * 3.0)
+		chip.scale = Vector2(0.72, 0.72)
+		chip.modulate.a = 0.0
+		_cashier_transfer_layer.add_child(chip)
+		var delay := index * 0.035
+		_cashier_transaction_tween.tween_property(
+			chip, "modulate:a", 1.0, 0.08
+		).set_delay(delay)
+		_cashier_transaction_tween.tween_property(
+			chip, "position", destination + Vector2(index * 4.0, -index * 2.0), 0.30
+		).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_cashier_transaction_tween.tween_property(
+			chip, "scale", Vector2(0.48, 0.48), 0.30
+		).set_delay(delay)
+		_cashier_transaction_tween.tween_property(
+			chip, "modulate:a", 0.0, 0.11
+		).set_delay(delay + 0.24)
+		_cashier_transaction_tween.tween_callback(chip.queue_free).set_delay(delay + 0.36)
