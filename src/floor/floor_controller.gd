@@ -2,25 +2,29 @@ class_name FloorController
 extends Node2D
 
 signal cashier_visibility_changed(is_open: bool)
+signal room_changed(room_id: StringName)
 
 const SPEED: float = 88.0
+## A hitch longer than this is treated as this long, so one late frame can
+## never carry the avatar across a room. Motion is also sub-stepped.
+const MAX_FRAME_DELTA: float = 0.25
 const INTERACTION_RADIUS: float = 76.0
-const CASHIER_POSITION := Vector2(660, 410)
-const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(250, 265), &"vip": Vector2(790, 242)}
+const MAIN_FLOOR := &"main_floor"
+const HIGH_ROLLER := &"high_roller"
+const VIP := &"vip"
+const EXIT_ANCHOR := &"exit"
+const CASHIER_POSITION := Vector2(668, 402)
+const WING_POSITIONS: Dictionary = {&"high_roller": Vector2(150, 274), &"vip": Vector2(862, 216)}
 const WING_THRESHOLDS: Dictionary = {&"high_roller": 5000, &"vip": 100_000}
-const FLOOR_ART := preload("res://assets/production/environments/casino_floor.png")
 const FLOOR_AVATAR_SCRIPT := preload("res://src/floor/floor_avatar.gd")
-const CASINO_PATRON_SCRIPT := preload("res://src/floor/casino_patron.gd")
 const CASHIER_WAYPOINT_SCRIPT := preload("res://src/floor/cashier_waypoint.gd")
-const MACHINE_ATTRACT_SCRIPT := preload("res://src/floor/machine_attract.gd")
 const PRACTICAL_LIGHT_RIG_SCRIPT := preload("res://src/floor/practical_light_rig.gd")
-const DEVELOPER_ROOM_VIEW_SCRIPT := preload("res://src/floor/developer_room_view.gd")
 const FLOOR_FOREGROUND_SCRIPT := preload("res://src/floor/floor_foreground.gd")
+const COLLISION_OVERLAY_SCRIPT := preload("res://src/floor/floor_collision_overlay.gd")
 const ANIMATED_PAIR_LABEL_SCRIPT := preload("res://src/ui/animated_pair_label.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
 const CYAN := Color("48c5d5")
-const AVATAR_RADIUS: float = 15.0
 const MACHINE_ZONE_RADIUS: float = 50.0
 const MACHINE_ZONE_SCALE := Vector2(1.25, 0.82)
 const JOIN_DIALOG_SIZE := Vector2(286, 70)
@@ -29,81 +33,36 @@ const CAMERA_CENTER := Vector2(480, 270)
 const CAMERA_FOCUS_ZOOM := Vector2(1.03, 1.03)
 const CAMERA_FOCUS_OFFSET: float = 9.0
 const CASHIER_NO_DIRECTION: int = -1
-const PATRON_LAYOUT: Array[Dictionary] = [
-	# Back-row guests flank each cabinet instead of covering its identity art.
-	{
-		"position": Vector2(270, 202), "profile": 0, "phase": 0.0,
-		"face_left": false, "station": &"slot_left",
-	},
-	{
-		"position": Vector2(401, 202), "profile": 5, "phase": 2.75,
-		"face_left": true, "station": &"slot_right",
-	},
-	{
-		"position": Vector2(449, 200), "profile": 8, "phase": 1.40,
-		"face_left": false, "station": &"blackjack_left",
-	},
-	{
-		"position": Vector2(573, 202), "profile": 4, "phase": 2.20,
-		"face_left": true, "station": &"blackjack_right",
-	},
-	{
-		"position": Vector2(624, 196), "profile": 9, "phase": 1.95,
-		"face_left": false, "station": &"vault_left",
-	},
-	{
-		"position": Vector2(754, 202), "profile": 2, "phase": 1.10,
-		"face_left": true, "station": &"vault_right",
-	},
-	# Peripheral guests belong to actual lounge/cashier landmarks.
-	{
-		"position": Vector2(838, 198), "profile": 3, "phase": 1.65,
-		"face_left": true, "station": &"elevator",
-	},
-	{
-		"position": Vector2(716, 429), "profile": 1, "phase": 0.55,
-		"face_left": false, "station": &"cashier",
-	},
-	{
-		"position": Vector2(104, 361), "profile": 6, "phase": 0.30,
-		"face_left": true, "station": &"upper_couch",
-	},
-	{
-		"position": Vector2(91, 448), "profile": 7, "phase": 0.85,
-		"face_left": false, "station": &"lower_couch",
-	},
-]
+const HUD_BAND_HEIGHT: float = 72.0
+const DEV_BUTTON_SIZE := Vector2(190, 44)
 const DEV_TARGETS: Array[Dictionary] = [
 	{"id": &"spawn", "label": "SPAWN", "position": Vector2(480, 408)},
 	{"id": &"slot_classic", "label": "SLOTS", "position": Vector2(334, 254)},
 	{"id": &"blackjack", "label": "BLACKJACK", "position": Vector2(504, 252)},
 	{"id": &"minefield_vault", "label": "VAULT", "position": Vector2(680, 254)},
 	{"id": &"cashier", "label": "CASHIER", "position": CASHIER_POSITION},
-	{"id": &"high_roller", "label": "HIGH ROLLER ROOM", "position": Vector2(250, 265)},
-	{"id": &"vip", "label": "VIP ROOM", "position": Vector2(790, 242)},
+	{"id": &"main_floor", "label": "MAIN FLOOR", "position": Vector2(480, 408)},
+	{"id": &"high_roller", "label": "HIGH ROLLER SALON", "position": Vector2(150, 274)},
+	{"id": &"vip", "label": "VIP PENTHOUSE", "position": Vector2(862, 216)},
 ]
-static var NAV_OBSTACLES: Array[PackedVector2Array] = [
-	PackedVector2Array([Vector2(0, 0), Vector2(208, 0), Vector2(236, 72), Vector2(258, 194), Vector2(226, 244), Vector2(0, 250)]),
-	PackedVector2Array([Vector2(265, 48), Vector2(406, 46), Vector2(427, 112), Vector2(420, 187), Vector2(390, 219), Vector2(278, 219), Vector2(250, 184), Vector2(250, 94)]),
-	PackedVector2Array([Vector2(438, 48), Vector2(572, 48), Vector2(591, 99), Vector2(586, 188), Vector2(558, 215), Vector2(450, 215), Vector2(425, 184), Vector2(425, 93)]),
-	PackedVector2Array([Vector2(605, 51), Vector2(742, 50), Vector2(770, 102), Vector2(766, 188), Vector2(738, 216), Vector2(628, 216), Vector2(588, 185), Vector2(590, 94)]),
-	PackedVector2Array([Vector2(782, 0), Vector2(960, 0), Vector2(960, 236), Vector2(914, 240), Vector2(845, 221), Vector2(780, 188)]),
-	PackedVector2Array([Vector2(733, 270), Vector2(960, 248), Vector2(960, 500), Vector2(718, 500), Vector2(690, 451), Vector2(695, 350)]),
-	PackedVector2Array([Vector2(0, 300), Vector2(176, 299), Vector2(228, 344), Vector2(231, 474), Vector2(196, 526), Vector2(0, 540)]),
-	PackedVector2Array([Vector2(278, 465), Vector2(326, 438), Vector2(600, 438), Vector2(681, 478), Vector2(681, 540), Vector2(270, 540)]),
-]
+const ROOM_IDS: Array[StringName] = [&"main_floor", &"high_roller", &"vip"]
+var room: FloorRoomLayout
+var previous_room_id: StringName = &""
 var avatar_position := Vector2(480, 408)
 var nearby_definition: CabinetDefinition
 var nearby_wing: StringName = &""
+var nearby_exit: bool = false
 var cabinet_positions: Dictionary = {
 	&"slot_classic": Vector2(334, 254),
 	&"blackjack": Vector2(504, 252),
 	&"minefield_vault": Vector2(680, 254),
 }
 var definitions: Dictionary = {}
+var _background: Texture2D
 var _prompt: Label
 var _cashier_open: bool = false
 var _avatar_visual: Node2D
+var _depth_layer: Node2D
 var _cashier_panel: Panel
 var _cashier_scrim: ColorRect
 var _cashier_balance: AnimatedNumberLabel
@@ -125,8 +84,6 @@ var _cashier_transaction_tween: Tween
 var _cashier_is_closing: bool = false
 var _cashier_transfer_layer: Control
 var _cashier_summary_flash: ColorRect
-var _machine_attracts: Dictionary = {}
-var _patrons: Array[Node2D] = []
 var _floor_camera: Camera2D
 var _camera_tween: Tween
 var _camera_focus_id: StringName = &""
@@ -141,13 +98,19 @@ var _dev_layer: CanvasLayer
 var _dev_panel: Panel
 var _dev_buttons: Array[Button] = []
 var _dev_open: bool = false
-var _dev_room_layer: CanvasLayer
-var _active_dev_room: Control
 var _floor_foreground: Node2D
+var _collision_overlay: Node2D
+var _room_layer: CanvasLayer
+var _room_title: Label
+var _room_status: Label
+var _room_back: Button
 
 
 func _ready() -> void:
+	room = FloorRoomLayout.load_room(MAIN_FLOOR)
+	_background = room.background()
 	for id: StringName in cabinet_positions:
+		cabinet_positions[id] = room.anchor(id)
 		var definition: CabinetDefinition = load("res://data/cabinets/%s.tres" % id)
 		assert(
 			definition != null and definition.is_valid_definition(),
@@ -159,19 +122,21 @@ func _ready() -> void:
 	_build_camera()
 	_build_dust()
 	_build_practical_lights()
-	_build_patrons()
-	_build_machine_attracts()
+	_depth_layer = Node2D.new()
+	_depth_layer.name = "DepthLayer"
+	_depth_layer.y_sort_enabled = true
+	_depth_layer.z_index = 2
+	add_child(_depth_layer)
+	_floor_foreground = FLOOR_FOREGROUND_SCRIPT.new() as Node2D
+	_floor_foreground.name = "FloorForeground"
+	_floor_foreground.call("configure", room)
+	_depth_layer.add_child(_floor_foreground)
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
 	_apply_motion_preference(MotionPolicy.is_reduced())
 	_avatar_visual = FLOOR_AVATAR_SCRIPT.new()
 	_avatar_visual.name = "FloorAvatar"
 	_avatar_visual.position = avatar_position
-	_avatar_visual.z_index = 4
-	add_child(_avatar_visual)
-	_floor_foreground = FLOOR_FOREGROUND_SCRIPT.new() as Node2D
-	_floor_foreground.name = "FloorForeground"
-	_floor_foreground.z_index = 5
-	add_child(_floor_foreground)
+	_depth_layer.add_child(_avatar_visual)
 	_prompt = Label.new()
 	_prompt.z_index = 10
 	_prompt.size = Vector2(260, 72)
@@ -182,12 +147,16 @@ func _ready() -> void:
 	add_child(_prompt)
 	_build_cashier_waypoint()
 	_build_cashier_menu()
-	_dev_tools_enabled = bool(
-		ProjectSettings.get_setting("house_rules/testing/dev_floor_tools", false)
+	_build_room_hud()
+	_dev_tools_enabled = (
+		bool(ProjectSettings.get_setting("house_rules/testing/dev_floor_tools", false))
+		and OS.is_debug_build()
 	)
 	if _dev_tools_enabled:
 		_build_dev_floor_tools()
 	SceneRouter.register_floor(self)
+	SceneRouter.session_changed.connect(_sync_overlay_layers)
+	visibility_changed.connect(_sync_overlay_layers)
 	Wallet.balance_changed.connect(func(_old: int, _new: int) -> void: refresh_proximity())
 	InputRouter.active_device_changed.connect(func(_device: int) -> void: refresh_proximity())
 	refresh_proximity()
@@ -196,16 +165,8 @@ func _ready() -> void:
 func move_avatar(direction: Vector2, delta: float) -> void:
 	var origin := avatar_position
 	if not direction.is_zero_approx():
-		var motion := direction.normalized() * SPEED * delta
-		var steps: int = maxi(1, ceili(motion.length() / 4.0))
-		var step := motion / steps
-		for _index: int in range(steps):
-			var horizontal := avatar_position + Vector2(step.x, 0.0)
-			if _is_walkable(horizontal):
-				avatar_position = horizontal
-			var vertical := avatar_position + Vector2(0.0, step.y)
-			if _is_walkable(vertical):
-				avatar_position = vertical
+		var motion := direction.normalized() * SPEED * clampf(delta, 0.0, MAX_FRAME_DELTA)
+		avatar_position = room.resolve_motion(avatar_position, motion)
 	if _avatar_visual != null:
 		_avatar_visual.position = avatar_position
 		_avatar_visual.call("set_motion", avatar_position - origin)
@@ -216,50 +177,67 @@ func move_avatar(direction: Vector2, delta: float) -> void:
 
 
 func _is_walkable(point: Vector2) -> bool:
-	if not Rect2(
-		AVATAR_RADIUS,
-		AVATAR_RADIUS,
-		960.0 - AVATAR_RADIUS * 2.0,
-		540.0 - AVATAR_RADIUS * 2.0
-	).has_point(point):
-		return false
-	for polygon: PackedVector2Array in NAV_OBSTACLES:
-		if _circle_hits_polygon(point, AVATAR_RADIUS, polygon):
-			return false
-	return true
+	return room.is_walkable(point)
 
 
-func _circle_hits_polygon(center: Vector2, radius: float, polygon: PackedVector2Array) -> bool:
-	if Geometry2D.is_point_in_polygon(center, polygon):
-		return true
-	var radius_squared := radius * radius
-	for index: int in range(polygon.size()):
-		var closest := Geometry2D.get_closest_point_to_segment(
-			center, polygon[index], polygon[(index + 1) % polygon.size()]
-		)
-		if center.distance_squared_to(closest) <= radius_squared:
-			return true
-	return false
+func is_main_floor() -> bool:
+	return room != null and room.id == MAIN_FLOOR
+
+
+## Switches the whole environment. The same avatar, wallet and save carry over.
+func enter_room(room_id: StringName) -> void:
+	assert(room_id in ROOM_IDS, "Unknown floor room: %s" % room_id)
+	if room != null and room.id == room_id:
+		return
+	if _cashier_open:
+		_close_cashier()
+	var from_id: StringName = room.id if room != null else MAIN_FLOOR
+	room = FloorRoomLayout.load_room(room_id)
+	previous_room_id = from_id
+	_background = room.background()
+	_floor_foreground.call("configure", room)
+	if room_id == MAIN_FLOOR:
+		avatar_position = WING_POSITIONS.get(from_id, room.return_point)
+	else:
+		avatar_position = room.spawn
+	if _avatar_visual != null:
+		_avatar_visual.position = avatar_position
+	var main := is_main_floor()
+	if _practical_lights != null:
+		_practical_lights.visible = main
+	_dismissed_game = &""
+	_refresh_room_hud()
+	refresh_proximity()
+	queue_redraw()
+	room_changed.emit(room.id)
+	AudioService.play(&"confirm")
+
+
+func return_to_main_floor() -> void:
+	enter_room(MAIN_FLOOR)
 
 
 func refresh_proximity() -> void:
 	nearby_definition = null
 	nearby_wing = &""
-	var nearest_score: float = INF
-	for id: StringName in cabinet_positions:
-		var score := _machine_proximity_score(avatar_position, cabinet_positions[id])
-		if score <= 1.0 and score <= nearest_score:
-			nearest_score = score
-			nearby_definition = definitions.get(id)
-	if nearby_definition == null:
-		var nearest_wing_distance: float = INTERACTION_RADIUS
-		for id: StringName in WING_POSITIONS:
-			var distance: float = avatar_position.distance_to(WING_POSITIONS[id])
-			if distance <= nearest_wing_distance:
-				nearest_wing_distance = distance
-				nearby_wing = id
+	nearby_exit = false
+	if is_main_floor():
+		var nearest_score: float = INF
+		for id: StringName in cabinet_positions:
+			var score := _machine_proximity_score(avatar_position, cabinet_positions[id])
+			if score <= 1.0 and score <= nearest_score:
+				nearest_score = score
+				nearby_definition = definitions.get(id)
+		if nearby_definition == null:
+			var nearest_wing_distance: float = INTERACTION_RADIUS
+			for id: StringName in WING_POSITIONS:
+				var distance: float = avatar_position.distance_to(WING_POSITIONS[id])
+				if distance <= nearest_wing_distance:
+					nearest_wing_distance = distance
+					nearby_wing = id
+	elif room != null and room.anchors.has(EXIT_ANCHOR):
+		nearby_exit = avatar_position.distance_to(room.anchor(EXIT_ANCHOR)) <= INTERACTION_RADIUS
 	var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
-	_update_machine_attracts(current_game)
 	_update_camera_focus(current_game)
 	if current_game != _last_nearby_game:
 		_dismissed_game = &""
@@ -271,6 +249,9 @@ func refresh_proximity() -> void:
 
 
 func interact() -> bool:
+	if nearby_exit:
+		return_to_main_floor()
+		return true
 	if nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
 			return false
@@ -282,7 +263,7 @@ func interact() -> bool:
 	if nearby_wing != &"":
 		_update_prompt()
 		return false
-	if avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
+	if is_main_floor() and avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_cashier_open = true
 		cashier_visibility_changed.emit(true)
 		_cashier_repay_amount = mini(10, _cashier_repayment_limit())
@@ -311,7 +292,7 @@ func _physics_process(delta: float) -> void:
 	if MotionPolicy.allows_continuous_motion():
 		_ambient_time += delta
 	queue_redraw()
-	if not _cashier_open and not _dev_open and _active_dev_room == null:
+	if not _cashier_open and not _dev_open:
 		move_avatar(Input.get_vector("move_left", "move_right", "move_up", "move_down"), delta)
 
 
@@ -320,14 +301,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_dev_floor_tools()
 		get_viewport().set_input_as_handled()
 		return
+	if _dev_tools_enabled and _is_key_press(event, KEY_F2):
+		toggle_collision_overlay()
+		get_viewport().set_input_as_handled()
+		return
 	if _dev_open:
 		if event.is_action_pressed("back"):
 			_toggle_dev_floor_tools(false)
 			get_viewport().set_input_as_handled()
-			return
-	if _active_dev_room != null:
-		if event.is_action_pressed("back"):
-			_exit_dev_room()
+		return
+	if not is_main_floor():
+		if event.is_action_pressed("back") or (event.is_action_pressed("interact") and nearby_exit):
+			return_to_main_floor()
 			get_viewport().set_input_as_handled()
 		return
 	if (
@@ -350,19 +335,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			_move_cashier_focus(_cashier_direction(event))
 		return
 	if event.is_action_pressed("back"):
-		if _cashier_open:
-			_close_cashier()
-		elif nearby_definition != null and _dismissed_game != nearby_definition.id:
+		if nearby_definition != null and _dismissed_game != nearby_definition.id:
 			_dismissed_game = nearby_definition.id
 			_update_prompt()
 		else:
 			SceneRouter.return_to_menu()
 	elif event.is_action_pressed("interact"):
-		if _cashier_open:
-			Economy.take_marker()
-			_update_prompt()
-		else:
-			interact()
+		interact()
+
+
+static func _is_key_press(event: InputEvent, keycode: Key) -> bool:
+	var key := event as InputEventKey
+	return key != null and key.pressed and not key.echo and key.keycode == keycode
 
 
 func _update_prompt() -> void:
@@ -378,12 +362,15 @@ func _update_prompt() -> void:
 		_refresh_cashier_menu()
 		_prompt.text = (
 			tr("CASHIER_ACTIONS")
-			% [
-				InputRouter.glyph("move"),
-				InputRouter.glyph("interact"),
-				InputRouter.glyph("back")
-			]
+			% [InputRouter.glyph("move"), InputRouter.glyph("interact"), InputRouter.glyph("back")]
 		)
+	elif not is_main_floor():
+		_prompt.position = Vector2(330, 482)
+		_prompt.size = Vector2(300, 34)
+		if nearby_exit:
+			_prompt.text = tr("ROOM_EXIT_PROMPT") % InputRouter.glyph("interact")
+		else:
+			_prompt.text = ""
 	elif nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
 			_prompt.text = ""
@@ -408,7 +395,8 @@ func _update_prompt() -> void:
 				]
 			)
 	elif nearby_wing != &"":
-		_prompt.position = WING_POSITIONS[nearby_wing] + Vector2(-115, 64)
+		var wing_at: Vector2 = WING_POSITIONS[nearby_wing]
+		_prompt.position = Vector2(clampf(wing_at.x - 115.0, 24.0, 706.0), wing_at.y + 40.0)
 		_prompt.size = Vector2(230, 72)
 		_prompt.text = (
 			tr("WING_LOCKED")
@@ -452,8 +440,7 @@ func nearby_definition_position() -> Vector2:
 func _machine_proximity_score(point: Vector2, machine_position: Vector2) -> float:
 	var delta := point - machine_position
 	var radii := Vector2(
-		MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.x,
-		MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.y
+		MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.x, MACHINE_ZONE_RADIUS * MACHINE_ZONE_SCALE.y
 	)
 	return Vector2(delta.x / radii.x, delta.y / radii.y).length()
 
@@ -468,13 +455,20 @@ func _animate_prompt_change() -> void:
 	_prompt.modulate.a = 0.25
 	_prompt.pivot_offset = _prompt.size * 0.5
 	var final_position := _prompt.position
-	_prompt.position = final_position if MotionPolicy.is_reduced() else final_position + Vector2(0, 8)
+	_prompt.position = (
+		final_position if MotionPolicy.is_reduced() else final_position + Vector2(0, 8)
+	)
 	_prompt.scale = Vector2.ONE
 	_prompt_tween = create_tween().set_parallel(true)
 	var duration := MotionPolicy.finite_duration(0.15)
 	_prompt_tween.tween_property(_prompt, "modulate:a", 1.0, duration).set_trans(Tween.TRANS_QUAD)
 	if not MotionPolicy.is_reduced():
-		_prompt_tween.tween_property(_prompt, "position", final_position, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		(
+			_prompt_tween
+			. tween_property(_prompt, "position", final_position, duration)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
 
 
 func _animate_prompt_hide() -> void:
@@ -488,12 +482,18 @@ func _animate_prompt_hide() -> void:
 		return
 	var exit_position := _prompt.position + Vector2(0, 6)
 	_prompt_tween = create_tween().set_parallel(true)
-	_prompt_tween.tween_property(_prompt, "modulate:a", 0.0, 0.12).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_IN)
-	_prompt_tween.tween_property(_prompt, "position", exit_position, 0.12).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_IN)
+	(
+		_prompt_tween
+		. tween_property(_prompt, "modulate:a", 0.0, 0.12)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		_prompt_tween
+		. tween_property(_prompt, "position", exit_position, 0.12)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
 	_prompt_tween.finished.connect(_finish_prompt_hide)
 
 
@@ -551,7 +551,6 @@ func _build_cashier_waypoint() -> void:
 	add_child(_directions_layer)
 	_cashier_waypoint = CASHIER_WAYPOINT_SCRIPT.new() as CashierWaypoint
 	_directions_layer.add_child(_cashier_waypoint)
-	visibility_changed.connect(func() -> void: _directions_layer.visible = visible)
 
 
 func _update_cashier_waypoint() -> void:
@@ -564,6 +563,7 @@ func _update_cashier_waypoint() -> void:
 		(
 			_floor_prompts_visible
 			and visible
+			and is_main_floor()
 			and Economy.is_below_solvency_floor()
 			and not near_cashier
 			and not _cashier_open
@@ -571,22 +571,87 @@ func _update_cashier_waypoint() -> void:
 	)
 
 
-func _build_patrons() -> void:
-	for index: int in range(PATRON_LAYOUT.size()):
-		var layout: Dictionary = PATRON_LAYOUT[index]
-		var patron := CASINO_PATRON_SCRIPT.new() as Node2D
-		patron.name = "CasinoPatron%d" % (index + 1)
-		patron.position = layout["position"] as Vector2
-		patron.set_meta("station", layout["station"] as StringName)
-		patron.z_index = 2 if patron.position.y < 300.0 else 3
-		patron.call(
-			"configure",
-			int(layout["profile"]),
-			float(layout["phase"]),
-			bool(layout["face_left"])
-		)
-		add_child(patron)
-		_patrons.append(patron)
+## CanvasLayers ignore their parent's visibility, so floor-owned overlays follow
+## the floor explicitly and never sit on top of a cabinet session.
+func _sync_overlay_layers() -> void:
+	var floor_visible := is_visible_in_tree() and SceneRouter.session == null
+	if _directions_layer != null:
+		_directions_layer.visible = floor_visible
+	if _dev_layer != null:
+		_dev_layer.visible = floor_visible
+		if not floor_visible and _dev_open:
+			_toggle_dev_floor_tools(false)
+	if _room_layer != null:
+		_room_layer.visible = floor_visible and room != null and room.preview_only
+
+
+func _build_room_hud() -> void:
+	_room_layer = CanvasLayer.new()
+	_room_layer.name = "RoomHud"
+	_room_layer.layer = 8
+	add_child(_room_layer)
+	_room_title = Label.new()
+	_room_title.name = "RoomTitle"
+	_room_title.position = Vector2(300, 14)
+	_room_title.size = Vector2(360, 40)
+	_room_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_room_title.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_room_title.add_theme_font_size_override("font_size", Typography.DISPLAY)
+	_room_title.add_theme_color_override("font_color", IVORY)
+	_room_layer.add_child(_room_title)
+	_room_status = Label.new()
+	_room_status.name = "RoomStatus"
+	_room_status.position = Vector2(260, 52)
+	_room_status.size = Vector2(440, 20)
+	_room_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_room_status.add_theme_font_override("font", Typography.UI_FONT)
+	_room_status.add_theme_font_size_override("font_size", Typography.SUPPORTING)
+	_room_status.add_theme_color_override("font_color", BRASS)
+	_room_layer.add_child(_room_status)
+	_room_back = Button.new()
+	_room_back.name = "BackToMainFloor"
+	_room_back.position = Vector2(48, 452)
+	_room_back.size = Vector2(212, 48)
+	_room_back.focus_mode = Control.FOCUS_ALL
+	_room_back.add_theme_font_override("font", Typography.UI_FONT)
+	_room_back.add_theme_font_size_override("font_size", Typography.CONTROL)
+	for state: String in ["normal", "hover", "pressed", "focus"]:
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color("141013f2") if state != "pressed" else Color("0c0a0c")
+		style.border_color = CYAN if state == "focus" else BRASS
+		style.set_border_width_all(2 if state == "focus" else 1)
+		style.set_corner_radius_all(6)
+		_room_back.add_theme_stylebox_override(state, style)
+	_room_back.pressed.connect(return_to_main_floor)
+	_room_layer.add_child(_room_back)
+	ButtonFeedback.attach(_room_back)
+	_refresh_room_hud()
+
+
+func _refresh_room_hud() -> void:
+	if _room_layer == null:
+		return
+	_room_title.text = room.label
+	_room_status.text = tr("ROOM_PREVIEW_ONLY") if room.preview_only else ""
+	_room_back.text = tr("ROOM_BACK_BUTTON") % InputRouter.glyph("back")
+	_sync_overlay_layers()
+
+
+func toggle_collision_overlay(force: Variant = null) -> void:
+	if not _dev_tools_enabled:
+		return
+	if _collision_overlay == null:
+		_collision_overlay = COLLISION_OVERLAY_SCRIPT.new() as Node2D
+		_collision_overlay.name = "CollisionOverlay"
+		_collision_overlay.z_index = 30
+		_collision_overlay.set("floor", self)
+		add_child(_collision_overlay)
+		_collision_overlay.visible = false
+	_collision_overlay.visible = not _collision_overlay.visible if force == null else bool(force)
+
+
+func collision_overlay_visible() -> bool:
+	return _collision_overlay != null and _collision_overlay.visible
 
 
 func _build_dev_floor_tools() -> void:
@@ -596,21 +661,19 @@ func _build_dev_floor_tools() -> void:
 	add_child(_dev_layer)
 	_dev_panel = Panel.new()
 	_dev_panel.name = "DeveloperLocations"
-	_dev_panel.position = Vector2(316, 104)
-	_dev_panel.size = Vector2(328, 228)
+	_dev_panel.position = Vector2(270, 84)
+	_dev_panel.size = Vector2(420, 356)
 	var panel_style := StyleBoxFlat.new()
 	panel_style.bg_color = Color("161215f5")
 	panel_style.border_color = Color("8a682f")
 	panel_style.set_border_width_all(2)
 	panel_style.set_corner_radius_all(10)
-	panel_style.shadow_color = Color("07050680")
-	panel_style.shadow_size = 8
 	_dev_panel.add_theme_stylebox_override("panel", panel_style)
 	_dev_layer.add_child(_dev_panel)
 	var title := Label.new()
 	title.text = "DEV LOCATIONS  ·  F1 CLOSE"
-	title.position = Vector2(16, 12)
-	title.size = Vector2(296, 26)
+	title.position = Vector2(16, 10)
+	title.size = Vector2(388, 28)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.add_theme_font_override("font", Typography.DISPLAY_FONT)
 	title.add_theme_font_size_override("font_size", Typography.CONTROL)
@@ -620,26 +683,31 @@ func _build_dev_floor_tools() -> void:
 		var target: Dictionary = DEV_TARGETS[index]
 		var button := _dev_button(
 			String(target.label),
-			Vector2(16 + (index % 2) * 150, 46 + (index / 2) * 40),
-			Vector2(142, 34)
+			Vector2(16 + (index % 2) * 198, 44 + (index / 2) * 52),
+			DEV_BUTTON_SIZE
 		)
 		button.name = "DevTarget_%s" % String(target.id)
 		button.pressed.connect(_dev_warp_to.bind(target.id))
 		_dev_buttons.append(button)
-	var close := _dev_button("CLOSE", Vector2(166, 166), Vector2(142, 34))
+	var overlay := _dev_button("COLLISION  ·  F2", Vector2(16, 252), DEV_BUTTON_SIZE)
+	overlay.name = "DevCollisionOverlay"
+	overlay.pressed.connect(func() -> void: toggle_collision_overlay())
+	_dev_buttons.append(overlay)
+	var close := _dev_button("CLOSE", Vector2(214, 252), DEV_BUTTON_SIZE)
 	close.name = "DevLocationsClose"
 	close.pressed.connect(_toggle_dev_floor_tools.bind(false))
 	_dev_buttons.append(close)
 	var note := Label.new()
-	note.text = "ROOM BUTTONS OPEN DISTINCT DEVELOPMENT FLOORS"
-	note.position = Vector2(16, 204)
-	note.size = Vector2(296, 16)
+	note.text = "ROOM BUTTONS SWITCH THE WHOLE ENVIRONMENT · DEBUG BUILDS ONLY"
+	note.position = Vector2(16, 306)
+	note.size = Vector2(388, 36)
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	note.add_theme_font_override("font", Typography.UI_FONT)
-	note.add_theme_font_size_override("font_size", Typography.MICRO)
+	note.add_theme_font_size_override("font_size", Typography.CAPTION)
 	note.add_theme_color_override("font_color", Color("a99e90"))
 	_dev_panel.add_child(note)
-	_toggle_dev_floor_tools(DisplayServer.get_name() != "headless")
+	_toggle_dev_floor_tools(false)
 
 
 func _dev_button(text_value: String, at: Vector2, dimensions: Vector2) -> Button:
@@ -647,6 +715,7 @@ func _dev_button(text_value: String, at: Vector2, dimensions: Vector2) -> Button
 	button.text = text_value
 	button.position = at
 	button.size = dimensions
+	button.clip_text = true
 	button.focus_mode = Control.FOCUS_ALL
 	button.add_theme_font_override("font", Typography.UI_FONT)
 	button.add_theme_font_size_override("font_size", Typography.CAPTION)
@@ -676,11 +745,12 @@ func _toggle_dev_floor_tools(force_open: Variant = null) -> void:
 
 
 func _dev_warp_to(target_id: StringName) -> void:
-	if target_id == &"high_roller" or target_id == &"vip":
-		_enter_dev_room(target_id)
+	_toggle_dev_floor_tools(false)
+	if target_id in ROOM_IDS:
+		enter_room(target_id)
 		return
-	if _active_dev_room != null:
-		_exit_dev_room()
+	if not is_main_floor():
+		enter_room(MAIN_FLOOR)
 	for target: Dictionary in DEV_TARGETS:
 		if target.id != target_id:
 			continue
@@ -690,66 +760,9 @@ func _dev_warp_to(target_id: StringName) -> void:
 		if _avatar_visual != null:
 			_avatar_visual.position = avatar_position
 		_has_moved = true
-		_toggle_dev_floor_tools(false)
 		refresh_proximity()
 		AudioService.play(&"move")
 		return
-
-
-func _enter_dev_room(room_id: StringName) -> void:
-	if _cashier_open:
-		_close_cashier()
-	if _active_dev_room != null:
-		_exit_dev_room()
-	_dev_room_layer = CanvasLayer.new()
-	_dev_room_layer.name = "DeveloperRoomLayer"
-	_dev_room_layer.layer = 8
-	add_child(_dev_room_layer)
-	_active_dev_room = DEVELOPER_ROOM_VIEW_SCRIPT.new() as Control
-	_active_dev_room.call("configure", room_id)
-	_active_dev_room.connect("exit_requested", _exit_dev_room)
-	_dev_room_layer.add_child(_active_dev_room)
-	_toggle_dev_floor_tools(false)
-	AudioService.play(&"confirm")
-
-
-func _exit_dev_room() -> void:
-	if _dev_room_layer != null:
-		_dev_room_layer.queue_free()
-	_dev_room_layer = null
-	_active_dev_room = null
-	AudioService.play(&"move")
-
-
-func _build_machine_attracts() -> void:
-	var machine_ids: Array = cabinet_positions.keys()
-	for index: int in range(machine_ids.size()):
-		var id: StringName = machine_ids[index]
-		var attract := MACHINE_ATTRACT_SCRIPT.new() as MachineAttract
-		attract.name = "MachineAttract_%s" % id
-		# The small live identity now sits on the cabinet surface rather than
-		# floating in the player's walking space.
-		attract.position = cabinet_positions[id] + Vector2(0, -44)
-		attract.z_index = 0
-		attract.configure(_machine_attract_kind(id), float(index) / float(machine_ids.size()))
-		add_child(attract)
-		_machine_attracts[id] = attract
-
-
-func _machine_attract_kind(id: StringName) -> MachineAttract.Kind:
-	match id:
-		&"slot_classic":
-			return MachineAttract.Kind.SLOT
-		&"blackjack":
-			return MachineAttract.Kind.BLACKJACK
-		_:
-			return MachineAttract.Kind.VAULT
-
-
-func _update_machine_attracts(nearby_id: StringName) -> void:
-	for id: StringName in _machine_attracts:
-		var attract: MachineAttract = _machine_attracts[id]
-		attract.set_near(id == nearby_id)
 
 
 func _update_camera_focus(game_id: StringName) -> void:
@@ -771,12 +784,18 @@ func _update_camera_focus(game_id: StringName) -> void:
 		target_zoom = CAMERA_FOCUS_ZOOM
 	_camera_tween = create_tween().set_parallel(true)
 	var duration := MotionPolicy.finite_duration(0.24)
-	_camera_tween.tween_property(
-		_floor_camera, "position", target_position, duration
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_camera_tween.tween_property(
-		_floor_camera, "zoom", target_zoom, duration
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_camera_tween
+		. tween_property(_floor_camera, "position", target_position, duration)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_camera_tween
+		. tween_property(_floor_camera, "zoom", target_zoom, duration)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _apply_motion_preference(reduced: bool) -> void:
@@ -802,8 +821,6 @@ func _apply_motion_preference(reduced: bool) -> void:
 		_camera_focus_id = &""
 		var current_game: StringName = nearby_definition.id if nearby_definition != null else &""
 		_update_camera_focus(current_game)
-	for attract: MachineAttract in _machine_attracts.values():
-		attract.apply_motion_preference(reduced)
 	queue_redraw()
 
 
@@ -836,34 +853,31 @@ func _settle_cashier_motion() -> void:
 
 
 func _draw() -> void:
-	draw_texture_rect(FLOOR_ART, Rect2(0, 0, 960, 540), false)
+	draw_texture_rect(_background, Rect2(0, 0, 960, 540), false)
 	draw_rect(Rect2(0, 0, 960, 540), Color("0c0b0d24"))
-	_draw_floor_lighting()
-	draw_rect(Rect2(0, 0, 960, 88), Color("0c0b0d9c"))
-	draw_rect(Rect2(32, 92, 896, 352), Color("0c0b0d18"), false, 2.0)
-	for id: StringName in cabinet_positions:
-		var at: Vector2 = cabinet_positions[id]
-		var is_near: bool = nearby_definition != null and nearby_definition.id == id
-		var cadence := 1.15 if is_near else 3.2
-		var phase := _ambient_time * TAU / cadence + float(cabinet_positions.keys().find(id)) * 1.9
-		var pulse := (sin(phase) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
-		_draw_machine_zone(id, at, is_near, pulse)
-	draw_string(
-		ThemeDB.fallback_font,
-		CASHIER_POSITION + Vector2(-46, -45),
-		tr("CASHIER_NAME"),
-		HORIZONTAL_ALIGNMENT_CENTER,
-		92,
-		Typography.CRITICAL,
-		IVORY
-	)
-	for wing: StringName in WING_POSITIONS:
-		var wing_at: Vector2 = WING_POSITIONS[wing]
-		var plaque := Rect2(wing_at - Vector2(34, 14), Vector2(68, 28))
-		draw_rect(plaque, Color("17161acc"))
-		draw_rect(plaque, Color("6e5225"), false, 2.0)
-		draw_arc(wing_at + Vector2(0, -3), 5.0, PI, TAU, 16, BRASS, 2.0)
-		draw_rect(Rect2(wing_at + Vector2(-6, -3), Vector2(12, 10)), Color("6e5225"))
+	# A flat band behind the top HUD keeps its text readable over the back wall.
+	draw_rect(Rect2(0, 0, 960, HUD_BAND_HEIGHT), Color("0c0b0d9c"))
+	if is_main_floor():
+		for id: StringName in cabinet_positions:
+			var at: Vector2 = cabinet_positions[id]
+			var is_near: bool = nearby_definition != null and nearby_definition.id == id
+			var cadence := 1.15 if is_near else 3.2
+			var phase := (
+				_ambient_time * TAU / cadence + float(cabinet_positions.keys().find(id)) * 1.9
+			)
+			var pulse := (
+				(sin(phase) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
+			)
+			_draw_machine_zone(id, at, is_near, pulse)
+		draw_string(
+			ThemeDB.fallback_font,
+			CASHIER_POSITION + Vector2(-46, -45),
+			tr("CASHIER_NAME"),
+			HORIZONTAL_ALIGNMENT_CENTER,
+			92,
+			Typography.CRITICAL,
+			IVORY
+		)
 	if _prompt != null and _prompt.visible:
 		var prompt_rect := Rect2(_prompt.position - Vector2(12, 8), _prompt.size + Vector2(24, 16))
 		var join_dialog := nearby_definition != null and _dismissed_game != nearby_definition.id
@@ -906,26 +920,6 @@ func _draw_machine_zone(id: StringName, at: Vector2, is_near: bool, pulse: float
 			true
 		)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-
-
-func _draw_floor_lighting() -> void:
-	var drift := sin(_ambient_time * 0.18) * 24.0 if MotionPolicy.allows_continuous_motion() else 0.0
-	draw_colored_polygon(
-		PackedVector2Array([
-			Vector2(278 + drift, 88), Vector2(354 + drift, 88),
-			Vector2(438 + drift, 444), Vector2(314 + drift, 444),
-		]),
-		Color("d9b44a12")
-	)
-	draw_colored_polygon(
-		PackedVector2Array([
-			Vector2(610 - drift, 88), Vector2(680 - drift, 88),
-			Vector2(648 - drift, 444), Vector2(526 - drift, 444),
-		]),
-		Color("8fb8c712")
-	)
-	draw_rect(Rect2(0, 88, 960, 10), Color("09070a42"))
-	draw_rect(Rect2(0, 436, 960, 16), Color("09070a4d"))
 
 
 func _machine_accent(id: StringName) -> Color:
@@ -972,21 +966,15 @@ func _build_cashier_menu() -> void:
 	rule.size = Vector2(352, 2)
 	rule.color = BRASS
 	_cashier_panel.add_child(rule)
-	_cashier_balance = _cashier_number_label(
-		Vector2(32, 74), Vector2(396, 34), 22, Color("f2c84b")
-	)
+	_cashier_balance = _cashier_number_label(Vector2(32, 74), Vector2(396, 34), 22, Color("f2c84b"))
 	_cashier_balance.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_cashier_debt = _cashier_number_label(
-		Vector2(32, 108), Vector2(396, 26), 16, Color("b8ad9c")
-	)
+	_cashier_debt = _cashier_number_label(Vector2(32, 108), Vector2(396, 26), 16, Color("b8ad9c"))
 	_cashier_debt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var amount_caption := _cashier_label(
 		tr("CASHIER_REPAY_AMOUNT"), Vector2(32, 142), Vector2(196, 24), 14, Color("b8ad9c")
 	)
 	amount_caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	_cashier_amount = _cashier_number_label(
-		Vector2(228, 138), Vector2(200, 32), 22, IVORY
-	)
+	_cashier_amount = _cashier_number_label(Vector2(228, 138), Vector2(200, 32), 22, IVORY)
 	_cashier_amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	var adjustment_specs: Array[Dictionary] = [
 		{
@@ -994,10 +982,26 @@ func _build_cashier_menu() -> void:
 			"text": "-10",
 			"action": func() -> void: _adjust_cashier_repayment(-10)
 		},
-		{"name": "RepayMinusOne", "text": "-1", "action": func() -> void: _adjust_cashier_repayment(-1)},
-		{"name": "RepayPlusOne", "text": "+1", "action": func() -> void: _adjust_cashier_repayment(1)},
-		{"name": "RepayPlusTen", "text": "+10", "action": func() -> void: _adjust_cashier_repayment(10)},
-		{"name": "RepayMaximum", "text": tr("CASHIER_PAY_ALL"), "action": _maximize_cashier_repayment},
+		{
+			"name": "RepayMinusOne",
+			"text": "-1",
+			"action": func() -> void: _adjust_cashier_repayment(-1)
+		},
+		{
+			"name": "RepayPlusOne",
+			"text": "+1",
+			"action": func() -> void: _adjust_cashier_repayment(1)
+		},
+		{
+			"name": "RepayPlusTen",
+			"text": "+10",
+			"action": func() -> void: _adjust_cashier_repayment(10)
+		},
+		{
+			"name": "RepayMaximum",
+			"text": tr("CASHIER_PAY_ALL"),
+			"action": _maximize_cashier_repayment
+		},
 	]
 	var adjustment_buttons: Array[Button] = []
 	for index: int in range(adjustment_specs.size()):
@@ -1030,25 +1034,21 @@ func _build_cashier_menu() -> void:
 	_cashier_transfer_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cashier_transfer_layer.z_index = 20
 	_cashier_panel.add_child(_cashier_transfer_layer)
-	_cashier_marker = _cashier_button(
-		tr("CASHIER_TAKE_MARKER"), Vector2(20, 272), Vector2(200, 56)
-	)
+	_cashier_marker = _cashier_button(tr("CASHIER_TAKE_MARKER"), Vector2(20, 272), Vector2(200, 56))
 	_cashier_marker.name = "TakeMarker"
 	_cashier_marker.pressed.connect(_take_cashier_marker)
 	_cashier_repay = _cashier_button("", Vector2(240, 272), Vector2(200, 56))
 	_cashier_repay.name = "RepayDebt"
 	_cashier_repay.pressed.connect(_confirm_cashier_repayment)
-	_cashier_close = _cashier_button(
-		tr("CASHIER_CLOSE"), Vector2(130, 348), Vector2(200, 44)
-	)
+	_cashier_close = _cashier_button(tr("CASHIER_CLOSE"), Vector2(130, 348), Vector2(200, 44))
 	_cashier_close.name = "CloseCashier"
 	_cashier_close.pressed.connect(_close_cashier)
 	for index: int in range(adjustment_buttons.size()):
 		var button := adjustment_buttons[index]
 		button.focus_neighbor_left = adjustment_buttons[maxi(index - 1, 0)].get_path()
-		button.focus_neighbor_right = adjustment_buttons[
-			mini(index + 1, adjustment_buttons.size() - 1)
-		].get_path()
+		button.focus_neighbor_right = (
+			adjustment_buttons[mini(index + 1, adjustment_buttons.size() - 1)].get_path()
+		)
 		button.focus_neighbor_bottom = _cashier_repay.get_path()
 	_cashier_marker.focus_neighbor_top = adjustment_buttons[0].get_path()
 	_cashier_marker.focus_neighbor_right = _cashier_repay.get_path()
@@ -1139,9 +1139,12 @@ func _refresh_cashier_menu() -> void:
 		var duration := MotionPolicy.finite_duration(0.18)
 		_cashier_tween.tween_property(_cashier_panel, "modulate:a", 1.0, duration)
 		if not MotionPolicy.is_reduced():
-			_cashier_tween.tween_property(
-				_cashier_panel, "scale", Vector2.ONE, duration
-			).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			(
+				_cashier_tween
+				. tween_property(_cashier_panel, "scale", Vector2.ONE, duration)
+				. set_trans(Tween.TRANS_BACK)
+				. set_ease(Tween.EASE_OUT)
+			)
 	var repayment_limit := _cashier_repayment_limit()
 	_cashier_repay_amount = (
 		clampi(_cashier_repay_amount, 1, repayment_limit) if repayment_limit > 0 else 0
@@ -1165,9 +1168,7 @@ func _refresh_cashier_menu() -> void:
 		)
 	_cashier_marker.disabled = not Economy.can_take_marker()
 	_cashier_marker.text = (
-		tr("CASHIER_ADD_TEST_MARKER")
-		if Wallet.test_mode_enabled
-		else tr("CASHIER_TAKE_MARKER")
+		tr("CASHIER_ADD_TEST_MARKER") if Wallet.test_mode_enabled else tr("CASHIER_TAKE_MARKER")
 	)
 	_cashier_repay.disabled = repayment_limit <= 0
 	_cashier_repay.text = tr("CASHIER_CONFIRM_REPAY") % _cashier_repay_amount
@@ -1255,12 +1256,18 @@ func _animate_cashier_close() -> void:
 		return
 	_cashier_is_closing = true
 	_cashier_tween = create_tween().set_parallel(true)
-	_cashier_tween.tween_property(_cashier_panel, "modulate:a", 0.0, 0.14).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_IN)
-	_cashier_tween.tween_property(_cashier_panel, "scale", Vector2(0.97, 0.97), 0.14).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_IN)
+	(
+		_cashier_tween
+		. tween_property(_cashier_panel, "modulate:a", 0.0, 0.14)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		_cashier_tween
+		. tween_property(_cashier_panel, "scale", Vector2(0.97, 0.97), 0.14)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
 	_cashier_tween.tween_property(_cashier_scrim, "modulate:a", 0.0, 0.14)
 	_cashier_tween.chain().tween_callback(
 		func() -> void:
@@ -1307,9 +1314,12 @@ func _play_cashier_transaction(amount: int, borrowing: bool) -> void:
 	_cashier_summary_flash.color = Color("58d68d2e")
 	_cashier_preview.add_theme_color_override("font_color", Color("8ce9b2"))
 	_cashier_transaction_tween = create_tween().set_parallel(true)
-	_cashier_transaction_tween.tween_property(
-		_cashier_summary_flash, "color:a", 0.0, MotionPolicy.finite_duration(0.38)
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_cashier_transaction_tween
+		. tween_property(_cashier_summary_flash, "color:a", 0.0, MotionPolicy.finite_duration(0.38))
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_cashier_transaction_tween.tween_method(
 		func(weight: float) -> void:
 			_cashier_preview.add_theme_color_override(
@@ -1332,16 +1342,22 @@ func _play_cashier_transaction(amount: int, borrowing: bool) -> void:
 		chip.modulate.a = 0.0
 		_cashier_transfer_layer.add_child(chip)
 		var delay := index * 0.035
-		_cashier_transaction_tween.tween_property(
-			chip, "modulate:a", 1.0, 0.08
-		).set_delay(delay)
-		_cashier_transaction_tween.tween_property(
-			chip, "position", destination + Vector2(index * 4.0, -index * 2.0), 0.30
-		).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		_cashier_transaction_tween.tween_property(
-			chip, "scale", Vector2(0.48, 0.48), 0.30
-		).set_delay(delay)
-		_cashier_transaction_tween.tween_property(
-			chip, "modulate:a", 0.0, 0.11
-		).set_delay(delay + 0.24)
+		_cashier_transaction_tween.tween_property(chip, "modulate:a", 1.0, 0.08).set_delay(delay)
+		(
+			_cashier_transaction_tween
+			. tween_property(
+				chip, "position", destination + Vector2(index * 4.0, -index * 2.0), 0.30
+			)
+			. set_delay(delay)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
+		(
+			_cashier_transaction_tween
+			. tween_property(chip, "scale", Vector2(0.48, 0.48), 0.30)
+			. set_delay(delay)
+		)
+		_cashier_transaction_tween.tween_property(chip, "modulate:a", 0.0, 0.11).set_delay(
+			delay + 0.24
+		)
 		_cashier_transaction_tween.tween_callback(chip.queue_free).set_delay(delay + 0.36)

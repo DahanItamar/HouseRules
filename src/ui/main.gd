@@ -49,7 +49,9 @@ func _ready() -> void:
 	_build_hud()
 	add_child(DisconnectPauseOverlay.new())
 	var error: Error = SaveService.load_game()
-	Wallet.set_test_mode(bool(ProjectSettings.get_setting("house_rules/testing/unlimited_bankroll", false)))
+	Wallet.set_test_mode(
+		bool(ProjectSettings.get_setting("house_rules/testing/unlimited_bankroll", false))
+	)
 	_build_menu()
 	MotionPolicy.motion_preference_changed.connect(_on_motion_preference_changed)
 	if error != OK:
@@ -90,29 +92,27 @@ func _build_hud() -> void:
 	_hud_layer = CanvasLayer.new()
 	_hud_layer.layer = 10
 	add_child(_hud_layer)
-	_bank_panel = _panel(Vector2(18, 16), Vector2(168, 52), Color("17161af2"), Color("c8a34b"))
+	_bank_panel = _panel(Vector2(18, 10), Vector2(168, 52), Color("17161af2"), Color("c8a34b"))
 	_bank_panel.pivot_offset = _bank_panel.size * 0.5
 	_hud_layer.add_child(_bank_panel)
 	_chip_icon = CreditChipIcon.new()
-	_chip_icon.position = Vector2(28, 25)
+	_chip_icon.position = Vector2(28, 19)
 	_hud_layer.add_child(_chip_icon)
 	_credit_caption = Label.new()
 	_credit_caption.add_theme_font_override("font", Typography.UI_FONT)
-	_credit_caption.position = Vector2(72, 20)
+	_credit_caption.position = Vector2(72, 14)
 	_credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	_credit_caption.add_theme_font_size_override("font_size", Typography.BODY_MIN)
 	_credit_caption.add_theme_color_override("font_color", Color("b8ad9c"))
 	_hud_layer.add_child(_credit_caption)
 	_hud = AnimatedNumberLabel.new()
 	_hud.add_theme_font_override("font", Typography.DISPLAY_FONT)
-	_hud.position = Vector2(72, 34)
+	_hud.position = Vector2(72, 28)
 	_hud.size = Vector2(126, 30)
 	_hud.add_theme_font_size_override("font_size", 24)
 	_hud.add_theme_color_override("font_color", Color("f2c84b"))
 	_hud_layer.add_child(_hud)
-	_message_panel = _panel(
-		Vector2(220, 104), Vector2(520, 40), Color("17161af2"), Color("c8a34b")
-	)
+	_message_panel = _panel(Vector2(220, 104), Vector2(520, 40), Color("17161af2"), Color("c8a34b"))
 	_message_panel.visible = false
 	_hud_layer.add_child(_message_panel)
 	_message = Label.new()
@@ -125,15 +125,16 @@ func _build_hud() -> void:
 	_message.add_theme_color_override("font_color", Color("f1e8d8"))
 	_message.visible = false
 	_hud_layer.add_child(_message)
-	_contracts_panel = _panel(
-		Vector2(594, 16), Vector2(348, 80), Color("17161ae8"), Color("6e5225")
-	)
+	# The contracts plaque stays inside the back-wall band so it never covers
+	# guests, the game islands or the VIP elevator entrance.
+	_contracts_panel = _panel(Vector2(594, 8), Vector2(348, 62), Color("17161ae8"), Color("6e5225"))
 	_contracts_panel.pivot_offset = _contracts_panel.size * 0.5
 	_hud_layer.add_child(_contracts_panel)
 	_contracts = Label.new()
 	_contracts.add_theme_font_override("font", Typography.UI_FONT)
-	_contracts.position = Vector2(610, 22)
-	_contracts.size = Vector2(316, 68)
+	_contracts.position = Vector2(610, 10)
+	_contracts.size = Vector2(316, 58)
+	_contracts.add_theme_constant_override("line_spacing", -2)
 	_contracts.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_contracts.add_theme_font_size_override("font_size", Typography.BODY_MIN)
 	_contracts.add_theme_color_override("font_color", Color("b8ad9c"))
@@ -326,26 +327,46 @@ func _play_menu_reveal() -> void:
 	_menu_reveal_tween.tween_property(_menu_background, "modulate:a", 1.0, 0.24)
 	_menu_reveal_tween.tween_property(_menu_kicker, "modulate:a", 1.0, 0.14).set_delay(0.04)
 	_menu_reveal_tween.tween_property(_menu_rule, "modulate:a", 1.0, 0.14).set_delay(0.06)
-	_menu_reveal_tween.tween_property(
-		_menu_rule, "scale:x", 1.0, 0.18
-	).set_delay(0.06).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_menu_reveal_tween
+		. tween_property(_menu_rule, "scale:x", 1.0, 0.18)
+		. set_delay(0.06)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_menu_reveal_tween.tween_property(_menu_title, "modulate:a", 1.0, 0.18).set_delay(0.08)
-	_menu_reveal_tween.tween_property(
-		_menu_title, "position:y", 140.0, 0.18
-	).set_delay(0.08).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_menu_reveal_tween
+		. tween_property(_menu_title, "position:y", 140.0, 0.18)
+		. set_delay(0.08)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_menu_reveal_tween.tween_property(_menu_subtitle, "modulate:a", 1.0, 0.16).set_delay(0.13)
-	_menu_reveal_tween.tween_property(
-		_menu_subtitle, "position:y", 222.0, 0.18
-	).set_delay(0.13).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_menu_reveal_tween
+		. tween_property(_menu_subtitle, "position:y", 222.0, 0.18)
+		. set_delay(0.13)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_menu_reveal_tween.tween_property(_menu_prompt_panel, "modulate:a", 1.0, 0.18).set_delay(0.18)
 	_menu_reveal_tween.tween_property(_menu_prompt, "modulate:a", 1.0, 0.18).set_delay(0.18)
-	_menu_reveal_tween.tween_property(
-		_menu_prompt_panel, "scale", Vector2.ONE, 0.18
-	).set_delay(0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_menu_reveal_tween
+		. tween_property(_menu_prompt_panel, "scale", Vector2.ONE, 0.18)
+		. set_delay(0.18)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_menu_reveal_tween.tween_property(_menu_motion_button, "modulate:a", 1.0, 0.16).set_delay(0.23)
-	_menu_reveal_tween.tween_property(
-		_menu_motion_button, "position:y", 444.0, 0.18
-	).set_delay(0.23).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_menu_reveal_tween
+		. tween_property(_menu_motion_button, "position:y", 444.0, 0.18)
+		. set_delay(0.23)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _play_menu_breath() -> void:
@@ -353,10 +374,20 @@ func _play_menu_breath() -> void:
 		_menu_attract_tween.kill()
 	_menu_prompt_panel.pivot_offset = _menu_prompt_panel.size * 0.5
 	_menu_attract_tween = create_tween().set_parallel(true)
-	_menu_attract_tween.tween_property(_menu_prompt_panel, "scale", Vector2(1.018, 1.018), 0.16).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_menu_attract_tween
+		. tween_property(_menu_prompt_panel, "scale", Vector2(1.018, 1.018), 0.16)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_menu_attract_tween.tween_property(_menu_prompt, "modulate", Color("fff4d8"), 0.16)
 	_menu_attract_tween.chain().set_parallel(true)
-	_menu_attract_tween.tween_property(_menu_prompt_panel, "scale", Vector2.ONE, 0.24).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	(
+		_menu_attract_tween
+		. tween_property(_menu_prompt_panel, "scale", Vector2.ONE, 0.24)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN_OUT)
+	)
 	_menu_attract_tween.tween_property(_menu_prompt, "modulate", Color.WHITE, 0.24)
 
 
@@ -438,13 +469,20 @@ func _on_balance_changed(old_balance: int, new_balance: int) -> void:
 	if MotionPolicy.is_reduced():
 		return
 	_bank_feedback_tween = create_tween().set_parallel(true)
-	_bank_feedback_tween.tween_property(_bank_panel, "scale", Vector2(1.035, 1.035), 0.10).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
+	(
+		_bank_feedback_tween
+		. tween_property(_bank_panel, "scale", Vector2(1.035, 1.035), 0.10)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_bank_feedback_tween.tween_property(_hud, "modulate", Color("fff0a0"), 0.10)
-	_bank_feedback_tween.chain().tween_property(_bank_panel, "scale", Vector2.ONE, 0.16).set_trans(
-		Tween.TRANS_BACK
-	).set_ease(Tween.EASE_OUT)
+	(
+		_bank_feedback_tween
+		. chain()
+		. tween_property(_bank_panel, "scale", Vector2.ONE, 0.16)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_bank_feedback_tween.parallel().tween_property(_hud, "modulate", Color.WHITE, 0.16)
 
 
@@ -460,16 +498,26 @@ func _on_contracts_changed() -> void:
 	_contracts.position.x = 622.0
 	_contracts.modulate.a = 0.62
 	_contract_feedback_tween = create_tween().set_parallel(true)
-	_contract_feedback_tween.tween_property(_contracts, "position:x", 610.0, 0.18).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
+	(
+		_contract_feedback_tween
+		. tween_property(_contracts, "position:x", 610.0, 0.18)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_contract_feedback_tween.tween_property(_contracts, "modulate:a", 1.0, 0.16)
-	_contract_feedback_tween.tween_property(
-		_contracts_panel, "scale", Vector2(1.015, 1.015), 0.10
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_contract_feedback_tween.chain().tween_property(
-		_contracts_panel, "scale", Vector2.ONE, 0.14
-	).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	(
+		_contract_feedback_tween
+		. tween_property(_contracts_panel, "scale", Vector2(1.015, 1.015), 0.10)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_contract_feedback_tween
+		. chain()
+		. tween_property(_contracts_panel, "scale", Vector2.ONE, 0.14)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _start_playing() -> void:
@@ -574,12 +622,18 @@ func _present_message(text_value: String) -> void:
 	_message_tween = create_tween().set_parallel(true)
 	_message_tween.tween_property(_message_panel, "modulate:a", 1.0, 0.15)
 	_message_tween.tween_property(_message, "modulate:a", 1.0, 0.15)
-	_message_tween.tween_property(_message_panel, "position:y", 104.0, 0.17).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
-	_message_tween.tween_property(_message, "position:y", 111.0, 0.17).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
+	(
+		_message_tween
+		. tween_property(_message_panel, "position:y", 104.0, 0.17)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_message_tween
+		. tween_property(_message, "position:y", 111.0, 0.17)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _dismiss_message() -> void:
@@ -594,12 +648,18 @@ func _dismiss_message() -> void:
 	_message_tween = create_tween().set_parallel(true)
 	_message_tween.tween_property(_message_panel, "modulate:a", 0.0, 0.14)
 	_message_tween.tween_property(_message, "modulate:a", 0.0, 0.14)
-	_message_tween.tween_property(_message_panel, "position:y", 98.0, 0.14).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_IN)
-	_message_tween.tween_property(_message, "position:y", 105.0, 0.14).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_IN)
+	(
+		_message_tween
+		. tween_property(_message_panel, "position:y", 98.0, 0.14)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		_message_tween
+		. tween_property(_message, "position:y", 105.0, 0.14)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
 	_message_tween.finished.connect(
 		func() -> void:
 			_message.text = ""

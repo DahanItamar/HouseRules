@@ -9,7 +9,10 @@ const GUEST_TEXTURE: Texture2D = preload(
 # Compatibility-facing size remains a Vector2; atlas math itself uses the
 # integer-only CharacterWalkAtlas.CELL_SIZE.
 const GUEST_CELL_SIZE := Vector2(240, 240)
-const GUEST_SCALE: float = 0.34
+const GUEST_SCALE: float = 0.29
+## Feet sit on the node origin, which is also the avatar's depth-sort point.
+## The atlas figure's soles are 111 px below its 240 px cell centre.
+const FOOT_OFFSET := Vector2(0, -111.0 * GUEST_SCALE)
 const WALK_CYCLE_DISTANCE: float = 64.0
 var facing := Vector2.DOWN
 var walk_phase: float = 0.0
@@ -30,7 +33,7 @@ func _ready() -> void:
 	_sprite.texture = _atlas
 	_sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_sprite.scale = Vector2.ONE * GUEST_SCALE
-	_sprite.position = Vector2(0, -19)
+	_sprite.position = FOOT_OFFSET
 	add_child(_sprite)
 	_update_facing_texture()
 	MotionPolicy.motion_preference_changed.connect(_apply_motion_preference)
@@ -45,10 +48,7 @@ func set_motion(displacement: Vector2) -> void:
 		is_walking = true
 		_walk_hold = 0.09
 		facing = displacement.normalized()
-		walk_phase = fmod(
-			walk_phase + displacement.length() / WALK_CYCLE_DISTANCE * TAU,
-			TAU
-		)
+		walk_phase = fmod(walk_phase + displacement.length() / WALK_CYCLE_DISTANCE * TAU, TAU)
 		walk_frame = int(floor(walk_phase / (TAU / 4.0))) % 4
 		idle_time = 0.0
 		_update_facing_texture()
@@ -68,7 +68,7 @@ func _process(delta: float) -> void:
 	# The rendered gait comes from the photographed leg phases. Keeping the
 	# anchor integer-stable prevents the old procedural sway from looking like
 	# the character is sliding over the carpet.
-	_sprite.position = Vector2(0, -23)
+	_sprite.position = FOOT_OFFSET
 
 
 func _apply_motion_preference(reduced: bool) -> void:
@@ -76,7 +76,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 		idle_time = 0.0
 		_sprite.rotation = 0.0
 		_sprite.scale = Vector2.ONE * GUEST_SCALE
-		_sprite.position = Vector2(0, -23)
+		_sprite.position = FOOT_OFFSET
 	queue_redraw()
 
 
@@ -88,7 +88,7 @@ func _update_facing_texture() -> void:
 
 func _draw() -> void:
 	if _sprite != null:
-		_draw_ellipse(Vector2(0, 8), Vector2(13.0, 4.5), Color("0806078f"))
+		_draw_ellipse(Vector2(0, 0), Vector2(10.0, 3.5), Color("0806078f"))
 		return
 	var stride: float = sin(walk_phase) if is_walking else 0.0
 	var bob: float = abs(sin(walk_phase)) * -1.4 if is_walking else sin(idle_time * 2.6) * 0.45
@@ -106,15 +106,21 @@ func _draw() -> void:
 	draw_line(Vector2(-7, -14), Vector2(-10, -3 + arm_swing), Color("681526"), 5.0, true)
 	draw_line(Vector2(7, -14), Vector2(10, -3 - arm_swing), Color("681526"), 5.0, true)
 	draw_colored_polygon(
-		PackedVector2Array([
-			Vector2(-8, -16), Vector2(-10, -2), Vector2(-5, 2),
-			Vector2(0, 0), Vector2(5, 2), Vector2(10, -2), Vector2(8, -16)
-		]),
+		PackedVector2Array(
+			[
+				Vector2(-8, -16),
+				Vector2(-10, -2),
+				Vector2(-5, 2),
+				Vector2(0, 0),
+				Vector2(5, 2),
+				Vector2(10, -2),
+				Vector2(8, -16)
+			]
+		),
 		Color("711827")
 	)
 	draw_colored_polygon(
-		PackedVector2Array([Vector2(-3, -16), Vector2(0, -8), Vector2(3, -16)]),
-		Color("f1e8d8")
+		PackedVector2Array([Vector2(-3, -16), Vector2(0, -8), Vector2(3, -16)]), Color("f1e8d8")
 	)
 	draw_line(Vector2(0, -15), Vector2(0, -1), Color("c8a34b"), 1.5, true)
 	draw_circle(Vector2(0, -8), 1.4, Color("f2c84b"))

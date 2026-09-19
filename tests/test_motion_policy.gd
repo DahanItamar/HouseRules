@@ -70,23 +70,12 @@ func test_reduced_vault_effect_keeps_static_acknowledgement_without_smoke() -> v
 	assert_null(mine_effect.smoke_particles, "Reduced motion omits drifting smoke")
 
 
-func test_reduced_floor_stops_dust_patrons_and_camera_emphasis() -> void:
+func test_reduced_floor_stops_dust_and_camera_emphasis() -> void:
 	MotionPolicy.set_reduced_motion_for_tests(true)
 	var floor := FloorController.new()
 	add_child_autofree(floor)
 	floor.set_physics_process(false)
 	assert_false(floor._dust.emitting)
-	var patron: Node2D = floor._patrons[0]
-	patron.call("_process", 0.4)
-	assert_eq(float(patron.get("elapsed")), 0.0)
-	assert_eq(float(patron.get("gesture_strength")), 0.0)
-	for attract: MachineAttract in floor._machine_attracts.values():
-		assert_true(attract.reduced_motion)
-		assert_false(attract.is_processing(), "Machine attract loops hold a stable reduced frame")
-		var stable_phase := attract.visual_phase()
-		attract._process(0.4)
-		assert_eq(attract.elapsed, 0.0)
-		assert_eq(attract.visual_phase(), stable_phase)
 	floor.avatar_position = floor.cabinet_positions[&"slot_classic"]
 	floor.refresh_proximity()
 	assert_eq(floor._floor_camera.position, FloorController.CAMERA_CENTER)
@@ -130,7 +119,9 @@ func test_full_motion_focus_has_one_restrained_living_cue() -> void:
 	feedback._process(0.55)
 	assert_true(feedback.is_processing())
 	assert_ne(button.self_modulate, Color.WHITE)
-	assert_eq(button.scale, Vector2(1.025, 1.025), "Existing bounded focus scale remains authoritative")
+	assert_eq(
+		button.scale, Vector2(1.025, 1.025), "Existing bounded focus scale remains authoritative"
+	)
 	button.release_focus()
 	assert_eq(button.self_modulate, Color.WHITE)
 	assert_false(feedback.is_processing())
@@ -194,7 +185,7 @@ func test_reduced_avatar_keeps_directional_walk_frames_without_body_bob() -> voi
 	assert_true(avatar.is_walking)
 	assert_gt(avatar.walk_frame, -1, "Directional gait frames still communicate movement")
 	assert_eq(avatar._sprite.rotation, 0.0)
-	assert_eq(avatar._sprite.position, Vector2(0, -23))
+	assert_eq(avatar._sprite.position, FloorAvatar.FOOT_OFFSET)
 	assert_eq(avatar._sprite.scale, Vector2.ONE * FloorAvatar.GUEST_SCALE)
 
 

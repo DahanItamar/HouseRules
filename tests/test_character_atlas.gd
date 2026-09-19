@@ -8,13 +8,7 @@ func test_atlas_uses_exact_integer_cells_with_transparent_gutters() -> void:
 		"res://assets/production/characters/casino_guest_walk_integer.png"
 	)
 	var image := texture.get_image()
-	assert_eq(
-		image.get_size(),
-		WalkAtlas.CELL_SIZE * Vector2i(
-			WalkAtlas.COLUMNS,
-			WalkAtlas.ROWS
-		)
-	)
+	assert_eq(image.get_size(), WalkAtlas.CELL_SIZE * Vector2i(WalkAtlas.COLUMNS, WalkAtlas.ROWS))
 	for row: int in range(WalkAtlas.ROWS):
 		for column: int in range(WalkAtlas.COLUMNS):
 			var origin := Vector2i(column, row) * WalkAtlas.CELL_SIZE
@@ -23,18 +17,26 @@ func test_atlas_uses_exact_integer_cells_with_transparent_gutters() -> void:
 			assert_eq(image.get_pixelv(far_corner).a, 0.0)
 			var gutter_is_clear := true
 			for offset: int in range(WalkAtlas.CELL_SIZE.x):
-				gutter_is_clear = gutter_is_clear and is_zero_approx(
-					image.get_pixelv(origin + Vector2i(offset, 0)).a
+				gutter_is_clear = (
+					gutter_is_clear
+					and is_zero_approx(image.get_pixelv(origin + Vector2i(offset, 0)).a)
 				)
-				gutter_is_clear = gutter_is_clear and is_zero_approx(
-					image.get_pixelv(origin + Vector2i(offset, WalkAtlas.CELL_SIZE.y - 1)).a
+				gutter_is_clear = (
+					gutter_is_clear
+					and is_zero_approx(
+						image.get_pixelv(origin + Vector2i(offset, WalkAtlas.CELL_SIZE.y - 1)).a
+					)
 				)
 			for offset: int in range(WalkAtlas.CELL_SIZE.y):
-				gutter_is_clear = gutter_is_clear and is_zero_approx(
-					image.get_pixelv(origin + Vector2i(0, offset)).a
+				gutter_is_clear = (
+					gutter_is_clear
+					and is_zero_approx(image.get_pixelv(origin + Vector2i(0, offset)).a)
 				)
-				gutter_is_clear = gutter_is_clear and is_zero_approx(
-					image.get_pixelv(origin + Vector2i(WalkAtlas.CELL_SIZE.x - 1, offset)).a
+				gutter_is_clear = (
+					gutter_is_clear
+					and is_zero_approx(
+						image.get_pixelv(origin + Vector2i(WalkAtlas.CELL_SIZE.x - 1, offset)).a
+					)
 				)
 			assert_true(gutter_is_clear, "Every frame is isolated by transparent pixels")
 
@@ -83,7 +85,7 @@ func test_avatar_advances_real_leg_frames_without_anchor_sliding() -> void:
 		avatar.set_motion(Vector2.RIGHT * (FloorAvatar.WALK_CYCLE_DISTANCE / 4.0))
 		regions[avatar._atlas.region] = true
 		avatar._process(0.01)
-		assert_eq(avatar._sprite.position, Vector2(0, -23))
+		assert_eq(avatar._sprite.position, FloorAvatar.FOOT_OFFSET)
 		assert_eq(avatar._sprite.rotation, 0.0)
 	assert_eq(regions.size(), 4, "Movement advances through four photographed leg phases")
 	assert_eq(avatar._sprite.texture_filter, CanvasItem.TEXTURE_FILTER_LINEAR)
