@@ -54,23 +54,23 @@ func test_vault_tile_uses_authored_faces_for_every_state() -> void:
 	assert_eq(VaultTile.FACE_TEXTURES.size(), 3)
 	for texture: Texture2D in VaultTile.FACE_TEXTURES:
 		assert_not_null(texture)
-		assert_eq(texture.get_size(), Vector2(224, 224))
+		assert_eq(texture.get_size(), Vector2(1024, 1024))
 
 
 func test_vault_faces_are_sharp_transparent_production_art() -> void:
 	var paths := [
-		"res://assets/production/vault/tile_unrevealed.png",
-		"res://assets/production/vault/tile_safe_revealed.png",
-		"res://assets/production/vault/tile_mine_revealed.png",
+		"res://assets/production/vault/witcher/tile_sealed.png",
+		"res://assets/production/vault/witcher/tile_safe_coins.png",
+		"res://assets/production/vault/witcher/tile_cursed_rune.png",
 	]
 	for path: String in paths:
 		var image := Image.load_from_file(ProjectSettings.globalize_path(path))
-		assert_eq(image.get_size(), Vector2i(224, 224), "%s retains its 4K-ready source" % path)
+		assert_eq(image.get_size(), Vector2i(1024, 1024), "%s retains its 1024 px master" % path)
 		for corner: Vector2i in [
-			Vector2i.ZERO, Vector2i(223, 0), Vector2i(0, 223), Vector2i(223, 223)
+			Vector2i.ZERO, Vector2i(1023, 0), Vector2i(0, 1023), Vector2i(1023, 1023)
 		]:
 			assert_eq(image.get_pixelv(corner).a, 0.0, "%s has a clean alpha gutter" % path)
-		assert_gt(image.get_pixel(112, 112).a, 0.95, "%s has an opaque readable center" % path)
+		assert_gt(image.get_pixel(512, 512).a, 0.95, "%s has an opaque readable center" % path)
 
 
 func test_vault_safe_reveal_finishes_with_a_pop_and_restored_scale() -> void:

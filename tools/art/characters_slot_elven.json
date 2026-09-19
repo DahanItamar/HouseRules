@@ -1,0 +1,28 @@
+{
+  "characters": [
+    {
+      "output": "assets/production/characters/hosts/slot_elf_princess.png",
+      "source": "assets/source/layered_v2/slot_elven/elf_master_b_1912132e.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/slot_elf_princess_reels.png",
+      "source": "assets/source/layered_v2/slot_elven/elf_reels_1f7b10e6.png",
+      "align_to": "assets/production/characters/hosts/slot_elf_princess.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/slot_elf_princess_anticipation.png",
+      "source": "assets/source/layered_v2/slot_elven/elf_anticipation_3b6e426e.png",
+      "align_to": "assets/production/characters/hosts/slot_elf_princess.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/slot_elf_princess_win.png",
+      "source": "assets/source/layered_v2/slot_elven/elf_win_ddbfa51d.png",
+      "align_to": "assets/production/characters/hosts/slot_elf_princess.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/slot_elf_princess_player.png",
+      "source": "assets/source/layered_v2/slot_elven/elf_player_69bc4bc2.png",
+      "align_to": "assets/production/characters/hosts/slot_elf_princess.png"
+    }
+  ]
+}

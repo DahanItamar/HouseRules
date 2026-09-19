@@ -197,3 +197,97 @@ by `ratio` to the master's 1994 px stature. On screen she is 264 px tall, with
 her boots at canvas (735, 386) on the crypt flagstones, clear of the grid,
 meter, status, deck, Cash Out and How to Play. Known art caveat: the cash-out
 edit drew bare hands where the other poses wear gloves.
+
+## 2026-09-19 Elven Court theme (Classic Slots re-skin)
+
+User direction: every mini-game gets its own theme and HUD. Classic Slots became
+**Elven Court**, an enchanted elven royal-court machine hosted by an adult blonde
+elf princess (pointed ears, jewelled gold circlet, fitted emerald-and-gold gown).
+Symbol indices and slot math are unchanged: cherry -> enchanted berries,
+lemon -> golden pear, bell -> silver elven bell, bar -> carved gold leaf bar,
+seven -> ruby rune seven, diamond -> moon crystal. All generation went through
+the connected **Higgsfield MCP**; this pass spent **36 credits** (one refunded
+NSFW false positive on the first "look at the player" prompt, re-phrased as a
+polite hostess greeting).
+
+Raw outputs: `assets/source/layered_v2/slot_elven/` (never modified).
+Production: `assets/production/characters/hosts/slot_elf_princess*.png` via
+`python tools/art/prepare_characters.py tools/art/characters_slot_elven.json`,
+and `assets/production/slot/elven/` via `python tools/art/slot_elven_prepare.py`.
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Elf princess master (presenting the reels) | `1912132e-8558-4dfd-8f02-2c15b31c4c7a` | `gpt_image_2_5`, 2:3, high, 2k, `background: transparent` (1360x2048, padded to 1392x2080) | 3 |
+| Alternate master (rejected) | `d8252d2d-c910-46c2-975f-01ec06ea924c` | same | 3 |
+| Reels pose (hands folded, watching reels) | `1f7b10e6-c3f2-49e2-a655-0c1c99d55dcb` | `gpt_image_2_5` edit referencing the master, 2k, transparent | 3 |
+| Anticipation pose (hands clasped under chin) | `3b6e426e-6230-4f98-bd22-7af0b1bb9249` | same | 3 |
+| Win pose (raised hand, delighted) | `ddbfa51d-0c54-4b36-bbe5-f57edeee1746` | same | 3 |
+| Player pose (greets the viewer) | `69bc4bc2-3fe1-4795-a2b4-d0f7be181416` (first try `bea10569-...` returned NSFW, refunded) | same | 3 |
+| Cabinet bezel | `036539be-3743-44b7-acfc-793a69e86633` | `nano_banana_pro` 16:9 4k, guided by an uploaded layout sketch (media `1231b256-9eeb-42ad-9965-598f0f981a87`) | 4 |
+| Berries / pear / bell / leaf bar / ruby seven | `1dcb34b8-...`, `a79c2b6c-...`, `f3217314-...`, `31566f6a-...`, `ab5b6afd-...` | `gpt_image_2_5`, 1:1, high, 1k, transparent | 2 each |
+| Moon crystal | `5357601e-5971-4d30-9890-a4fccd820a2b` | same (first submit rate-limited, not charged) | 2 |
+| Lever arm | `87efa7ba-1054-4e1f-a8b0-2a243742668d` | `gpt_image_2_5`, 2:3, high, 1k, transparent | 2 |
+
+Processing: the painted reel opening landed at virtual (254,198)-(706,391), not
+on the runtime reel window. `slot_elven_prepare.py` scales the painting uniformly
+to the window height and widens only the opening column by 13%, so the opening
+matches Rect2(166,151,628,234) exactly. It cuts that rectangle to alpha 0 and
+replaces the painted static lever arm with the forest wall above it, keeping the
+carved mount. The animated SlotLever pivots in that mount at (860,316). Symbols
+are trimmed and re-centred at 1024x1024, and `SlotSymbol.SUBJECT_RECTS` fits the
+painted subject, not the square canvas, to each reel cell.
+
+Placement: the host's five poses share one 1392x2080 canvas and one foot anchor
+(source 400,2030 -> canvas 30,424, scale 0.142, ~282 px tall). Every pose stays in
+x 2-164. She clears the reels, payline, plaque title and status, credits, bet
+tray, Spin, result meter and lever (`tests/test_cabinet_hosts.gd`).
+
+## Blackjack salon redesign and the reusable card deck (2026-09-19)
+
+Blackjack was rebuilt as a live-dealer salon: a new table master with a higher
+camera, a new stylized painterly dealer standing centred behind the far rail, a
+painted shoe and chip stack, and a reusable 52-card deck with illustrated courts.
+All generation went through the connected **Higgsfield MCP**; this pass spent
+**66 credits** (35 for the table, props and dealer; 31 for the deck).
+
+Raw outputs (never modified): `assets/source/layered_v2/blackjack/` and
+`assets/source/layered_v2/cards/`. Production derivatives:
+`python assets/source/layered_v2/blackjack/prepare_blackjack_v2.py` ->
+`assets/production/blackjack/{dealer,props}/`, and
+`python assets/source/layered_v2/cards/prepare_cards.py` -> `assets/production/cards/`.
+
+| Asset | Job | Model / settings | Credits |
+| --- | --- | --- | --- |
+| Table master (chosen) | `d99954b1-8877-4dcf-b2c7-bbc7beceebf0` | `nano_banana_pro` 16:9 4k (served as nano_banana_2), reference = old table (media `6e21e553-...`) | 4 |
+| Table alternate (rejected) | `6152d955-c205-493d-b317-3d13d12463e8` | same | 4 |
+| Card shoe | `68045eb2-e164-45ed-81d1-7c4cfd8a2902` | `gpt_image_2_5`, 3:2, high, 2k, transparent | 3 |
+| Chip stack | `e7403c67-31e8-4717-8910-57f85598746a` | `gpt_image_2_5`, 1:1, high, 2k, transparent | 3 |
+| Ivory face stock (paper source) | `c62dd28a-79d0-46a8-af4c-e9ae6b8fcb4a` | `gpt_image_2_5`, 2:3, high, 2k, transparent | 3 |
+| First card back (superseded) | `fc531367-4a20-45c5-ae52-849930e1374f` | same | 3 |
+| Salon dealer master, cards pose (chosen) | `00078168-8da9-48a4-a279-acd61f3eb480` | `gpt_image_2_5`, 2:3, high, 2k, transparent | 3 |
+| Salon dealer alternate (rejected) | `d344680c-4aee-47a5-baa6-7d6768d88587` | same | 3 |
+| Deal / reveal / player poses | `b791d185-e7e3-410a-9e63-d5ea784dd78b`, `f23948f6-48bc-42bb-8585-7b624907ddc5`, `51c62ac7-0b40-4163-a342-98af467e4a6b` | `gpt_image_2_5` edit referencing the master, 2k, transparent | 3 each |
+| King of spades court half (style key) | `77cbb1a3-f712-44d1-8d7c-8cac791332de` | `gpt_image_2_5`, 4:3, high, 1k | 2 |
+| Other 11 court halves | `edb63c23-...` (Q♠), `d6bff1f4-...` (J♠), `54db661d-...` (K♥), `ec95a5d1-...` (Q♥), `8bfa84be-...` (J♥), `5b18c996-...` (K♦), `d5a7e1ff-...` (Q♦), `a611b0c5-...` (J♦), `2e6eab3d-...` (K♣), `e8e8582f-...` (Q♣), `1837fd84-...` (J♣) | `gpt_image_2_5` edit referencing the K♠ half, 4:3, high, 1k | 2 each |
+| Suit pip set | `8533fe4e-6b58-48d7-98d6-c6d3e8237b1c` | `gpt_image_2_5`, 1:1, high, 1k, transparent | 2 |
+| Ornate ace of spades | `e7fdc80d-f8cc-44a8-a72d-0672b6660391` | same | 2 |
+| Card back | `627d91d2-2def-4034-a7e7-e9130153eeb4` | `gpt_image_2_5`, 2:3, high, 2k | 3 |
+
+Processing:
+- Table: a 1.12x top-centred crop of the 5504x3072 output resized to 3840x2160
+  (`blackjack_table_v2.png`); the painted betting circle under the control deck
+  was inpainted out (OpenCV Telea plus the felt's own grain). The far walnut
+  rail edge is level at virtual y 175.25; the dealer occluder samples this texture.
+- Dealer: four aligned 1360x2048 poses (`blackjack_dealer_v2_salon_<pose>.png`);
+  the skirt waistband (source y 1215) sits on the rail. A hands layer
+  (`..._salon_hands_<pose>.png`) keeps hands, cuffs and held cards, starts 40
+  source rows above the rail and is fully opaque 6 rows above it, so it is drawn
+  over the rail occluder with no seam; legs (components touching the frame
+  bottom) and the skirt stay behind the table. A soft 34% contact shadow is baked
+  under the hands.
+- Deck: the ivory stock is the inside of the face template; the back is made
+  exactly point-symmetric; courts are the generated half plus the same half
+  rotated 180 degrees (double-headed), trimmed to the last painted row so the
+  halves meet on a dark rule. Ranks, indices and 2-10 pip layouts are laid out in
+  `src/ui/playing_card.gd`; no generated text is used anywhere. No third-party
+  deck marks, logos or back designs.

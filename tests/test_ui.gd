@@ -530,10 +530,12 @@ func test_slot_reels_spin_independently_and_gate_settlement() -> void:
 
 
 func test_higgsfield_slot_symbols_are_high_resolution_and_transparent() -> void:
-	for symbol_name: String in ["cherry", "lemon", "bell", "bar", "seven", "diamond"]:
-		var path := "res://assets/production/slot/symbols/%s.png" % symbol_name
-		var texture: Texture2D = load(path)
-		assert_not_null(texture, "%s runtime symbol is imported" % symbol_name)
+	# Elven Court symbols keep the classic index semantics (cherry, lemon, bell,
+	# bar, seven, diamond) with themed Higgsfield paintings.
+	assert_eq(SlotSymbol.TEXTURES.size(), SlotMachineMath.Symbol.size())
+	for texture: Texture2D in SlotSymbol.TEXTURES:
+		var symbol_name := texture.resource_path
+		assert_string_starts_with(symbol_name, "res://assets/production/slot/elven/symbol_")
 		assert_eq(texture.get_size(), Vector2(1024, 1024), "%s retains its sharp master" % symbol_name)
 		var image := texture.get_image()
 		assert_eq(image.get_pixel(0, 0).a, 0.0, "%s magenta corner is transparent" % symbol_name)
@@ -551,9 +553,7 @@ func test_slot_uses_a_full_screen_sharp_higgsfield_stage() -> void:
 	for reel: Control in panel._slot_reels:
 		assert_gte(reel.size.x, 190.0, "Each reel is large enough for handheld readability")
 		assert_gte(reel.size.y, 230.0, "Three visible rows fill the main stage")
-	var bezel: Texture2D = load(
-		"res://assets/production/slot/symbols/slot_fullscreen_bezel.png"
-	)
+	var bezel: Texture2D = load("res://assets/production/slot/elven/elven_court_bezel.png")
 	assert_gte(bezel.get_width(), 3840, "The bezel retains a native 4K master")
 	var bezel_image := bezel.get_image()
 	assert_lt(
@@ -622,7 +622,9 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 	assert_eq(vault_panel._vault_tiles[0].size, Vector2(56, 56))
 	assert_eq(vault_panel._vault_tiles[1].position.x - vault_panel._vault_tiles[0].position.x, 60.0)
 	assert_eq(vault_panel._vault_cashout_meter.position, Vector2(48, 284))
-	var vault_backdrop: Texture2D = load("res://assets/production/vault/vault_backdrop.png")
+	var vault_backdrop: Texture2D = load(
+		"res://assets/production/vault/witcher/witcher_vault_backdrop.png"
+	)
 	assert_gte(vault_backdrop.get_width(), 3840, "Vault backdrop retains a native 4K master")
 	assert_not_null(vault_panel.find_child("VaultControlDeck", true, false))
 	assert_not_null(vault_panel.find_child("VaultStatusPanel", true, false))

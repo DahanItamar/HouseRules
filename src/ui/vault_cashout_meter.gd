@@ -1,18 +1,22 @@
 class_name VaultCashoutMeter
 extends Control
 ## Presentation-only vault cash-out meter. Game rules remain the caller's responsibility.
+## Hexbound Vault styling: a carved-slate plate with silver rules and rivets; the
+## banked value and progress rail burn candle-amber once a cash-out is possible.
 
 signal animation_finished
 
 const ANIMATION_MIN_SECONDS: float = 0.35
 const ANIMATION_MAX_SECONDS: float = 0.55
-const PANEL_COLOR := Color("17171b")
-const PANEL_BORDER := Color("665a47")
-const READY_COLOR := Color("45bd78")
-const DISABLED_COLOR := Color("77736c")
-const RAIL_COLOR := Color("302f33")
-const TEXT_COLOR := Color("f2eadc")
-const MUTED_TEXT_COLOR := Color("aaa49b")
+const PANEL_COLOR := Color("111115")
+const PANEL_BORDER := Color("5d636d")
+const READY_COLOR := Color("e3b062")
+const READY_BORDER := Color("aab3bf")
+const READY_PULSE := Color("ffd79a")
+const DISABLED_COLOR := Color("6d6a66")
+const RAIL_COLOR := Color("25252b")
+const TEXT_COLOR := Color("ece6da")
+const MUTED_TEXT_COLOR := Color("a39d94")
 
 var target_amount: int = 0
 var target_multiplier: float = 1.0
@@ -159,19 +163,16 @@ func _draw() -> void:
 		if is_ready and MotionPolicy.allows_continuous_motion()
 		else 0.0
 	)
-	var panel := StyleBoxFlat.new()
-	panel.bg_color = PANEL_COLOR
-	panel.border_color = (
-		READY_COLOR.lerp(Color("8bf2b1"), ready_pulse * 0.34)
-		if is_ready
-		else PANEL_BORDER
+	VaultRuneFrame.draw_plate(
+		self,
+		bounds,
+		Color(PANEL_COLOR, 0.95),
+		READY_BORDER if is_ready else PANEL_BORDER,
+		READY_COLOR if is_ready else VaultRuneFrame.SILVER_DIM
 	)
-	panel.set_border_width_all(2)
-	panel.set_corner_radius_all(8)
-	draw_style_box(panel, bounds)
 
 	var accent := (
-		READY_COLOR.lerp(Color("b5f2c8"), ready_pulse * 0.22)
+		READY_COLOR.lerp(READY_PULSE, ready_pulse * 0.22)
 		if is_ready
 		else DISABLED_COLOR
 	)
@@ -180,7 +181,7 @@ func _draw() -> void:
 	var number_font := Typography.DISPLAY_FONT
 	draw_string(
 		label_font,
-		Vector2(12, 21),
+		Vector2(14, 23),
 		tr("ACTION_CASH_OUT"),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		84,
@@ -215,7 +216,7 @@ func _draw() -> void:
 		accent
 	)
 
-	var rail := Rect2(Vector2(12, size.y - 18), Vector2(maxf(size.x - 24, 0.0), 7))
+	var rail := Rect2(Vector2(14, size.y - 20), Vector2(maxf(size.x - 28, 0.0), 7))
 	draw_rect(rail, RAIL_COLOR, true)
 	for marker_index: int in range(1, 5):
 		var marker_x := rail.position.x + rail.size.x * float(marker_index) / 5.0
@@ -234,7 +235,7 @@ func _draw() -> void:
 			draw_line(
 				Vector2(glint_x, fill.position.y),
 				Vector2(glint_x, fill.end.y),
-				Color(0.90, 1.0, 0.93, 0.42 + ready_pulse * 0.28),
+				Color(READY_PULSE, 0.42 + ready_pulse * 0.28),
 				3.0
 			)
 		# A hard leading edge makes increasing value legible at a glance.

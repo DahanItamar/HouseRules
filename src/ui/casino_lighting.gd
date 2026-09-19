@@ -32,7 +32,8 @@ func _draw() -> void:
 	if mode == Mode.BLACKJACK:
 		accent = Color("4a9d7c")
 	elif mode == Mode.VAULT:
-		accent = Color("5574b8")
+		# Hexbound Vault: the crypt's candlelight, not a cold vault-blue beam.
+		accent = Color("c98a3e")
 	elif mode == Mode.SLOT:
 		accent = Color("a92c3f")
 	var drift := sin(elapsed * 0.22) * 34.0

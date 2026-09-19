@@ -4,6 +4,12 @@ extends Node2D
 
 signal pressed
 
+const ARM := preload("res://assets/production/slot/elven/lever_arm.png")
+## Centre of the rounded pivot cap in the arm master (tools/art/slot_elven_prepare.py).
+const ARM_PIVOT := Vector2(88.5, 1002)
+## ~110 px from pivot to crystal tip on the 960x540 canvas.
+const ARM_SCALE: float = 0.112
+
 var disabled: bool = false:
 	set(value):
 		disabled = value
@@ -15,10 +21,12 @@ var _hit_target: Button
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_hit_target = Button.new()
 	_hit_target.name = "LeverHitTarget"
-	_hit_target.position = Vector2(-30, -125)
-	_hit_target.size = Vector2(118, 250)
+	# Covers shaft and crystal (>= 44 px wide) while staying inside TV-safe x.
+	_hit_target.position = Vector2(-32, -112)
+	_hit_target.size = Vector2(64, 128)
 	_hit_target.focus_mode = Control.FOCUS_NONE
 	_hit_target.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	_hit_target.tooltip_text = tr("SLOT_SPIN")
@@ -38,23 +46,14 @@ func settle() -> void:
 
 
 func _draw() -> void:
-	var base := Vector2.ZERO
-	var handle := Vector2(0, -92)
-	var dim := 0.68 if disabled else 1.0
-	var hovered := _hit_target != null and _hit_target.is_hovered() and not disabled
-	var hover_lift := 0.08 if hovered else 0.0
-
-	draw_circle(base + Vector2(3, 4), 24.0, Color("0504058c") * dim)
-	draw_circle(base, 23.0, Color("2a1517") * dim)
-	draw_circle(base, 18.0, Color("6b1723") * dim)
-	draw_arc(base, 20.0, 0.0, TAU, 32, Color("c8a34b") * dim, 3.0)
-	draw_line(base, handle, Color("090709") * dim, 11.0, true)
-	draw_line(base, handle, Color("c8a34b") * dim, 6.0, true)
-	draw_circle(handle + Vector2(2, 3), 18.0, Color("05040580") * dim)
-	draw_circle(handle, 17.0, Color("71101f") * dim)
-	draw_circle(
-		handle + Vector2(-4, -5),
-		6.0,
-		Color(0.95, 0.76, 0.43, 0.52 + hover_lift) * dim
+	# Elven Court lever: the painted silver-and-emerald arm pivots in the carved
+	# mount painted on the cabinet flank. Hover brightens it; disabled dims it.
+	var tint := Color(1, 1, 1)
+	if disabled:
+		tint = Color(0.62, 0.66, 0.64)
+	elif _hit_target != null and _hit_target.is_hovered():
+		tint = Color(1.12, 1.12, 1.08)
+	draw_circle(Vector2(1, 2), 9.0, Color(0.02, 0.05, 0.03, 0.55))
+	draw_texture_rect(
+		ARM, Rect2(-ARM_PIVOT * ARM_SCALE, ARM.get_size() * ARM_SCALE), false, tint
 	)
-	draw_arc(handle, 16.0, 0.0, TAU, 32, Color("f2c84b") * dim, 2.0)

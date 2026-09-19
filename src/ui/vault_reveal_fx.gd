@@ -4,11 +4,13 @@ extends Node2D
 
 enum Kind { SAFE, MINE }
 
-const SAFE_COLOR := Color("5de4d2")
-const SAFE_HIGHLIGHT := Color("e9fff9")
-const MINE_COLOR := Color("ef5350")
-const DEBRIS_COLOR := Color("8d6257")
-const SMOKE_COLOR := Color("39313d")
+## Hexbound Vault palette: moon-silver coin shards with a candle-amber glint;
+## a cursed rune throws ember-red shock and slate grit.
+const SAFE_COLOR := Color("c9d2dc")
+const SAFE_HIGHLIGHT := Color("ffe2a8")
+const MINE_COLOR := Color("e2483e")
+const DEBRIS_COLOR := Color("56525c")
+const SMOKE_COLOR := Color("241f26")
 
 var kind: Kind = Kind.SAFE
 var lifetime: float = 0.54
@@ -195,7 +197,7 @@ func _make_debris_texture() -> Texture2D:
 	for y: int in range(1, 6):
 		for x: int in range(1, 6):
 			if x + y >= 3 and x + y <= 9:
-				image.set_pixel(x, y, Color("b47b65") if y < 3 else DEBRIS_COLOR)
+				image.set_pixel(x, y, Color("8a8591") if y < 3 else DEBRIS_COLOR)
 	return ImageTexture.create_from_image(image)
 
 

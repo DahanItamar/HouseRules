@@ -94,7 +94,7 @@ HELP_BLACKJACK_CONTROLS,"[%s] Deal / Hit
 [%s] Leave"
 HELP_MINEFIELD_VAULT_RULES,"Choose risk before the round.
 
-Every safe box raises the multiplier. Cash out before finding a mine.
+Every silver cache raises the multiplier. Cash out before you break a cursed rune.
 
 More mines mean higher rewards."
 HELP_MINEFIELD_VAULT_CONTROLS,"[%s] Open
@@ -107,6 +107,7 @@ HELP_MINEFIELD_VAULT_CONTROLS,"[%s] Open
 
 [%s] Leave"
 SLOT_SPIN,SPIN
+SLOT_THEME_TITLE,ELVEN COURT
 SLOT_CENTER_PAYLINE,CENTER PAYLINE
 SLOT_LAST_WIN,RETURNED  %d
 SLOT_RETURNED,WIN  %d
@@ -124,7 +125,7 @@ BLACKJACK_TOTAL,TOTAL %d
 BLACKJACK_SHOWING,SHOWING %d
 BLACKJACK_HANDS,"PLAYER  %s\n\nDEALER  %s\n\nAce = 1 (or 11) · J / Q / K = 10"
 BLACKJACK_CONTROLS,[%s] Deal / Hit   [%s] Stand   [%s] Double   %s: Stake   [%s] Leave
-VAULT_REVEAL,Reveal a box or cash out after a safe reveal.
+VAULT_REVEAL,"Break a rune seal, or cash out after a safe find."
 VAULT_GRID,"MINES %d   MULTIPLIER %.2f×\nCASH OUT %d"
 VAULT_CONTROLS,[%s] Open   [%s] Cash out   %s: Stake   %s: Mines   [%s] Leave
 INPUT_ENTER,Enter
@@ -145,7 +146,7 @@ ACTION_STAND,STAND
 ACTION_DOUBLE,DOUBLE
 ACTION_DOUBLE_TO,DOUBLE TO %d
 ACTION_ENTER,ENTER VAULT
-ACTION_OPEN,OPEN BOX
+ACTION_OPEN,BREAK SEAL
 ACTION_CASH_OUT,CASH OUT
 INPUT_STICK_HORIZONTAL,Left stick / D-pad left-right
 INPUT_STICK_VERTICAL,Left stick / D-pad up-down
@@ -168,3 +169,12 @@ GAMEPAD_RECONNECT,Controller disconnected. Reconnect a controller to continue.
 ROOM_EXIT_PROMPT,[%s] Return to the Main Floor
 ROOM_PREVIEW_ONLY,PREVIEW ONLY · NO PLAYABLE TABLES IN THIS ROOM YET
 ROOM_BACK_BUTTON,‹  MAIN FLOOR  [%s]
+BLACKJACK_RESULT_WIN,WIN  +%d
+BLACKJACK_RESULT_NATURAL,BLACKJACK  +%d
+BLACKJACK_RESULT_DEALER_BUST,DEALER BUSTS  +%d
+BLACKJACK_RESULT_PUSH,PUSH
+BLACKJACK_RESULT_BUST,BUST
+BLACKJACK_RESULT_LOSS,DEALER WINS
+BLACKJACK_RESULT_CLOSED,HAND CLOSED
+VAULT_WITCHER_TITLE,HEXBOUND VAULT
+WING_ENTER,[%s] Enter the %s

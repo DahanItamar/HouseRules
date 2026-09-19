@@ -1,15 +1,31 @@
 class_name SlotSymbol
 extends Control
-## High-resolution Higgsfield reel icon, keyed from exact magenta-mask masters.
+## High-resolution Higgsfield reel icon for the Elven Court theme. The index keeps
+## the classic symbol semantics used by SlotMachineMath (cherry, lemon, bell, bar,
+## seven, diamond) and only swaps the painted subject.
 
 const TEXTURES: Array[Texture2D] = [
-	preload("res://assets/production/slot/symbols/cherry.png"),
-	preload("res://assets/production/slot/symbols/lemon.png"),
-	preload("res://assets/production/slot/symbols/bell.png"),
-	preload("res://assets/production/slot/symbols/bar.png"),
-	preload("res://assets/production/slot/symbols/seven.png"),
-	preload("res://assets/production/slot/symbols/diamond.png"),
+	preload("res://assets/production/slot/elven/symbol_berries.png"),
+	preload("res://assets/production/slot/elven/symbol_pear.png"),
+	preload("res://assets/production/slot/elven/symbol_bell.png"),
+	preload("res://assets/production/slot/elven/symbol_leaf_bar.png"),
+	preload("res://assets/production/slot/elven/symbol_ruby_seven.png"),
+	preload("res://assets/production/slot/elven/symbol_moon_crystal.png"),
 ]
+## Painted subject inside each 1024 px master (see tools/art/slot_elven_prepare.py).
+## Fitting the subject, not the square canvas, lets the wide leaf bar read as
+## large as the tall icons inside a wide reel cell.
+const SUBJECT_RECTS: Array[Rect2] = [
+	Rect2(146, 71, 731, 881),
+	Rect2(243, 71, 537, 881),
+	Rect2(255, 71, 513, 881),
+	Rect2(71, 392, 881, 240),
+	Rect2(179, 71, 666, 881),
+	Rect2(195, 71, 633, 881),
+]
+## Wide subjects never grow past this multiple of the cell height.
+const MAX_SUBJECT_ASPECT: float = 1.55
+const CELL_FILL: float = 0.92
 
 const SYMBOL_SHADER_SOURCE := """
 shader_type canvas_item;
@@ -96,13 +112,17 @@ func _phase_seed() -> float:
 func _draw() -> void:
 	var texture := TEXTURES[symbol_index]
 	var source_size := texture.get_size()
-	var scale_factor: float = minf(size.x / source_size.x, size.y / source_size.y)
+	var subject := SUBJECT_RECTS[symbol_index]
+	var fit_box := Vector2(minf(size.x, size.y * MAX_SUBJECT_ASPECT), size.y) * CELL_FILL
+	var scale_factor: float = minf(fit_box.x / subject.size.x, fit_box.y / subject.size.y)
 	var draw_size := source_size * scale_factor
+	# Centre the painted subject (not the canvas) in the cell.
+	var subject_center := (subject.position + subject.size * 0.5) * scale_factor
 	var phase := float(symbol_index) * 0.91 + position.x * 0.013 + position.y * 0.007
 	var idle_offset := Vector2.ZERO
 	if MotionPolicy.allows_continuous_motion():
 		idle_offset.y = sin(_motion_time * 1.7 + phase) * (1.25 - spin_strength)
-	var draw_origin := (size - draw_size) * 0.5 + idle_offset
+	var draw_origin := size * 0.5 - subject_center + idle_offset
 	if spin_strength > 0.001:
 		for trail: float in [-18.0, -10.0, 10.0, 18.0]:
 			var trail_alpha := spin_strength * (0.10 if absf(trail) < 12.0 else 0.055)

@@ -1,0 +1,23 @@
+{
+  "characters": [
+    {
+      "output": "assets/production/characters/hosts/vault_witcher_sorceress.png",
+      "source": "assets/source/layered_v2/vault_witcher/sorceress_a_683397aa.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/vault_witcher_sorceress_idle.png",
+      "source": "assets/source/layered_v2/vault_witcher/sorceress_idle_cutout_9ad395c9.png",
+      "align_to": "assets/production/characters/hosts/vault_witcher_sorceress.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/vault_witcher_sorceress_cashout.png",
+      "source": "assets/source/layered_v2/vault_witcher/sorceress_cashout_cutout_5ef43ed9.png",
+      "align_to": "assets/production/characters/hosts/vault_witcher_sorceress.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/vault_witcher_sorceress_warning.png",
+      "source": "assets/source/layered_v2/vault_witcher/sorceress_warning_cutout_0fad4a35.png",
+      "align_to": "assets/production/characters/hosts/vault_witcher_sorceress.png"
+    }
+  ]
+}

@@ -138,8 +138,8 @@ func _layout_buttons() -> void:
 		_buttons[index].position = rects[index].position
 		_buttons[index].size = rects[index].size
 	if _stake_value != null:
-		_stake_value.position = Vector2(48.0, 1.0)
-		_stake_value.size = Vector2(72.0, 32.0)
+		_stake_value.position = Vector2(62.0, 1.0)
+		_stake_value.size = Vector2(62.0, 32.0)
 
 
 func _select_amount(amount: int) -> void:
@@ -157,7 +157,7 @@ func _draw() -> void:
 		Vector2(8, 20),
 		tr("BET_IN_PLAY") if cabinet.is_round_active else tr("BET_TOTAL"),
 		HORIZONTAL_ALIGNMENT_LEFT,
-		42,
+		54,
 		Typography.CAPTION,
 		Color("b8aa97")
 	)

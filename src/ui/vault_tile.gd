@@ -1,6 +1,7 @@
 class_name VaultTile
 extends Control
-## Physical deposit-box tile with a press-and-flip reveal.
+## Hexbound Vault rune-sealed stone tile with a press-and-flip reveal: sealed
+## slate, a cache of silver moon coins (safe) or a burning curse sigil (mine).
 
 signal reveal_effect_requested(face_value: int, local_origin: Vector2)
 signal reveal_completed(face_value: int)
@@ -9,9 +10,9 @@ signal pointer_activated
 
 enum Face { HIDDEN, SAFE, MINE }
 const FACE_TEXTURES: Array[Texture2D] = [
-	preload("res://assets/production/vault/tile_unrevealed.png"),
-	preload("res://assets/production/vault/tile_safe_revealed.png"),
-	preload("res://assets/production/vault/tile_mine_revealed.png"),
+	preload("res://assets/production/vault/witcher/tile_sealed.png"),
+	preload("res://assets/production/vault/witcher/tile_safe_coins.png"),
+	preload("res://assets/production/vault/witcher/tile_cursed_rune.png"),
 ]
 var face: Face = Face.HIDDEN
 var is_flipping: bool = false
@@ -248,12 +249,12 @@ func _draw() -> void:
 	if _pointer_hovered and face == Face.HIDDEN:
 		draw_rect(
 			Rect2(Vector2(3, 3) + physical_offset, size - Vector2(6, 6)),
-			Color("d9fbff", 0.18),
+			Color("e8edf5", 0.14),
 			true
 		)
 		draw_rect(
 			Rect2(Vector2(2, 2) + physical_offset, size - Vector2(4, 4)),
-			Color("8be7ef", 0.82),
+			Color("c9d2dc", 0.86),
 			false,
 			2.0
 		)
@@ -293,7 +294,7 @@ func _draw() -> void:
 		)
 		draw_circle(marker_center + Vector2(0.0, 5.5), 1.2, Color("ffd8c7"))
 	if _flash_remaining > 0.0:
-		var flash_color := Color("ff394d") if face == Face.MINE else Color("68f0a4")
+		var flash_color := Color("ff394d") if face == Face.MINE else Color("e3eaf4")
 		flash_color.a = (_flash_remaining / 0.30) * 0.55
 		draw_rect(Rect2(Vector2.ONE, size - Vector2(2, 2)), flash_color, false, 4.0)
 	if is_selected:
