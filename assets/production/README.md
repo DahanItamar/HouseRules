@@ -30,3 +30,14 @@ transparent, mipmapped runtime files under `slot/symbols/`.
 | File | Generator | Job ID | Date | Purpose |
 | --- | --- | --- | --- | --- |
 | `slot/symbols/slot_fullscreen_bezel.png` | Higgsfield GPT Image 2.5 | `16f8cc7e-58ae-4b65-93dc-978d2620bd58` | 2026-09-18 | Full-screen transparent Art Deco reel bezel and control deck |
+
+## Vault-tile provenance
+
+The three matching 1536 px transparent masters were generated as one visual family,
+then Lanczos-downsampled to 224 px runtime textures (4× their 56 px logical size).
+
+| File | Generator | Generation ID | Date | Purpose |
+| --- | --- | --- | --- | --- |
+| `vault/tile_unrevealed.png` | OpenAI ImageGen | `exec-b76b9dd1-416e-4c7b-b48e-ec52167e404b` | 2026-09-19 | Closed navy, gunmetal and brass security tile |
+| `vault/tile_safe_revealed.png` | OpenAI ImageGen | `exec-1937b419-b67b-4875-808a-28d76e6fa817` | 2026-09-19 | Matching revealed cyan-diamond reward state |
+| `vault/tile_mine_revealed.png` | OpenAI ImageGen | `exec-1b18d4a7-c2e9-4a41-9681-2d1d3959d2f6` | 2026-09-19 | Matching revealed red mechanical hazard state |

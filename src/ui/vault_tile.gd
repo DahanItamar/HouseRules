@@ -7,9 +7,9 @@ signal reveal_completed(face_value: int)
 
 enum Face { HIDDEN, SAFE, MINE }
 const FACE_TEXTURES: Array[Texture2D] = [
-	preload("res://assets/drafts/m2/tile_unrevealed.png"),
-	preload("res://assets/drafts/m2/tile_safe_revealed.png"),
-	preload("res://assets/drafts/m2/tile_mine_revealed.png"),
+	preload("res://assets/production/vault/tile_unrevealed.png"),
+	preload("res://assets/production/vault/tile_safe_revealed.png"),
+	preload("res://assets/production/vault/tile_mine_revealed.png"),
 ]
 var face: Face = Face.HIDDEN
 var is_flipping: bool = false
