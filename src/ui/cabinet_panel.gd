@@ -1608,8 +1608,41 @@ func _settle_action_control(button: BaseButton) -> void:
 func _apply_live_feedback_motion_preference(reduced: bool) -> void:
 	if not reduced:
 		return
+	_settle_slot_spin_motion()
 	_settle_blackjack_card_motions()
 	_settle_slot_lever_motion()
+	if _help_tween != null and _help_tween.is_valid():
+		set_help_open(help_open)
+	if _entrance_tween != null and _entrance_tween.is_valid():
+		_entrance_tween.kill()
+	_entrance_tween = null
+	if _art_root != null:
+		_art_root.position = Vector2.ZERO
+		_art_root.modulate.a = 1.0
+	if _cursor_tween != null and _cursor_tween.is_valid():
+		_cursor_tween.kill()
+	_cursor_tween = null
+	if _blackjack_fx_tween != null and _blackjack_fx_tween.is_valid():
+		_blackjack_fx_tween.kill()
+	_blackjack_fx_tween = null
+	if _blackjack_result_banner != null:
+		_blackjack_result_banner.modulate.a = 1.0
+		_blackjack_result_banner.scale = Vector2.ONE
+	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
+		if label != null:
+			label.scale = Vector2.ONE
+	if _vault_fx_tween != null and _vault_fx_tween.is_valid():
+		_vault_fx_tween.kill()
+	_vault_fx_tween = null
+	if _vault_cursor != null:
+		_vault_cursor.scale = Vector2.ONE
+	if _result_impact_tween != null and _result_impact_tween.is_valid():
+		_result_impact_tween.kill()
+	_result_impact_tween = null
+	_reset_slot_win_feedback()
+	_reset_slot_result_ticker()
+	if _result != null and _slot_result_value != null:
+		_slot_result_value.text = tr("SLOT_RETURNED") % _result.payout
 	for control_id: int in _state_feedback_tweens.keys():
 		_stop_state_feedback(control_id)
 	for control: Control in _state_controls.values():
@@ -1620,6 +1653,22 @@ func _apply_live_feedback_motion_preference(reduced: bool) -> void:
 	for button: BaseButton in _action_controls.values():
 		if is_instance_valid(button):
 			_settle_action_control(button)
+	refresh()
+
+
+func _settle_slot_spin_motion() -> void:
+	if not _slot_spinning:
+		return
+	for reel_index: int in range(_slot_reel_cells.size()):
+		_slot_offsets[reel_index] = _slot_total_offsets[reel_index]
+		_update_spinning_reel(reel_index)
+		_slot_reels[reel_index].position.y = SLOT_REEL_TOP
+		for cell: SlotSymbol in _slot_reel_cells[reel_index]:
+			cell.set_spin_strength(0.0)
+	_slot_anticipating_third = false
+	if _slot_anticipation_frame != null:
+		_slot_anticipation_frame.visible = false
+		_slot_anticipation_frame.modulate.a = 1.0
 
 
 func has_live_state_feedback() -> bool:

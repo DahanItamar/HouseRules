@@ -37,6 +37,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 	set_process(not reduced)
 	if reduced:
 		elapsed = 0.0
+		event_energy = 0.0
 	queue_redraw()
 
 
