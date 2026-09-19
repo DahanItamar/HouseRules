@@ -63,6 +63,11 @@ var _blackjack_credit_value: AnimatedNumberLabel
 var _blackjack_primary: Button
 var _blackjack_stand: Button
 var _blackjack_double: Button
+var _blackjack_bet_stack: Control
+var _blackjack_dealer_total_panel: Panel
+var _blackjack_player_total_panel: Panel
+var _blackjack_result_banner: Panel
+var _blackjack_result_text: Label
 var _vault_credit_value: AnimatedNumberLabel
 var _vault_open: Button
 var _vault_cash_out: Button
@@ -97,6 +102,7 @@ const VAULT_TILE_HIDDEN := preload("res://assets/drafts/m2/tile_unrevealed.png")
 const VAULT_TILE_SAFE := preload("res://assets/drafts/m2/tile_safe_revealed.png")
 const VAULT_TILE_MINE := preload("res://assets/drafts/m2/tile_mine_revealed.png")
 const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
+const BLACKJACK_BET_STACK := preload("res://src/ui/blackjack_bet_stack.gd")
 
 
 func _ready() -> void:
@@ -469,6 +475,14 @@ func _refresh_blackjack() -> void:
 		_blackjack_double.disabled = (
 			cabinet.is_result_pending or not math.can_double(cabinet.context.balance)
 		)
+	if _blackjack_bet_stack != null:
+		var live_wager: int = cabinet.current_stake if cabinet.is_round_active else 0
+		if live_wager > 0:
+			_blackjack_bet_stack.place_wager(live_wager, not _blackjack_bet_stack.is_live)
+		elif _result == null:
+			_blackjack_bet_stack.clear_wager(false)
+	if _blackjack_result_banner != null and _result == null:
+		_blackjack_result_banner.hide()
 
 
 func _refresh_vault() -> void:
@@ -777,6 +791,15 @@ func _build_blackjack_deck() -> void:
 	_blackjack_double = _action_button(
 		tr("ACTION_DOUBLE"), Vector2(778, 444), Vector2(130, 68), Callable(cabinet, "request_double")
 	)
+	_blackjack_primary.name = "BlackjackPrimaryAction"
+	_blackjack_stand.name = "BlackjackStandAction"
+	_blackjack_double.name = "BlackjackDoubleAction"
+	_blackjack_primary.add_theme_stylebox_override(
+		"normal", _panel_style(Color("143d42"), Color("48c5d5"), 7, 2)
+	)
+	_blackjack_primary.add_theme_stylebox_override(
+		"hover", _panel_style(Color("1b5158"), Color("7be5ef"), 7, 2)
+	)
 
 
 func _build_vault_deck() -> void:
@@ -860,8 +883,8 @@ func _build_blackjack_art() -> void:
 		_texture("BlackjackTableArt", BLACKJACK_TABLE, Vector2.ZERO, Vector2(960, 540))
 	)
 	for label_data: Array in [
-		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(104, 166)],
-		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(104, 330)],
+		["DealerHandLabel", "BLACKJACK_DEALER", Vector2(650, 158)],
+		["PlayerHandLabel", "BLACKJACK_PLAYER", Vector2(650, 310)],
 	]:
 		var hand_label := Label.new()
 		hand_label.name = label_data[0]
@@ -871,14 +894,60 @@ func _build_blackjack_art() -> void:
 		hand_label.add_theme_font_size_override("font_size", Typography.SUPPORTING)
 		hand_label.add_theme_color_override("font_color", Color("c8a34b"))
 		_art_root.add_child(hand_label)
-	_blackjack_dealer_total = _number_label(Vector2(104, 190), 16)
-	_blackjack_dealer_total.size = Vector2(150, 26)
+	_blackjack_dealer_total_panel = Panel.new()
+	_blackjack_dealer_total_panel.name = "DealerTotalBadge"
+	_blackjack_dealer_total_panel.position = Vector2(642, 181)
+	_blackjack_dealer_total_panel.size = Vector2(150, 38)
+	_blackjack_dealer_total_panel.z_index = 5
+	_blackjack_dealer_total_panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("091c19dc"), Color("9b7a35"), 7, 1)
+	)
+	add_child(_blackjack_dealer_total_panel)
+	_blackjack_dealer_total = _help_number_label(
+		_blackjack_dealer_total_panel, Vector2(8, 6), Vector2(134, 26), 16, Color("f1e8d8")
+	)
+	_blackjack_dealer_total.name = "DealerTotal"
+	_blackjack_dealer_total.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_blackjack_dealer_total.add_theme_color_override("font_color", Color("f1e8d8"))
 	_blackjack_dealer_total.z_index = 6
-	_blackjack_player_total = _number_label(Vector2(104, 354), 16)
-	_blackjack_player_total.size = Vector2(150, 26)
+	_blackjack_player_total_panel = Panel.new()
+	_blackjack_player_total_panel.name = "PlayerTotalBadge"
+	_blackjack_player_total_panel.position = Vector2(642, 333)
+	_blackjack_player_total_panel.size = Vector2(150, 38)
+	_blackjack_player_total_panel.z_index = 5
+	_blackjack_player_total_panel.add_theme_stylebox_override(
+		"panel", _panel_style(Color("091c19dc"), Color("9b7a35"), 7, 1)
+	)
+	add_child(_blackjack_player_total_panel)
+	_blackjack_player_total = _help_number_label(
+		_blackjack_player_total_panel, Vector2(8, 6), Vector2(134, 26), 16, Color("f1e8d8")
+	)
+	_blackjack_player_total.name = "PlayerTotal"
+	_blackjack_player_total.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_blackjack_player_total.add_theme_color_override("font_color", Color("f1e8d8"))
 	_blackjack_player_total.z_index = 6
+	_blackjack_bet_stack = BLACKJACK_BET_STACK.new()
+	_blackjack_bet_stack.name = "BlackjackBetStack"
+	_blackjack_bet_stack.position = Vector2(286, 354)
+	_blackjack_bet_stack.size = Vector2(92, 62)
+	_blackjack_bet_stack.z_index = 8
+	_blackjack_bet_stack.hide()
+	_art_root.add_child(_blackjack_bet_stack)
+	_blackjack_result_banner = Panel.new()
+	_blackjack_result_banner.name = "BlackjackResultBanner"
+	_blackjack_result_banner.position = Vector2(330, 88)
+	_blackjack_result_banner.size = Vector2(300, 52)
+	_blackjack_result_banner.z_index = 12
+	_blackjack_result_banner.add_theme_stylebox_override(
+		"panel", _panel_style(Color("120d0de8"), Color("c8a34b"), 8, 2)
+	)
+	_blackjack_result_banner.hide()
+	add_child(_blackjack_result_banner)
+	_blackjack_result_text = _help_label(
+		_blackjack_result_banner, Vector2(12, 9), Vector2(276, 34), 20, Color("f5e6bd")
+	)
+	_blackjack_result_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_blackjack_result_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_build_blackjack_deck()
 
 
@@ -1375,6 +1444,15 @@ func _animate_blackjack_result(result: RoundResult) -> void:
 	var color := Color("3fc276") if result.payout > result.stake else Color("d55353")
 	if result.payout == result.stake:
 		color = Color("f2c84b")
+	if _blackjack_result_banner != null:
+		_blackjack_result_text.text = tr("ROUND_RESULT") % [result.stake, result.payout]
+		_blackjack_result_text.add_theme_color_override("font_color", color)
+		_blackjack_result_banner.show()
+		_blackjack_result_banner.modulate.a = 1.0
+		_blackjack_result_banner.scale = Vector2.ONE
+		_blackjack_result_banner.pivot_offset = _blackjack_result_banner.size * 0.5
+	if _blackjack_bet_stack != null:
+		_blackjack_bet_stack.place_wager(result.stake, false)
 	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
 		label.pivot_offset = label.size * 0.5
 		label.scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(1.18, 1.18)
@@ -1382,6 +1460,12 @@ func _animate_blackjack_result(result: RoundResult) -> void:
 	if MotionPolicy.is_reduced():
 		return
 	_blackjack_fx_tween = create_tween().set_parallel(true)
+	_blackjack_result_banner.modulate.a = 0.0
+	_blackjack_result_banner.scale = Vector2(0.96, 0.96)
+	_blackjack_fx_tween.tween_property(_blackjack_result_banner, "modulate:a", 1.0, 0.16)
+	_blackjack_fx_tween.tween_property(_blackjack_result_banner, "scale", Vector2.ONE, 0.22).set_trans(
+		Tween.TRANS_BACK
+	).set_ease(Tween.EASE_OUT)
 	for label: Label in [_blackjack_player_total, _blackjack_dealer_total]:
 		_blackjack_fx_tween.tween_property(label, "scale", Vector2.ONE, 0.34).set_trans(Tween.TRANS_BACK)
 	for index: int in range(_blackjack_cards.size()):
