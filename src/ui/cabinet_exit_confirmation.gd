@@ -110,9 +110,12 @@ func _play_reveal() -> void:
 	_transition.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	_transition.tween_property(_blocker, "modulate:a", 1.0, 0.12)
 	_transition.tween_property(_dialog, "modulate:a", 1.0, 0.16)
-	_transition.tween_property(_dialog, "position:y", 146.0, 0.18).set_trans(
-		Tween.TRANS_CUBIC
-	).set_ease(Tween.EASE_OUT)
+	(
+		_transition
+		. tween_property(_dialog, "position:y", 146.0, 0.18)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_transition.tween_property(_dialog, "scale", Vector2.ONE, 0.18)
 	_transition.finished.connect(func() -> void: _transition = null)
 

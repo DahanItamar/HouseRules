@@ -62,12 +62,19 @@ func play(tint_color: Color, big: bool) -> void:
 	_motion.tween_method(_set_energy, 0.0, peak, 0.07).set_trans(Tween.TRANS_QUAD).set_ease(
 		Tween.EASE_OUT
 	)
-	_motion.tween_method(_set_sweep, -0.15, 1.15, sweep_duration).set_trans(Tween.TRANS_CUBIC).set_ease(
-		Tween.EASE_OUT
+	(
+		_motion
+		. tween_method(_set_sweep, -0.15, 1.15, sweep_duration)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
 	)
-	_motion.chain().tween_method(_set_energy, peak, 0.0, fade_duration).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_IN)
+	(
+		_motion
+		. chain()
+		. tween_method(_set_energy, peak, 0.0, fade_duration)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
 	_motion.chain().tween_callback(_finish)
 
 

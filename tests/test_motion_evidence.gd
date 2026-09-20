@@ -108,10 +108,18 @@ func test_slot_lever_visibly_pulls_inside_the_right_cabinet_rail() -> void:
 func test_high_value_alive_flows_have_named_temporal_evidence() -> void:
 	var full: Dictionary = _manifest().full_motion
 	for sequence_key: String in [
-		"floor_practical_lights", "cashier_idle", "slot_lever", "help_reveal",
-		"help_dismiss", "exit_reveal",
-		"exit_cancel", "exit_confirm",
-		"blackjack_deal", "blackjack_hit", "blackjack_reveal", "vault_hazard",
+		"floor_practical_lights",
+		"cashier_idle",
+		"slot_lever",
+		"help_reveal",
+		"help_dismiss",
+		"exit_reveal",
+		"exit_cancel",
+		"exit_confirm",
+		"blackjack_deal",
+		"blackjack_hit",
+		"blackjack_reveal",
+		"vault_hazard",
 	]:
 		assert_true(full.has(sequence_key), "%s is represented in the manifest" % sequence_key)
 		assert_eq((full[sequence_key] as Array).size(), 2)

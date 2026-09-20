@@ -117,7 +117,15 @@ func _draw() -> void:
 	var progress := clampf(elapsed / maxf(lifetime, 0.001), 0.0, 1.0)
 	if kind == Kind.SAFE:
 		var acknowledge := 1.0 - progress
-		draw_arc(Vector2.ZERO, 8.0 + progress * 22.0, 0.0, TAU, 28, Color(SAFE_COLOR, acknowledge * 0.72), 2.0)
+		draw_arc(
+			Vector2.ZERO,
+			8.0 + progress * 22.0,
+			0.0,
+			TAU,
+			28,
+			Color(SAFE_COLOR, acknowledge * 0.72),
+			2.0
+		)
 		draw_colored_polygon(
 			PackedVector2Array([Vector2(0, -8), Vector2(7, 0), Vector2(0, 10), Vector2(-7, 0)]),
 			Color(SAFE_HIGHLIGHT, acknowledge * 0.42)

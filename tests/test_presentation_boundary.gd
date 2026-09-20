@@ -45,8 +45,10 @@ func test_cabinet_definitions_do_not_embed_playable_scenes() -> void:
 		for token: String in forbidden:
 			assert_false(
 				source.contains(token),
-				"%s keeps presentation resource token %s out of cabinet metadata"
-				% [filename, token]
+				(
+					"%s keeps presentation resource token %s out of cabinet metadata"
+					% [filename, token]
+				)
 			)
 		var definition := load(path) as CabinetDefinition
 		assert_not_null(definition)

@@ -51,9 +51,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 
 func _draw() -> void:
 	var breath := (
-		(sin(idle_time * TAU / 3.2) + 1.0) * 0.5
-		if MotionPolicy.allows_continuous_motion()
-		else 0.0
+		(sin(idle_time * TAU / 3.2) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
 	)
 	draw_texture_rect(CHIP_TEXTURE, Rect2(Vector2(0.0, -breath * 0.6), ICON_SIZE), false)
 	if transaction_time > 0.0:

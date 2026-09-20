@@ -64,7 +64,9 @@ func test_live_vault_reveal_fx_clears_immediately_without_touching_the_wallet() 
 	var safe_effect := VaultRevealFX.spawn(host, Vector2(50, 60), VaultRevealFX.Kind.SAFE)
 	var mine_effect := VaultRevealFX.spawn(host, Vector2(110, 60), VaultRevealFX.Kind.MINE)
 	assert_true(safe_effect.shard_particles.emitting)
-	assert_not_null(safe_effect.sparkle_particles, "The safe reveal begins with full-motion sparkle")
+	assert_not_null(
+		safe_effect.sparkle_particles, "The safe reveal begins with full-motion sparkle"
+	)
 	assert_true(mine_effect.debris_particles.emitting)
 	assert_not_null(mine_effect.smoke_particles, "The mine reveal begins with full-motion smoke")
 	assert_false(safe_effect.is_queued_for_deletion())
@@ -81,4 +83,6 @@ func test_live_vault_reveal_fx_clears_immediately_without_touching_the_wallet() 
 	assert_signal_not_emitted(Wallet, "balance_changed")
 	await get_tree().process_frame
 	assert_false(is_instance_valid(safe_effect), "No safe-reveal particle survives the handoff")
-	assert_false(is_instance_valid(mine_effect), "No mine particle or drawn shockwave survives the handoff")
+	assert_false(
+		is_instance_valid(mine_effect), "No mine particle or drawn shockwave survives the handoff"
+	)

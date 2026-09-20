@@ -38,7 +38,14 @@ func test_each_game_starts_a_bounded_win_impact_with_its_result_sound() -> void:
 			10,
 			20,
 			RoundResult.Outcome.WIN,
-			{"symbols": [SlotMachineMath.Symbol.CHERRY, SlotMachineMath.Symbol.BELL, SlotMachineMath.Symbol.CHERRY]}
+			{
+				"symbols":
+				[
+					SlotMachineMath.Symbol.CHERRY,
+					SlotMachineMath.Symbol.BELL,
+					SlotMachineMath.Symbol.CHERRY
+				]
+			}
 		)
 		heard_cues.clear()
 		panel.show_result(result)
@@ -58,7 +65,14 @@ func test_big_win_shake_is_bounded_and_returns_the_stage_to_origin() -> void:
 		10,
 		100,
 		RoundResult.Outcome.WIN,
-		{"symbols": [SlotMachineMath.Symbol.SEVEN, SlotMachineMath.Symbol.SEVEN, SlotMachineMath.Symbol.SEVEN]}
+		{
+			"symbols":
+			[
+				SlotMachineMath.Symbol.SEVEN,
+				SlotMachineMath.Symbol.SEVEN,
+				SlotMachineMath.Symbol.SEVEN
+			]
+		}
 	)
 	panel.show_result(result)
 	assert_eq(panel._last_result_impact_tier, CabinetPanel.ResultImpactTier.BIG_WIN)
@@ -82,7 +96,14 @@ func test_reduced_motion_keeps_result_audio_but_removes_stage_displacement() -> 
 		10,
 		100,
 		RoundResult.Outcome.WIN,
-		{"symbols": [SlotMachineMath.Symbol.SEVEN, SlotMachineMath.Symbol.SEVEN, SlotMachineMath.Symbol.SEVEN]}
+		{
+			"symbols":
+			[
+				SlotMachineMath.Symbol.SEVEN,
+				SlotMachineMath.Symbol.SEVEN,
+				SlotMachineMath.Symbol.SEVEN
+			]
+		}
 	)
 	watch_signals(AudioService)
 	panel.show_result(result)

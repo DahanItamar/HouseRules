@@ -20,10 +20,7 @@ func burst(origin: Vector2, count: int = 12) -> void:
 		var atlas := AtlasTexture.new()
 		atlas.atlas = SHEET
 		var cell := index % 12
-		atlas.region = Rect2(
-			Vector2i(cell % 4, cell / 4) * CELL_SIZE,
-			Vector2(CELL_SIZE)
-		)
+		atlas.region = Rect2(Vector2i(cell % 4, cell / 4) * CELL_SIZE, Vector2(CELL_SIZE))
 		var token := TextureRect.new()
 		token.texture = atlas
 		token.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -48,17 +45,20 @@ func burst(origin: Vector2, count: int = 12) -> void:
 			continue
 		var direction := -1.0 if index % 2 == 0 else 1.0
 		var vertical_exit := (
-			_rng.randf_range(260.0, 420.0)
-			if index % 3 == 0
-			else -_rng.randf_range(180.0, 450.0)
+			_rng.randf_range(260.0, 420.0) if index % 3 == 0 else -_rng.randf_range(180.0, 450.0)
 		)
-		var destination := origin + Vector2(
-			direction * _rng.randf_range(170.0, 520.0), vertical_exit
+		var destination := (
+			origin + Vector2(direction * _rng.randf_range(170.0, 520.0), vertical_exit)
 		)
 		var duration := _rng.randf_range(0.72, 1.05)
 		var motion := create_tween().set_parallel(true)
 		_active_tweens.append(motion)
-		motion.tween_property(token, "position", destination, duration).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		(
+			motion
+			. tween_property(token, "position", destination, duration)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
 		motion.tween_property(token, "rotation", direction * _rng.randf_range(2.8, 7.2), duration)
 		motion.tween_property(token, "scale", Vector2(0.55, 0.55), duration)
 		motion.tween_property(token, "modulate:a", 0.0, duration * 0.42).set_delay(duration * 0.58)

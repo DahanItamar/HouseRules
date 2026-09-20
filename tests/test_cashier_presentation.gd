@@ -63,7 +63,9 @@ func test_cashier_close_animates_then_releases_focus_and_hides() -> void:
 	assert_true(_floor._cashier_panel.is_ancestor_of(get_viewport().gui_get_focus_owner()))
 	_floor._close_cashier()
 	assert_false(_floor._cashier_open)
-	assert_true(_floor._cashier_panel.visible, "Full-motion close retains the panel for its exit beat")
+	assert_true(
+		_floor._cashier_panel.visible, "Full-motion close retains the panel for its exit beat"
+	)
 	assert_true(_floor._cashier_is_closing)
 	assert_false(_floor._prompt_target_visible)
 	assert_true(

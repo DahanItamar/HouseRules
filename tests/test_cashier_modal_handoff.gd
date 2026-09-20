@@ -88,8 +88,10 @@ func test_reduced_motion_clears_active_cashier_transfer_at_canonical_feedback_re
 	await get_tree().process_frame
 
 	assert_true(
-		_floor._cashier_transaction_tween == null
-		or not _floor._cashier_transaction_tween.is_running(),
+		(
+			_floor._cashier_transaction_tween == null
+			or not _floor._cashier_transaction_tween.is_running()
+		),
 		"No chip-transfer or feedback tween survives the live preference change"
 	)
 	assert_eq(_floor._cashier_transfer_layer.get_child_count(), 0)

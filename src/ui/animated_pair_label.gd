@@ -17,13 +17,13 @@ func _ready() -> void:
 	MotionPolicy.motion_preference_changed.connect(_on_motion_preference_changed)
 
 
-func set_numbers(
-	first: int,
-	second: int,
-	format_text: String,
-	animate: bool = true
-) -> void:
-	if _initialized and target_first == first and target_second == second and _format == format_text:
+func set_numbers(first: int, second: int, format_text: String, animate: bool = true) -> void:
+	if (
+		_initialized
+		and target_first == first
+		and target_second == second
+		and _format == format_text
+	):
 		return
 	target_first = first
 	target_second = second
@@ -40,16 +40,21 @@ func set_numbers(
 	var distance := maxf(absf(float(first) - from_first), absf(float(second) - from_second))
 	var duration := clampf(0.18 + distance * 0.002, 0.18, 0.58)
 	_number_tween = create_tween()
-	_number_tween.tween_method(
-		func(weight: float) -> void:
-			_apply_values(
-				lerpf(from_first, float(target_first), weight),
-				lerpf(from_second, float(target_second), weight)
-			),
-		0.0,
-		1.0,
-		duration
-	).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	(
+		_number_tween
+		. tween_method(
+			func(weight: float) -> void:
+				_apply_values(
+					lerpf(from_first, float(target_first), weight),
+					lerpf(from_second, float(target_second), weight)
+				),
+			0.0,
+			1.0,
+			duration
+		)
+		. set_trans(Tween.TRANS_QUART)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_number_tween.tween_callback(
 		func() -> void:
 			_apply_values(float(target_first), float(target_second))

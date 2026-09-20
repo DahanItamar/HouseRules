@@ -433,11 +433,12 @@ func test_redesigned_shell_uses_high_resolution_production_environments() -> voi
 	main._process(2.1)
 	assert_false(main._menu_first_breath, "The main CTA has a bounded idle attract beat")
 	assert_not_null(main._menu_attract_tween)
-	var menu_art: Texture2D = load("res://assets/production/environments/casino_menu_hall.png")
+	assert_not_null(main._menu.get_node_or_null("TitleBadge"), "The menu wears the painted badge")
+	var menu_art: Texture2D = load("res://assets/production/environments/casino_menu_hall_v2.png")
 	var floor_art: Texture2D = load(
 		"res://assets/production/environments/casino_floor_background_v2.png"
 	)
-	assert_gte(menu_art.get_width(), 1280)
+	assert_eq(menu_art.get_width(), 3840, "Menu plate is sharp at UHD")
 	assert_eq(floor_art.get_width(), 3840, "Floor master is sharp at UHD")
 
 

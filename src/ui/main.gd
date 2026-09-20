@@ -21,6 +21,7 @@ var _menu_background: TextureRect
 var _menu_kicker: Label
 var _menu_rule: ColorRect
 var _menu_title: Label
+var _menu_badge: TextureRect
 var _menu_subtitle: Label
 var _menu_prompt_panel: Panel
 var _menu_prompt: Label
@@ -141,7 +142,11 @@ func _build_menu() -> void:
 	add_child(_menu)
 	_menu_background = TextureRect.new()
 	_menu_background.name = "CasinoHallArt"
-	_menu_background.texture = preload("res://assets/production/environments/casino_menu_hall.png")
+	# The branded plate: the hall with the three of them held to the right, so the
+	# whole left column is free for the badge and the keys.
+	_menu_background.texture = preload(
+		"res://assets/production/environments/casino_menu_hall_v2.png"
+	)
 	_menu_background.size = Vector2(960, 540)
 	_menu_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_menu_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
@@ -185,6 +190,20 @@ func _build_menu() -> void:
 	_menu_title.add_theme_color_override("font_color", Color("f1e8d8"))
 	_menu_title.text = tr("GAME_TITLE")
 	_menu.add_child(_menu_title)
+	# The kicker, rule and title stay as nodes because the menu reveal animates
+	# them, but the player sees the painted badge instead of typeset words.
+	for typeset: Control in [_menu_kicker, _menu_rule, _menu_title]:
+		typeset.visible = false
+	_menu_badge = TextureRect.new()
+	_menu_badge.name = "TitleBadge"
+	_menu_badge.texture = preload("res://assets/branding/house_rules_logo.png")
+	_menu_badge.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_menu_badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_menu_badge.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_menu_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_menu_badge.position = Vector2(56, 64)
+	_menu_badge.size = Vector2(380, 152)
+	_menu.add_child(_menu_badge)
 	_menu_subtitle = Label.new()
 	_menu_subtitle.name = "Subtitle"
 	_menu_subtitle.add_theme_font_override("font", Typography.UI_FONT)
@@ -238,6 +257,7 @@ func _build_motion_preference_button() -> void:
 	_menu_motion_button.add_theme_stylebox_override(
 		"focus", _menu_button_style(Color("00000000"), Color("f2c84b"), 3)
 	)
+	UiKit.paint_button(_menu_motion_button, &"menu", false, 15.0)
 	_menu_motion_button.tooltip_text = tr("MENU_REDUCED_MOTION_HELP")
 	_menu_motion_button.pressed.connect(_toggle_motion_preference)
 	ButtonFeedback.attach(_menu_motion_button)

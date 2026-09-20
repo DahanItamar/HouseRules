@@ -67,8 +67,10 @@ func test_cashier_content_reveal_is_bounded_and_restores_every_control() -> void
 	assert_eq(director._controls[0].modulate.a, 0.0)
 	assert_eq(
 		director._controls[0].position,
-		director._rest_positions[director._controls[0]]
-		+ CASHIER_MOTION_DIRECTOR_SCRIPT.ENTRY_OFFSET
+		(
+			director._rest_positions[director._controls[0]]
+			+ CASHIER_MOTION_DIRECTOR_SCRIPT.ENTRY_OFFSET
+		)
 	)
 	await wait_seconds(0.58)
 	assert_false(director.has_active_motion())
@@ -183,6 +185,4 @@ func test_reduced_motion_settles_active_hud_feedback_to_exact_rest_state() -> vo
 	MotionPolicy.set_reduced_motion_for_tests(true)
 	assert_eq(main._bank_panel.scale, Vector2.ONE)
 	assert_eq(main._hud.modulate, Color.WHITE)
-	assert_true(
-		main._bank_feedback_tween == null or not main._bank_feedback_tween.is_running()
-	)
+	assert_true(main._bank_feedback_tween == null or not main._bank_feedback_tween.is_running())

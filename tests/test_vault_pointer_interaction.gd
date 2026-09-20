@@ -11,7 +11,9 @@ func before_each() -> void:
 	_original_motion_persistence = MotionPolicy.persistence_enabled
 	MotionPolicy.persistence_enabled = false
 	MotionPolicy.set_reduced_motion_for_tests(false)
-	SaveService.platform = LocalPlatform.new("user://tests/vault_pointer_%s" % Time.get_ticks_usec())
+	SaveService.platform = LocalPlatform.new(
+		"user://tests/vault_pointer_%s" % Time.get_ticks_usec()
+	)
 	SaveService.new_game(20260919)
 
 
@@ -35,7 +37,11 @@ func test_pointer_hover_synchronizes_snap_cursor_and_visual_selection() -> void:
 	await wait_seconds(0.12)
 	assert_eq(
 		game.panel._vault_cursor.position,
-		CabinetPanel.VAULT_GRID_ORIGIN - Vector2(2, 2) + Vector2(2, 1) * CabinetPanel.VAULT_GRID_PITCH,
+		(
+			CabinetPanel.VAULT_GRID_ORIGIN
+			- Vector2(2, 2)
+			+ Vector2(2, 1) * CabinetPanel.VAULT_GRID_PITCH
+		),
 		"The visible cursor settles over the pointer-selected tile"
 	)
 
@@ -82,7 +88,9 @@ func test_pointer_input_is_gated_after_round_result() -> void:
 	game.panel._vault_tiles[11].mouse_entered.emit()
 	_emit_left_click(game.panel._vault_tiles[11])
 
-	assert_false(game.is_round_active, "Clicking the result board cannot silently start another wager")
+	assert_false(
+		game.is_round_active, "Clicking the result board cannot silently start another wager"
+	)
 	assert_eq(game.context.balance, balance_before)
 	assert_false(_math(game).revealed.has(11))
 
@@ -123,7 +131,11 @@ func test_reduced_motion_pointer_selection_reaches_exact_rest_immediately() -> v
 	assert_eq(tile.modulate, Color.WHITE)
 	assert_eq(
 		game.panel._vault_cursor.position,
-		CabinetPanel.VAULT_GRID_ORIGIN - Vector2(2, 2) + Vector2(3, 4) * CabinetPanel.VAULT_GRID_PITCH,
+		(
+			CabinetPanel.VAULT_GRID_ORIGIN
+			- Vector2(2, 2)
+			+ Vector2(3, 4) * CabinetPanel.VAULT_GRID_PITCH
+		),
 		"Reduced motion snaps the visual cursor to its exact rest state"
 	)
 

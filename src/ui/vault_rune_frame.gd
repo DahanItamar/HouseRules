@@ -57,13 +57,17 @@ static func button_style(face: Color, edge: Color, width: int) -> StyleBoxFlat:
 
 
 static func _draw_diamond(canvas: CanvasItem, at: Vector2, radius: float, color: Color) -> void:
-	canvas.draw_colored_polygon(
-		PackedVector2Array([
-			at + Vector2(0, -radius),
-			at + Vector2(radius, 0),
-			at + Vector2(0, radius),
-			at + Vector2(-radius, 0),
-		]),
-		color
+	(
+		canvas
+		. draw_colored_polygon(
+			PackedVector2Array(
+				[
+					at + Vector2(0, -radius),
+					at + Vector2(radius, 0),
+					at + Vector2(0, radius),
+					at + Vector2(-radius, 0),
+				]
+			),
+			color
+		)
 	)
-

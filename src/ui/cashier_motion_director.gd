@@ -65,9 +65,13 @@ func play_open() -> void:
 	for index: int in range(_controls.size()):
 		var control := _controls[index]
 		var delay := index * STAGGER
-		_reveal_tween.tween_property(
-			control, "position", _rest_positions[control], ENTRY_DURATION
-		).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		(
+			_reveal_tween
+			. tween_property(control, "position", _rest_positions[control], ENTRY_DURATION)
+			. set_delay(delay)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
 		_reveal_tween.tween_property(control, "modulate:a", 1.0, 0.12).set_delay(delay)
 
 
@@ -89,7 +93,10 @@ func _collect_controls() -> void:
 		func(left: Control, right: Control) -> bool:
 			return (
 				left.position.y < right.position.y
-				or (is_equal_approx(left.position.y, right.position.y) and left.position.x < right.position.x)
+				or (
+					is_equal_approx(left.position.y, right.position.y)
+					and left.position.x < right.position.x
+				)
 			)
 	)
 

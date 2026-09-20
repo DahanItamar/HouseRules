@@ -110,7 +110,9 @@ func test_vault_safe_effect_uses_procedural_diamond_shards() -> void:
 	assert_not_null(effect.shard_particles)
 	assert_eq(effect.shard_particles.name, "DiamondShards")
 	assert_not_null(effect.shard_particles.texture, "Safe reveal has a generated shard texture")
-	assert_not_null(effect.sparkle_particles, "Full motion adds a separate diamond facet sparkle layer")
+	assert_not_null(
+		effect.sparkle_particles, "Full motion adds a separate diamond facet sparkle layer"
+	)
 	assert_eq(effect.sparkle_particles.name, "DiamondSparkles")
 	assert_null(effect.debris_particles)
 	assert_null(effect.smoke_particles)
@@ -172,9 +174,7 @@ func test_primary_spin_button_has_a_restrained_idle_breath() -> void:
 
 
 func test_win_burst_uses_integer_gutter_safe_regions() -> void:
-	var texture: Texture2D = load(
-		"res://assets/production/effects/casino_win_burst_integer.png"
-	)
+	var texture: Texture2D = load("res://assets/production/effects/casino_win_burst_integer.png")
 	assert_not_null(texture)
 	assert_eq(texture.get_size(), Vector2(1024, 1032))
 	assert_eq(WinCelebration.CELL_SIZE, Vector2i(256, 344))
@@ -183,9 +183,7 @@ func test_win_burst_uses_integer_gutter_safe_regions() -> void:
 		for column: int in range(4):
 			var origin := Vector2i(column * 256, row * 344)
 			assert_eq(
-				image.get_pixelv(origin).a,
-				0.0,
-				"Every particle frame starts with a clear gutter"
+				image.get_pixelv(origin).a, 0.0, "Every particle frame starts with a clear gutter"
 			)
 
 

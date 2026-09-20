@@ -53,10 +53,7 @@ func _process(delta: float) -> void:
 
 
 func set_values(
-	cashout_amount: int,
-	multiplier: float,
-	progress: float,
-	animate: bool = true
+	cashout_amount: int, multiplier: float, progress: float, animate: bool = true
 ) -> void:
 	var next_amount := maxi(cashout_amount, 0)
 	var next_multiplier := maxf(multiplier, 0.0)
@@ -96,17 +93,22 @@ func set_values(
 	var from_multiplier := displayed_multiplier
 	var from_progress := displayed_progress
 	_value_tween = create_tween()
-	_value_tween.tween_method(
-		func(weight: float) -> void:
-			_apply_values(
-				lerpf(from_amount, float(target_amount), weight),
-				lerpf(from_multiplier, target_multiplier, weight),
-				lerpf(from_progress, target_progress, weight)
-			),
-		0.0,
-		1.0,
-		animation_duration
-	).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	(
+		_value_tween
+		. tween_method(
+			func(weight: float) -> void:
+				_apply_values(
+					lerpf(from_amount, float(target_amount), weight),
+					lerpf(from_multiplier, target_multiplier, weight),
+					lerpf(from_progress, target_progress, weight)
+				),
+			0.0,
+			1.0,
+			animation_duration
+		)
+		. set_trans(Tween.TRANS_QUART)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_value_tween.tween_callback(
 		func() -> void:
 			_apply_values(float(target_amount), target_multiplier, target_progress)
@@ -171,11 +173,7 @@ func _draw() -> void:
 		READY_COLOR if is_ready else VaultRuneFrame.SILVER_DIM
 	)
 
-	var accent := (
-		READY_COLOR.lerp(READY_PULSE, ready_pulse * 0.22)
-		if is_ready
-		else DISABLED_COLOR
-	)
+	var accent := READY_COLOR.lerp(READY_PULSE, ready_pulse * 0.22) if is_ready else DISABLED_COLOR
 	var primary_text := TEXT_COLOR if is_ready else MUTED_TEXT_COLOR
 	var label_font := Typography.UI_FONT
 	var number_font := Typography.DISPLAY_FONT
@@ -191,12 +189,7 @@ func _draw() -> void:
 	if value_surge > 0.0 and last_change_direction != 0:
 		var change_color := READY_COLOR if last_change_direction > 0 else Color("d76a62")
 		var change_alpha := sin(value_surge * PI) * 0.86
-		draw_line(
-			Vector2(90, 30),
-			Vector2(152, 30),
-			Color(change_color, change_alpha),
-			2.0
-		)
+		draw_line(Vector2(90, 30), Vector2(152, 30), Color(change_color, change_alpha), 2.0)
 	draw_string(
 		number_font,
 		Vector2(90, 25),
@@ -231,7 +224,9 @@ func _draw() -> void:
 		fill.size.x *= displayed_progress
 		draw_rect(fill, accent, true)
 		if is_ready and MotionPolicy.allows_continuous_motion() and fill.size.x > 8.0:
-			var glint_x := lerpf(fill.position.x + 3.0, fill.end.x - 3.0, fmod(idle_time * 0.72, 1.0))
+			var glint_x := lerpf(
+				fill.position.x + 3.0, fill.end.x - 3.0, fmod(idle_time * 0.72, 1.0)
+			)
 			draw_line(
 				Vector2(glint_x, fill.position.y),
 				Vector2(glint_x, fill.end.y),

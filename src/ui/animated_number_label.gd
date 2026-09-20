@@ -37,9 +37,12 @@ func set_number(value: int, format_text: String = "%d", animate: bool = true) ->
 	var distance := absf(float(value) - displayed_value)
 	var duration := clampf(0.18 + distance * 0.002, 0.18, 0.6)
 	_number_tween = create_tween()
-	_number_tween.tween_method(
-		_apply_value, displayed_value, float(value), duration
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_number_tween
+		. tween_method(_apply_value, displayed_value, float(value), duration)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func set_infinity() -> void:

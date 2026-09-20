@@ -27,9 +27,12 @@ func trigger_event(strength: float = 1.0) -> void:
 	queue_redraw()
 	if MotionPolicy.is_reduced():
 		var feedback := create_tween()
-		feedback.tween_property(
-			self, "event_energy", 0.0, MotionPolicy.finite_duration(0.20)
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		(
+			feedback
+			. tween_property(self, "event_energy", 0.0, MotionPolicy.finite_duration(0.20))
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
 		feedback.tween_callback(queue_redraw)
 
 
@@ -50,7 +53,15 @@ func _draw() -> void:
 		return
 	if mode == Mode.BLACKJACK:
 		var sweep := (sin(elapsed * 0.75) + 1.0) * 0.5
-		draw_arc(Vector2(size.x * 0.5, size.y + 270), 420.0, PI * 1.12, PI * 1.88, 72, Color(accent, 0.10 + sweep * 0.08 + event_energy * 0.22), 3.0)
+		draw_arc(
+			Vector2(size.x * 0.5, size.y + 270),
+			420.0,
+			PI * 1.12,
+			PI * 1.88,
+			72,
+			Color(accent, 0.10 + sweep * 0.08 + event_energy * 0.22),
+			3.0
+		)
 		return
 	var count := 18 if mode == Mode.SLOT else 14
 	for index: int in range(count):

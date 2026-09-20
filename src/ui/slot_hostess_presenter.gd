@@ -45,9 +45,7 @@ func _init() -> void:
 	cue_color = Color("d8b65a")
 	add_pose(Pose.new(&"idle", POSE_IDLE, SOURCE_FOOT, Rect2(216, 48, 1117, 1987)))
 	add_pose(Pose.new(&"reels", POSE_REELS, SOURCE_FOOT, Rect2(217, 48, 1120, 1989)))
-	add_pose(
-		Pose.new(&"anticipation", POSE_ANTICIPATION, SOURCE_FOOT, Rect2(225, 49, 1113, 1986))
-	)
+	add_pose(Pose.new(&"anticipation", POSE_ANTICIPATION, SOURCE_FOOT, Rect2(225, 49, 1113, 1986)))
 	add_pose(Pose.new(&"win", POSE_WIN, SOURCE_FOOT, Rect2(203, 48, 1138, 1989)))
 	add_pose(Pose.new(&"player", POSE_PLAYER, SOURCE_FOOT, Rect2(214, 48, 1124, 1989)))
 

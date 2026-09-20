@@ -74,10 +74,7 @@ func test_every_cabinet_result_uses_the_shared_flash_without_mutating_result() -
 		add_child_autofree(session)
 		session.begin(definition)
 		var result := RoundResult.create(
-			10,
-			100,
-			RoundResult.Outcome.WIN,
-			{"symbols": [4, 4, 4], "evidence": definition.id}
+			10, 100, RoundResult.Outcome.WIN, {"symbols": [4, 4, 4], "evidence": definition.id}
 		)
 		var original_detail: Dictionary = result.detail.duplicate(true)
 		session.cabinet.panel.show_result(result)

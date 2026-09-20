@@ -68,12 +68,18 @@ func _play_reveal() -> void:
 	_motion = create_tween().set_parallel(true).set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
 	_motion.tween_property(_shade, "modulate:a", 1.0, 0.16)
 	_motion.tween_property(_message, "modulate:a", 1.0, 0.18)
-	_motion.tween_property(_message, "position:y", 245.0, 0.18).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
-	_motion.tween_property(_message, "scale", Vector2.ONE, 0.18).set_trans(
-		Tween.TRANS_BACK
-	).set_ease(Tween.EASE_OUT)
+	(
+		_motion
+		. tween_property(_message, "position:y", 245.0, 0.18)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_motion
+		. tween_property(_message, "scale", Vector2.ONE, 0.18)
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _play_hide() -> void:

@@ -54,6 +54,4 @@ func _draw() -> void:
 	elif _hit_target != null and _hit_target.is_hovered():
 		tint = Color(1.12, 1.12, 1.08)
 	draw_circle(Vector2(1, 2), 9.0, Color(0.02, 0.05, 0.03, 0.55))
-	draw_texture_rect(
-		ARM, Rect2(-ARM_PIVOT * ARM_SCALE, ARM.get_size() * ARM_SCALE), false, tint
-	)
+	draw_texture_rect(ARM, Rect2(-ARM_PIVOT * ARM_SCALE, ARM.get_size() * ARM_SCALE), false, tint)

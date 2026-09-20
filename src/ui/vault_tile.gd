@@ -74,9 +74,7 @@ func set_selected(selected: bool) -> void:
 func set_interaction_enabled(enabled: bool) -> void:
 	_interaction_enabled = enabled
 	mouse_filter = Control.MOUSE_FILTER_STOP if enabled else Control.MOUSE_FILTER_IGNORE
-	mouse_default_cursor_shape = (
-		Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW
-	)
+	mouse_default_cursor_shape = (Control.CURSOR_POINTING_HAND if enabled else Control.CURSOR_ARROW)
 	if not enabled:
 		_pointer_hovered = false
 		_pointer_pressed = false
@@ -125,9 +123,12 @@ func reveal(next_face: Face) -> void:
 	_reveal_tween = create_tween()
 	if MotionPolicy.is_reduced():
 		# Preserve anticipation and the exact completion callback with no tile flip/pop.
-		_reveal_tween.tween_property(
-			self, "modulate:a", 0.60, MotionPolicy.finite_duration(0.09)
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		(
+			_reveal_tween
+			. tween_property(self, "modulate:a", 0.60, MotionPolicy.finite_duration(0.09))
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_IN)
+		)
 		_reveal_tween.tween_callback(
 			func() -> void:
 				face = next_face
@@ -137,9 +138,12 @@ func reveal(next_face: Face) -> void:
 				reveal_effect_requested.emit(next_face, size * 0.5)
 				queue_redraw()
 		)
-		_reveal_tween.tween_property(
-			self, "modulate:a", 1.0, MotionPolicy.finite_duration(0.11)
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		(
+			_reveal_tween
+			. tween_property(self, "modulate:a", 1.0, MotionPolicy.finite_duration(0.11))
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
 		_reveal_tween.tween_callback(
 			func() -> void:
 				is_flipping = false
@@ -147,43 +151,71 @@ func reveal(next_face: Face) -> void:
 		)
 		return
 	# A short key-travel press makes the deposit box feel operated rather than swapped.
-	_reveal_tween.tween_method(
-		_set_press_depth, 0.0, 1.0, MotionPolicy.finite_duration(0.04)
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_reveal_tween.tween_method(
-		_set_press_depth, 1.0, 0.30, MotionPolicy.finite_duration(0.03)
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	_reveal_tween.tween_property(self, "scale:x", 0.06, MotionPolicy.finite_duration(0.08)).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_IN)
+	(
+		_reveal_tween
+		. tween_method(_set_press_depth, 0.0, 1.0, MotionPolicy.finite_duration(0.04))
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		_reveal_tween
+		. tween_method(_set_press_depth, 1.0, 0.30, MotionPolicy.finite_duration(0.03))
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_reveal_tween
+		. tween_property(self, "scale:x", 0.06, MotionPolicy.finite_duration(0.08))
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
 	_reveal_tween.tween_callback(
 		func() -> void:
 			face = next_face
 			_impact_strength = 1.0
-			_flash_remaining = MotionPolicy.finite_duration(0.30 if next_face == Face.MINE else 0.18)
+			_flash_remaining = MotionPolicy.finite_duration(
+				0.30 if next_face == Face.MINE else 0.18
+			)
 			reveal_effect_requested.emit(next_face, size * 0.5)
 			queue_redraw()
 	)
-	_reveal_tween.tween_property(self, "scale:x", 1.0, MotionPolicy.finite_duration(0.10)).set_trans(
-		Tween.TRANS_BACK
-	).set_ease(Tween.EASE_OUT)
+	(
+		_reveal_tween
+		. tween_property(self, "scale:x", 1.0, MotionPolicy.finite_duration(0.10))
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
 	if next_face == Face.SAFE:
-		_reveal_tween.tween_property(
-			self, "scale", Vector2(1.12, 1.12), MotionPolicy.finite_duration(0.06)
-		).set_trans(Tween.TRANS_QUAD)
-		_reveal_tween.tween_property(
-			self, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.10)
-		).set_trans(Tween.TRANS_BACK)
+		(
+			_reveal_tween
+			. tween_property(self, "scale", Vector2(1.12, 1.12), MotionPolicy.finite_duration(0.06))
+			. set_trans(Tween.TRANS_QUAD)
+		)
+		(
+			_reveal_tween
+			. tween_property(self, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.10))
+			. set_trans(Tween.TRANS_BACK)
+		)
 	else:
-		_reveal_tween.tween_property(
-			self, "scale", Vector2(1.08, 0.94), MotionPolicy.finite_duration(0.045)
-		).set_trans(Tween.TRANS_QUAD)
-		_reveal_tween.tween_property(
-			self, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.12)
-		).set_trans(Tween.TRANS_BACK)
-	_reveal_tween.parallel().tween_method(
-		_set_impact_strength, 1.0, 0.0, MotionPolicy.finite_duration(0.12)
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		(
+			_reveal_tween
+			. tween_property(
+				self, "scale", Vector2(1.08, 0.94), MotionPolicy.finite_duration(0.045)
+			)
+			. set_trans(Tween.TRANS_QUAD)
+		)
+		(
+			_reveal_tween
+			. tween_property(self, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.12))
+			. set_trans(Tween.TRANS_BACK)
+		)
+	(
+		_reveal_tween
+		. parallel()
+		. tween_method(_set_impact_strength, 1.0, 0.0, MotionPolicy.finite_duration(0.12))
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	_reveal_tween.tween_callback(
 		func() -> void:
 			_set_press_depth(0.0)
@@ -217,9 +249,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 			is_flipping = false
 			_press_depth = 0.0
 			_impact_strength = 0.0
-			_flash_remaining = MotionPolicy.finite_duration(
-				0.30 if face == Face.MINE else 0.18
-			)
+			_flash_remaining = MotionPolicy.finite_duration(0.30 if face == Face.MINE else 0.18)
 			reveal_effect_requested.emit(face, size * 0.5)
 			reveal_completed.emit(face)
 	queue_redraw()
@@ -279,11 +309,13 @@ func _draw() -> void:
 		# A solid hazard marker survives peripheral vision and color-vision differences.
 		var marker_center := visual_center + Vector2(0.0, -1.0)
 		draw_colored_polygon(
-			PackedVector2Array([
-				marker_center + Vector2(0.0, -9.0),
-				marker_center + Vector2(9.0, 8.0),
-				marker_center + Vector2(-9.0, 8.0),
-			]),
+			PackedVector2Array(
+				[
+					marker_center + Vector2(0.0, -9.0),
+					marker_center + Vector2(9.0, 8.0),
+					marker_center + Vector2(-9.0, 8.0),
+				]
+			),
 			Color(0.20, 0.06, 0.07, 0.78)
 		)
 		draw_line(
@@ -298,15 +330,11 @@ func _draw() -> void:
 		flash_color.a = (_flash_remaining / 0.30) * 0.55
 		draw_rect(Rect2(Vector2.ONE, size - Vector2(2, 2)), flash_color, false, 4.0)
 	if is_selected:
-		var pulse := (sin(_pulse_time * 4.5) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
+		var pulse := (
+			(sin(_pulse_time * 4.5) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
+		)
 		draw_arc(
-			size * 0.5,
-			24.0 + pulse * 2.0,
-			0,
-			TAU,
-			32,
-			Color("48c5d5", 0.28 + pulse * 0.22),
-			2.0
+			size * 0.5, 24.0 + pulse * 2.0, 0, TAU, 32, Color("48c5d5", 0.28 + pulse * 0.22), 2.0
 		)
 	if face == Face.SAFE:
 		var idle_pass := fmod(_idle_time + _idle_phase, 3.8)

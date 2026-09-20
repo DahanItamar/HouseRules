@@ -14,7 +14,12 @@ func register_floor(controller: FloorController) -> void:
 
 
 func enter_cabinet(definition: CabinetDefinition) -> void:
-	if _transitioning or session != null or definition == null or Wallet.balance < definition.min_bet:
+	if (
+		_transitioning
+		or session != null
+		or definition == null
+		or Wallet.balance < definition.min_bet
+	):
 		return
 	if DisplayServer.get_name() == "headless":
 		_enter_cabinet_now(definition)

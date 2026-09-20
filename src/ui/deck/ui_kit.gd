@@ -73,6 +73,14 @@ const THEMES: Dictionary = {
 		"medallion": preload("res://assets/production/ui/kit/medallion_forno.png"),
 		"medallion_region": Rect2(18, 14, 985, 985),
 	},
+	## The main menu's own key: burgundy enamel in a gold art-deco frame, cut from
+	## the same branding as the title badge.
+	&"menu":
+	{
+		"button": preload("res://assets/production/ui/kit/menu_key.png"),
+		"button_region": Rect2(0, 0, 1344, 721),
+		"button_margin": 143,
+	},
 	&"poker":
 	{
 		"button": preload("res://assets/production/ui/kit/button_poker.png"),
