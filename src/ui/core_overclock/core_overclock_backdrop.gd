@@ -1,7 +1,7 @@
 class_name CoreOverclockBackdrop
 extends Control
 ## The painted pizzeria kitchen, kept alive: the whole plate drifts on a slow
-## parallax, live flame tongues burn in the oven mouth and grow with the bake,
+## parallax, a moonlit glow lifts off the water as the run goes on,
 ## heat shimmer wobbles above them, embers lift out, flour dust hangs over the
 ## counter, and a warm vignette closes in.
 ##
@@ -81,8 +81,6 @@ func _draw() -> void:
 		Rect2(Vector2(-PARALLAX, -PARALLAX) + drift, size + Vector2(PARALLAX, PARALLAX) * 2.0),
 		false
 	)
-	_draw_oven_light()
-	_draw_flames()
 	_draw_shimmer()
 	_draw_embers()
 	_draw_flour()
@@ -91,62 +89,10 @@ func _draw() -> void:
 
 ## The fire in the painted mouth, brighter and livelier as the bake goes on.
 ## Cabinet screens are allowed this glow; the floor and the HUD are not.
-func _draw_oven_light() -> void:
-	var mouth := CoreOverclockTheme.OVEN_MOUTH
-	var centre := mouth.get_center()
-	var flicker := 1.0 if MotionPolicy.is_reduced() else 0.92 + sin(_phase * 7.3) * 0.08
-	for index: int in range(GLOW_RINGS):
-		var spread := 1.0 + float(index) * 0.34
-		var alpha := (0.05 + heat * 0.13) * (1.0 - float(index) / float(GLOW_RINGS)) * flicker
-		draw_circle(
-			centre,
-			mouth.size.y * 0.5 * spread,
-			Color(CoreOverclockTheme.FLAME.lerp(CoreOverclockTheme.EMBER, heat), alpha)
-		)
-
-
-## Live flame tongues standing in the mouth. They grow with the bake, so the
-## fire itself reads as the multiplier climbing.
-func _draw_flames() -> void:
-	var mouth := CoreOverclockTheme.OVEN_MOUTH
-	var base := mouth.end.y - 6.0
-	var reach := mouth.size.y * (0.42 + heat * 0.60)
-	for index: int in range(FLAME_TONGUES):
-		var place := (float(index) + 0.5) / float(FLAME_TONGUES)
-		var x := mouth.position.x + mouth.size.x * place
-		var wobble := 1.0
-		if not MotionPolicy.is_reduced():
-			wobble = 0.66 + 0.34 * sin(_phase * (4.0 + float(index) * 0.7) + float(index))
-		var height := reach * wobble
-		var width := mouth.size.x / float(FLAME_TONGUES) * 0.8
-		var lean := 0.0 if MotionPolicy.is_reduced() else sin(_phase * 2.0 + float(index)) * 3.0
-		draw_colored_polygon(
-			PackedVector2Array(
-				[
-					Vector2(x - width * 0.5, base),
-					Vector2(x + lean, base - height),
-					Vector2(x + width * 0.5, base),
-				]
-			),
-			Color(CoreOverclockTheme.FLAME, 0.16 + heat * 0.24)
-		)
-		draw_colored_polygon(
-			PackedVector2Array(
-				[
-					Vector2(x - width * 0.26, base),
-					Vector2(x + lean * 0.6, base - height * 0.62),
-					Vector2(x + width * 0.26, base),
-				]
-			),
-			Color(CoreOverclockTheme.CREAM, 0.07 + heat * 0.14)
-		)
-
-
-## Heat shimmer over the mouth: warm bars that slide sideways, cheap and flat.
 func _draw_shimmer() -> void:
 	if MotionPolicy.is_reduced() or heat <= 0.0:
 		return
-	var mouth := CoreOverclockTheme.OVEN_MOUTH
+	var mouth := CoreOverclockTheme.FLIGHT_AREA
 	for index: int in range(SHIMMER_BARS):
 		var place := float(index) / float(SHIMMER_BARS)
 		var y := mouth.position.y - 6.0 - place * 48.0
@@ -162,7 +108,7 @@ func _draw_shimmer() -> void:
 func _draw_embers() -> void:
 	if not baking and heat <= 0.0:
 		return
-	var mouth := CoreOverclockTheme.OVEN_MOUTH
+	var mouth := CoreOverclockTheme.FLIGHT_AREA
 	for index: int in range(_embers.size()):
 		var spark := _embers[index]
 		var life := fposmod(_phase * (0.35 + heat * 0.5) * spark.z + spark.y, 1.0)

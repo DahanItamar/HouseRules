@@ -628,48 +628,48 @@ Each shattered tile charges the upgrade bar, and the bar's multiplier is applied
 The round ends when a tumble makes no new cluster."
 HELP_UPGRADE_CLUSTER_NOTE,"Pays are shown as a multiple of your bet, before the upgrade bar's multiplier."
 HELP_CONTROL_CLUSTER_PLAY,Play the board
-CABINET_CORE_OVERCLOCK_NAME,FORNO D'ORO
-CORE_OVERCLOCK_THEME_TITLE,FORNO D'ORO
-CORE_OVERCLOCK_STATE_READY,DOUGH READY
-CORE_OVERCLOCK_STATE_COUNTDOWN,OVEN HEATING
-CORE_OVERCLOCK_STATE_BAKING,BAKING
-CORE_OVERCLOCK_STATE_SERVED,SERVED
-CORE_OVERCLOCK_STATE_BURNT,BURNT
-CORE_OVERCLOCK_RECENT,RECENT BAKES
-CORE_OVERCLOCK_VALUE,WORTH %d
-CORE_OVERCLOCK_ACTION_BAKE,BAKE
-CORE_OVERCLOCK_ACTION_PULL,PULL IT OUT
-CORE_OVERCLOCK_AUTO_OFF,TIMER OFF
-CORE_OVERCLOCK_AUTO_AT,TIMER %s×
-CORE_OVERCLOCK_STATUS_READY,Set your stake and fire the oven
-CORE_OVERCLOCK_STATUS_COUNTDOWN,The oven is coming up to heat
-CORE_OVERCLOCK_STATUS_BAKING,Pull it out before it burns
-CORE_OVERCLOCK_STATUS_SERVED,Served at %s× · paid %d
-CORE_OVERCLOCK_STATUS_BURNT,Burnt at %s×
+CABINET_CORE_OVERCLOCK_NAME,CORSAIR'S REACH
+CORE_OVERCLOCK_THEME_TITLE,CORSAIR'S REACH
+CORE_OVERCLOCK_STATE_READY,AT ANCHOR
+CORE_OVERCLOCK_STATE_COUNTDOWN,MAKING SAIL
+CORE_OVERCLOCK_STATE_BAKING,RUNNING
+CORE_OVERCLOCK_STATE_SERVED,HAULED IN
+CORE_OVERCLOCK_STATE_BURNT,BROKEN UP
+CORE_OVERCLOCK_RECENT,RECENT RUNS
+CORE_OVERCLOCK_VALUE,HAUL %d
+CORE_OVERCLOCK_ACTION_BAKE,CAST OFF
+CORE_OVERCLOCK_ACTION_PULL,HAUL IT IN
+CORE_OVERCLOCK_AUTO_OFF,NO ORDERS
+CORE_OVERCLOCK_AUTO_AT,TURN AT %s×
+CORE_OVERCLOCK_STATUS_READY,Set your stake and cast off
+CORE_OVERCLOCK_STATUS_COUNTDOWN,Making sail before the swell
+CORE_OVERCLOCK_STATUS_BAKING,Haul it in before the sea takes her
+CORE_OVERCLOCK_STATUS_SERVED,Hauled in at %s× · paid %d
+CORE_OVERCLOCK_STATUS_BURNT,Broken up at %s×
 CORE_OVERCLOCK_NEED_STAKE,No stake your credits can cover
-CORE_OVERCLOCK_HELP_LOCKED,The guide opens between bakes
-DECK_FORNO_BETTING,"Set your stake with {bet_down}{bet_up}, then {interact} Bake      {back} Leave"
-DECK_FORNO_COUNTDOWN,The oven is coming up to heat…
-DECK_FORNO_BAKING,{interact} Pull it out      every second in the oven is more crust
-DECK_FORNO_SERVED,You keep %d      {interact} Bake another
-DECK_FORNO_BURNT,The oven takes %d      {interact} Bake another
-HELP_CORE_OVERCLOCK_GOAL,Bake a pizza in the wood-fired oven and pull it out before it burns.
+CORE_OVERCLOCK_HELP_LOCKED,The guide opens between runs
+DECK_FORNO_BETTING,"Set your stake with {bet_down}{bet_up}, then {interact} Cast off      {back} Leave"
+DECK_FORNO_COUNTDOWN,Making sail…
+DECK_FORNO_BAKING,{interact} Haul it in      every wave she rides is more gold
+DECK_FORNO_SERVED,You keep %d      {interact} Sail again
+DECK_FORNO_BURNT,The sea takes %d      {interact} Sail again
+HELP_CORE_OVERCLOCK_GOAL,Run your galleon before a rising sea and haul in the prize before she is taken.
 HELP_CORE_OVERCLOCK_STEPS,"Set your stake with {bet_down} and {bet_up}.
-Optionally set the oven timer with {secondary}: it comes out there by itself.
-Press {interact} to send it in. The gauge climbs while it bakes.
-Press {interact} again to pull it out and take your stake times the gauge.
-If it burns first there is nothing to serve and the stake is gone."
-HELP_CORE_OVERCLOCK_RULES,"Send a pizza into the wood-fired oven. The longer it bakes the more it is worth: pulling it out pays your stake times the multiplier on the oven gauge.
+Optionally give standing orders with {secondary}: she turns back there by herself.
+Press {interact} to cast off. The compass climbs while she runs.
+Press {interact} again to haul in and take your stake times the compass.
+If the sea takes her first there is nothing to haul and the stake is gone."
+HELP_CORE_OVERCLOCK_RULES,"Send your galleon out before a rising sea. The longer she runs the richer the haul: hauling in pays your stake times the multiplier on the compass.
 
-It can burn at any moment, and a burnt pizza pays nothing. Where it burns is drawn before the dough touches the stone, so nothing you do changes it — only when you choose to pull it out.
+The sea can take her at any moment, and a broken ship pays nothing. Where she is taken is drawn before she casts off, so nothing you do changes it — only when you choose to turn back.
 
-Set the oven timer before the bake and it comes out at exactly that multiplier, whatever the frame rate. Every timer setting returns the same 97%%, so bake as long as your nerve allows."
-HELP_CORE_OVERCLOCK_CONTROLS,"%s  Bake, then pull it out
-%s  Oven timer
+Give standing orders before you cast off and she turns at exactly that multiplier, whatever the frame rate. Every order returns the same 97%%, so run as long as your nerve allows."
+HELP_CORE_OVERCLOCK_CONTROLS,"%s  Cast off, then haul in
+%s  Standing orders
 %s  Change stake
 %s  Leave"
-HELP_CORE_OVERCLOCK_NOTE,One bake in %.0f%% burns at the door. Every timer setting returns the same 97%%.
-HELP_PAY_FORNO_REACH,Pull out at %s×
+HELP_CORE_OVERCLOCK_NOTE,One run in %.0f%% is taken before she clears the bar. Every order returns the same 97%%.
+HELP_PAY_FORNO_REACH,Turn back at %s×
 HELP_CONTROL_FORNO_PRIMARY,Bake / Pull it out
 HELP_CONTROL_FORNO_AUTO,Oven timer
 TIER_GUEST,GUEST

@@ -48,13 +48,15 @@
     "bar": [884, 220],
     "roulette_view": [480, 240],
     "roulette": [480, 246],
-    "poker": [196, 200]
+    "poker": [196, 200],
+    "upgrade_cluster": [700, 196]
   },
   "patrons": [],
   "preview_actors": [],
   "cabinets": [
     "roulette",
-    "poker"
+    "poker",
+    "upgrade_cluster"
   ],
   "lights": [
     {"name": "window_sconce_1", "at": [144, 18], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.4, "phase": 0.14, "flicker": 0.3},

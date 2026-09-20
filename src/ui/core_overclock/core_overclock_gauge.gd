@@ -18,6 +18,8 @@ const SWEEP_START: float = 0.75 * PI
 const SWEEP_SPAN: float = 1.5 * PI
 const TICK_COUNT: int = 25
 const NUMBER_SIZE: int = 40
+## How much larger the number is set when it stands on its own, with no case.
+const BARE_NUMBER_SCALE: float = 2.3
 const CAPTION_SIZE: int = 13
 const VALUE_SIZE: int = 15
 const POP_SECONDS: float = 0.20
@@ -41,6 +43,8 @@ var charge: float = 0.0
 var caption: String = ""
 var caption_color := CoreOverclockTheme.TERRACOTTA_DEEP
 var value_text: String = ""
+## Drawn as bare typography over the canvas, with no case around it.
+var bare: bool = false
 var number_color := CoreOverclockTheme.INK
 var baking: bool = false
 var _needle: float = 0.0
@@ -203,6 +207,12 @@ func _draw() -> void:
 	var heat := _heat()
 	var centre := dial_centre()
 	var radius := dial_radius()
+	if bare:
+		# No case, no needle, no ticks: the multiplier is read straight off the
+		# graph the way a crash game reads it. A brass dial this size sat in the
+		# middle of the canvas and hid the very thing the player is watching.
+		_draw_readout(centre, radius)
+		return
 	_draw_lamp(centre, radius, heat)
 	draw_texture_rect(CoreOverclockTheme.GAUGE, Rect2(Vector2.ZERO, size), false)
 	_draw_dial_warmth(centre, radius, heat)
@@ -334,15 +344,39 @@ func _draw_readout(centre: Vector2, radius: float) -> void:
 		CoreOverclockTheme.draw_centered(
 			self,
 			caption,
-			centre - Vector2(0.0, radius * 0.56),
-			_fitted_size(font, caption, CAPTION_SIZE, radius * 1.30),
+			centre - Vector2(0.0, radius * (0.86 if bare else 0.56)),
+			_fitted_size(font, caption, int(CAPTION_SIZE * (1.5 if bare else 1.0)), radius * 1.30),
 			caption_color
 		)
 	var text := CoreOverclockMath.multiplier_text(centi) + String.chr(0x00D7)
-	var font_size := _fitted_size(font, text, NUMBER_SIZE, radius * 1.72)
+	# Without a case to fit inside, the number is the headline and is set as
+	# large as the canvas allows.
+	var wanted := NUMBER_SIZE * (BARE_NUMBER_SCALE if bare else 1.0)
+	var font_size := _fitted_size(font, text, int(wanted), radius * 1.72)
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var swell := 1.0 + _pop_scale * (_pop_left / POP_SECONDS)
 	draw_set_transform(centre, 0.0, Vector2(swell, swell))
+	if bare:
+		# A dark rim so the number holds against bright foam and moonlight.
+		for ring: Vector2 in [
+			Vector2(-3, 0),
+			Vector2(3, 0),
+			Vector2(0, -3),
+			Vector2(0, 3),
+			Vector2(-2, -2),
+			Vector2(2, -2),
+			Vector2(-2, 2),
+			Vector2(2, 2)
+		]:
+			draw_string(
+				font,
+				Vector2(-text_size.x * 0.5, font.get_ascent(font_size) * 0.5 - 2.0) + ring,
+				text,
+				HORIZONTAL_ALIGNMENT_LEFT,
+				-1,
+				font_size,
+				CoreOverclockTheme.INK
+			)
 	draw_string(
 		font,
 		Vector2(-text_size.x * 0.5, font.get_ascent(font_size) * 0.5 - 2.0),
@@ -358,7 +392,7 @@ func _draw_readout(centre: Vector2, radius: float) -> void:
 	CoreOverclockTheme.draw_centered(
 		self,
 		value_text,
-		centre + Vector2(0.0, radius * 0.48),
-		_fitted_size(font, value_text, VALUE_SIZE, radius * 1.18),
-		CoreOverclockTheme.TERRACOTTA_DEEP
+		centre + Vector2(0.0, radius * (0.86 if bare else 0.48)),
+		_fitted_size(font, value_text, int(VALUE_SIZE * (1.5 if bare else 1.0)), radius * 1.18),
+		CoreOverclockTheme.BRASS_BRIGHT if bare else CoreOverclockTheme.TERRACOTTA_DEEP
 	)

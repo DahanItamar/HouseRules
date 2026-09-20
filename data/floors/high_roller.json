@@ -46,13 +46,15 @@
   "anchors": {
     "exit": [480, 493],
     "baccarat": [480, 268],
-    "match_point": [290, 141]
+    "match_point": [290, 141],
+    "core_overclock": [680, 141]
   },
   "patrons": [],
   "preview_actors": [],
   "cabinets": [
     "baccarat",
-    "match_point"
+    "match_point",
+    "core_overclock"
   ],
   "lights": [
     {"name": "wall_sconce_1", "at": [205, 30], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.3, "phase": 0.12, "flicker": 0.3},

@@ -28,11 +28,16 @@ extends Resource
 ## The uniform draw is an integer in [1, curve_denominator]. Larger values make
 ## the quantised survival function closer to the continuous 0.97 / m.
 @export var curve_denominator: int = 1_000_000_000
-## The climb is multiplier = exp(growth_per_second * seconds); 2x at 1.73 s,
-## 10x at 5.76 s, 100x at 11.5 s.
-@export var growth_per_second: float = 0.40
+## The climb is multiplier = exp(growth_per_second * seconds); 2x at 5.8 s,
+## 10x at 19 s, 100x at 38 s.
+##
+## This was 0.40 (2x in 1.7 s), which made a run something that had already
+## happened by the time you read it. The rate does not touch the return: the
+## crash point is drawn before the bird leaves, so this only decides how long
+## she takes to reach it, and therefore how long you have to hold your nerve.
+@export var growth_per_second: float = 0.12
 ## Locked-in bet, spooling core, no cash-out yet.
-@export var countdown_seconds: float = 1.6
+@export var countdown_seconds: float = 2.2
 ## How many crash points the recent-runs strip keeps.
 @export var history_length: int = 10
 ## Auto cash-out presets in hundredths; 0 is "off" (cash out by hand).

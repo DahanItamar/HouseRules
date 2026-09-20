@@ -22,6 +22,8 @@ const ROAR_FROM: float = 0.40
 const ROAR_SLOW: float = 0.62
 const ROAR_FAST: float = 0.30
 const SERVED_SECONDS: float = 2.4
+## How long the ship's break-up plays for.
+const WRECK_SECONDS: float = 0.9
 const NOTICE_SECONDS: float = 1.8
 
 var backdrop: CoreOverclockBackdrop
@@ -29,9 +31,11 @@ var gauge: CoreOverclockGauge
 var history: CoreOverclockHistory
 var hosts: CoreOverclockHosts
 var burst: CoreOverclockBurst
-var baking_pizza: TextureRect
-## Which painted bake stage `baking_pizza` is showing; -1 before the first one.
-var _bake_stage: int = -1
+var flight: CoreOverclockFlight
+## The ship breaking up, played once when a run is taken.
+var _wreck: Sprite2D
+var _wreck_left: float = 0.0
+var _wreck_at: Vector2 = Vector2.ZERO
 var deck: CabinetDeck
 var primary_button: PromptButton
 var auto_button: PromptButton
@@ -103,10 +107,11 @@ func _build_cabinet() -> void:
 	_stage.add_child(backdrop)
 	_build_left_column()
 	_build_hosts()
-	_build_baking_pizza()
+	_build_flight()
 	gauge = CoreOverclockGauge.new()
 	gauge.position = CoreOverclockTheme.GAUGE_CENTRE - gauge.size * 0.5
-	gauge.z_index = 4
+	gauge.bare = true
+	gauge.z_index = 6
 	gauge.whole_multiple_passed.connect(_on_whole_multiple)
 	_stage.add_child(gauge)
 	burst = CoreOverclockBurst.new()
@@ -143,25 +148,40 @@ func _build_left_column() -> void:
 ## frame with both of them in it, so their reaction is shared by construction.
 func _build_hosts() -> void:
 	hosts = CoreOverclockHosts.new()
-	hosts.z_index = 2
+	hosts.z_index = 4
 	_stage.add_child(hosts)
 
 
-## The pizza itself, in the oven mouth, browning as it bakes.
-func _build_baking_pizza() -> void:
-	baking_pizza = TextureRect.new()
-	baking_pizza.name = "FornoBakingPizza"
-	baking_pizza.texture = CoreOverclockTheme.BAKE_STAGES[CoreOverclockTheme.BAKE_STAGE_RAW]
-	baking_pizza.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	baking_pizza.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	baking_pizza.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	baking_pizza.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	baking_pizza.size = Vector2.ONE * CoreOverclockTheme.BAKE_HEIGHT
-	baking_pizza.position = CoreOverclockTheme.BAKE_CENTRE - baking_pizza.size * 0.5
-	baking_pizza.pivot_offset = baking_pizza.size * 0.5
-	baking_pizza.z_index = 3
-	baking_pizza.visible = false
-	_stage.add_child(baking_pizza)
+## The parrot and the line she draws. This is the multiplier made visible: she
+## climbs the same curve the number does, and the trail is where she has been.
+func _build_flight() -> void:
+	# The chart frame is laid first so the swell draws inside it.
+	var chart := NinePatchRect.new()
+	chart.name = "CorsairChartFrame"
+	chart.texture = CoreOverclockTheme.FRAME_CHART
+	chart.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	chart.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	for side: Side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		chart.set_patch_margin(side, CoreOverclockTheme.FRAME_CHART_MARGIN)
+	var chart_scale := 0.22
+	chart.scale = Vector2.ONE * chart_scale
+	var box := CoreOverclockTheme.FLIGHT_AREA.grow(CoreOverclockTheme.frame_chart_border())
+	chart.position = box.position
+	chart.size = box.size / chart_scale
+	chart.z_index = 2
+	_stage.add_child(chart)
+	flight = CoreOverclockFlight.new()
+	flight.area = CoreOverclockTheme.FLIGHT_AREA
+	flight.z_index = 3
+	_stage.add_child(flight)
+	_wreck = Sprite2D.new()
+	_wreck.name = "CorsairWreck"
+	_wreck.texture = CoreOverclockTheme.WRECK
+	_wreck.region_enabled = true
+	_wreck.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	_wreck.visible = false
+	_wreck.z_index = 5
+	_stage.add_child(_wreck)
 
 
 func _build_title_plate() -> void:
@@ -314,14 +334,10 @@ func show_notice(key: String) -> void:
 func begin_bake() -> void:
 	_result = null
 	gauge.reset()
-	gauge.set_number_color(CoreOverclockTheme.INK)
+	gauge.set_number_color(CoreOverclockTheme.CREAM)
 	burst.clear()
-	# The peel has just set it on the stone: topped, raw, nothing browned yet.
-	_bake_stage = -1
-	_show_bake_stage(CoreOverclockTheme.BAKE_STAGE_RAW)
-	baking_pizza.modulate = Color.WHITE
-	baking_pizza.visible = true
-	baking_pizza.rotation = 0.0
+	# She leaves the perch; the line builds from nothing.
+	flight.set_reach(0.0, true)
 	_served_left = 0.0
 	_impulse = 0.0
 	_pulse_left = 0.0
@@ -350,32 +366,17 @@ func tick(delta: float) -> void:
 		)
 	)
 	backdrop.set_bake(heat, baking or math.state == CoreOverclockMath.State.COUNTDOWN)
-	if math.state == CoreOverclockMath.State.COUNTDOWN:
-		# The pizza is being made while the oven comes up to heat: a dough ball,
-		# stretched, sauced, then topped and ready for the peel.
-		var left := math.countdown_left / maxf(math.paytable.countdown_seconds, 0.001)
-		_show_bake_stage(CoreOverclockTheme.prep_stage(1.0 - left))
 	if baking:
 		gauge.set_value(tr("CORE_OVERCLOCK_VALUE") % math.current_payout())
-		_show_bake_stage(CoreOverclockTheme.bake_stage(heat))
-		if MotionPolicy.allows_continuous_motion():
-			baking_pizza.rotation = sin(_shake_phase * 1.2) * 0.02
+		# She climbs with the multiplier: same curve, drawn instead of counted.
+		flight.set_reach(heat, true)
+	_advance_wreck(delta)
 	_update_shake(delta, heat, baking)
 	_update_audio(delta, heat, baking)
 	if _served_left > 0.0:
 		_served_left = maxf(_served_left - delta, 0.0)
 		if _served_left <= 0.0:
-			baking_pizza.visible = false
-
-
-## Shows one painted bake stage. The pizza is the multiplier made visible, so
-## this is the only thing that decides which stage is on screen.
-func _show_bake_stage(stage: int) -> void:
-	var index := clampi(stage, 0, CoreOverclockTheme.BAKE_STAGES.size() - 1)
-	if _bake_stage == index:
-		return
-	_bake_stage = index
-	baking_pizza.texture = CoreOverclockTheme.BAKE_STAGES[index]
+			flight.set_reach(0.0, false)
 
 
 ## Reacts once to each state the bake moves through.
@@ -392,10 +393,8 @@ func _sync_state(initial: bool) -> void:
 		and previous == CoreOverclockMath.State.COUNTDOWN
 	):
 		# The dough is on the stone: a puff of flour off the peel.
-		burst.puff(
-			CoreOverclockTheme.OVEN_MOUTH.get_center(), CoreOverclockTheme.EMBER_FLOUR[0], 170.0
-		)
-		burst.sparks(CoreOverclockTheme.OVEN_MOUTH.get_center(), 8)
+		burst.puff(flight.crest_point(1.0), CoreOverclockTheme.EMBER_FLOUR[0], 170.0)
+		burst.sparks(flight.crest_point(1.0), 8)
 	refresh()
 
 
@@ -454,9 +453,9 @@ func show_result(result: RoundResult) -> void:
 	var served: bool = result.detail.get("cashed_out", false)
 	var math := _math()
 	gauge.settle_pop()
-	gauge.set_number_color(
-		CoreOverclockTheme.TERRACOTTA_DEEP if served else CoreOverclockTheme.CHAR
-	)
+	# Gold when she came home, pale when the sea took her. Both have to hold
+	# against a dark canvas, so neither goes near the old oven inks.
+	gauge.set_number_color(CoreOverclockTheme.BRASS_BRIGHT if served else CoreOverclockTheme.MUTED)
 	history.set_entries(math.history)
 	hosts.show_state(&"cheer" if served else &"wince")
 	if served:
@@ -470,30 +469,44 @@ func show_result(result: RoundResult) -> void:
 func _present_served(result: RoundResult) -> void:
 	AudioService.play(&"oven_serve")
 	var multiple := float(result.payout) / maxf(result.stake, 1.0)
-	_show_bake_stage(
-		CoreOverclockTheme.bake_stage(CoreOverclockTheme.heat_of(_math().settled_centi))
-	)
-	baking_pizza.visible = true
+	flight.set_reach(CoreOverclockTheme.heat_of(_math().settled_centi), true)
 	_served_left = MotionPolicy.finite_duration(SERVED_SECONDS)
-	burst.sparks(CoreOverclockTheme.OVEN_MOUTH.get_center(), 18 if multiple >= 5.0 else 10)
-	burst.puff(CoreOverclockTheme.BAKE_CENTRE, CoreOverclockTheme.EMBER_FLOUR[1], 150.0)
+	burst.sparks(flight.crest_point(1.0), 18 if multiple >= 5.0 else 10)
+	burst.puff(flight.crest_point(0.92), CoreOverclockTheme.EMBER_FLOUR[1], 150.0)
 	_win_flash.play(CoreOverclockTheme.BRASS_BRIGHT, multiple >= BIG_WIN_MULTIPLE)
 
 
-## The meltdown: the needle slams, the screen flashes white-hot, smoke rolls out
-## of the mouth and over the pizza, and the stage settles.
+## Steps the break-up through its four painted stages and then clears it.
+func _advance_wreck(delta: float) -> void:
+	if _wreck_left <= 0.0:
+		_wreck.visible = false
+		return
+	_wreck_left = maxf(_wreck_left - delta, 0.0)
+	var played := 1.0 - _wreck_left / maxf(WRECK_SECONDS, 0.001)
+	var cells := int(CoreOverclockTheme.WRECK_GRID.x * CoreOverclockTheme.WRECK_GRID.y)
+	var frame := clampi(int(played * float(cells)), 0, cells - 1)
+	_wreck.region_rect = CoreOverclockTheme.sheet_region(
+		frame, CoreOverclockTheme.WRECK_GRID, CoreOverclockTheme.WRECK_CELL
+	)
+	_wreck.position = _wreck_at
+	_wreck.scale = (
+		Vector2.ONE * (CoreOverclockFlight.BIRD_SPAN * 1.8 / CoreOverclockTheme.WRECK_CELL)
+	)
+	_wreck.visible = true
+
+
+## She is taken: the needle slams, the screen goes white, and the sea closes
+## over where she was.
 func _present_burnt() -> void:
 	AudioService.play(&"oven_burn")
-	_show_bake_stage(CoreOverclockTheme.BAKE_STAGE_BURNT)
-	baking_pizza.modulate = Color.WHITE
-	baking_pizza.visible = true
+	_wreck_at = flight.crest_point(1.0)
+	_wreck_left = MotionPolicy.finite_duration(WRECK_SECONDS)
+	flight.set_reach(CoreOverclockTheme.heat_of(maxi(_math().crash_centi, 100)), false)
 	_served_left = MotionPolicy.finite_duration(SERVED_SECONDS)
 	gauge.slam()
-	burst.puff(
-		CoreOverclockTheme.OVEN_MOUTH.get_center(), CoreOverclockTheme.EMBER_SMOKE[0], 300.0, 0.9
-	)
-	burst.puff(CoreOverclockTheme.BAKE_CENTRE, CoreOverclockTheme.EMBER_SMOKE[1], 190.0, 0.8)
-	burst.sparks(CoreOverclockTheme.OVEN_MOUTH.get_center(), 14)
+	burst.puff(flight.crest_point(1.0), CoreOverclockTheme.EMBER_SMOKE[0], 300.0, 0.9)
+	burst.puff(flight.crest_point(0.92), CoreOverclockTheme.EMBER_SMOKE[1], 190.0, 0.8)
+	burst.sparks(flight.crest_point(1.0), 14)
 	if MotionPolicy.allows_camera_emphasis():
 		_impulse = BURN_IMPULSE
 	_win_flash.play(CoreOverclockTheme.CREAM, true)
@@ -503,10 +516,10 @@ func _refresh_gauge() -> void:
 	var math := _math()
 	gauge.set_auto_target(math.auto_centi)
 	history.set_entries(math.history)
-	var ink := CoreOverclockTheme.TERRACOTTA_DEEP
+	var ink := CoreOverclockTheme.CREAM
 	match math.state:
 		CoreOverclockMath.State.CASHED_OUT:
-			ink = CoreOverclockTheme.BASIL
+			ink = CoreOverclockTheme.BRASS_BRIGHT
 		CoreOverclockMath.State.CRASHED:
 			ink = CoreOverclockTheme.TOMATO
 	gauge.set_caption(tr(_state_key()), ink)

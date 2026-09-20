@@ -19,41 +19,43 @@ extends RefCounted
 ## Rebuild the production art with `python tools/art/prepare_forno.py`;
 ## provenance is in docs/art/GENERATION-REPORT.md under "Forno d'Oro".
 
-const BACKDROP := preload("res://assets/production/forno/forno_backdrop_v4.png")
-const GAUGE := preload("res://assets/production/forno/forno_oven_gauge.png")
-const PIZZA := preload("res://assets/production/forno/forno_pizza.png")
-## The bake, in order, all on one 512 px cell and all at one shared scale so the
-## dough ball stays small and the finished pizza stays large. This is the
-## cabinet's real multiplier readout: the player reads how far the bake has gone
-## from the food in the oven, not only from the number under it.
-const BAKE_STAGES: Array[Texture2D] = [
-	preload("res://assets/production/forno/forno_bake_0.png"),
-	preload("res://assets/production/forno/forno_bake_1.png"),
-	preload("res://assets/production/forno/forno_bake_2.png"),
-	preload("res://assets/production/forno/forno_bake_3.png"),
-	preload("res://assets/production/forno/forno_bake_4.png"),
-	preload("res://assets/production/forno/forno_bake_5.png"),
-	preload("res://assets/production/forno/forno_bake_6.png"),
-	preload("res://assets/production/forno/forno_bake_7.png"),
-	preload("res://assets/production/forno/forno_bake_8.png"),
-]
-## The stage the pizza is at before the oven is lit: made, topped, still raw.
-const BAKE_STAGE_RAW: int = 3
-## The stage a bake that ran too long settles on: the last one in the set.
-const BAKE_STAGE_BURNT: int = 8
-const BURNT := preload("res://assets/production/forno/forno_burnt_pizza.png")
+const BACKDROP := preload("res://assets/production/corsair/corsair_sea.png")
+const GAUGE := preload("res://assets/production/corsair/corsair_compass.png")
 const ICONS := preload("res://assets/production/forno/forno_icons.png")
 const EMBERS := preload("res://assets/production/forno/forno_embers.png")
-const FRAME := preload("res://assets/production/forno/forno_frame.png")
+## The small plates behind the title, the timer and the recent runs are cut
+## from the same chart frame as the crash box, so the whole cabinet is one
+## set of materials rather than a pizzeria border left over from the theme
+## this machine used to wear.
+const FRAME := preload("res://assets/production/corsair/corsair_frame.png")
+const CREST := preload("res://assets/production/corsair/corsair_crest.png")
+const PARROT := preload("res://assets/production/corsair/corsair_parrot.png")
+## The bird on the line: a four-frame flap cycle, body fixed, wings moving.
+const PARROT_FLIGHT := preload("res://assets/production/corsair/corsair_parrot_flight.png")
+const PARROT_GRID := Vector2i(2, 2)
+const PARROT_CELL: float = 512.0
+## The glowing beam she draws behind her.
+const TRAIL := preload("res://assets/production/corsair/corsair_trail.png")
+const TRAIL_TINT := Color(1.0, 0.86, 0.46, 0.95)
+const DECK_TRIM := preload("res://assets/production/corsair/corsair_deck_trim.png")
+## The chart frame the crash is drawn inside, so the graph is a thing on the
+## wall and the room decorates up to its edge. It is the same painted frame the
+## small HUD plates are cut from, at a different scale.
+const FRAME_CHART := FRAME
+## The painted border thickness in the 1536 px master.
+const FRAME_CHART_MARGIN: int = 114
+const WRECK := preload("res://assets/production/corsair/corsair_wreck.png")
+const WRECK_GRID := Vector2i(2, 2)
+const WRECK_CELL: float = 512.0
 ## The two pizzaiole, one painted frame per state of the bake with both of them
 ## in it. They are generated together so their reaction is always shared; see
 ## `CoreOverclockHosts`. The middle of every frame is transparent, so the oven
 ## burns between them.
 const HOST_STATES: Dictionary = {
-	&"ready": preload("res://assets/production/forno/forno_duo_ready.png"),
-	&"tense": preload("res://assets/production/forno/forno_duo_tense.png"),
-	&"cheer": preload("res://assets/production/forno/forno_duo_cheer.png"),
-	&"wince": preload("res://assets/production/forno/forno_duo_wince.png"),
+	&"ready": preload("res://assets/production/corsair/corsair_crew_ready.png"),
+	&"tense": preload("res://assets/production/corsair/corsair_crew_tense.png"),
+	&"cheer": preload("res://assets/production/corsair/corsair_crew_cheer.png"),
+	&"wince": preload("res://assets/production/corsair/corsair_crew_wince.png"),
 }
 
 ## Sprite sheet grids, as re-cut by tools/art/prepare_forno.py.
@@ -74,14 +76,18 @@ const EMBER_FLOUR: Array[int] = [1, 4, 9, 12]
 const EMBER_SMOKE: Array[int] = [3, 6, 11, 15]
 
 ## The blank cream dial inside the oven gauge, in texture fractions.
-const DIAL_CENTRE := Vector2(0.4946, 0.4902)
-const DIAL_RADIUS: float = 0.29
+const DIAL_CENTRE := Vector2(0.4971, 0.4873)
+const DIAL_RADIUS: float = 0.315
 ## The terracotta nine-slice plate: its margin in the 1024 px master, and the
 ## canvas pixels per source pixel it is drawn at (a 15 px painted border).
-const FRAME_MARGIN: int = 140
-const FRAME_SCALE: float = 0.11
+const FRAME_MARGIN: int = 114
+const FRAME_SCALE: float = 0.13
 ## Where the oven mouth burns on the painted backdrop, in canvas pixels.
-const OVEN_MOUTH := Rect2(400, 145, 160, 67)
+## The crash itself owns the middle of the screen, between the two character
+## lanes and from under the title down to the deck. The climb is drawn inside
+## this box and the multiplier is read off its centre.
+## The chart the flight is drawn inside.
+const FLIGHT_AREA := Rect2(232, 116, 496, 274)
 ## She is seen head to foot now, so she is scaled to the lane's height
 ## (2011 painted pixels into 264) instead of to a hip cut line.
 const HOSTESS_SCALE: float = 0.1313
@@ -93,26 +99,22 @@ const HOSTESS_ANCHOR := Vector2(670, 2044)
 ## column and the right column are the same width and keep the same margin.
 const AUTO_RECT := Rect2(48, 27, 176, 44)
 const TITLE_RECT := Rect2(330, 27, 300, 70)
-## Sits above the left host's head, so the sides stay hers and the centre
-## line stays the game's.
-const HISTORY_RECT := Rect2(40, 78, 252, 68)
+## The recent runs sit under the timer in the top-left corner, clear of the
+## left-hand lane.
+const HISTORY_RECT := Rect2(44, 78, 152, 34)
 ## The one multiplier: the brass oven dial, standing on the counter front on the
 ## centre line directly below the oven mouth. An earlier screen showed the same
 ## number twice, on this dial and again on a drawn bake curve; the curve is gone.
 ## It is sized to the gap between the counter top and the deck so it covers
 ## neither.
-const GAUGE_CENTRE := Vector2(480, 318)
-const GAUGE_SIZE: float = 196.0
-## The pizza sits on the oven floor inside the painted arch, so it is part of the
-## oven instead of floating over the counter attached to nothing.
-const BAKE_CENTRE := Vector2(480, 182)
-const BAKE_HEIGHT: float = 70.0
-## The two hosts stand on the open floor either side of the oven, head to
-## foot: the game itself owns the centre line between them.
-## Feet land on the lane's bottom edge, clear of the deck, so both hosts are
-## seen head to foot rather than cut off at the waist by furniture.
-const HOST_LANE := Rect2(660, 152, 264, 266)
-const HOST_LANE_LEFT := Rect2(36, 152, 264, 266)
+## The multiplier is read in the middle of the crash area, over the sea, the way
+## every crash game reads it. There is no separate dial to cover the water.
+const GAUGE_CENTRE := Vector2(464, 226)
+const GAUGE_SIZE: float = 300.0
+## The two of them stand in narrow lanes hard against the left and right edges,
+## clear of the crash area between them and clear of the deck below.
+const HOST_LANE := Rect2(764, 118, 160, 300)
+const HOST_LANE_LEFT := Rect2(36, 118, 160, 300)
 
 const NIGHT := Color("1a0f09")
 const CRUST := Color("d8a85a")
@@ -149,24 +151,6 @@ static func heat_color(heat: float) -> Color:
 	return _ramp(HEAT_STOPS, heat)
 
 
-## Which painted bake stage the pizza shows at this point in the bake.
-##
-## The stages before `BAKE_STAGE_RAW` are the pizza being made and are stepped
-## through during the countdown; from there the heat walks it to the last stage
-## before burnt. A burn settles on `BAKE_STAGE_BURNT` outright.
-static func bake_stage(heat: float) -> int:
-	var first := BAKE_STAGE_RAW
-	var last := BAKE_STAGE_BURNT - 1
-	return clampi(first + int(round(clampf(heat, 0.0, 1.0) * float(last - first))), first, last)
-
-
-## The stage the pizza is at while it is being made, `progress` running 0 to 1
-## across the countdown: a dough ball, stretched, sauced, then topped and raw.
-static func prep_stage(progress: float) -> int:
-	var steps := BAKE_STAGE_RAW
-	return clampi(int(clampf(progress, 0.0, 1.0) * float(steps + 1)), 0, steps)
-
-
 static func _ramp(stops: Array[Color], place: float) -> Color:
 	var span := float(stops.size() - 1)
 	var spot := clampf(place, 0.0, 1.0) * span
@@ -192,6 +176,12 @@ static func frame_plate(
 	plate.position = rect.position
 	plate.size = rect.size / plate_scale
 	return plate
+
+
+## The chart frame's painted border on the canvas, at the scale the panel draws
+## it. The swell is inset by this much so the water never runs under the brass.
+static func frame_chart_border(chart_scale: float = 0.22) -> float:
+	return float(FRAME_CHART_MARGIN) * chart_scale
 
 
 ## The painted plate's border thickness on the canvas at `plate_scale`.

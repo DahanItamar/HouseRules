@@ -1,0 +1,35 @@
+[
+	{
+		"auto_centi": 0,
+		"crash": "242.50",
+		"crash_centi": 24250,
+		"dial_reads": "9.06",
+		"label": "served",
+		"matches": true,
+		"settled_centi": 906,
+		"state": 4,
+		"uniform": 4000000
+	},
+	{
+		"auto_centi": 0,
+		"crash": "1.07",
+		"crash_centi": 107,
+		"dial_reads": "1.07",
+		"label": "burnt",
+		"matches": true,
+		"settled_centi": 0,
+		"state": 3,
+		"uniform": 900000000
+	},
+	{
+		"auto_centi": 200,
+		"crash": "323.33",
+		"crash_centi": 32333,
+		"dial_reads": "2.00",
+		"label": "reduced_motion",
+		"matches": true,
+		"settled_centi": 200,
+		"state": 4,
+		"uniform": 3000000
+	}
+]
