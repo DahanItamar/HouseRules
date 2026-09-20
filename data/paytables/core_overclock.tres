@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="CoreOverclockPaytable" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/core_overclock_paytable.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+stake_unit = 100
+multiplier_scale = 100
+min_cashout_centi = 100
+cap_centi = 1000000
+rtp_numerator = 97
+rtp_denominator = 100
+curve_denominator = 1000000000
+growth_per_second = 0.4
+countdown_seconds = 1.6
+history_length = 10
+auto_targets = PackedInt32Array(0, 120, 150, 200, 300, 500, 1000)

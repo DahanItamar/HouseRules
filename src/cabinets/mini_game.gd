@@ -22,6 +22,8 @@ func begin(game_context: MiniGameContext) -> void:
 	normalize_selected_stake()
 	if panel != null:
 		panel.refresh()
+		# Presentation-only backdrop life (lamps, candles, fireflies) under the art.
+		CabinetAmbience.attach(panel)
 
 
 func abandon() -> void:
@@ -169,9 +171,35 @@ func handle_common_input(event: InputEvent) -> bool:
 	if panel.help_open:
 		if event.is_action_pressed("back"):
 			panel.set_help_open(false)
+		elif event.is_action_pressed("bet_down") or event.is_action_pressed("move_left"):
+			panel.help_page_step(-1)
+		elif event.is_action_pressed("bet_up") or event.is_action_pressed("move_right"):
+			panel.help_page_step(1)
 		get_viewport().set_input_as_handled()
 		return true
 	return false
+
+
+## Shoulder bet stepping (LB/RB, Q/E) and the table maximum (RT, R). Returns
+## true when the event was a bet action, whether or not the stake changed.
+func handle_bet_input(event: InputEvent) -> bool:
+	var direction := 0
+	if event.is_action_pressed("bet_down"):
+		direction = -1
+	elif event.is_action_pressed("bet_up"):
+		direction = 1
+	elif event.is_action_pressed("bet_max"):
+		var stakes := available_stakes()
+		if not is_round_active and not stakes.is_empty():
+			select_stake(stakes[-1])
+		return true
+	if direction == 0:
+		return false
+	if adjust_stake(direction):
+		AudioService.play(&"chip")
+		if panel != null:
+			panel.refresh()
+	return true
 
 
 ## Games with their own table presentation return a CabinetPanel subclass.
@@ -237,6 +265,8 @@ func _unhandled_input(event: InputEvent) -> void:
 			exit_confirmation.present(current_stake)
 		else:
 			exit_requested.emit()
+	elif context != null and handle_bet_input(event):
+		get_viewport().set_input_as_handled()
 	elif not is_round_active and context != null:
 		var changed := false
 		if event.is_action_pressed("move_left"):

@@ -10,6 +10,8 @@ const SCENE_PATHS: Dictionary = {
 	&"poker": "res://src/cabinets/poker/poker.tscn",
 	&"match_point": "res://src/cabinets/match_point/match_point.tscn",
 	&"baccarat": "res://src/cabinets/baccarat/baccarat.tscn",
+	&"core_overclock": "res://src/cabinets/core_overclock/core_overclock.tscn",
+	&"upgrade_cluster": "res://src/cabinets/upgrade_cluster/upgrade_cluster.tscn",
 }
 
 

@@ -45,6 +45,9 @@ func apply_result(result: RoundResult) -> bool:
 		stats.best_win = maxi(stats.best_win, result.payout)
 		SaveService.state.cabinet_stats[id] = stats
 	Economy.record_round(context.definition.id, result)
+	# Standing and the ledger only read what has already settled; neither can
+	# change this round's stake, payout or balance.
+	Progression.record_round(result)
 	context.balance = Wallet.balance
 	cabinet.normalize_selected_stake()
 	round_applied.emit(result)

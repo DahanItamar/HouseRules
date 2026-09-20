@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CabinetDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/domain/cabinet_definition.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"core_overclock"
+name_key = "CABINET_CORE_OVERCLOCK_NAME"
+tier = 1
+min_bet = 100
+max_bet = 1000
+target_rtp = 0.97
+volatility = 2
