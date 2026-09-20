@@ -726,3 +726,8 @@ MANAGER_AFTER_DEED,"Your house now. I'll keep the books, if you'll have me."
 DEED_TITLE,THE HOUSE IS YOURS
 DEED_LINE,"Paid %s chips for the deed, after turning over %s at the tables."
 DEED_CLOSE,[%s] CLOSE
+MENU_ROW_PLAY,ENTER THE CASINO
+MENU_ROW_MOTION,REDUCED MOTION %s
+MENU_ROW_QUIT,SAVE AND QUIT
+MENU_VERSION,v%s
+MENU_NOTICE,Play money only. No real-money wagering and no purchases of any kind.

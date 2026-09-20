@@ -73,6 +73,22 @@ const THEMES: Dictionary = {
 		"medallion": preload("res://assets/production/ui/kit/medallion_corsair.png"),
 		"medallion_region": Rect2(22, 9, 976, 992),
 	},
+	## The main menu's row: a chevron banner, burgundy at rest and gold when it is
+	## the row the player is standing on.
+	&"menu_row":
+	{
+		"button": preload("res://assets/production/ui/kit/menu_chevron.png"),
+		"button_region": Rect2(0, 297, 1343, 129),
+		"button_margin": 25,
+		"medallion": preload("res://assets/production/ui/kit/menu_selector.png"),
+		"medallion_region": Rect2(111, 65, 844, 892),
+	},
+	&"menu_row_hot":
+	{
+		"button": preload("res://assets/production/ui/kit/menu_chevron_hot.png"),
+		"button_region": Rect2(18, 291, 1315, 145),
+		"button_margin": 37,
+	},
 	## The main menu's own key: burgundy enamel in a gold art-deco frame, cut from
 	## the same branding as the title badge.
 	&"menu":

@@ -22,6 +22,9 @@ var _menu_kicker: Label
 var _menu_rule: ColorRect
 var _menu_title: Label
 var _menu_badge: TextureRect
+## The menu's own rows, in the order the player walks them.
+var _menu_rows: Array[Button] = []
+var _menu_selector: TextureRect
 var _menu_subtitle: Label
 var _menu_prompt_panel: Panel
 var _menu_prompt: Label
@@ -254,7 +257,127 @@ func _build_menu() -> void:
 	_menu_prompt.add_theme_color_override("font_color", Color("f1e8d8"))
 	_menu.add_child(_menu_prompt)
 	_build_motion_preference_button()
+	_build_menu_rows()
+	_build_menu_chrome()
 	_play_menu_reveal()
+
+
+## The menu as a list the player walks, instead of a wall of key prompts.
+##
+## Each row is a painted chevron that lights when it is the one you are standing
+## on, with a gold arrowhead beside it. The old prompt panel and the settings key
+## stay as nodes because the reveal animation drives them and the suite measures
+## them; they are simply no longer what the player uses.
+const MENU_ROW_RECT := Rect2(56, 300, 330, 46)
+const MENU_ROW_STEP: float = 56.0
+
+
+func _build_menu_rows() -> void:
+	for typeset: Control in [_menu_prompt_panel, _menu_prompt, _menu_motion_button]:
+		typeset.visible = false
+	_menu_selector = TextureRect.new()
+	_menu_selector.name = "MenuSelector"
+	_menu_selector.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_menu_selector.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_menu_selector.texture = UiKit.texture(&"menu_row", "medallion")
+	_menu_selector.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_menu_selector.size = Vector2(26, 26)
+	_menu_selector.z_index = 3
+	_menu.add_child(_menu_selector)
+	var actions: Array[Callable] = [_start_playing, _toggle_motion_preference, _quit_game]
+	for index: int in range(actions.size()):
+		var row := Button.new()
+		row.name = "MenuRow%d" % index
+		row.position = MENU_ROW_RECT.position + Vector2(0.0, MENU_ROW_STEP * float(index))
+		row.size = MENU_ROW_RECT.size
+		row.focus_mode = Control.FOCUS_ALL
+		row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		row.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		row.add_theme_constant_override("h_separation", 0)
+		row.add_theme_font_override("font", Typography.DISPLAY_FONT)
+		row.add_theme_font_size_override("font_size", 21)
+		for state: String in ["font_color", "font_hover_color", "font_focus_color"]:
+			row.add_theme_color_override(state, Color("f6eed8"))
+		row.add_theme_color_override("font_pressed_color", Color("fff6dc"))
+		row.add_theme_stylebox_override(
+			"focus", _menu_button_style(Color(0, 0, 0, 0), Color("48c5d5"), 3)
+		)
+		var act := actions[index]
+		row.pressed.connect(func() -> void: act.call())
+		row.focus_entered.connect(_place_menu_selector.bind(row))
+		row.mouse_entered.connect(row.grab_focus)
+		ButtonFeedback.attach(row)
+		_menu.add_child(row)
+		UiKit.paint_button(row, &"menu_row", index == 0, 11.0)
+		_menu_rows.append(row)
+	for index: int in range(_menu_rows.size()):
+		var row := _menu_rows[index]
+		row.focus_neighbor_top = row.get_path_to(_menu_rows[posmod(index - 1, _menu_rows.size())])
+		row.focus_neighbor_bottom = row.get_path_to(
+			_menu_rows[posmod(index + 1, _menu_rows.size())]
+		)
+	_refresh_menu_rows()
+	_menu_rows[0].grab_focus.call_deferred()
+
+
+## The version ticker and the play-money notice: the two things a splash screen
+## owes the person looking at it.
+func _build_menu_chrome() -> void:
+	var version := Label.new()
+	version.name = "VersionTicker"
+	version.add_theme_font_override("font", Typography.UI_FONT)
+	version.add_theme_font_size_override("font_size", 13)
+	version.add_theme_color_override("font_color", Color("9a8f7f"))
+	version.position = Vector2(760, 26)
+	version.size = Vector2(152, 20)
+	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	version.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	version.text = (
+		tr("MENU_VERSION") % ProjectSettings.get_setting("application/config/version", "0.0.0")
+	)
+	_menu.add_child(version)
+	var band := ColorRect.new()
+	band.name = "MenuNotice"
+	band.position = Vector2(0, 494)
+	band.size = Vector2(960, 46)
+	band.color = Color("0a0809b4")
+	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_menu.add_child(band)
+	var notice := Label.new()
+	notice.name = "MenuNoticeText"
+	notice.add_theme_font_override("font", Typography.UI_FONT)
+	notice.add_theme_font_size_override("font_size", 14)
+	notice.add_theme_color_override("font_color", Color("b8ad9c"))
+	notice.position = Vector2(48, 504)
+	notice.size = Vector2(864, 26)
+	notice.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	notice.text = tr("MENU_NOTICE")
+	_menu.add_child(notice)
+
+
+## Puts the arrowhead beside whichever row has focus.
+func _place_menu_selector(row: Button) -> void:
+	if _menu_selector == null:
+		return
+	_menu_selector.position = Vector2(
+		row.position.x - 32.0, row.position.y + row.size.y * 0.5 - 13.0
+	)
+	_menu_selector.visible = true
+
+
+func _refresh_menu_rows() -> void:
+	if _menu_rows.size() < 3:
+		return
+	_menu_rows[0].text = "  " + tr("MENU_ROW_PLAY")
+	_menu_rows[1].text = (
+		"  "
+		+ (
+			tr("MENU_ROW_MOTION")
+			% (tr("SETTING_ON") if MotionPolicy.is_reduced() else tr("SETTING_OFF"))
+		)
+	)
+	_menu_rows[2].text = "  " + tr("MENU_ROW_QUIT")
 
 
 func _build_motion_preference_button() -> void:
@@ -323,6 +446,7 @@ func _refresh_menu() -> void:
 		tr("MENU_CONTROLS") % [InputRouter.glyph("interact"), InputRouter.glyph("back")]
 	)
 	_refresh_motion_preference_button()
+	_refresh_menu_rows()
 
 
 func _refresh_motion_preference_button() -> void:
