@@ -1,107 +1,138 @@
 # House Rules — session handoff
 
-Rewritten 2026-09-20 at the end of the session. Everything below was checked
-against the repo, not remembered.
+Rewritten 2026-09-20, mid-session. Everything below was checked against the
+repo, not remembered. The section that is *not* finished is §5, and it says so.
 
 ---
 
 ## 1. Where the project stands
 
-**Nine playable cabinets**, all nine now reachable on a floor: Elven Court
-(slots), Blackjack, Hexbound Vault, Ruby Roulette, Texas Hold'em, Velvet
-Baccarat, Match Point, Harlequin Masquerade (cluster-pays) and **Corsair's
-Reach** (crash). **Four rooms**: Main Floor, High Roller Salon, VIP Penthouse,
+**Nine playable cabinets**, all nine reachable on a floor: Elven Court (slots),
+Blackjack 21, Hexbound Vault, Ruby Roulette, Texas Hold'em, Velvet Baccarat,
+Match Point, Harlequin Masquerade (cluster-pays) and **Corsair's Reach**
+(crash). **Four rooms**: Main Floor, High Roller Salon, VIP Penthouse,
 Manager's Office.
 
 * GUT: **566/566**, including the million-round RTP harness per cabinet.
-* `tools/check_localization.py`: passes (618 keys, 444 referenced).
-* `gdformat --check` and `gdlint` over **all** of `src` and `tests`: pass.
-* **CI is green.** It had been red on every push for a long time; see §3.
-* `export/HouseRules.pck` rebuilt, 400.1 MB, smoke-launched from an absolute
-  path and left running cleanly.
-  SHA-256 `3ad52d4be9c7400fc879f0124737ab32ce864aa36e14f78bb3b46e14d111d362`
-  (rebuild after any commit — that hash is for `98c0832`).
+  Last full green run this session: 123,881 asserts, 304 s.
+* `tools/check_localization.py`: passes.
+* `gdformat --check` and `gdlint` over all of `src` and `tests`: pass.
+* CI is green.
+* `export/HouseRules.pck` **needs a rebuild** — the last recorded hash is for
+  `98c0832`, which is many commits stale. See §5.
 
-## 2. The crash cabinet is now Corsair's Reach
+## 2. What this session changed
 
-The `core_overclock` id, its maths and its verified 97% return are unchanged.
-Everything the player sees was replaced twice: first as Forno d'Oro (a pizza
-bake), then re-themed to pirates at the user's request.
+Pushed to `main`, in order:
 
-A parrot climbs an exponential curve inside a painted chart frame and the
-glowing trail is drawn live behind her. There is no ship, no water and no dial:
-a crash game is one object climbing a line, and anything else on the canvas
-competes with the number, which is set as bare type over the chart. Two crew
-stand in narrow lanes either side, one painted frame per state so their reaction
-is shared by construction.
+| Commit | What |
+|---|---|
+| `f96cca5`, `7ef24cf` | README rebuilt against verified numbers and illustrated with current captures, every photo full-width |
+| `3c0d8cc` | **The main menu rebuilt** as three painted chevron rows with a gold selector arrowhead, a version ticker and the play-money notice band |
+| `a196ee5` | (from the user) floor screenshot removed from the README |
+| `27a4ec2` | **The menu's focus ring restored**, and the reveal rewritten to animate what is on screen |
+| `22d4e4e` | Six cabinet pages and SPEC.md §2 corrected to describe the build rather than the plan |
 
-`growth_per_second` went 0.40 → 0.12, so 2× takes 5.8 s instead of 1.7 s. That
-does not touch the return — the end point is drawn before she leaves — it only
-decides how long you hold your nerve, and it is what makes the wing beat read as
-flight instead of a vibrating sprite.
+### The menu
 
-Every Forno asset is deleted, including the deck kit, the icon and the sprite
-sheets the bursts were still reading from.
+It was a badge, a prompt panel and one settings key. It is now a list the
+player walks. Two real bugs came out of photographing it:
+
+1. **The focus ring had disappeared.** A hidden `Control` in Godot can still
+   own focus. The retired settings key was hidden when the rows went in but
+   left at `FOCUS_ALL`, so it took focus off the row the player was standing on
+   and held it somewhere invisible. `test_ui` had been asserting that an
+   invisible node is focusable; it now asserts the opposite.
+2. **The reveal was animating nothing anybody sees** — kicker, rule, title,
+   subtitle and prompt panel, all hidden. It now fades the background, drops
+   the badge, slides the three rows in one after another, and settles the
+   chrome. Those four typeset nodes are deleted, and `MENU_KICKER` and
+   `MENU_SUBTITLE` with them. The subtitle still read "Three games. One
+   bankroll." with nine on the floor.
+
+`project.godot` had no `application/config/version`, so the ticker read "v" and
+the developer build panel read an empty string. It says `1.0.0` now.
 
 ## 3. What was wrong when this session started
 
 * **Velvet Baccarat was dead.** `baccarat_style.gd` defaulted a helper's colour
   to `IVORY`, which that palette does not define (it is `PEARL`). The parse
-  error took down every script preloading it. One word, 13 of 17 suite failures.
+  error took down every script preloading it. One word, 13 of 17 failures.
 * **CI had been failing on every push**, at `gdformat --check`: 27 files had
-  drifted out of format, long before this session. Then a second failure behind
-  it — `test_ui` loaded capture PNGs as Godot resources, which needs an import
-  cache a fresh checkout does not have. Both fixed; the capture directory now
-  carries a `.gdignore` so Godot stops importing ~2 GB of evidence per run.
-* **The Manager's Office drew the player 2.6–3.2× scale**, a third of the screen
-  tall. `src/nodes/character_scaler.gd` now states what an adult may measure and
-  clamps to it, and `tests/test_character_scale.gd` walks all four rooms at 21
+  drifted out of format long before this session. Behind it, `test_ui` loaded
+  capture PNGs as Godot resources, which needs an import cache a fresh checkout
+  does not have. Both fixed; the capture directory carries a `.gdignore` so
+  Godot stops importing ~2 GB of evidence per run.
+* **The Manager's Office drew the player 2.6–3.2× scale.**
+  `src/nodes/character_scaler.gd` now states what an adult may measure and
+  clamps to it; `tests/test_character_scale.gd` walks all four rooms at 21
   depths. It caught a second one on its first run: **the High Roller ramp was
-  inverted** (1.85 far, 1.75 near), so walking toward the camera made the player
-  smaller.
+  inverted**, so walking toward the camera made the player smaller.
 * **The menu had never been photographed** — the build starts on the floor, so
-  the shot `capture_game.gd` calls `01_menu` is the floor. `tools/capture_menu.gd`
-  fixes that, and it immediately showed the hall plate was not rendering at all:
-  a TextureRect adopts its texture's size the moment you assign it, so a 3840 px
-  master made the node 3840 wide.
+  the shot named `01_menu` was the floor. `tools/capture_menu.gd` fixes that.
 * **Test isolation.** Seventeen scripts wrote `Wallet.test_mode_enabled`
   directly instead of calling `set_test_mode()`, desyncing the wallet's two
-  balances so every later `reset()` was a no-op. Two lever tests and one room
-  transition measured wall-clock time and failed under load.
+  balances so every later `reset()` was a no-op.
 
-## 4. Open, and honestly open
+## 4. In flight when this was written
 
-1. **The selected/focus button design.** The user says it looks bad. The cyan
-   focus ring is mandated by `CLAUDE.md` and asserted by tests in several
-   cabinets, so changing its colour is a design-system decision, not a tweak.
-   The painted *selected* plates exist and are unused:
-   `assets/production/ui/kit/menu_key_hover.png`, and the chevron pair and
-   selector arrow in `assets/source/layered_v2/branding/`.
-2. **The AAA menu list.** Chevron plates, selector arrow, version ticker and
-   bottom notice bar are generated and not wired. The menu today is the badge, a
-   prompt panel and one painted key.
-3. **README photos.** The README was rewritten against verified numbers
-   (`c2d702a`) but illustrated with older committed captures, because the new
-   menu and Corsair shots were untracked at the time. They are tracked now and
-   should replace them, sized uniformly as the user asked.
-4. **The quick-bet row is not on every machine.** It is on the three cabinets
-   that use the shared deck (Elven Court/Blackjack/Vault via `cabinet_panel`,
-   Corsair, Harlequin). Roulette and Baccarat bet by placing chips of a chosen
-   denomination on spots — a `MIN/10/25/X2/X5/ALL` row does not map onto that
-   model. Poker and Match Point have fixed stake keys instead. This is a design
-   decision that has never actually been made, and the original handoff assumed
-   it was mechanical.
-5. **Repository size.** ~3.2 GB tracked, ~2.2 GB of it assets and ~947 MB of
-   screenshots. `walk_tmp/` (≈350 MB) is ignored and the Forno set is deleted,
-   but Git LFS or pruning old capture sets would cut far more. Push in sections
-   — `git push origin <sha>:refs/heads/main` — one push can exceed GitHub's 2 GB
+Two background agents were mid-task. **Check `git status` before trusting
+this section** — if their files are still dirty, they did not land.
+
+1. **Selected/focus state redesign** across every cabinet. New files
+   `src/ui/focus_ring.gd` and `tests/test_focus_ring.gd`, plus edits to roughly
+   twenty UI scripts (baccarat, roulette, poker, match point, cluster, deck,
+   help, dev menu, prompts). The cyan focus ring is mandated by `CLAUDE.md` and
+   asserted by tests in several cabinets, so its **colour** must not change.
+2. **Pizza-naming purge** in the crash cabinet. Corsair's Reach still carried
+   Forno d'Oro names all through its code — `request_bake()`, `begin_bake()`,
+   `set_bake()`, audio cues `oven_load`/`oven_burn`, and doc comments calling it
+   "a crash game dressed as a pizza bake". Also `locale/en.csv`
+   (`DECK_FORNO_*` → `DECK_CORSAIR_*`, `CORE_OVERCLOCK_STATE_BAKING` →
+   `_RUNNING`, and so on). `src/floor/floor_room_layout.gd` mentions
+   `tools/art/bake_paint_ins.py`, which is a **genuine** use of "bake" — leave it.
+
+`locale/en.csv` is shared between that purge and the menu work: the removal of
+`MENU_KICKER` and `MENU_SUBTITLE` is sitting in that file uncommitted and
+should go out with the Corsair rename.
+
+## 5. Not done
+
+1. **Re-shoot every capture set.** This is the top of the list. The user's
+   standing instruction is that the README carries **new photos only**, and
+   they have twice caught old ones. The menu shot is now correct and pushed,
+   and the Corsair and High Roller shots were checked by eye and are current,
+   but the rest have not been re-shot since the focus-ring and pizza-purge work
+   landed, and that work changes how every button looks.
+2. **Rename the Corsair capture files.** `tools/capture_core_overclock.gd` has
+   already been relabelled (`03_countdown`, `04_early_climb`, `05_long_climb`,
+   `06_hauled_in`, `07_paid_out`, `08_crashed`, `10_auto_haul_set`,
+   `11_reduced_motion_climb`) but the **PNGs on disk still carry the old
+   names**, and the README links a parrot photograph at
+   `core_overclock_fhd/05_long_bake.png`. Re-run the capture, `git rm` the old
+   files, and update the README link in the same commit.
+3. **Rebuild `export/HouseRules.pck`**, smoke-launch it from an absolute path,
+   and record its SHA-256 here.
+4. **`upgrade_cluster` declares `tier = 1` (HIGH_ROLLER) but stands in the VIP
+   Penthouse.** Every other VIP cabinet is `tier = 2`. Nothing reads
+   `CabinetDefinition.tier` to gate access, so nothing is broken, but one of the
+   two is wrong and the call is the user's.
+5. **The quick-bet row is not on every machine.** It is on the cabinets using
+   the shared deck (Elven Court, Blackjack, Vault, Corsair, Harlequin).
+   Roulette and Baccarat bet by placing chips of a chosen denomination on
+   spots — `MIN/10/25/X2/X5/ALL` does not map onto that. Poker and Match Point
+   have fixed stake keys. This is a design decision that has never been made.
+6. **Match Point's board is the most code-drawn screen left** — 11 draw
+   primitives in `src/ui/match_point/match_point_board.gd` plus 6 in its style
+   file. If the "painted assets, not code-drawn UI" pass continues, that is
+   where it goes next.
+7. **No `LICENSE` file.** That is the user's decision, not an oversight to fix.
+8. **Repository size**: ~3.15 GB tracked, ~1.94 GB assets, 718 committed
+   screenshot PNGs at ~1.2 GB. Push in sections —
+   `git push origin <sha>:refs/heads/main` — one push can exceed GitHub's 2 GB
    limit.
-6. **Stale docs the README agent found.** `docs/SPEC.md` §2 still says v1 is
-   "three playable machines" and that the High Roller and VIP rooms are "empty
-   and unreachable"; `docs/cabinets/baccarat.md` and `match_point.md` say floor
-   placement is pending when both are seated. There is no `LICENSE` file.
 
-## 5. How to verify
+## 6. How to verify
 
 ```powershell
 & 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --headless --path . --import
@@ -111,18 +142,22 @@ python tools/check_localization.py
 python -m gdtoolkit.formatter --check src tests ; python -m gdtoolkit.linter src tests
 ```
 
-`gdformat`/`gdlint` are not on PATH; install `tools/requirements-dev.txt` and run
-them as Python modules. `gdlintrc` waives `max-file-lines` and
-`max-public-methods` with the reasoning written down — those are decisions, not
+`-gselect=<script>.gd` runs one script; `-gtest=` does **not** narrow the run.
+
+`gdformat`/`gdlint` are not on PATH; install `tools/requirements-dev.txt` and
+run them as Python modules. `gdlintrc` waives `max-file-lines` and
+`max-public-methods` with the reasoning written down — decisions, not
 oversights.
 
+Captures write an isolated `session_<pid>` folder beside their output; delete it
+before committing (`rm -rf tests/results/screenshots/*/session_*`).
+
 Art pipelines: `tools/art/prepare_corsair.py`, `prepare_harlequin.py`,
-`prepare_ui_kit.py`, `build_key_art.py`, `cut_forno_hosts.py` (rembg
-segmentation for opaque character renders). Captures:
+`prepare_ui_kit.py`, `build_key_art.py`, `cut_forno_hosts.py`. Captures:
 `tools/capture_menu.tscn`, `capture_core_overclock.tscn`,
 `capture_upgrade_cluster.tscn`, `capture_game.tscn`.
 
-## 6. Higgsfield notes
+## 7. Higgsfield notes
 
 The **locally configured** MCP server fails to connect (`CONNECTION_CLOSED`);
 the **claude.ai connector** works and is what this session used.
@@ -130,13 +165,10 @@ the **claude.ai connector** works and is what this session used.
 * A reference image uses the role `image_references`, not `reference`.
 * `background: "transparent"` is a request, not a guarantee — check the alpha
   and fall back to `rembg` (`isnet-general-use`) plus
-  `prepare_characters.defringe()`.
-* A **local file** can be used as a reference without the upload widget:
-  `media_upload` with `method: "upload_url"`, PUT the bytes yourself, then
-  `media_confirm`. This is what kept the two approved hosts consistent across
-  every generated state.
-* Generated lettering is checked by eye before it ships; the badge in
-  `assets/branding/` is generated, and `tools/art/build_key_art.py` can draw the
-  same lockup from the shipped font at any size as a fallback.
+  `prepare_characters.defringe()`. Pass `erode=1`, never `0`: zero divides by
+  zero and takes the process down with exit `-1073741676`.
+* A **local file** can be a reference without the upload widget: `media_upload`
+  with `method: "upload_url"`, PUT the bytes yourself, then `media_confirm`.
+  This is what kept the two approved hosts consistent across every state.
 * Provenance for every generated asset belongs in
   `docs/art/GENERATION-REPORT.md`.
