@@ -1,0 +1,20 @@
+{
+	"expected_symbols": [
+		1,
+		0,
+		0
+	],
+	"frames": [
+		"04_slot_spin_start.png",
+		"04_slot_spinning.png",
+		"04_slot_spin_progress.png",
+		"04_slot_result.png"
+	],
+	"observed_symbols": [
+		1,
+		0,
+		0
+	],
+	"outcome_matches_render": true,
+	"seed": 20260918
+}
