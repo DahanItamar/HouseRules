@@ -3,11 +3,11 @@
 		"high_roller"
 	],
 	"office": {
-		"avatar_scale": 1.35000002384186,
-		"room": "manager_office",
+		"avatar_scale": 1.27002155780792,
+		"room": "main_floor",
 		"spawn": [
-			480.0,
-			522.0
+			896.0,
+			255.0
 		]
 	},
 	"shots": {
