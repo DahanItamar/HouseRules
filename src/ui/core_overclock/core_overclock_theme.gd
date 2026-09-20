@@ -19,7 +19,7 @@ extends RefCounted
 ## Rebuild the production art with `python tools/art/prepare_forno.py`;
 ## provenance is in docs/art/GENERATION-REPORT.md under "Forno d'Oro".
 
-const BACKDROP := preload("res://assets/production/forno/forno_backdrop_v2.png")
+const BACKDROP := preload("res://assets/production/forno/forno_backdrop_v4.png")
 const GAUGE := preload("res://assets/production/forno/forno_oven_gauge.png")
 const PIZZA := preload("res://assets/production/forno/forno_pizza.png")
 ## The bake, in order, all on one 512 px cell and all at one shared scale so the
@@ -73,28 +73,38 @@ const DIAL_RADIUS: float = 0.29
 const FRAME_MARGIN: int = 140
 const FRAME_SCALE: float = 0.11
 ## Where the oven mouth burns on the painted backdrop, in canvas pixels.
-const OVEN_MOUTH := Rect2(420, 180, 126, 62)
-const HOSTESS_SCALE: float = 0.24
-## The source pixel that lands on the cut line at the foot of her lane.
-const HOSTESS_ANCHOR := Vector2(650, 1341)
+const OVEN_MOUTH := Rect2(400, 145, 160, 67)
+## She is seen head to foot now, so she is scaled to the lane's height
+## (2011 painted pixels into 264) instead of to a hip cut line.
+const HOSTESS_SCALE: float = 0.1313
+## The source pixel that lands on the floor at the foot of her lane: the
+## middle of her body columns, at the very bottom of her painted art.
+const HOSTESS_ANCHOR := Vector2(670, 2044)
 
 ## Screen geometry on the 960x540 virtual canvas, all inside TV-safe. The left
 ## column and the right column are the same width and keep the same margin.
 const AUTO_RECT := Rect2(48, 27, 176, 44)
 const TITLE_RECT := Rect2(330, 27, 300, 70)
-const HISTORY_RECT := Rect2(48, 88, 236, 152)
+## Sits above the left host's head, so the sides stay hers and the centre
+## line stays the game's.
+const HISTORY_RECT := Rect2(40, 78, 252, 68)
 ## The one multiplier: the brass oven dial, standing on the counter front on the
 ## centre line directly below the oven mouth. An earlier screen showed the same
 ## number twice, on this dial and again on a drawn bake curve; the curve is gone.
 ## It is sized to the gap between the counter top and the deck so it covers
 ## neither.
-const GAUGE_CENTRE := Vector2(480, 347)
-const GAUGE_SIZE: float = 148.0
+const GAUGE_CENTRE := Vector2(480, 318)
+const GAUGE_SIZE: float = 196.0
 ## The pizza sits on the oven floor inside the painted arch, so it is part of the
 ## oven instead of floating over the counter attached to nothing.
-const BAKE_CENTRE := Vector2(483, 232)
-const BAKE_HEIGHT: float = 88.0
-const HOST_LANE := Rect2(676, 88, 236, 322)
+const BAKE_CENTRE := Vector2(480, 182)
+const BAKE_HEIGHT: float = 70.0
+## The two hosts stand on the open floor either side of the oven, head to
+## foot: the game itself owns the centre line between them.
+## Feet land on the lane's bottom edge, clear of the deck, so both hosts are
+## seen head to foot rather than cut off at the waist by furniture.
+const HOST_LANE := Rect2(660, 152, 264, 266)
+const HOST_LANE_LEFT := Rect2(36, 152, 264, 266)
 
 const NIGHT := Color("1a0f09")
 const CRUST := Color("d8a85a")

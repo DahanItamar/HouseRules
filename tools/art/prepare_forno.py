@@ -26,6 +26,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets/source/layered_v2/forno"
 OUT = ROOT / "assets/production/forno"
+CUTOUTS = ROOT / "assets/source/layered_v2/forno/cutouts"
 HOSTS = ROOT / "assets/production/characters/hosts"
 HOST_CANVAS = (1360, 2048)
 HOST_BORDER = 16
@@ -95,17 +96,27 @@ BAKE_STAGES = [
 ]
 
 
-def build_backdrop() -> None:
-    """The v2 counter: the oven is dead centre so the pizza bakes in its mouth.
+## Where the marble counter top caps the walnut front, as a fraction of the
+## backdrop's height. Everything below this is cut out again as a foreground so
+## the pizzaiola can stand BEHIND the counter instead of in front of it.
+COUNTER_TOP: float = 232.0 / 540.0
 
-    The v1 backdrop stood the oven off to the right, which left the gauge and
-    the pizza hanging over the counter attached to nothing.
+
+def build_backdrop() -> None:
+    """The v4 room: oven centred against the back wall, open floor either side.
+
+    v1 stood the oven off to the right, which left the dial and the pizza
+    hanging over the counter attached to nothing. v2 centred it. v3 lifted it
+    and gave the lower half to a full-width counter -- but that counter cut the
+    hosts off at the waist. v4 shrinks the counter to the middle third and
+    leaves open terracotta floor on both sides, so both hosts stand in the room
+    head to foot with the game itself on the centre line between them.
     """
-    backdrop = Image.open(SOURCE / "backdrop_centred_4k.png").convert("RGB")
+    backdrop = Image.open(SOURCE / "backdrop_v4_4k.png").convert("RGB")
     if backdrop.size != (3840, 2160):
         backdrop = backdrop.resize((3840, 2160), Image.LANCZOS)
-    backdrop.save(OUT / "forno_backdrop_v2.png", optimize=True)
-    print("forno_backdrop_v2.png", backdrop.size)
+    backdrop.save(OUT / "forno_backdrop_v4.png", optimize=True)
+    print("forno_backdrop_v4.png", backdrop.size)
 
 
 def build_bake_stages(side: int = 512, margin: int = 4) -> None:
@@ -184,6 +195,60 @@ def build_sheet(source: str, name: str, columns: int, rows: int, cell: int) -> N
     print(name, out.size, "%dx%d cells of %d" % (columns, rows, cell))
 
 
+## The two hosts the user approved, and which pose each of them holds in each
+## state of the bake. Generating them as one pair was rejected: these are the
+## two characters that already exist, and the point is only to stand them in one
+## room and have them react to the same thing at the same time.
+##
+## Every row is one game state, so a state can never show one of them
+## celebrating while the other winces.
+HOST_STATES: list[tuple[str, str, str]] = [
+    ("ready", "left_ready_8e26e5f4", "right_ready_b3eda408"),
+    ("launch", "left_launch_51807f94", "right_launch_15ab7320"),
+    ("baking", "left_tense_4f6a42b2", "right_baking_ec7dfd6b"),
+    ("served", "left_cheer_f4080c1d", "right_serve_4f6209ad"),
+    ("burnt", "left_burnt_v2_c4f739ea", "right_burnt_v2_79a04071"),
+]
+## Every pose of one host is cut to this canvas, foot-aligned and centred on the
+## body, so changing pose never makes her jump sideways or hop off the floor.
+HOST_CELL = (1024, 1536)
+
+
+def build_host_poses() -> None:
+    """Cuts both hosts' poses to one shared, foot-aligned cell each.
+
+    The raw poses are opaque studio and kitchen renders; the transparent
+    versions under `cutouts/` come from `tools/art/cut_forno_hosts.py`.
+    """
+    pipeline = _pipeline()
+    for side, index in (("left", 1), ("right", 2)):
+        poses = [(row[0], row[index]) for row in HOST_STATES]
+        trimmed = []
+        for _, source in poses:
+            image = _clean(Image.open(CUTOUTS / (source + ".png")), 1)
+            trimmed.append(_trim(image))
+        # One scale for the whole set, from the tallest pose, so they share a
+        # height and the floor line stays put.
+        scale = (HOST_CELL[1] - 24) / max(piece.height for piece in trimmed)
+        for (name, _), piece in zip(poses, trimmed):
+            sized = piece.resize(
+                (max(1, round(piece.width * scale)), max(1, round(piece.height * scale))),
+                Image.LANCZOS,
+            )
+            cell = Image.new("RGBA", HOST_CELL, (0, 0, 0, 0))
+            cell.paste(sized, ((HOST_CELL[0] - sized.width) // 2, HOST_CELL[1] - 12 - sized.height))
+            cell = pipeline._bleed(cell, np.zeros(1))
+            out = OUT / ("forno_host_%s_%s.png" % (side, name))
+            cell.save(out, optimize=True)
+            alpha = np.asarray(cell.getchannel("A")) > 128
+            ys, xs = np.nonzero(alpha)
+            print(
+                "forno_host_%s_%s.png %s used=Rect2(%d, %d, %d, %d)"
+                % (side, name, cell.size, xs.min(), ys.min(),
+                   xs.max() - xs.min() + 1, ys.max() - ys.min() + 1)
+            )
+
+
 def build_hostess() -> None:
     pipeline = _pipeline()
     image = _clean(Image.open(SOURCE / "hostess_d5a64ecb.png"), 1)
@@ -228,6 +293,7 @@ def main() -> int:
     build_sheet("icons_a534fda5.png", "forno_icons.png", 3, 2, 256)
     build_sheet("embers_dbebbbf9.png", "forno_embers.png", 4, 4, 256)
     build_hostess()
+    build_host_poses()
     return 0
 
 

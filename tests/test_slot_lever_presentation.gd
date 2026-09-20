@@ -122,7 +122,13 @@ func test_enabling_reduced_motion_settles_an_active_lever_pull() -> void:
 		return
 
 	assert_true(game.request_spin())
-	await wait_seconds(0.10)
+	# Stepped by hand rather than slept through, for the same reason as the pull
+	# test above: a real-time wait measures the host, not the swing.
+	var swing: Tween = panel._motion_tween
+	assert_not_null(swing, "The pull owns a tween")
+	swing.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	swing.pause()
+	swing.custom_step(0.10)
 	assert_gt(absf(lever.rotation), 0.05)
 	MotionPolicy.set_reduced_motion_for_tests(true)
 	assert_eq(lever.rotation, LEVER_REST_ROTATION)

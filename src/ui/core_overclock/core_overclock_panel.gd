@@ -146,14 +146,14 @@ func _build_host() -> void:
 	lane.size = CoreOverclockTheme.HOST_LANE.size
 	lane.clip_contents = true
 	lane.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lane.z_index = 5
+	lane.z_index = 3
 	_stage.add_child(lane)
 	hostess = CoreOverclockHostess.new()
 	hostess.place_on_cut(Vector2(lane.size.x * 0.5, lane.size.y), CoreOverclockTheme.HOST_LANE.size)
 	lane.add_child(hostess)
 
 
-## The pizza itself, on the counter under the gauge, browning as it bakes.
+## The pizza itself, in the oven mouth, browning as it bakes.
 func _build_baking_pizza() -> void:
 	baking_pizza = TextureRect.new()
 	baking_pizza.name = "FornoBakingPizza"
