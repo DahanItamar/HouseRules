@@ -49,6 +49,7 @@ directories; they do not overwrite the player's normal save.
 | M5 audio | Deterministic 16-bit PCM cues are cached and emitted for navigation and cabinet events. |
 | AC-037 disconnect | Losing the active gamepad pauses behind a blocking overlay; reconnecting resumes it. |
 | AC-051 | Both v1 wing transition points show their lifetime-wagered thresholds and refuse entry while locked. |
+| Harlequin Masquerade | `test_upgrade_cluster.gd`: the 4-way connection rule with an explicit diagonal-does-not-count board, cluster detection and separation, tumble gravity and refill, seeded replay equality, the upgrade ladder's thresholds, one-rounding settlement, chip conservation through the wallet, settlement gated on the replay, the measured return, 44px/TV-safe controls, protected readout rectangles the host and the floating arithmetic can never cover, and reduced motion bounding every phase. |
 | Manager's Office | `test_manager_office.gd`: UHD layers with clear alpha, walkable connected anchors, furniture edge samples, foreground depth, the Main Floor door route, room switching with one player, contracts board parity with Economy, marker parity after the move from the cashier, persisted one-time invitations, the tour (first run, action steps, skip, replay, saved state, reduced motion), the in-panel cameo facing the text, one shared colour grade per person, TV-safe 44px targets. |
 
 The input regression injects a real `InputEventAction` and verifies cabinet back
@@ -72,6 +73,7 @@ RTP and 500× maximum were preserved while return moved toward frequent outcomes
 | Ruby Roulette | 97.7191% | 97.3% (exact 36/37) | PASS |
 | Match Point | 96.1322% | 96.0% (exact 39320/40960 = 95.99609375%) | PASS |
 | Velvet Baccarat | 98.99387% | 98.9% (exact Banker, 20 chips: 98.9421%) | PASS |
+| Harlequin Masquerade | see `results/rtp.json` | 96.6% | PASS |
 
 Blackjack uses the specified basic strategy, 10-chip base stakes, and includes
 doubled stakes in the denominator. Minefield uses legal 25-chip stakes, 3 mines,
@@ -85,6 +87,18 @@ Velvet Baccarat puts 20 chips on Banker every coup from an eight-deck shoe shuff
 for every coup. `tests/test_baccarat.gd` enumerates every ordered deal exactly:
 Banker 98.9421%, Player 98.7649%, Tie 85.6404%, each pair 89.6386%. Every chip is a
 multiple of 20, so the whole-chip commission is exactly 5%.
+
+Harlequin Masquerade (`upgrade_cluster`) plays one 10-chip board per round and lets
+it tumble to the end. Its return is exactly linear in `data/paytables/upgrade_cluster.tres`,
+so it was tuned by measuring a reference curve over **ten million** rounds and scaling
+that one array by the ratio to the target; `tests/upgrade_cluster_rtp_diagnostic.gd`
+records the confirming run in `results/upgrade_cluster_diagnostic.json`. Prices are
+milli-bet integers rather than the two decimals the machine prints, because at
+two-decimal granularity the four cheapest prices on the board all round down and cost
+0.7 percentage points of return on their own. Payout-multiple variance is about
+**13.0**, a one-million-round standard error of roughly **0.36 percentage points**,
+which is why the paytable was tuned against the ten-million sample and not the gate's
+own. See `docs/cabinets/upgrade_cluster.md` §6.
 
 Exact enumeration of the 31-stop slot gives RTP **95.4952838105468%**. Its
 single-stop 500× jackpot remains the maximum win, while a 3× two-cherry return

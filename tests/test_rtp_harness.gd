@@ -8,7 +8,14 @@ const SEED := 20260918
 func test_million_rounds_per_cabinet() -> void:
 	var measurements: Array[Dictionary] = []
 	for id in [
-		"slot_classic", "blackjack", "minefield_vault", "roulette", "match_point", "baccarat"
+		"slot_classic",
+		"blackjack",
+		"minefield_vault",
+		"roulette",
+		"match_point",
+		"baccarat",
+		"core_overclock",
+		"upgrade_cluster",
 	]:
 		var definition = load("res://data/cabinets/%s.tres" % id)
 		assert_not_null(definition, "Shipped definition exists: " + id)
@@ -30,6 +37,10 @@ func test_million_rounds_per_cabinet() -> void:
 				math = MatchPointMath.new()
 			"baccarat":
 				math = BaccaratMath.new()
+			"core_overclock":
+				math = CoreOverclockMath.new()
+			"upgrade_cluster":
+				math = UpgradeClusterMath.new()
 		var roulette_spots: Array = math.spots().keys() if id == "roulette" else []
 		var wagered: int = 0
 		var returned: int = 0
@@ -63,6 +74,19 @@ func test_million_rounds_per_cabinet() -> void:
 					# 20 on Banker every coup: the declared (best) bet, commission exact.
 					math.place(BaccaratMath.BANKER, 20, 400)
 					result = math.deal(rng)
+				"core_overclock":
+					# 100 a dive, surfacing depth cycling 1.20x, 2.00x, 5.00x and
+					# 10.00x. One advance past the whole climb settles the decided
+					# dive exactly, which is the same arithmetic the cabinet runs
+					# frame by frame.
+					math.reset()
+					math.set_auto_target([120, 200, 500, 1000][index % 4])
+					math.begin(100, rng)
+					result = math.advance(1000.0)
+				"upgrade_cluster":
+					# One 10-chip board a round. `play` draws the grid, every tumble
+					# and the upgrade bar in one call, so the whole round settles here.
+					result = math.play(10, rng)
 			wagered += result.stake
 			returned += result.payout
 		var observed := float(returned) / wagered
@@ -97,6 +121,10 @@ func test_million_rounds_per_cabinet() -> void:
 		}
 		if id == "baccarat":
 			measurement.strategy = "20 on Banker, 8-deck shoe shuffled every coup"
+		if id == "core_overclock":
+			measurement.strategy = "100 a dive, auto surface cycles 1.20x/2x/5x/10x"
+		if id == "upgrade_cluster":
+			measurement.strategy = "10 a board, tumbles and upgrade bar to the end"
 		measurements.append(measurement)
 		print(JSON.stringify(measurement))
 		assert_almost_eq(observed, definition.target_rtp, 0.01, "AC-027 " + id)

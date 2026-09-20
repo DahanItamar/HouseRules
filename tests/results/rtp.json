@@ -14,7 +14,7 @@
 		{
 			"absolute_error": 0.0000830000000000553,
 			"cabinet": "slot_classic",
-			"elapsed_ms": 3238,
+			"elapsed_ms": 3235,
 			"observed_rtp": 0.955083,
 			"returned": 9550830,
 			"rounds": 1000000,
@@ -26,7 +26,7 @@
 		{
 			"absolute_error": 0.0000518885176702399,
 			"cabinet": "blackjack",
-			"elapsed_ms": 7736,
+			"elapsed_ms": 7617,
 			"observed_rtp": 0.99005188851767,
 			"returned": 10854820,
 			"rounds": 1000000,
@@ -38,7 +38,7 @@
 		{
 			"absolute_error": 0.00601359999999995,
 			"cabinet": "minefield_vault",
-			"elapsed_ms": 6232,
+			"elapsed_ms": 6606,
 			"observed_rtp": 0.9639864,
 			"returned": 24099660,
 			"rounds": 1000000,
@@ -50,7 +50,7 @@
 		{
 			"absolute_error": 0.00419100000000006,
 			"cabinet": "roulette",
-			"elapsed_ms": 16863,
+			"elapsed_ms": 11308,
 			"observed_rtp": 0.977191,
 			"returned": 39087640,
 			"rounds": 1000000,
@@ -62,7 +62,7 @@
 		{
 			"absolute_error": 0.00132200000000005,
 			"cabinet": "match_point",
-			"elapsed_ms": 21660,
+			"elapsed_ms": 15996,
 			"observed_rtp": 0.961322,
 			"returned": 9613220,
 			"rounds": 1000000,
@@ -74,7 +74,7 @@
 		{
 			"absolute_error": 0.000938699999999959,
 			"cabinet": "baccarat",
-			"elapsed_ms": 19716,
+			"elapsed_ms": 13963,
 			"observed_rtp": 0.9899387,
 			"returned": 19798774,
 			"rounds": 1000000,
@@ -82,6 +82,30 @@
 			"strategy": "20 on Banker, 8-deck shoe shuffled every coup",
 			"target_rtp": 0.989,
 			"wagered": 20000000
+		},
+		{
+			"absolute_error": 0.00248700000000002,
+			"cabinet": "core_overclock",
+			"elapsed_ms": 5632,
+			"observed_rtp": 0.967513,
+			"returned": 96751300,
+			"rounds": 1000000,
+			"seed": 20260918,
+			"strategy": "100 a dive, auto surface cycles 1.20x/2x/5x/10x",
+			"target_rtp": 0.97,
+			"wagered": 100000000
+		},
+		{
+			"absolute_error": 0.00141009999999997,
+			"cabinet": "upgrade_cluster",
+			"elapsed_ms": 98963,
+			"observed_rtp": 0.9645899,
+			"returned": 9645899,
+			"rounds": 1000000,
+			"seed": 20260918,
+			"strategy": "10 a board, tumbles and upgrade bar to the end",
+			"target_rtp": 0.966,
+			"wagered": 10000000
 		},
 		{
 			"absolute_error": 0.00006344814425984,
