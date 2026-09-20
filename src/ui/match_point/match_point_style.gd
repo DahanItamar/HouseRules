@@ -64,6 +64,9 @@ static func style_button(button: Button, primary: bool = false) -> void:
 	button.add_theme_color_override("font_disabled_color", TEXT_DISABLED)
 	button.add_theme_font_override("font", Typography.DISPLAY_FONT)
 	button.add_theme_font_size_override("font_size", 18)
+	# The table's own keys wear the same painted plate the shared deck uses, so
+	# one cabinet does not mix painted keys with flat ones.
+	UiKit.paint_button(button, &"match_point", primary)
 
 
 ## A toggle key shows its selected state as a cream enamel face.

@@ -902,6 +902,10 @@ func _poker_action(node_name: String, rect: Rect2, action: Callable, primary: bo
 	button.add_theme_stylebox_override("disabled", _style(Color("0c1017"), Color("2a313b"), 7, 1))
 	button.pressed.connect(func() -> void: action.call())
 	add_child(button)
+	# The table's own keys wear the same painted plate the shared deck uses, so
+	# one cabinet does not mix painted keys with flat ones. It is laid down
+	# before the labels so it stays behind them.
+	UiKit.paint_button(button, &"poker", primary)
 	ButtonFeedback.attach(button)
 	var main := _help_label(
 		button, Vector2(4, 9), Vector2(rect.size.x - 8, 28), Typography.CONTROL, INK

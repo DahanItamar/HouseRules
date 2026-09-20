@@ -141,8 +141,15 @@ func test_layout_stays_tv_safe_and_never_overlaps() -> void:
 		assert_true(TV_SAFE.encloses(button.get_rect()))
 		var focus := button.get_theme_stylebox("focus") as StyleBoxFlat
 		assert_eq(focus.border_color, Color("48c5d5"), "Cyan only as the focus ring")
+		# A painted key carries its face in a KitPlate and wears an empty normal
+		# stylebox; only a flat key still has a border colour to check.
 		var normal := button.get_theme_stylebox("normal") as StyleBoxFlat
-		assert_ne(normal.border_color, Color("48c5d5"))
+		if normal == null:
+			assert_not_null(
+				button.get_node_or_null("KitPlate"), "An empty face means a painted plate"
+			)
+		else:
+			assert_ne(normal.border_color, Color("48c5d5"))
 	for button: Button in panel._stake_buttons:
 		assert_gte(button.size.y, 44.0)
 		assert_true(TV_SAFE.encloses(button.get_rect()))

@@ -100,6 +100,38 @@ const THEMES: Dictionary = {
 }
 
 
+## Lays this theme's painted button plate behind `button` and clears the flat
+## styleboxes it was wearing, so a table game's own keys are cut from the same
+## materials as the shared deck's. Returns false when the theme has no plate,
+## leaving the flat styling in place.
+##
+## The focus stylebox is deliberately untouched: the cyan ring stays the only
+## focus cue and stays on top of the plate.
+static func paint_button(
+	button: Button, theme_id: StringName, primary: bool = false, corner_px: float = 13.0
+) -> bool:
+	if not has_part(theme_id, "button"):
+		return false
+	var plate := KitPlate.new()
+	plate.name = "KitPlate"
+	if not plate.configure(theme_id, "button", scale_for_corner(theme_id, "button", corner_px)):
+		return false
+	plate.show_behind_parent = true
+	plate.base_tint = Color.WHITE if primary else Color(0.84, 0.84, 0.84)
+	button.add_child(plate)
+	button.move_child(plate, 0)
+	var empty := StyleBoxEmpty.new()
+	for state: String in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, empty)
+	var sync := func() -> void:
+		plate.fit(Rect2(Vector2.ZERO, button.size))
+		plate.set_state(DeckStyle.plate_state(button))
+	button.resized.connect(sync)
+	button.draw.connect(sync)
+	sync.call()
+	return true
+
+
 static func has_part(theme_id: StringName, part: String) -> bool:
 	return THEMES.has(theme_id) and (THEMES[theme_id] as Dictionary).has(part)
 
