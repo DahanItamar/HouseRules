@@ -14,6 +14,7 @@ side under it and a drop shadow, over a burgundy ribbon.
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -51,8 +52,15 @@ def _gradient(size: tuple[int, int]) -> Image.Image:
     return ramp.resize(size, Image.BILINEAR)
 
 
-def word(text: str, size: int, track: int = 18, keyline: int = 0, depth: int = 0) -> Image.Image:
-    """One word of the lockup, on its own transparent layer."""
+def word(
+    text: str, size: int, track: int = 18, keyline: int = 0, depth: int = 0, arc: float = 0.0
+) -> Image.Image:
+    """One word of the lockup, on its own transparent layer.
+
+    `arc` bends the word over a shallow circle, in degrees across the whole word:
+    each letter is drawn on its own and turned to sit square on the curve, which
+    is what stops a slot-game logo reading as a flat line of type. 0 is straight.
+    """
     font = ImageFont.truetype(str(FONT), size)
     keyline = keyline or max(10, size // 16)
     depth = depth or max(12, size // 13)
@@ -61,15 +69,39 @@ def word(text: str, size: int, track: int = 18, keyline: int = 0, depth: int = 0
     total = sum(widths) + track * (len(text) - 1)
     box = font.getbbox(text)
     pad = keyline * 2 + depth + 30
-    canvas = (int(total + pad * 2), int((box[3] - box[1]) + pad * 2))
-    origin = (pad, pad - box[1])
+    rise = 0.0 if arc == 0.0 else total * abs(arc) / 260.0
+    canvas = (int(total + pad * 2), int((box[3] - box[1]) + pad * 2 + rise))
+    origin = (pad, pad - box[1] + rise)
 
     def draw_run(target: ImageDraw.ImageDraw, dx: float, dy: float, fill, stroke, width: int):
-        x = origin[0] + dx
+        if arc == 0.0:
+            x = origin[0] + dx
+            for c, w in zip(text, widths):
+                target.text((x, origin[1] + dy), c, font=font, fill=fill,
+                            stroke_width=width, stroke_fill=stroke)
+                x += w + track
+            return
+        # Lay the letters along a circle whose chord is the word's width.
+        span = math.radians(arc)
+        radius = total / (2.0 * math.sin(span / 2.0))
+        run = 0.0
         for c, w in zip(text, widths):
-            target.text((x, origin[1] + dy), c, font=font, fill=fill,
-                        stroke_width=width, stroke_fill=stroke)
-            x += w + track
+            centre = run + w / 2.0
+            theta = (centre / total - 0.5) * span
+            glyph = Image.new("L", (int(w + width * 4 + 8), canvas[1]), 0)
+            ImageDraw.Draw(glyph).text(
+                (width * 2, origin[1] - rise), c, font=font, fill=255,
+                stroke_width=width, stroke_fill=255,
+            )
+            turned = glyph.rotate(-math.degrees(theta), resample=Image.BICUBIC,
+                                  center=(glyph.width / 2, glyph.height))
+            lift = radius * (1.0 - math.cos(theta))
+            target.bitmap(
+                (int(origin[0] + dx + centre - turned.width / 2),
+                 int(dy - lift)),
+                turned, fill=fill,
+            )
+            run += w + track
 
     # The silhouette, used both as the extrusion and as the mask for the face.
     silhouette = Image.new("L", canvas, 0)
@@ -116,8 +148,8 @@ def ribbon(width: int, height: int) -> Image.Image:
 
 def lockup(scale: float = 1.0) -> Image.Image:
     """HOUSE over RULES on a ribbon, as one transparent piece."""
-    house = word("HOUSE", round(330 * scale), track=round(16 * scale))
-    rules = word("RULES", round(228 * scale), track=round(26 * scale))
+    house = word("HOUSE", round(330 * scale), track=round(16 * scale), arc=-16.0)
+    rules = word("RULES", round(228 * scale), track=round(26 * scale), arc=-10.0)
     # The band is cut to the lower word so the word sits inside it rather than
     # hanging off both ends of it.
     band = ribbon(round(rules.width * 1.34), round(rules.height * 0.86))
@@ -139,6 +171,40 @@ def lockup(scale: float = 1.0) -> Image.Image:
     return shadow.crop(shadow.getbbox())
 
 
+def github_banner() -> Image.Image:
+    """The README mark: the three of them and the logo, and nothing behind."""
+    trio = Image.open(SOURCE / "trio_cutout.png").convert("RGBA")
+    trio = trio.crop(trio.getbbox())
+    mark = lockup(1.0)
+    width = round(trio.width * 1.06)
+    logo = mark.resize((width, round(mark.height * width / mark.width)), Image.LANCZOS)
+    overlap = round(logo.height * 0.42)
+    canvas = Image.new("RGBA", (width, trio.height + logo.height - overlap), (0, 0, 0, 0))
+    canvas.alpha_composite(trio, ((width - trio.width) // 2, 0))
+    canvas.alpha_composite(logo, (0, trio.height - overlap))
+    return canvas.crop(canvas.getbbox())
+
+
+def menu_background() -> Image.Image:
+    """The menu plate: the room, the three of them held to the right, logo left.
+
+    The left of the frame is deliberately left plain so the menu's own buttons
+    have somewhere to sit without fighting the art.
+    """
+    room = Image.open(SOURCE / "menu_room_a7708d66.png").convert("RGBA").resize((3840, 2160), Image.LANCZOS)
+    trio = Image.open(SOURCE / "trio_cutout.png").convert("RGBA")
+    trio = trio.crop(trio.getbbox())
+    height = round(room.height * 0.92)
+    trio = trio.resize((round(trio.width * height / trio.height), height), Image.LANCZOS)
+    room.alpha_composite(trio, (room.width - trio.width + round(trio.width * 0.06),
+                                room.height - trio.height))
+    mark = lockup(1.0)
+    wanted = round(room.width * 0.42)
+    logo = mark.resize((wanted, round(mark.height * wanted / mark.width)), Image.LANCZOS)
+    room.alpha_composite(logo, (round(room.width * 0.05), round(room.height * 0.08)))
+    return room
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     mark = lockup(1.0)
@@ -158,6 +224,15 @@ def main() -> int:
                                int(art.height * 0.97) - logo.height))
     art.convert("RGB").save(OUT / "house_rules_key_art.png", optimize=True)
     print("house_rules_key_art.png", art.size)
+
+    if (SOURCE / "trio_cutout.png").exists():
+        banner = github_banner()
+        banner.save(OUT / "house_rules_banner.png", optimize=True)
+        print("house_rules_banner.png", banner.size)
+        if (SOURCE / "menu_room_a7708d66.png").exists():
+            menu = menu_background()
+            menu.convert("RGB").save(OUT / "house_rules_menu.png", optimize=True)
+            print("house_rules_menu.png", menu.size)
     return 0
 
 
