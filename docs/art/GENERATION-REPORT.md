@@ -1156,3 +1156,35 @@ Superseded: `wreck_14c9dff1.png`, the galleon break-up.
 The particles are bounded to the chart frame now. Feathers thrown from the head
 of the line were flying out of the chart and landing on the crew standing
 beside it, which reads as a compositing mistake rather than as debris.
+
+## 2026-09-20 Match Point court troughs
+
+The thirteen courts along the bottom of the board were flat rectangles filled
+with one of three colours -- the last screen in the game still drawing its own
+furniture rather than wearing painted art. The peg field, the ball and the
+clubhouse backdrop were already painted; only the courts were not.
+
+Generated with `gpt_image_2_5` at 1:1, one plate per payout band.
+
+| Band | Job | Production file |
+| --- | --- | --- |
+| Edge (`tenths >= 50`) | `86f429db-f283-4a23-91b9-2ad5b1c4127a` | `match_point/court_hot.png` |
+| Middle (`tenths >= 10`) | `1a064189-2c1e-4f16-abca-8fabcbb0001d` | `match_point/court_mid.png` |
+| Centre | `f6fb3803-baf8-442f-9139-d72ea26c8147` | `match_point/court_cold.png` |
+
+Three faces rather than one plate tinted three ways: a polished brass edge and
+a matte green centre are different materials, and tinting a single plate reads
+as one object standing under coloured light instead of three different things.
+
+Each is a brass-rimmed trough with a dark open slot along its top edge, so the
+mouth the ball drops into is painted rather than drawn as a translucent black
+strip over a flat fill. **The face of each plate is deliberately plain**: the
+multiplier changes with the risk setting, so it is drawn over the plate in code
+and cannot be baked into the art.
+
+Cut by `tools/art/prepare_match_point.py` with rembg `isnet-general-use`, then
+trimmed to the paint so the board can place each plate by rectangle without
+carrying a margin it would have to guess at.
+
+`MatchPointStyle.court_fill` survives for the result plaque, whose cells are
+too small for a painted plate to show anything but its own rim.

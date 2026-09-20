@@ -289,11 +289,12 @@ func _draw_courts() -> void:
 	for court: int in range(COURTS):
 		var rect := court_rect(court)
 		var tenths: int = table[court] if court < table.size() else 0
-		var fill := MatchPointStyle.court_fill(tenths)
+		# The court that took the ball keeps its own light; the rest fall back,
+		# so the eye lands on the one that paid without anything being hidden.
+		var tint := Color.WHITE
 		if landed_court >= 0 and court != landed_court:
-			fill = fill.darkened(0.35)
-		draw_rect(rect, fill)
-		draw_rect(Rect2(rect.position, Vector2(rect.size.x, COURT_MOUTH)), Color(0, 0, 0, 0.28))
+			tint = Color(0.52, 0.52, 0.52)
+		draw_texture_rect(MatchPointStyle.court_plate(tenths), rect, false, tint)
 		var ink := MatchPointStyle.court_ink(tenths)
 		if landed_court >= 0 and court != landed_court:
 			ink = Color(ink, 0.55)
@@ -304,10 +305,10 @@ func _draw_courts() -> void:
 			16,
 			ink
 		)
+		# The plate paints its own rim, so only the court that paid gets a second
+		# one drawn over the top of it.
 		if court == landed_court:
 			draw_rect(rect.grow(1.0), MatchPointStyle.BRASS_BRIGHT, false, 3.0)
-		else:
-			draw_rect(rect, MatchPointStyle.BRASS_DIM, false, 1.0)
 	if _cue_left > 0.0 and landed_court >= 0:
 		var alpha := clampf(_cue_left / REDUCED_CUE_SECONDS, 0.0, 1.0)
 		draw_arc(

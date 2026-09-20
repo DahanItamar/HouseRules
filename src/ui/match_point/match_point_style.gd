@@ -117,6 +117,26 @@ static func draw_centered(
 
 ## Court colour by multiplier: brass for the big edges, cream for a return of the
 ## stake or better, racing green for courts that return less than the stake.
+## The painted troughs the thirteen courts are drawn with. Three faces rather
+## than one plate tinted three ways: a brass edge and a green centre are
+## different materials, and tinting a single plate reads as one object standing
+## under coloured light instead of three different things.
+const COURT_HOT := preload("res://assets/production/match_point/court_hot.png")
+const COURT_MID := preload("res://assets/production/match_point/court_mid.png")
+const COURT_COLD := preload("res://assets/production/match_point/court_cold.png")
+
+
+## The trough for a court paying `tenths`, on the same bands as `court_fill`.
+static func court_plate(tenths: int) -> Texture2D:
+	if tenths >= 50:
+		return COURT_HOT
+	if tenths >= 10:
+		return COURT_MID
+	return COURT_COLD
+
+
+## The flat colour the result plaque still reads, where the cells are too small
+## for a painted plate to show anything but its rim.
 static func court_fill(tenths: int) -> Color:
 	if tenths >= 50:
 		return BRASS

@@ -1,7 +1,7 @@
 class_name MatchPointPanel
 extends CabinetPanel
 ## Match Point cabinet presentation. Owns the painted clubhouse backdrop, the
-## hostess in the window alcove, the code-drawn peg field and courts, and the
+## hostess in the window alcove, the peg field and the painted courts, and the
 ## racing-green scoreboard HUD. Game state is read from the cabinet; the panel
 ## never decides an outcome.
 
