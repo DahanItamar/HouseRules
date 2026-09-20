@@ -8,17 +8,18 @@ var _starting_test_mode: bool
 
 
 func before_each() -> void:
-	_starting_balance = Wallet.balance
 	_starting_test_mode = Wallet.test_mode_enabled
-	Wallet.test_mode_enabled = false
+	Wallet.set_test_mode(false)
+	_starting_balance = Wallet.balance
 	Wallet.reset(200)
 	MotionPolicy.clear_test_override()
 
 
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
-	Wallet.test_mode_enabled = _starting_test_mode
+	Wallet.set_test_mode(false)
 	Wallet.reset(_starting_balance)
+	Wallet.set_test_mode(_starting_test_mode)
 
 
 func test_blackjack_reveal_and_readable_beat_precede_single_settlement() -> void:
@@ -42,7 +43,9 @@ func test_blackjack_reveal_and_readable_beat_precede_single_settlement() -> void
 	var result := math._resolve(20, RoundResult.Outcome.WIN)
 	game.call("_resolve", result)
 	assert_true(game.is_result_pending)
-	assert_false(game.panel._blackjack_cards[1].face_down, "Hole-card state flips before settlement")
+	assert_false(
+		game.panel._blackjack_cards[1].face_down, "Hole-card state flips before settlement"
+	)
 	assert_false(game.request_stand(), "Gameplay input stays locked through the reveal timeline")
 	assert_true(game.panel._blackjack_primary.disabled)
 	assert_eq(game.panel._blackjack_dealer_total.target_value, 9, "Tally waits for the reveal beat")
@@ -93,7 +96,9 @@ func test_reduced_motion_vault_flip_still_finishes_before_single_settlement() ->
 	assert_eq(Wallet.balance, 200)
 
 	await wait_seconds(0.22)
-	assert_false(game.panel._vault_tiles[0].is_flipping, "Reduced motion still reaches reveal completion")
+	assert_false(
+		game.panel._vault_tiles[0].is_flipping, "Reduced motion still reaches reveal completion"
+	)
 	assert_signal_not_emitted(game, "round_resolved")
 	await wait_seconds(0.18)
 	assert_signal_emit_count(game, "round_resolved", 1)

@@ -16,16 +16,17 @@ var _starting_balance: int
 
 func before_each() -> void:
 	_starting_test_mode = Wallet.test_mode_enabled
+	Wallet.set_test_mode(false)
 	_starting_balance = Wallet.balance
-	Wallet.test_mode_enabled = false
 	Wallet.reset(500)
 	MotionPolicy.set_reduced_motion_for_tests(false)
 
 
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
-	Wallet.test_mode_enabled = _starting_test_mode
+	Wallet.set_test_mode(false)
 	Wallet.reset(_starting_balance)
+	Wallet.set_test_mode(_starting_test_mode)
 
 
 func _open(definition_path: String) -> CabinetPanel:
@@ -121,27 +122,26 @@ func test_vault_hud_is_its_own_carved_stone_language() -> void:
 		assert_gte(button.size.y, 44.0, "44 px minimum target")
 		assert_true(TV_SAFE.encloses(Rect2(button.position, button.size)))
 	await get_tree().process_frame
-	for child: Node in panel._stake_selector.get_children():
-		var chip := child as Button
-		if chip == null:
-			continue
-		var chip_style := chip.get_theme_stylebox("normal") as StyleBoxFlat
-		assert_eq(chip_style.corner_radius_top_left, VaultRuneFrame.CORNER_RADIUS)
-		assert_ne(chip_style.border_color, FOCUS_CYAN)
+	# The quick-bet keys are shared, so the vault says "vault" through its own
+	# painted kit plate rather than through a different set of controls.
+	for chip: Button in panel._stake_selector._buttons:
+		var plate := chip.get_node_or_null("KitPlate") as KitPlate
+		assert_not_null(plate, "%s wears the vault's painted plate" % chip.name)
+		assert_eq(plate.texture, UiKit.texture(&"minefield_vault", "button"))
+		var focus: StyleBoxFlat = chip.get_theme_stylebox("focus")
+		assert_eq(focus.border_color, FOCUS_CYAN, "Cyan stays reserved for focus")
 
 
 func test_other_games_keep_their_own_stake_chips() -> void:
 	var slot := _open(OTHER_DEFINITIONS[0])
-	for child: Node in slot._stake_selector.get_children():
-		var chip := child as Button
-		if chip == null:
-			continue
-		var chip_style := chip.get_theme_stylebox("normal") as StyleBoxFlat
-		var vault_chip := (
-			chip_style.corner_radius_top_left == VaultRuneFrame.CORNER_RADIUS
-			and chip_style.border_color in [VaultRuneFrame.AMBER, VaultRuneFrame.SILVER_DIM]
+	for chip: Button in slot._stake_selector._buttons:
+		var plate := chip.get_node_or_null("KitPlate") as KitPlate
+		assert_not_null(plate)
+		assert_ne(
+			plate.texture,
+			UiKit.texture(&"minefield_vault", "button"),
+			"The vault's plate never leaks into the Slot HUD"
 		)
-		assert_false(vault_chip, "Vault chip styling never leaks into the Slot HUD")
 
 
 func test_meter_ready_state_uses_candle_amber_not_green() -> void:

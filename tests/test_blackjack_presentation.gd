@@ -2,8 +2,8 @@ extends GutTest
 
 const BLACKJACK_DEFINITION: CabinetDefinition = preload("res://data/cabinets/blackjack.tres")
 ## Top of the blackjack control deck; nothing on the felt may reach it.
-const DECK_TOP := 424.0
-const HOW_TO_PLAY := Rect2(770, 28, 142, 38)
+const DECK_TOP := CabinetDeck.DECK_RECT.position.y
+const HOW_TO_PLAY := CabinetPanel.HELP_BUTTON_RECT
 const TV_SAFE := Rect2(48, 27, 864, 486)
 
 var _starting_balance: int
@@ -11,17 +11,18 @@ var _starting_test_mode: bool
 
 
 func before_each() -> void:
-	_starting_balance = Wallet.balance
 	_starting_test_mode = Wallet.test_mode_enabled
-	Wallet.test_mode_enabled = false
+	Wallet.set_test_mode(false)
+	_starting_balance = Wallet.balance
 	Wallet.reset(200)
 	MotionPolicy.clear_test_override()
 
 
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
-	Wallet.test_mode_enabled = _starting_test_mode
+	Wallet.set_test_mode(false)
 	Wallet.reset(_starting_balance)
+	Wallet.set_test_mode(_starting_test_mode)
 
 
 func _open(reduced: bool) -> CabinetPanel:
@@ -65,9 +66,10 @@ func test_totals_are_badged_beside_each_hand_and_actions_stay_controller_ready()
 			"%s is level with its hand" % badge.name
 		)
 		assert_false(badge_rect.intersects(card_rect), "%s never covers a card" % badge.name)
-		assert_lte(badge_rect.size.y, 28.0, "Compact badge, not a side panel")
+		# Tall enough for the painted plaque's brass rim, still a badge not a panel.
+		assert_lte(badge_rect.size.y, 32.0, "Compact badge, not a side panel")
 		assert_true(TV_SAFE.encloses(badge_rect))
-		var label := badge.get_child(0) as Label
+		var label := badge.find_child("*Total", true, false) as Label
 		assert_gte(label.get_theme_font_size("font_size"), 14, "Readable at FHD")
 	assert_eq(panel._blackjack_primary.focus_mode, Control.FOCUS_ALL)
 	assert_eq(panel._blackjack_stand.focus_mode, Control.FOCUS_ALL)

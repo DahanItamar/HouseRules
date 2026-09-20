@@ -11,17 +11,18 @@ var _starting_test_mode: bool
 
 
 func before_each() -> void:
-	_starting_balance = Wallet.balance
 	_starting_test_mode = Wallet.test_mode_enabled
-	Wallet.test_mode_enabled = false
+	Wallet.set_test_mode(false)
+	_starting_balance = Wallet.balance
 	Wallet.reset(500)
 	MotionPolicy.set_reduced_motion_for_tests(false)
 
 
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
-	Wallet.test_mode_enabled = _starting_test_mode
+	Wallet.set_test_mode(false)
 	Wallet.reset(_starting_balance)
+	Wallet.set_test_mode(_starting_test_mode)
 
 
 func _begin(definition: CabinetDefinition) -> CabinetSession:

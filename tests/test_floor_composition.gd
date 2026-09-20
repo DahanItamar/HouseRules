@@ -140,7 +140,7 @@ func test_collision_overlay_is_debug_only_and_toggles() -> void:
 func test_unlocked_wings_open_their_rooms_and_locked_ones_stay_shut() -> void:
 	var was_test_mode := Wallet.test_mode_enabled
 	var wagered := Economy.lifetime_wagered
-	Wallet.test_mode_enabled = false
+	Wallet.set_test_mode(false)
 	Economy.lifetime_wagered = 0
 	_floor.avatar_position = FloorController.WING_POSITIONS[FloorController.VIP]
 	_floor.refresh_proximity()
@@ -150,15 +150,41 @@ func test_unlocked_wings_open_their_rooms_and_locked_ones_stay_shut() -> void:
 	assert_true(_floor.interact(), "Reaching the threshold opens the VIP elevator")
 	assert_eq(_floor.room.id, FloorController.VIP)
 	Economy.lifetime_wagered = wagered
-	Wallet.test_mode_enabled = was_test_mode
+	Wallet.set_test_mode(was_test_mode)
 
 
 func test_hud_panels_leave_the_floor_play_area_clear() -> void:
-	# HUD plaques stay in the back-wall band above every island and entrance.
+	# HUD plaques stay in the back-wall strip above every island and entrance.
 	for room_id: StringName in FloorController.ROOM_IDS:
 		var room := FloorRoomLayout.load_room(room_id)
 		for anchor_id: StringName in room.anchors:
 			assert_gt(room.anchor(anchor_id).y, FloorController.HUD_BAND_HEIGHT)
+
+
+func test_hud_plates_are_opaque_and_nothing_darkens_the_full_width_header() -> void:
+	var main: Node = load("res://src/ui/main.tscn").instantiate()
+	add_child_autofree(main)
+	for plate: Panel in [main._bank_panel, main._message_panel]:
+		var style := plate.get_theme_stylebox("panel") as StyleBoxFlat
+		assert_eq(style.bg_color.a, 1.0, "%s carries its own opaque surface" % plate.name)
+	var bank: Rect2 = main._bank_panel.get_rect()
+	assert_true(Rect2(48, 27, 864, 486).encloses(bank), "The bank plate sits inside TV-safe")
+	assert_lte(bank.end.y, DialoguePanel.LAYOUTS[1].panel.position.y, "It clears the dialogue lane")
+	var back_style := _floor._room_back.get_theme_stylebox("normal") as StyleBoxFlat
+	assert_eq(back_style.bg_color.a, 1.0, "The room Back plate is opaque")
+	# No full-width dark strip across the top of a room or a cabinet: the painted
+	# back wall (and the people in it) is never cut by a header band.
+	var header_band := RegEx.create_from_string(
+		"draw_rect\\(\\s*Rect2\\(\\s*0\\s*,\\s*0\\s*,\\s*(960|size\\.x)\\s*,(?!\\s*(540|size\\.y))"
+	)
+	for path: String in [
+		"res://src/floor/floor_controller.gd",
+		"res://src/ui/casino_lighting.gd",
+		"res://src/ui/main.gd",
+		"res://src/ui/cabinet_panel.gd",
+	]:
+		var source := FileAccess.get_file_as_string(path)
+		assert_null(header_band.search(source), "%s draws no full-width header band" % path)
 
 
 func _reachable_cells(room: FloorRoomLayout) -> Dictionary:

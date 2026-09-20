@@ -22,16 +22,17 @@ var _starting_balance: int
 
 func before_each() -> void:
 	_starting_test_mode = Wallet.test_mode_enabled
+	Wallet.set_test_mode(false)
 	_starting_balance = Wallet.balance
-	Wallet.test_mode_enabled = false
 	Wallet.reset(500)
 	MotionPolicy.set_reduced_motion_for_tests(false)
 
 
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
-	Wallet.test_mode_enabled = _starting_test_mode
+	Wallet.set_test_mode(false)
 	Wallet.reset(_starting_balance)
+	Wallet.set_test_mode(_starting_test_mode)
 
 
 func _open(definition_path: String) -> CabinetPanel:
@@ -66,9 +67,11 @@ func test_each_game_has_a_unique_sharp_adult_host_pose_set() -> void:
 		for texture: Texture2D in textures:
 			var path := texture.resource_path
 			assert_true(
-				path.contains("_v2")
-				or path.contains("/slot_elf_princess")
-				or path.contains("/vault_witcher_"),
+				(
+					path.contains("_v2")
+					or path.contains("/slot_elf_princess")
+					or path.contains("/vault_witcher_")
+				),
 				"%s runs on its authored master %s" % [game_id, path]
 			)
 			assert_false(

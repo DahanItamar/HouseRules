@@ -7,17 +7,18 @@ var _starting_test_mode: bool
 
 
 func before_each() -> void:
-	_starting_balance = Wallet.balance
 	_starting_test_mode = Wallet.test_mode_enabled
-	Wallet.test_mode_enabled = false
+	Wallet.set_test_mode(false)
+	_starting_balance = Wallet.balance
 	Wallet.reset(500)
 	MotionPolicy.set_reduced_motion_for_tests(false)
 
 
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
-	Wallet.test_mode_enabled = _starting_test_mode
+	Wallet.set_test_mode(false)
 	Wallet.reset(_starting_balance)
+	Wallet.set_test_mode(_starting_test_mode)
 
 
 func test_live_slot_spin_settles_exactly_and_finishes_once_when_reduced_motion_turns_on() -> void:
@@ -43,8 +44,12 @@ func test_live_slot_spin_settles_exactly_and_finishes_once_when_reduced_motion_t
 	assert_true(panel._slot_spinning, "Accessibility never resolves semantic play early")
 	assert_true(game.is_round_active, "The authoritative round remains pending")
 	assert_eq(panel._slot_stopped, [false, false, false])
-	assert_eq(panel._slot_offsets, panel._slot_total_offsets, "Every reel reaches its exact stop offset")
-	assert_eq(panel._slot_spin_targets, evaluated_symbols, "Presentation settlement preserves the outcome")
+	assert_eq(
+		panel._slot_offsets, panel._slot_total_offsets, "Every reel reaches its exact stop offset"
+	)
+	assert_eq(
+		panel._slot_spin_targets, evaluated_symbols, "Presentation settlement preserves the outcome"
+	)
 	assert_true(panel._slot_finish_callback.is_valid(), "Normal timed completion remains pending")
 	assert_signal_not_emitted(game, "round_resolved")
 	for reel_index: int in range(panel._slot_reel_cells.size()):
@@ -64,7 +69,9 @@ func test_live_slot_spin_settles_exactly_and_finishes_once_when_reduced_motion_t
 	panel._process(0.02)
 	assert_false(panel._slot_spinning)
 	assert_false(game.is_round_active)
-	assert_false(panel._slot_finish_callback.is_valid(), "The callback is consumed at canonical timing")
+	assert_false(
+		panel._slot_finish_callback.is_valid(), "The callback is consumed at canonical timing"
+	)
 	assert_signal_emit_count(game, "round_resolved", 1)
 	panel._process(4.0)
 	assert_signal_emit_count(game, "round_resolved", 1, "Later frames cannot resolve twice")
@@ -134,7 +141,9 @@ func test_live_credit_transaction_settles_to_one_canonical_rest_state() -> void:
 	MotionPolicy.set_reduced_motion_for_tests(true)
 
 	assert_eq(chip.idle_time, 0.0, "Ambient chip travel returns to its canonical sample")
-	assert_eq(chip.transaction_time, 0.0, "The in-flight ring cannot continue with a new duration basis")
+	assert_eq(
+		chip.transaction_time, 0.0, "The in-flight ring cannot continue with a new duration basis"
+	)
 	assert_eq(chip.transaction_direction, 0, "No stale credit/debit accent survives at rest")
 	assert_false(chip.is_processing())
 	chip._process(1.0)
