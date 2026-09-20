@@ -35,7 +35,10 @@ func test_menu_reveal_stages_the_information_hierarchy_then_settles_exactly() ->
 		assert_eq(row.position.x, 38.0, "Every row slides in from the left")
 	for chrome: Control in main._menu_chrome:
 		assert_eq(chrome.modulate.a, 0.0)
-	await wait_seconds(0.46)
+	# The reveal finishes at 0.50 s: the chrome starts at 0.32 and runs 0.18.
+	# Waiting 0.46 measured it mid-tween, which is a race the test always lost
+	# eventually. This is a ceiling, not a measurement.
+	await wait_seconds(0.62)
 	assert_eq(main._menu_badge.modulate, Color.WHITE)
 	assert_eq(main._menu_badge.position, Vector2(56, 64))
 	for index: int in range(main._menu_rows.size()):
