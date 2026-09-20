@@ -142,14 +142,19 @@ func _build_menu() -> void:
 	add_child(_menu)
 	_menu_background = TextureRect.new()
 	_menu_background.name = "CasinoHallArt"
+	# `expand_mode` is set BEFORE the texture: a TextureRect adopts its texture's
+	# size as its minimum the moment the texture is assigned, and setting the mode
+	# afterwards does not take that back. With a 3840 px master the node grew to
+	# 3840 wide and the menu showed the empty left margin of the plate blown up
+	# across the whole screen.
+	_menu_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_menu_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	# The branded plate: the hall with the three of them held to the right, so the
 	# whole left column is free for the badge and the keys.
 	_menu_background.texture = preload(
 		"res://assets/production/environments/casino_menu_hall_v2.png"
 	)
 	_menu_background.size = Vector2(960, 540)
-	_menu_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_menu_background.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
 	_menu_background.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_menu.add_child(_menu_background)
 	var lighting := CasinoLighting.new()
@@ -164,9 +169,26 @@ func _build_menu() -> void:
 	menu_ambient.mode = CasinoAmbient.Mode.LOBBY
 	menu_ambient.accent = Color("f2c84b")
 	_menu.add_child(menu_ambient)
-	var readability := ColorRect.new()
-	readability.size = Vector2(548, 540)
-	readability.color = Color("0c0b0dcc")
+	# The left column has to be dark enough to read the badge and the keys against,
+	# but a flat panel over half the screen drew a hard vertical seam down the
+	# middle of the menu and cut the room in two. A gradient does the same job and
+	# lets the hall carry on behind the type instead of stopping at an edge.
+	var readability := TextureRect.new()
+	readability.name = "MenuReadability"
+	readability.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	readability.stretch_mode = TextureRect.STRETCH_SCALE
+	readability.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var shade := GradientTexture2D.new()
+	shade.fill = GradientTexture2D.FILL_LINEAR
+	shade.fill_from = Vector2.ZERO
+	shade.fill_to = Vector2(1.0, 0.0)
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color("0c0b0de8"))
+	ramp.set_color(1, Color("0c0b0d00"))
+	ramp.add_point(0.52, Color("0c0b0dc4"))
+	shade.gradient = ramp
+	readability.texture = shade
+	readability.size = Vector2(760, 540)
 	_menu.add_child(readability)
 	_menu_rule = ColorRect.new()
 	_menu_rule.name = "BrassRule"
@@ -192,6 +214,9 @@ func _build_menu() -> void:
 	_menu.add_child(_menu_title)
 	# The kicker, rule and title stay as nodes because the menu reveal animates
 	# them, but the player sees the painted badge instead of typeset words.
+	# The kicker, rule, title and subtitle stay as nodes because the menu reveal
+	# animates them, but the player sees the painted badge instead of typeset
+	# words. The subtitle also said "Three games" long after there were nine.
 	for typeset: Control in [_menu_kicker, _menu_rule, _menu_title]:
 		typeset.visible = false
 	_menu_badge = TextureRect.new()
@@ -213,6 +238,7 @@ func _build_menu() -> void:
 	_menu_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_menu_subtitle.add_theme_font_size_override("font_size", 18)
 	_menu_subtitle.add_theme_color_override("font_color", Color("b8ad9c"))
+	_menu_subtitle.visible = false
 	_menu.add_child(_menu_subtitle)
 	_menu_prompt_panel = _panel(
 		Vector2(70, 320), Vector2(360, 104), Color("17161af2"), Color("c8a34b")
