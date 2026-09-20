@@ -1,0 +1,63 @@
+{
+	"reduced_motion": false,
+	"seed": 20260918,
+	"sequences": {
+		"blackjack_deal": [
+			"05_blackjack_deal_start.png",
+			"05_blackjack_deal_mid.png",
+			"05_blackjack.png"
+		],
+		"blackjack_hit": [
+			"05_blackjack_hit_start.png",
+			"05_blackjack_hit_mid.png"
+		],
+		"blackjack_reveal": [
+			"05_blackjack_reveal_start.png",
+			"05_blackjack_reveal_mid.png",
+			"05_blackjack_result.png"
+		],
+		"cashier": [
+			"02_cashier_menu.png",
+			"02_cashier_transaction.png",
+			"02_cashier_settled.png"
+		],
+		"exit_cancel": [
+			"04_exit_confirmation.png",
+			"04_exit_cancel_mid.png"
+		],
+		"exit_confirm": [
+			"04_exit_confirm_ready.png",
+			"04_exit_confirmed_floor.png"
+		],
+		"exit_reveal": [
+			"04_exit_reveal_start.png",
+			"04_exit_reveal_mid.png"
+		],
+		"floor_practical_lights": [
+			"02_floor_motion_a.png",
+			"02_floor.png"
+		],
+		"help_dismiss": [
+			"03_help_open.png",
+			"03_help_dismiss_mid.png"
+		],
+		"help_reveal": [
+			"03_help_reveal_start.png",
+			"03_help_reveal_mid.png"
+		],
+		"menu": [
+			"01_menu_motion_a.png",
+			"01_menu.png"
+		],
+		"vault_hazard": [
+			"06_vault_hazard_warning.png",
+			"06_vault_hazard_impact.png",
+			"06_vault_hazard_result.png"
+		],
+		"vault_reveal": [
+			"06_vault_reveal_start.png",
+			"06_vault_reveal_mid.png",
+			"06_vault_reveal.png"
+		]
+	}
+}

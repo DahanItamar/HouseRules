@@ -1,0 +1,25 @@
+{
+	"tiers": [
+		{
+			"banner": "BIG WIN",
+			"frame": "09_big_win",
+			"multiple": 31.2,
+			"payout": 312,
+			"tier": "big"
+		},
+		{
+			"banner": "SUPER WIN",
+			"frame": "10_super_win",
+			"multiple": 60.9,
+			"payout": 609,
+			"tier": "super"
+		},
+		{
+			"banner": "MEGA WIN",
+			"frame": "11_mega_win",
+			"multiple": 121.3,
+			"payout": 1213,
+			"tier": "mega"
+		}
+	]
+}

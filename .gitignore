@@ -9,6 +9,9 @@ test-results/
 tools/uv/
 tools/uv.zip
 tests/results/screenshots/session_*/
+# Intermediate per-frame dumps from the walk-cycle build; the finished
+# atlas, sheet and GIFs are committed, the 1400 loose frames are not.
+tests/results/screenshots/walk_tmp/
 tests/results/*.log
 assets/source/layered_v2/_rejected/
 tools/art/__pycache__/

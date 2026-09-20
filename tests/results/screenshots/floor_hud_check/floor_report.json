@@ -1,0 +1,140 @@
+{
+	"rooms": {
+		"high_roller": {
+			"label": "HIGH ROLLER SALON",
+			"preview_only": true,
+			"return_position": [
+				150.0,
+				274.0
+			],
+			"returned_to": "main_floor",
+			"room_hud_visible": true,
+			"spawn_walkable": true
+		},
+		"vip": {
+			"label": "VIP PENTHOUSE",
+			"preview_only": true,
+			"return_position": [
+				862.0,
+				216.0
+			],
+			"returned_to": "main_floor",
+			"room_hud_visible": true,
+			"spawn_walkable": true
+		}
+	},
+	"stations": {
+		"blackjack_rug_front": {
+			"clearance": 16.67,
+			"position": [
+				504.0,
+				212.0
+			],
+			"walkable": true
+		},
+		"cashier_above": {
+			"clearance": 30.43,
+			"position": [
+				860.0,
+				274.0
+			],
+			"walkable": true
+		},
+		"cashier_below_ropes": {
+			"clearance": 26.67,
+			"position": [
+				840.0,
+				516.0
+			],
+			"walkable": true
+		},
+		"cashier_left": {
+			"clearance": 24.43,
+			"position": [
+				668.0,
+				402.0
+			],
+			"walkable": true
+		},
+		"elevator_plant_behind": {
+			"clearance": 14.0,
+			"position": [
+				792.0,
+				148.0
+			],
+			"walkable": true
+		},
+		"lounge_right": {
+			"clearance": 24.64,
+			"position": [
+				232.0,
+				440.0
+			],
+			"walkable": true
+		},
+		"planter_above_foliage": {
+			"clearance": 15.0,
+			"position": [
+				470.0,
+				456.0
+			],
+			"walkable": true
+		},
+		"planter_above_lamp": {
+			"clearance": 15.0,
+			"position": [
+				368.0,
+				456.0
+			],
+			"walkable": true
+		},
+		"planter_left": {
+			"clearance": 23.16,
+			"position": [
+				262.0,
+				480.0
+			],
+			"walkable": true
+		},
+		"slot_rug_front": {
+			"clearance": 16.67,
+			"position": [
+				334.0,
+				212.0
+			],
+			"walkable": true
+		},
+		"spawn": {
+			"clearance": 95.0,
+			"position": [
+				480.0,
+				408.0
+			],
+			"walkable": true
+		},
+		"staircase_below": {
+			"clearance": 36.32,
+			"position": [
+				150.0,
+				274.0
+			],
+			"walkable": true
+		},
+		"vault_rug_front": {
+			"clearance": 16.67,
+			"position": [
+				680.0,
+				212.0
+			],
+			"walkable": true
+		},
+		"vip_entrance": {
+			"clearance": 20.0,
+			"position": [
+				862.0,
+				216.0
+			],
+			"walkable": true
+		}
+	}
+}
