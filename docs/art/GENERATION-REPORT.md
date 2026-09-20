@@ -1038,3 +1038,66 @@ out instead of lighting it. The arrowhead is a separate sprite because it sits
 The cyan focus ring is drawn by the engine over the top of whichever plate is
 showing. It is mandated by `CLAUDE.md` for keyboard and controller focus and is
 not part of the painted art.
+
+## 2026-09-20 Corsair's Reach (the crash cabinet, re-themed)
+
+Forno d'Oro was replaced. The maths, the id `core_overclock` and the verified
+97% return are unchanged; everything the player sees was regenerated. The
+Forno set is deleted -- see the superseded note at the end of its own section.
+
+Generated with `gpt_image_2_5`. Cut and composed by
+`tools/art/prepare_corsair.py`, which never modifies the raw outputs under
+`assets/source/layered_v2/corsair/`. The job id is the hex suffix on each
+source filename.
+
+| Piece | Source | Production file |
+| --- | --- | --- |
+| Night sea | `sea_4k.png` | `corsair/corsair_sea.png` |
+| Chart frame | `crash_frame_592335ce.png` | `corsair/corsair_frame.png` |
+| Parrot, flight sheet | `parrot_flight_f4cd7a4a.png` | `corsair/corsair_parrot_flight.png` |
+| Parrot, icon | `parrot_023a0f22.png` | `corsair/corsair_parrot.png` |
+| Trail | `trail_9dbed124.png` | `corsair/corsair_trail.png` |
+| Compass | `compass_13f114f4.png` | `corsair/corsair_compass.png` |
+| Crest | `crest_2b1f476e.png` | `corsair/corsair_crest.png` |
+| Deck trim | `deck_trim_317dbeed.png` | `corsair/corsair_deck_trim.png` |
+| Wreck | `wreck_14c9dff1.png` | `corsair/corsair_wreck.png` |
+| Ship, wake, foam | `ship_568a1063.png`, `wake_45c672bf.png`, `foam_79a94205.png` | `corsair_ship/wake/foam.png` |
+
+### The crew
+
+| State | Source |
+| --- | --- |
+| Ready | `crew_v3_ready_ea6f81cb.png` |
+| Tense | `crew_v3_tense_033b6430.png` |
+| Cheer | `crew_v3_cheer_96cada4d.png` |
+| Wince | `crew_v3_wince_f2d4370c.png` |
+
+**One frame holds both women per state.** That is the point: their reaction is
+shared by construction, so the pair can never be caught feeling different things
+about the same result. `prepare_corsair.py` then splits each frame down its
+middle and stands each woman in her own narrow edge lane. Asking the generator
+to place them in the lanes directly was tried and abandoned -- it cropped their
+heads and drifted their costumes between states.
+
+Rejected takes, kept for provenance:
+
+* `crew_v2_captain_b6699072.png` and `captain_cutout.png` -- a tricorn hat that
+  cropped the top of her head off at the frame edge.
+* `crew_v2_nohat_0024d784.png` -- hat removed, but the two women were put in
+  matching uniforms, which the user rejected: they are a crew, not staff.
+* `payline_8140aa65.png` -- a drawn payline for the curve, superseded when the
+  parrot became the line object and the trail was moved to live drawing in
+  `core_overclock_flight.gd`.
+* `ship_568a1063.png`, `wake_45c672bf.png`, `foam_79a94205.png` -- the ship and
+  water, cut when the cabinet became one object climbing a line. The files are
+  still built by the pipeline but nothing on the canvas reads them.
+
+### The parrot is the line
+
+The multiplier is drawn as a parrot climbing `exp(SHAPE * t)` with the glowing
+trail laid live behind her, not as a dial. `FLAP_SECONDS` is 0.46 and
+`BOB_PIXELS` is 5: a bird that beats faster than the eye can separate reads as
+a vibrating sprite rather than flight, and without the rise and fall inside the
+beat the wings move while the bird slides. `growth_per_second` went 0.40 to
+0.12 in the same pass, so 2x takes 5.8 s instead of 1.7 -- that does not touch
+the return, which is drawn before she leaves, only how long the nerve is held.
