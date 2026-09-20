@@ -19,9 +19,9 @@ Manager's Office.
 * `gdformat --check` and `gdlint` over all of `src` and `tests`: pass.
 * CI green.
 * Every screenshot set in the repo was re-shot against this build.
-* `export/HouseRules.pck` rebuilt at `84b6a02`, 420.2 MB, smoke-launched
+* `export/HouseRules.pck` rebuilt at `44b31b1`, 421.3 MB, smoke-launched
   from an absolute path.
-  SHA-256 `37fb6c4777ecdc672007daac8d920e87a603b02752ea2be1422ef187670cdca0`
+  SHA-256 `1b6ba7fb440710db1684fd0a58e9d6776c402b94dd4dc2bb4438df055edcdc0c`
   (rebuild after any commit — that hash is for that one).
 
 ## 2. What this session did
@@ -100,6 +100,24 @@ never be caught feeling different things about the same result.
 `prepare_corsair.py` splits each frame down the middle; `middle_px=0` on all
 four, so neither woman reaches the chart.
 
+### Match Point
+
+The thirteen courts were flat rectangles filled with one of three colours, and
+the serving hatch was three stroked rectangles — the last furniture in the game
+drawn by the code that places it, with painted art all around it. Both are
+painted plates now: brass-rimmed troughs with the drop slot painted as an
+opening, in three faces for the three payout bands, and a brass-framed recess
+whose interior is shaded so it reads as depth.
+
+Three plates rather than one tinted three ways, because a brass edge and a
+green centre are different materials. The face of each is deliberately plain:
+the multiplier changes with the risk setting, so it is still drawn over the top.
+
+What the board still draws in code is state, not material — the studs the ball
+touched, the ring on the court that took it, the ball's shadow. Those change
+every drop and belong there. `court_fill` also survives for the result plaque,
+whose cells are too small for a plate to show anything but its rim.
+
 ### Captures
 
 `tools/capture_all.ps1` re-shoots every set in one pass, reports the shot count
@@ -146,14 +164,11 @@ photograph of a parrot and the README linked it under that name.
    Roulette and Baccarat bet by placing chips of a chosen denomination on
    spots — `MIN/10/25/X2/X5/ALL` does not map onto that. Poker and Match Point
    have fixed stake keys. This design decision has never actually been made.
-4. **Match Point's board is the most code-drawn screen left** — 11 draw
-   primitives in `src/ui/match_point/match_point_board.gd` plus 6 in its style
-   file. If the painted-assets pass continues, that is where it goes next.
-5. **The bet HUD covers the crew's boots** in Corsair. `CLAUDE.md` says HUD
+4. **The bet HUD covers the crew's boots** in Corsair. `CLAUDE.md` says HUD
    panels must not cover people. It reads as them standing behind the console,
    and it follows the wireframe the user drew, but it is worth a look.
-6. **No `LICENSE` file.** That is the user's decision, not an oversight.
-7. **Repository size**: **3.95 GB packed**, 4.1 GB on disk, almost all of it
+5. **No `LICENSE` file.** That is the user's decision, not an oversight.
+6. **Repository size**: **3.95 GB packed**, 4.1 GB on disk, almost all of it
    art and the 700-plus committed screenshots. GitHub warns above 1 GB and
    soft-limits around 5 GB, so this is close to a real problem rather than a
    tidiness one. Git LFS for `assets/` and `tests/results/screenshots/`, or
