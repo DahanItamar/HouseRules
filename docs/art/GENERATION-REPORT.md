@@ -1013,3 +1013,28 @@ the original kit: `gpt_image_2_5`, 1:1, high, 1k, `background: transparent`.
 | --- | --- | --- | --- |
 | Forno d'Oro | `20d1f991-6c26-4083-a37b-490f049c97db` | `0f62cd34-1392-4006-a69f-5d5d8412827d` | `86317252-d873-4fa2-bec2-02123d441ef7` |
 | Harlequin Masquerade | `b9ac3d1f-3261-419e-b648-4079f922ed60` | `0066278b-d563-4de1-aed0-66480817a886` | `2bde3eee-2456-40f9-9a0f-a69bcc90b275` |
+
+## 2026-09-20 Main menu chevron rows
+
+The menu was a badge, a prompt panel and one settings key. It became a list the
+player walks, which needed a plate that reads as a row rather than a button: a
+long burgundy chevron with a brass rim and a point on its right end.
+
+Generated with `gpt_image_2_5`, 16:9, high, 1k, `background: transparent`, then
+cut by `tools/art/prepare_ui_kit.py` into a nine-slice whose centre is repainted
+flat so a stretched row does not bloom down its middle.
+
+| Plate | Production file | Region | Patch margin |
+| --- | --- | --- | --- |
+| Row, at rest | `assets/production/ui/kit/menu_chevron.png` | `Rect2(0, 297, 1343, 129)` | 25 |
+| Row, lit | `assets/production/ui/kit/menu_chevron_hot.png` | `Rect2(18, 291, 1315, 145)` | 37 |
+| Selector arrowhead | `assets/production/ui/kit/menu_selector.png` | whole image | n/a |
+
+Two plates rather than one tint: a lit row is a different painting -- brighter
+rim, warmer face, a wider point -- and tinting the rest plate washes the brass
+out instead of lighting it. The arrowhead is a separate sprite because it sits
+*outside* the row's box, to the left of it, and moves between rows on focus.
+
+The cyan focus ring is drawn by the engine over the top of whichever plate is
+showing. It is mandated by `CLAUDE.md` for keyboard and controller focus and is
+not part of the painted art.
