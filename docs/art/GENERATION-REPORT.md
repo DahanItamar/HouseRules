@@ -1136,3 +1136,23 @@ tricorn and the fringe of the sash. It prints the painted fraction of each cut
 as well as the transparent one, because a frame that comes back nearly empty
 means the matting ate the women and the state has to be regenerated rather than
 shipped.
+
+### The break-up is the parrot
+
+The break-up sheet was a galleon coming apart -- planks, sails and barrels --
+left over from the build where a ship climbed the line. She is the object on
+the curve now, so she has to be the thing the sea takes; a ship breaking up
+read as something else entirely being destroyed.
+
+`feather_burst_66da3f61.png`, job `66da3f61-4e6b-4bee-850d-0c5392e34532`,
+generated with `gpt_image_2_5` at 1:1 from the parrot flight sheet as an
+`image_references` input so the scarlet, blue and yellow match her exactly. A
+2x2 sheet of four stages -- the first tight puff, the burst opening, full
+spread, and the last stray feathers drifting -- with no bird's body left
+recognisable in any cell.
+
+Superseded: `wreck_14c9dff1.png`, the galleon break-up.
+
+The particles are bounded to the chart frame now. Feathers thrown from the head
+of the line were flying out of the chart and landing on the crew standing
+beside it, which reads as a compositing mistake rather than as debris.

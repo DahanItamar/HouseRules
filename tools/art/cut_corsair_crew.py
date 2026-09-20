@@ -40,12 +40,20 @@ FRAMES: list[str] = [
 ]
 
 
+## Other opaque Corsair renders that arrive on the same painted checkerboard.
+## They are not crew, but they need the same cut, and giving them a second
+## script would mean two places to keep the matting settings in step.
+SHEETS: list[str] = [
+    "feather_burst_66da3f61",
+]
+
+
 def main() -> int:
     from rembg import new_session, remove
 
     OUT.mkdir(parents=True, exist_ok=True)
     session = new_session("isnet-general-use")
-    for name in FRAMES:
+    for name in FRAMES + SHEETS:
         source = Image.open(SOURCE / (name + ".png")).convert("RGBA")
         cut = remove(
             source,

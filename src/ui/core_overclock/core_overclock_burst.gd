@@ -16,6 +16,11 @@ const SPARK_SIZE: float = 26.0
 const PUFF_SECONDS: float = 0.6
 const BURST_SEED: int = 4531
 
+## The box the burst is allowed to occupy. A feather that flies out of the
+## chart is dropped rather than carried on across the frame and over the crew
+## standing beside it. Left empty, nothing is bounded.
+var bounds: Rect2 = Rect2()
+
 var _sparks: Array[Dictionary] = []
 var _puffs: Array[Dictionary] = []
 var _rng := RandomNumberGenerator.new()
@@ -85,6 +90,8 @@ func _process(delta: float) -> void:
 		spark["velocity"] = (spark["velocity"] as Vector2) + Vector2(0.0, SPARK_GRAVITY * delta)
 		spark["at"] = (spark["at"] as Vector2) + (spark["velocity"] as Vector2) * delta
 		spark["turn"] = float(spark["turn"]) + float(spark["spin"]) * delta
+		if bounds.has_area() and not bounds.has_point(spark["at"] as Vector2):
+			continue
 		alive.append(spark)
 	_sparks = alive
 	var drifting: Array[Dictionary] = []

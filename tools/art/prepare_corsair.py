@@ -240,8 +240,14 @@ def build_frame() -> None:
 
 
 def build_wreck() -> None:
-    """Re-cuts the generated 2x2 break-up so every cell is trimmed and exact."""
-    sheet = _clean(Image.open(SOURCE / "wreck_14c9dff1.png"))
+    """Re-cuts the generated 2x2 break-up so every cell is trimmed and exact.
+
+    The break-up is the parrot coming apart, not a ship. She is the object on
+    the curve, so she has to be the thing the sea takes; a galleon breaking up
+    was left over from the build where a ship climbed the line, and it read as
+    something else entirely being destroyed.
+    """
+    sheet = _clean(Image.open(SOURCE / "cutouts/feather_burst_66da3f61.png"))
     columns, rows = WRECK_GRID
     out = Image.new("RGBA", (columns * WRECK_CELL, rows * WRECK_CELL), (0, 0, 0, 0))
     step_x = sheet.width / columns

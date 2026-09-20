@@ -118,6 +118,7 @@ func _build_cabinet() -> void:
 	_stage.add_child(gauge)
 	burst = CoreOverclockBurst.new()
 	burst.z_index = 8
+	burst.bounds = CoreOverclockTheme.FLIGHT_AREA
 	_stage.add_child(burst)
 	_build_title_plate()
 	_build_deck()
