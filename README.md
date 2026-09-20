@@ -1,6 +1,13 @@
 <div align="center">
 
-<img src="assets/branding/house_rules_logo.png" alt="House Rules — High Roller Edition" width="420">
+<img src="assets/branding/house_rules_logo.png" alt="House Rules — High Roller Edition" width="380">
+
+</div>
+
+<img src="tests/results/screenshots/floor_spawn.png" width="100%"
+     alt="The Main Floor from above: three carpeted islands labelled SLOTS, BLACKJACK and MINEFIELD VAULT with brass join inlays in front of them, guests seated at the machines and talking in the lounge, a roped staircase to the High Roller Salon on the left, the VIP Penthouse lift on the right, the curved cashier cage bottom right, and the player standing alone on open carpet in the middle under a prompt reading Move with W A S D.">
+
+<div align="center">
 
 **House Rules is an offline casino you walk around with a gamepad: nine cabinets across four
 rooms, one chip wallet, no real money anywhere in it. The house edge is a test — every cabinet's
@@ -8,13 +15,18 @@ payout maths is an engine-free library, and CI plays a million rounds of each on
 build if the measured return drifts more than a percentage point from the declared target.**
 
 Godot 4.7.2 and GDScript on the GL Compatibility renderer, drawn on a 960×540 virtual canvas that
-scales to FHD, QHD and native 4K. **No .NET, no outbound network call, no account, no telemetry,
-no real-money anything** — saves are plain JSON under `user://`.
+scales to FHD, QHD and native 4K. Presentation and maths never touch: the reels, the felt and the
+dealer cannot pay anybody. Reduced Motion is a single policy that every effect in the game honours
+rather than a switch each screen reimplements, and every rendered pixel of art came out of a
+recorded pipeline whose job IDs — including the rejected takes — are written down in
+[`docs/art/GENERATION-REPORT.md`](docs/art/GENERATION-REPORT.md). **No .NET, no outbound network
+call, no account, no telemetry, no real-money anything** — saves are plain JSON under `user://`.
 
 <a href="https://github.com/DahanItamar/HouseRules/actions/workflows/ci.yml"><img src="https://github.com/DahanItamar/HouseRules/actions/workflows/ci.yml/badge.svg" alt="Godot checks workflow status"></a>
 <img src="https://img.shields.io/badge/tests-566%20passing-a01236?style=flat-square" alt="566 tests passing across 52 scripts">
-<img src="https://img.shields.io/badge/assertions-123%2C860-2b2b33?style=flat-square" alt="123,860 assertions">
-<img src="https://img.shields.io/badge/RTP%20harness-8%20%C3%97%201%2C000%2C000%20rounds-a01236?style=flat-square" alt="RTP harness runs one million rounds for each of eight cabinets">
+<img src="https://img.shields.io/badge/assertions-123%2C879-2b2b33?style=flat-square" alt="123,879 assertions">
+<img src="https://img.shields.io/badge/RTP%20harness-9%20cabinets%20simulated-a01236?style=flat-square" alt="The RTP harness simulates all nine cabinets, a million rounds each for eight of them">
+<img src="https://img.shields.io/badge/acceptance%20criteria-53-2b2b33?style=flat-square" alt="53 numbered acceptance criteria in the spec">
 
 <img src="https://img.shields.io/badge/Godot-4.7.2%20stable-2b2b33?style=flat-square" alt="Godot 4.7.2 stable">
 <img src="https://img.shields.io/badge/GUT-9.5.0-2b2b33?style=flat-square" alt="GUT 9.5.0 vendored and pinned">
@@ -27,13 +39,6 @@ no real-money anything** — saves are plain JSON under `user://`.
 <a href="docs/DISPLAY-VALIDATION.md">Display</a> ·
 <a href="docs/PROGRESSION.md">Progression</a>
 
-<img src="tests/results/screenshots/floor_hud_check/floor_spawn.png" width="830"
-     alt="The Main Floor from above: three carpeted islands labelled SLOTS, BLACKJACK and MINEFIELD
-          VAULT with brass join inlays in front of them, guests seated and talking inside the
-          furniture, a roped staircase to the High Roller Salon on the left, the VIP Penthouse lift
-          on the right, the cashier cage bottom right, and the player standing alone on open carpet
-          in the middle">
-
 </div>
 
 ---
@@ -44,9 +49,8 @@ Each cabinet is two things that never touch. `src/domain/` holds the payout math
 every one of them `RefCounted` or `Resource`, with no `Node`, no `SceneTree`, no `signal` and not
 one autoload named anywhere in the directory. `src/cabinets/` holds the reels, the felt, the
 dealer and the sound, and it cannot pay anybody: a cabinet reports a finished round by emitting
-`round_resolved(RoundResult)`, and across the whole of `src/cabinets/` the only file that names
-`Wallet` at all is `cabinet_session.gd`. The screens under `src/ui/` read the balance and never
-change it.
+`round_resolved(RoundResult)`, and `cabinet_session.gd` is the only file under `src/cabinets/` that
+calls `Wallet` at all. The screens under `src/ui/` read the balance and never write it.
 
 That split is not tidiness. It is what lets the test suite pick up the exact same maths object the
 player is betting against and run a million rounds of it in a few seconds, with no game running.
@@ -58,7 +62,7 @@ flowchart TD
     DEF -- "declares the target" --> MATH
     MATH -- "one round → RoundResult(stake, payout)" --> CAB["src/cabinets/slot_classic/<br/>reels, lever, hostess, PCM cues"]
     MATH -- "1,000,000 rounds, seed 20260918" --> HARNESS["tests/test_rtp_harness.gd"]
-    CAB -- "emits round_resolved" --> SESSION["CabinetSession.apply_result<br/>the one file in src/cabinets that names Wallet"]
+    CAB -- "emits round_resolved" --> SESSION["CabinetSession.apply_result<br/>the one file in src/cabinets that calls Wallet"]
     SESSION -- "stake and payout as one transaction" --> WALLET["Wallet — integer chips, never a float"]
     SESSION -- "would take the balance below zero" --> REJECT["transaction_rejected<br/>round ABANDONED, stake forfeited"]
     HARNESS -- "|observed − target| ≤ 0.01" --> PASS["tests/results/rtp.json"]
@@ -71,17 +75,19 @@ Two of the nine lines from a full suite run on 2026-09-20, copied verbatim; the 
 the same shape and all nine are in [`tests/results/rtp.json`](tests/results/rtp.json).
 
 ```json
-{"absolute_error":0.0000830000000000553,"cabinet":"slot_classic","elapsed_ms":3714,"observed_rtp":0.955083,"returned":9550830,"rounds":1000000,"seed":20260918,"strategy":"spin","target_rtp":0.955,"wagered":10000000}
-{"absolute_error":0.0000518885176702399,"cabinet":"blackjack","elapsed_ms":8292,"observed_rtp":0.99005188851767,"returned":10854820,"rounds":1000000,"seed":20260918,"strategy":"basic strategy","target_rtp":0.99,"wagered":10963890}
+{"absolute_error":0.0000830000000000553,"cabinet":"slot_classic","elapsed_ms":3235,"observed_rtp":0.955083,"returned":9550830,"rounds":1000000,"seed":20260918,"strategy":"spin","target_rtp":0.955,"wagered":10000000}
+{"absolute_error":0.0000518885176702399,"cabinet":"blackjack","elapsed_ms":7617,"observed_rtp":0.99005188851767,"returned":10854820,"rounds":1000000,"seed":20260918,"strategy":"basic strategy","target_rtp":0.99,"wagered":10963890}
 ```
 
 Notice `wagered` on the blackjack line: **10,963,890 chips staked against 1,000,000 rounds of a
 10-chip bet**, because the harness plays basic strategy and basic strategy doubles down. The
 measured 99.005% is what a player actually gets back, not a paytable multiplied out on paper. And
 because the seed is fixed, those two lines reproduce the committed `rtp.json` digit for digit —
-the only field that moved between the run above and the file in the index was `elapsed_ms`.
+the only field that moves between one run and the next is `elapsed_ms`.
 
 ## Nine cabinets, nine sets of maths
+
+Every one of them is seated on a floor you can walk to. Nothing here opens only from a menu.
 
 | | Cabinet | Room | Mechanic | Target | Measured |
 |:-:|---|---|---|---:|---:|
@@ -90,10 +96,10 @@ the only field that moved between the run above and the file in the index was `e
 | <img src="assets/production/ui/icons/icon_minefield_vault.png" width="34"> | **Hexbound Vault** | Main Floor | 5×5 mines, true odds less the edge, cash out any time | 97.00% | 96.399% |
 | <img src="assets/production/ui/icons/icon_baccarat.png" width="34"> | **Velvet Baccarat** | High Roller Salon | punto banco, eight-deck shoe, exact commission | 98.90% | 98.994% |
 | <img src="assets/production/ui/icons/icon_match_point.png" width="34"> | **Match Point** | High Roller Salon | 12-row plinko, thirteen courts, three risk curves | 96.00% | 96.132% |
+| <img src="assets/production/ui/icons/icon_core_overclock.png" width="34"> | **Corsair's Reach** | High Roller Salon | crash — haul it in before the sea takes her | 97.00% | 96.751% |
 | <img src="assets/production/ui/icons/icon_roulette.png" width="34"> | **Ruby Roulette** | VIP Penthouse | single-zero wheel, full inside/outside layout | 97.30% | 97.719% |
 | <img src="assets/production/ui/icons/icon_poker.png" width="34"> | **Texas Hold'em** | VIP Penthouse | five NPC archetypes, raked pot | *skill* | 106.494% |
-| <img src="assets/production/ui/icons/icon_core_overclock.png" width="34"> | **Forno d'Oro** | not seated yet | crash — pull it out before it burns | 97.00% | 96.751% |
-| <img src="assets/production/ui/icons/icon_upgrade_cluster.png" width="34"> | **Harlequin Masquerade** | not seated yet | cluster pays, tumbles, a 2× to 256× upgrade bar | 96.60% | 96.459% |
+| <img src="assets/production/ui/icons/icon_upgrade_cluster.png" width="34"> | **Harlequin Masquerade** | VIP Penthouse | cluster pays, tumbles, a 2× to 256× upgrade bar | 96.60% | 96.459% |
 
 Eight of the nine are measured over **1,000,000 rounds each** and asserted to within one
 percentage point of the `target_rtp` declared in their `.tres` — that is acceptance criterion
@@ -102,20 +108,22 @@ record: return there depends on how well you play, so the harness deals **100,00
 declared baseline strategy against the five NPCs and records the result as a baseline rather than
 a target, including each NPC's big-blinds-per-100 so a regression in one opponent is visible.
 
-> [!IMPORTANT]
-> **Forno d'Oro and Harlequin Masquerade are built, tested and measured, but no room seats them
-> yet.** Their maths, scenes, art and RTP entries are all in — they simply have no join inlay on
-> any floor plan, so in normal play you cannot walk up to them. They open from the developer menu
-> (`F10`), and their row in the table above says so rather than implying a seat that is not there.
+Corsair's Reach is the crash cabinet: a parrot climbs an exponential curve inside a painted chart
+frame, the multiplier is set as bare type over it, and the crew either side react to the same
+frame she does. There is no ship and no dial, because a crash game is one object climbing a line
+and everything else on the canvas competes with the number you are deciding against.
 
-<img src="tests/results/screenshots/fhd/05_blackjack.png" width="415"
-     alt="Blackjack 21: the dealer stands at the left of a green felt table gesturing toward the
-          player's hand, the player holds 10 and J for a total of 20 against the dealer's shown 10,
-          and the bottom deck offers HIT, STAND and DOUBLE TO 20">
-<img src="tests/results/screenshots/poker_fhd/06_showdown.png" width="415"
-     alt="Texas Hold'em showdown in the VIP Penthouse: a blonde dealer in front of a night skyline,
-          five named NPC panels around the table reading THE MANIAC fold, THE ROCK pair, THE SHARK
-          fold, THE TOURIST fold and CALLING STATION straight, with a pot of 35">
+<img src="tests/results/screenshots/core_overclock_fhd/05_long_bake.png" width="100%"
+     alt="Corsair's Reach mid-run: a moonlit sea, a rope-and-brass chart frame holding the word RUNNING above a bare 5.69× and a HAUL 1138 line, a scarlet macaw climbing a glowing gold trail from the bottom-left corner of the frame, a pirate crew member standing in a lane either side watching her, and a bottom deck with balance 4800, 200 in play, a MIN/10/25/X2/X5/ALL quick-bet row and a cyan-focused HAUL IT IN button">
+
+<img src="tests/results/screenshots/05_blackjack.png" width="100%"
+     alt="Blackjack 21: a dealer in a burgundy waistcoat and bow tie stands behind green felt holding the deck beside a wooden shoe, her hole card face down under a SHOWING 10 badge, the player's 10 of spades and jack of diamonds under a TOTAL 20 badge with a 10-chip stack beside them, and a bottom deck reading You have 20 with DOUBLE TO 20, STAND and a cyan-focused HIT">
+
+<img src="tests/results/screenshots/upgrade_cluster_fhd/06_shatter.png" width="100%"
+     alt="Harlequin Masquerade mid-tumble: a 7×7 grid of jewels, bells and jester symbols inside a green-and-cream diamond frame between theatre curtains, an upgrade bar across the top stepping 2× to 256× with 2× lit, a ROUND WIN panel reading 24 at 2.42 × your bet and The board is tumbling, a cluster-of-five paytable down the left, and a host in a pink jacket and carnival mask presenting the board from the right">
+
+<img src="tests/results/screenshots/poker_fhd/06_showdown.png" width="100%"
+     alt="Texas Hold'em showdown in the VIP Penthouse: a dealer in front of a night skyline, five named NPC panels around the table reading THE MANIAC fold, THE ROCK pair, THE SHARK fold, THE TOURIST fold and CALLING STATION straight, with a pot of 35">
 
 ## Walking the floor
 
@@ -129,21 +137,24 @@ a single hand-placed sprite.
 
 Collision is traced from what you can see, not boxed around it. Across the four rooms that is
 **40 solid polygons over 468 vertices**, named after the furniture they follow —
-`GrandStaircase`, `SlotIsland`, `CashierCage`, `LoungeDais`, `EntrancePlanter` — plus **70
+`GrandStaircase`, `SlotIsland`, `CashierCage`, `Lounge`, `EntrancePlanter` — plus **70
 occluders**. `F2` draws the lot over the running game.
 
-<img src="tests/results/screenshots/floor_qa_fhd/floor_collision_overlay.png" width="830"
-     alt="The Main Floor from the header image with F2 pressed: red polygons trace the exact outline
-          of each rug, island, planter and the curved cashier cage, green marks the walkable bounds,
-          yellow lines mark occluder baselines, white rings label the slot_classic, blackjack,
-          minefield_vault, cashier, high_roller and vip anchors, and a cyan dot under the player's
-          feet reads 480, 408 clear 95.0">
+<img src="tests/results/screenshots/floor_collision_overlay.png" width="100%"
+     alt="The Main Floor from the header image with F2 pressed: red polygons trace the exact outline of each rug, island, planter and the curved cashier cage, green marks the walkable bounds, yellow lines mark occluder baselines, white rings label the slot_classic, blackjack, minefield_vault, cashier, high_roller, vip and office anchors, and a cyan dot under the player's feet reads 480, 408 clear 95.0">
 
-That is the room at the top of this page with `F2` held down, and the red outlines are the whole
-argument: they follow the curve of the cashier cage and the corner of each rug rather than a
-rectangle drawn around them, so you slide along the furniture you can see instead of stopping in
-open carpet. The cyan dot is the foot anchor — the only thing that decides both collision and
-depth, which is why a character's torso can overlap a machine without ever reaching it.
+The red outlines are the whole argument: they follow the curve of the cashier cage and the corner
+of each rug rather than a rectangle drawn around them, so you slide along the furniture you can see
+instead of stopping in open carpet. The cyan dot is the foot anchor — the only thing that decides
+both collision and depth, which is why a character's torso can overlap a machine without ever
+reaching it.
+
+The staircase and the lift are real destinations, not coordinates on the same floor plan. Each
+room loads its own background, foreground, collision set, spawn and return point, keeps one player
+and one wallet across the transition, and exits on <kbd>Esc</kbd> to a visible back control.
+
+<img src="tests/results/screenshots/room_high_roller.png" width="100%"
+     alt="The High Roller Salon: a HIGH ROLLER SALON sign over a panelled wall, a baccarat table under two lamps at the centre with a hostess in purple dealing to three seated guests, leather booths and railed daises in each corner with guests drinking and talking, a concierge desk on the right, and the player standing in the lift doorway at the bottom under a prompt reading Enter Return to the Main Floor">
 
 ## Run it
 
@@ -155,18 +166,21 @@ the binary straight at the project:
 & 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --path .
 ```
 
+<img src="tests/results/screenshots/menu/01_menu.png" width="100%"
+     alt="The House Rules main menu: the crowned House Rules — High Roller Edition badge on the left, a brass-edged prompt panel below it reading [Enter] Enter the casino and [Esc] Save and quit, a painted burgundy key under that reading [X] REDUCED MOTION OFF, and key art on the right of a host in a pinstripe suit raising a whisky between a manager in black leather holding a folio and a croupier in burgundy fanning cards, under a chandelier.">
+
 <kbd>WASD</kbd> or the left stick moves. Step into a cabinet's brass inlay and <kbd>Enter</kbd>
 joins; <kbd>Esc</kbd> leaves, forfeiting the stake if a round is live. <kbd>X</kbd> on the main
-menu toggles Reduced Motion. <kbd>F10</kbd> opens the developer menu in a debug build, which is how
-you reach every room and every cabinet, including the two the floor plans do not seat yet.
+menu toggles Reduced Motion, the painted key above. <kbd>F1</kbd> opens any cabinet's help card,
+<kbd>F2</kbd> the collision overlay, and <kbd>F10</kbd> the developer menu in a debug build.
 
 Below, `godot` is that same 4.7.2 binary — substitute the full path if it is not on your `PATH`.
 
 | Command | |
 |---|---|
-| `python tools/check_localization.py` | Passes: 618 keys, 444 referenced. No user-facing string is hardcoded |
+| `python tools/check_localization.py` | Passes: 623 keys, 451 referenced. No user-facing string is hardcoded |
 | `gdformat --check src tests` and `gdlint src tests` | The formatting and lint gate, from `tools/requirements-dev.txt` |
-| `godot --headless --path . -s addons/gut/gut_cmdln.gd -gexit` | 566 tests, 123,860 assertions, 52 scripts — 305 s, because it plays 8,100,000 real rounds on the way |
+| `godot --headless --path . -s addons/gut/gut_cmdln.gd -gexit` | 566 tests, 123,879 assertions, 52 scripts — 285 s, because it plays 8,100,000 real rounds on the way |
 | `godot --headless --path . -s tests/slot_rtp_diagnostic.gd` | Slot variance diagnosis, written to `tests/results/slot_diagnostic.json` |
 
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — the **Godot checks** workflow behind the
@@ -183,10 +197,10 @@ so the RTP evidence for a red build is downloadable from the run that produced i
 ## Under the hood — briefly
 
 - **Reduced motion is a policy, not a setting each screen reinvents.** `MotionPolicy` is an
-  autoload that 71 files consult; it scales finite animations to 0.6 and removes ambient motion
-  entirely, and `tests/test_reduced_motion_handoff.gd` proves a live spin, an ambient event and a
-  credit transaction all settle on their exact canonical rest state when it is switched on
-  mid-animation.
+  autoload that 72 files under `src/` consult; it scales finite animations and removes ambient
+  motion entirely, and `tests/test_reduced_motion_handoff.gd` proves a live spin, an ambient event
+  and a credit transaction all settle on their exact canonical rest state when it is switched on
+  mid-animation. Every cabinet's capture set includes its reduced-motion frames.
 - **Every rendered asset has a recorded provenance.** The 4K room masters, the transparent host
   characters and the nine cabinet medallions were generated through a logged pipeline —
   [`docs/art/GENERATION-REPORT.md`](docs/art/GENERATION-REPORT.md) names the job ID behind each
@@ -200,13 +214,25 @@ so the RTP evidence for a red build is downloadable from the run that produced i
   prompts swap glyph sets when the active device changes, and the 960×540 canvas is verified at
   FHD, QHD and native 4K with no QHD letterboxing — see
   [`docs/DISPLAY-VALIDATION.md`](docs/DISPLAY-VALIDATION.md).
-- **The repository is large on purpose: 3.2 GB of tracked files.** 2.2 GB is 4K art masters and
-  their sources, and a further 947 MB is 622 committed screenshots — the capture sets that back the
-  visual claims above. Cloning it is a real download; that was the trade made to keep the evidence
-  in the repository rather than in a bug tracker.
+
+## Honestly
+
+- **The repository is large on purpose: 3.15 GB of tracked files.** 1.94 GB is 4K art masters and
+  their sources, and a further 1.2 GB is 718 committed screenshots — the capture sets that back
+  every visual claim above, re-shot against the current build rather than kept from older ones.
+  Cloning it is a real download; that was the trade made to keep the evidence in the repository
+  rather than in a bug tracker.
 - **There is no LICENSE file.** Nothing here is licensed for reuse yet. The vendored GUT 9.5.0 and
   the bundled Barlow Condensed family carry their own licences
   (`assets/fonts/OFL-BarlowCondensed.txt`).
+- **Some documents under `docs/` have fallen behind the game.** `docs/SPEC.md` §2 still describes
+  a three-machine v1 with the upper rooms "empty and unreachable", and two cabinet pages still
+  carry a placement-pending status line. The spec's numbered acceptance criteria are current and
+  are what the suite asserts; the prose around them is dated and being corrected.
+- **The quick-bet row is not on every machine.** Elven Court, Blackjack, Hexbound Vault, Corsair's
+  Reach and Harlequin Masquerade carry `MIN/10/25/X2/X5/ALL`. Roulette and Baccarat bet by placing
+  chips of a chosen denomination on spots and Hold'em and Match Point use fixed stake keys, so the
+  row does not map onto them. Whether it should is a design decision that has not been made.
 
 > This README covers what the project is and how to see it run. The design behind it lives in
 > [`docs/SPEC.md`](docs/SPEC.md) — fifty-three numbered acceptance criteria, the ones cited above
@@ -216,11 +242,6 @@ so the RTP evidence for a red build is downloadable from the run that produced i
 ---
 
 <div align="center">
-
-<img src="assets/branding/house_rules_menu_banner.png" width="830"
-     alt="House Rules key art: a host in a pinstripe suit raising a whisky between a manager in
-          black leather and a croupier in a burgundy waistcoat holding a fan of cards, gold coins
-          in the air, the crowned House Rules logo across the centre">
 
 Built by <a href="https://github.com/DahanItamar">Itamar Dahan</a> · © 2026
 
