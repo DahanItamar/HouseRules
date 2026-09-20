@@ -251,9 +251,7 @@ func _draw() -> void:
 
 
 func _draw_hatch() -> void:
-	draw_rect(HATCH_RECT, MatchPointStyle.RACING_DEEP)
-	draw_rect(HATCH_RECT, MatchPointStyle.BRASS, false, 2.0)
-	draw_rect(HATCH_RECT.grow(-4.0), Color(MatchPointStyle.BRASS, 0.5), false, 1.0)
+	draw_texture_rect(MatchPointStyle.HATCH, HATCH_RECT, false)
 	# Once the served ball rests in its court, the next ball waits in the hatch.
 	if not dropping and landed_court >= 0:
 		_draw_ball_at(hatch_rest(), 1.0)

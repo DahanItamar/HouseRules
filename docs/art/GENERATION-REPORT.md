@@ -1188,3 +1188,14 @@ carrying a margin it would have to guess at.
 
 `MatchPointStyle.court_fill` survives for the result plaque, whose cells are
 too small for a painted plate to show anything but its own rim.
+
+The serving hatch at the top of the board went the same way, job
+`282df2a5-2b44-4643-a12f-ac371b49434d` → `match_point/hatch.png`: a brass frame
+with small corner rivets around a recess shaded darker at the top where the
+frame overhangs it, so the opening the next ball waits in reads as depth rather
+than as a flat black rectangle with a border stroked round it.
+
+That is the last piece of furniture on the board. What the board still draws in
+code is state, not material: the studs the ball touched on its way down, the
+ring around the court that took it, and the ball's own shadow. Those change
+every drop and belong in code.

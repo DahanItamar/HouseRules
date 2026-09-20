@@ -36,6 +36,8 @@ PLATES: list[tuple[str, str]] = [
     ("court_hot_86f429db.png", "court_hot.png"),
     ("court_mid_1a064189.png", "court_mid.png"),
     ("court_cold_f6fb3803.png", "court_cold.png"),
+    # The hatch the ball waits in before a serve. Same treatment, same reason.
+    ("hatch_282df2a5.png", "hatch.png"),
 ]
 
 

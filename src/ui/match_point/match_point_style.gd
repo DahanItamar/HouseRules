@@ -124,6 +124,8 @@ static func draw_centered(
 const COURT_HOT := preload("res://assets/production/match_point/court_hot.png")
 const COURT_MID := preload("res://assets/production/match_point/court_mid.png")
 const COURT_COLD := preload("res://assets/production/match_point/court_cold.png")
+## The brass-framed recess the next ball waits in.
+const HATCH := preload("res://assets/production/match_point/hatch.png")
 
 
 ## The trough for a court paying `tenths`, on the same bands as `court_fill`.
