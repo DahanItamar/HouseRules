@@ -20,6 +20,8 @@ const TICK_COUNT: int = 25
 const NUMBER_SIZE: int = 40
 ## How much larger the number is set when it stands on its own, with no case.
 const BARE_NUMBER_SCALE: float = 2.3
+## The readout before a run: cream at the weight of something switched off.
+const DORMANT_NUMBER := Color("f2e6cc", 0.42)
 const CAPTION_SIZE: int = 13
 const VALUE_SIZE: int = 15
 const POP_SECONDS: float = 0.20
@@ -45,7 +47,11 @@ var caption_color := CoreOverclockTheme.RUST_DEEP
 var value_text: String = ""
 ## Drawn as bare typography over the canvas, with no case around it.
 var bare: bool = false
-var number_color := CoreOverclockTheme.INK
+## The bare readout draws a dark rim behind the number so it holds against
+## moonlight, which means the fill can never be dark itself. At rest it is
+## cream held back, not brown: dormant, but still the biggest number on the
+## canvas and still legible.
+var number_color := DORMANT_NUMBER
 var climbing: bool = false
 var _needle: float = 0.0
 var _needle_speed: float = 0.0
@@ -149,6 +155,7 @@ func needle_place() -> float:
 
 
 func reset() -> void:
+	number_color = DORMANT_NUMBER
 	centi = 100
 	_last_whole = 1
 	_pop_left = 0.0

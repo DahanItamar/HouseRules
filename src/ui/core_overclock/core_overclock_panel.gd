@@ -23,6 +23,8 @@ const ROAR_FAST: float = 0.30
 ## How long a settled run is held on screen before the line is cleared.
 const SETTLE_SECONDS: float = 2.4
 ## How long the ship's break-up plays for.
+## How far inside the chart frame wreckage and spray are held, in canvas px.
+const BURST_INSET: float = 62.0
 const WRECK_SECONDS: float = 0.9
 const NOTICE_SECONDS: float = 1.8
 
@@ -394,8 +396,8 @@ func _sync_state(initial: bool) -> void:
 		and previous == CoreOverclockMath.State.COUNTDOWN
 	):
 		# She is away: a burst of spray off the water as the line goes out.
-		burst.puff(flight.crest_point(1.0), CoreOverclockTheme.EMBER_SPRAY[0], 170.0)
-		burst.sparks(flight.crest_point(1.0), 8)
+		burst.puff(_burst_point(1.0), CoreOverclockTheme.EMBER_SPRAY[0], 170.0)
+		burst.sparks(_burst_point(1.0), 8)
 	refresh()
 
 
@@ -476,8 +478,8 @@ func _present_haul(result: RoundResult) -> void:
 	var multiple := float(result.payout) / maxf(result.stake, 1.0)
 	flight.set_reach(CoreOverclockTheme.climb_of(_math().settled_centi), true)
 	_settle_left = MotionPolicy.finite_duration(SETTLE_SECONDS)
-	burst.sparks(flight.crest_point(1.0), 18 if multiple >= 5.0 else 10)
-	burst.puff(flight.crest_point(0.92), CoreOverclockTheme.EMBER_SPRAY[1], 150.0)
+	burst.sparks(_burst_point(1.0), 18 if multiple >= 5.0 else 10)
+	burst.puff(_burst_point(0.92), CoreOverclockTheme.EMBER_SPRAY[1], 150.0)
 	_win_flash.play(CoreOverclockTheme.BRASS_BRIGHT, multiple >= BIG_WIN_MULTIPLE)
 
 
@@ -502,16 +504,31 @@ func _advance_wreck(delta: float) -> void:
 
 ## She is taken: the needle slams, the screen goes white, and the sea closes
 ## over where she was.
+## Where wreckage and spray may sit.
+##
+## Both belong at the bird, but on an early break-up the bird is in the very
+## corner of the chart, and a puff 300 across centred there spills out of the
+## frame and lands on the crew standing beside it and on the bet row. Held far
+## enough inside that the wreck still reads as happening on the line.
+func _burst_point(t: float) -> Vector2:
+	var area := CoreOverclockTheme.FLIGHT_AREA
+	var point := flight.crest_point(t)
+	return Vector2(
+		clampf(point.x, area.position.x + BURST_INSET, area.end.x - BURST_INSET),
+		clampf(point.y, area.position.y + BURST_INSET, area.end.y - BURST_INSET)
+	)
+
+
 func _present_crash() -> void:
 	AudioService.play(&"corsair_breakup")
-	_wreck_at = flight.crest_point(1.0)
+	_wreck_at = _burst_point(1.0)
 	_wreck_left = MotionPolicy.finite_duration(WRECK_SECONDS)
 	flight.set_reach(CoreOverclockTheme.climb_of(maxi(_math().crash_centi, 100)), false)
 	_settle_left = MotionPolicy.finite_duration(SETTLE_SECONDS)
 	gauge.slam()
-	burst.puff(flight.crest_point(1.0), CoreOverclockTheme.EMBER_SMOKE[0], 300.0, 0.9)
-	burst.puff(flight.crest_point(0.92), CoreOverclockTheme.EMBER_SMOKE[1], 190.0, 0.8)
-	burst.sparks(flight.crest_point(1.0), 14)
+	burst.puff(_burst_point(1.0), CoreOverclockTheme.EMBER_SMOKE[0], 220.0, 0.9)
+	burst.puff(_burst_point(0.92), CoreOverclockTheme.EMBER_SMOKE[1], 150.0, 0.8)
+	burst.sparks(_burst_point(1.0), 14)
 	if MotionPolicy.allows_camera_emphasis():
 		_impulse = CRASH_IMPULSE
 	_win_flash.play(CoreOverclockTheme.CREAM, true)

@@ -651,17 +651,17 @@ DECK_CORSAIR_COUNTDOWN,Making sail…
 DECK_CORSAIR_RUNNING,{interact} Haul it in      every wave she rides is more gold
 DECK_CORSAIR_HAULED,You keep %d      {interact} Sail again
 DECK_CORSAIR_CRASHED,The sea takes %d      {interact} Sail again
-HELP_CORE_OVERCLOCK_GOAL,Run your galleon before a rising sea and haul in the prize before she is taken.
+HELP_CORE_OVERCLOCK_GOAL,Send her out over a rising sea and call her back before it takes her.
 HELP_CORE_OVERCLOCK_STEPS,"Set your stake with {bet_down} and {bet_up}.
 Optionally give standing orders with {secondary}: she turns back there by herself.
-Press {interact} to cast off. The compass climbs while she runs.
-Press {interact} again to haul in and take your stake times the compass.
+Press {interact} to cast off. The multiplier climbs while she flies.
+Press {interact} again to haul in and take your stake times the multiplier.
 If the sea takes her first there is nothing to haul and the stake is gone."
-HELP_CORE_OVERCLOCK_RULES,"Send your galleon out before a rising sea. The longer she runs the richer the haul: hauling in pays your stake times the multiplier on the compass.
+HELP_CORE_OVERCLOCK_RULES,"Send her out over a rising sea. The longer she flies the richer the haul: hauling in pays your stake times the multiplier she has reached.
 
-The sea can take her at any moment, and a broken ship pays nothing. Where she is taken is drawn before she casts off, so nothing you do changes it — only when you choose to turn back.
+The sea can take her at any moment, and a bird it takes pays nothing. Where she is taken is drawn before she leaves, so nothing you do changes it — only when you choose to turn back.
 
-Give standing orders before you cast off and she turns at exactly that multiplier, whatever the frame rate. Every order returns the same 97%%, so run as long as your nerve allows."
+Give standing orders before you cast off and she turns at exactly that multiplier, whatever the frame rate. Every order returns the same 97%%, so fly as long as your nerve allows."
 HELP_CORE_OVERCLOCK_CONTROLS,"%s  Cast off, then haul in
 %s  Standing orders
 %s  Change stake

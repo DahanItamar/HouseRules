@@ -35,7 +35,6 @@ const BRASS := Color("c8a34b")
 const BRASS_DIM := Color("6e5225")
 const IVORY := Color("f1e8d8")
 const MUTED := Color("b8ad9c")
-const CYAN := Color("48c5d5")
 ## Losses are stated in a muted red, never a warning red and never celebrated.
 const DOWN := Color("b9636a")
 

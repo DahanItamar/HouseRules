@@ -330,12 +330,15 @@ func _draw() -> void:
 		flash_color.a = (_flash_remaining / 0.30) * 0.55
 		draw_rect(Rect2(Vector2.ONE, size - Vector2(2, 2)), flash_color, false, 4.0)
 	if is_selected:
-		var pulse := (
-			(sin(_pulse_time * 4.5) + 1.0) * 0.5 if MotionPolicy.allows_continuous_motion() else 0.0
-		)
-		draw_arc(
-			size * 0.5, 24.0 + pulse * 2.0, 0, TAU, 32, Color("48c5d5", 0.28 + pulse * 0.22), 2.0
-		)
+		var moving := MotionPolicy.allows_continuous_motion()
+		var pulse := (sin(_pulse_time * 4.5) + 1.0) * 0.5 if moving else 0.0
+		# The cursor is this board's focus cue, so it takes the colour from the
+		# one place that defines it. Without the pulse it has to carry the cue
+		# alone, so reduced motion holds it at the top of the swing rather than
+		# the bottom -- a static ring at 0.28 read fainter than every other key
+		# in the game.
+		var alpha := 0.28 + pulse * 0.22 if moving else 0.50
+		draw_arc(size * 0.5, 24.0 + pulse * 2.0, 0, TAU, 32, Color(FocusRing.COLOR, alpha), 2.0)
 	if face == Face.SAFE:
 		var idle_pass := fmod(_idle_time + _idle_phase, 3.8)
 		if MotionPolicy.allows_continuous_motion() and idle_pass < 0.48:

@@ -70,7 +70,10 @@ func _capture() -> void:
 	await _snapshot("03_countdown")
 	await _wait_until(func() -> bool: return _centi(game) > 130)
 	await _snapshot("04_early_climb")
-	await _wait_until(func() -> bool: return _centi(game) > 900)
+	# 9x takes ln(9) / 0.12 = 18 s at the shipped growth rate, so the default
+	# 12 s ceiling expired before she ever got there. The wait is a ceiling,
+	# not a measurement: it has to outlast the slowest honest climb.
+	await _wait_until(func() -> bool: return _centi(game) > 900, 40.0)
 	await _snapshot("05_long_climb")
 	game.call("request_pull")
 	await get_tree().create_timer(0.12).timeout

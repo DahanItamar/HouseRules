@@ -17,7 +17,6 @@ const SURFACE := Color("0e0b0df5")
 const BRASS := Color("c8a34b")
 const IVORY := Color("f1e8d8")
 const MUTED := Color("b8ad9c")
-const CYAN := Color("48c5d5")
 const ROW_TOP: float = 66.0
 const ROW_HEIGHT: float = 56.0
 const BAR_WIDTH: float = 290.0

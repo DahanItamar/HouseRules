@@ -30,6 +30,8 @@ param(
     [string]$Godot = 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe'
 )
 
+# Stop on a genuine cmdlet failure, but see the note by the Godot call: a
+# native exe writing to stderr is not a failure.
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Push-Location $root
@@ -63,7 +65,11 @@ foreach ($name in $names) {
     if (-not $Sets.Contains($name)) { throw "Unknown capture set '$name'. Known: $($Sets.Keys -join ', ')" }
     $set = $Sets[$name]
     Write-Host "== $name ==" -ForegroundColor Cyan
-    $output = & $Godot --path . $set.scene -- @($set.args) 2>&1 | Out-String
+    # No 2>&1 here. In Windows PowerShell 5.1 redirecting a native executable's
+    # stderr wraps each line in a NativeCommandError, which under
+    # $ErrorActionPreference = 'Stop' aborts the whole run on a harmless warning.
+    # Godot prints its script errors to stdout, which is what we grade on.
+    $output = & $Godot --path . $set.scene -- @($set.args) | Out-String
     $shots = ([regex]::Matches($output, 'SCREENSHOT ')).Count
     if ($output -match 'SCRIPT ERROR' -or $shots -eq 0) {
         $failed += $name

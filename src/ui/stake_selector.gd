@@ -273,4 +273,7 @@ func _draw() -> void:
 			Color("d3c3a6")
 		)
 	if _bet_flash > 0.0:
-		draw_rect(Rect2(0, 34, size.x * _bet_flash, 2), Color("48c5d5"))
+		# Brass, not cyan. This bar acknowledges a changed stake; cyan is
+		# reserved for where keyboard and controller focus is, and a second
+		# cyan mark on the same screen makes the real one mean less.
+		draw_rect(Rect2(0, 34, size.x * _bet_flash, 2), Color("c8a34b"))
