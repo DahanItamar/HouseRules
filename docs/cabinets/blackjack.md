@@ -1,6 +1,7 @@
 # Cabinet: Blackjack 21
 
-> `id: &"blackjack"` · Tier: MAIN_FLOOR · Status: Specified (M2)
+> `id: &"blackjack"` · Tier: MAIN_FLOOR · Status: Shipped as **Blackjack 21**, seated on
+> the Main Floor (`data/floors/main_floor.json`)
 
 ---
 

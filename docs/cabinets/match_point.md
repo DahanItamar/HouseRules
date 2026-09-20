@@ -1,6 +1,6 @@
 # Cabinet: Match Point (tennis Plinko)
 
-> `id: &"match_point"` · Tier: High Roller · Status: Playable (floor placement pending in the High Roller Salon)
+> `id: &"match_point"` · Tier: High Roller · Status: Playable and seated in the High Roller Salon (`data/floors/high_roller.json`)
 
 ---
 

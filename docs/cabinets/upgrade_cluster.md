@@ -1,6 +1,10 @@
 # Cabinet: Harlequin Masquerade (Upgrade Cluster)
 
-> `id: &"upgrade_cluster"` · Tier: HIGH_ROLLER · Status: Playable (not placed on a floor yet)
+> `id: &"upgrade_cluster"` · Tier: HIGH_ROLLER · Status: Playable and seated in the
+> **VIP Penthouse** (`data/floors/vip.json`). Note the mismatch: the definition still
+> declares `tier = 1` (HIGH_ROLLER) while the cabinet stands in the VIP room. Nothing
+> reads `CabinetDefinition.tier` to gate access today, so this is a labelling question,
+> not a broken unlock.
 
 ---
 

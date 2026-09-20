@@ -19,9 +19,9 @@ A secondary and explicit goal: this repository is a portfolio artifact. It is re
 ### In scope (v1)
 
 - A top-down casino floor the player walks with a gamepad, with approachable cabinets
-- Three playable machines, one per archetype: **Classic 3-Reel Slot** (pure chance), **Blackjack** (chance + decision), **Minefield Vault** (chance + escalating cash-out decision)
+- Playable machines, one per archetype, starting with **Classic 3-Reel Slot** (pure chance), **Blackjack** (chance + decision) and **Minefield Vault** (chance + escalating cash-out decision). Nine have shipped on that framework; see *Delivered beyond the v1 plan* below.
 - A **Cashier** on the main floor: takes markers, accepts debt repayment. Always reachable.
-- **Wing transition points** (staircase and elevator) to the upper tiers, present but locked in v1
+- **Wing transition points** (staircase and elevator) to the upper tiers
 - A chip wallet as the single source of truth for currency, with integer arithmetic
 - Contracts (objective-based income) and the **marker/debt** anti-ruin system
 - Save and load, atomic and versioned, surviving a crash mid-write
@@ -31,10 +31,25 @@ A secondary and explicit goal: this repository is a portfolio artifact. It is re
 - Localization-ready string handling (English ships; no hardcoded user-facing text)
 - Platform services (saves, achievements) behind an interface with a local implementation
 
+### Delivered beyond the v1 plan
+
+v1 was specified as three machines and two locked doors. What shipped on that same
+framework, with no change to the cabinet contract in §3:
+
+- **Nine cabinets**: Elven Court (slots), Blackjack, Hexbound Vault, Ruby Roulette,
+  Texas Hold'em, Velvet Baccarat, Match Point, Harlequin Masquerade (cluster-pays)
+  and Corsair's Reach (crash).
+- **Four rooms**, all walkable: Main Floor, High Roller Salon, VIP Penthouse and the
+  Manager's Office, each with its own background, occlusion layer, collision set and
+  spawn.
+
+The RTP harness in §6 grew with them: it now plays a million rounds of each cabinet's
+shipped maths on every CI run.
+
 ### Explicitly out of scope
 
-- **The other thirteen cabinets** — designed in `docs/design/CABINET-CATALOG.md`, not scheduled. They are content against the v1 framework; if the framework is right they need no spec changes.
-- **High-Roller and VIP wing content** — the economy is designed to extend to three tiers (`docs/design/ECONOMY.md`) and the staircase and elevator that lead to them exist in v1 as locked transition points showing their thresholds. The rooms behind them are empty and unreachable.
+- **The remaining catalogued cabinets** — designed in `docs/design/CABINET-CATALOG.md`, not scheduled. They are content against the v1 framework, and the six added since v1 needed no spec change, which is the evidence that the framework was drawn in the right place.
+- **The full High-Roller and VIP wing economies** — the economy is designed to extend to three tiers (`docs/design/ECONOMY.md`). Both rooms are now built and reachable through the staircase and the lift, but the tier thresholds, pricing and progression behind them are still the v1 single-tier model.
 - **The House boss showdown** — the campaign endgame. Designed, unscheduled.
 - **Steam integration** — no Steamworks, no achievements backend, no cloud saves. §3 keeps the seam so this is an additive change, not a refactor.
 - **Multiplayer, leaderboards, telemetry, analytics** — the game makes no network calls at all. This is a hard rule (AC-023), partly because it makes the portfolio repo trivially auditable.

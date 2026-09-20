@@ -1,7 +1,7 @@
 # Cabinet: Velvet Baccarat (Punto Banco)
 
-> `id: &"baccarat"` · Tier: High Roller · Status: Playable. The scene is registered, but
-> it is not yet placed on a floor. It is meant for the High Roller Salon.
+> `id: &"baccarat"` · Tier: High Roller · Status: Playable and seated in the High Roller
+> Salon (`data/floors/high_roller.json`).
 
 ---
 

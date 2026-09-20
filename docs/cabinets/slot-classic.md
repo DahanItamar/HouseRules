@@ -1,6 +1,7 @@
 # Cabinet: Classic 3-Reel
 
-> `id: &"slot_classic"` · Tier: MAIN_FLOOR · Status: Specified (M1)
+> `id: &"slot_classic"` · Tier: MAIN_FLOOR · Status: Shipped as **Elven Court**, seated
+> on the Main Floor (`data/floors/main_floor.json`)
 
 ---
 

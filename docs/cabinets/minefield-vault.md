@@ -1,6 +1,7 @@
 # Cabinet: Minefield Vault
 
-> `id: &"minefield_vault"` · Tier: MAIN_FLOOR · Status: Specified (M2)
+> `id: &"minefield_vault"` · Tier: MAIN_FLOOR · Status: Shipped as **Hexbound Vault**,
+> seated on the Main Floor (`data/floors/main_floor.json`)
 
 ---
 
