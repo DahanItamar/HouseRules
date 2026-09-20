@@ -1,0 +1,36 @@
+{
+  "characters": [
+    {
+      "output": "assets/production/characters/hosts/harlequin_hostess.png",
+      "source": "assets/source/layered_v2/harlequin/hostess_34997eda.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/harlequin_hostess_mask.png",
+      "source": "assets/source/layered_v2/harlequin/cutouts/harlequin_mask.png",
+      "defringe": 2,
+      "align_to": "assets/production/characters/hosts/harlequin_hostess.png",
+      "match_to": "assets/production/characters/hosts/harlequin_hostess.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/harlequin_hostess_present.png",
+      "source": "assets/source/layered_v2/harlequin/cutouts/harlequin_present.png",
+      "defringe": 2,
+      "align_to": "assets/production/characters/hosts/harlequin_hostess.png",
+      "match_to": "assets/production/characters/hosts/harlequin_hostess.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/harlequin_hostess_cheer.png",
+      "source": "assets/source/layered_v2/harlequin/cutouts/harlequin_cheer.png",
+      "defringe": 2,
+      "align_to": "assets/production/characters/hosts/harlequin_hostess.png",
+      "match_to": "assets/production/characters/hosts/harlequin_hostess.png"
+    },
+    {
+      "output": "assets/production/characters/hosts/harlequin_hostess_pout.png",
+      "source": "assets/source/layered_v2/harlequin/cutouts/harlequin_pout.png",
+      "defringe": 2,
+      "align_to": "assets/production/characters/hosts/harlequin_hostess.png",
+      "match_to": "assets/production/characters/hosts/harlequin_hostess.png"
+    }
+  ]
+}

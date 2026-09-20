@@ -1,0 +1,31 @@
+{
+	"best_payout_multiple": 749.9,
+	"big_win_rate": 0.0079222,
+	"cabinet": "upgrade_cluster",
+	"deepest_cascade": 8,
+	"elapsed_ms": 1151328,
+	"hit_rate": 0.3639145,
+	"mean_cascades": 0.4520914,
+	"mega_win_rate": 0.0001181,
+	"multiplier_rungs": {
+		"1": 6360855,
+		"2": 2441096,
+		"4": 816719,
+		"8": 280251,
+		"16": 82311,
+		"32": 16327,
+		"64": 2191,
+		"128": 240,
+		"256": 10
+	},
+	"observed_rtp": 0.96550038,
+	"payout_multiple_variance": 13.0831138341202,
+	"purpose": "Supplemental Upgrade Cluster stability evidence",
+	"returned": 96550038,
+	"rounds": 10000000,
+	"seed": 20260918,
+	"stake": 10,
+	"standard_error": 0.00114381440077139,
+	"super_win_rate": 0.0005906,
+	"wagered": 100000000
+}
