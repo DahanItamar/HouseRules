@@ -28,18 +28,22 @@ func after_each() -> void:
 func test_menu_reveal_stages_the_information_hierarchy_then_settles_exactly() -> void:
 	var main := MAIN_SCENE.instantiate()
 	add_child_autofree(main)
-	assert_eq(main._menu_kicker.modulate.a, 0.0)
-	assert_eq(main._menu_rule.scale.x, 0.25)
-	assert_eq(main._menu_title.position.y, 148.0)
-	assert_eq(main._menu_subtitle.position.y, 230.0)
-	assert_eq(main._menu_motion_button.position.y, 452.0)
+	assert_eq(main._menu_badge.modulate.a, 0.0, "The badge fades in rather than popping")
+	assert_eq(main._menu_badge.position.y, 72.0, "The badge drops the last few pixels")
+	for row: Button in main._menu_rows:
+		assert_eq(row.modulate.a, 0.0)
+		assert_eq(row.position.x, 38.0, "Every row slides in from the left")
+	for chrome: Control in main._menu_chrome:
+		assert_eq(chrome.modulate.a, 0.0)
 	await wait_seconds(0.46)
-	assert_eq(main._menu_kicker.modulate, Color.WHITE)
-	assert_eq(main._menu_rule.scale, Vector2.ONE)
-	assert_eq(main._menu_title.position, Vector2(66, 140))
-	assert_eq(main._menu_subtitle.position.y, 222.0)
-	assert_eq(main._menu_prompt_panel.scale, Vector2.ONE)
-	assert_eq(main._menu_motion_button.position.y, 444.0)
+	assert_eq(main._menu_badge.modulate, Color.WHITE)
+	assert_eq(main._menu_badge.position, Vector2(56, 64))
+	for index: int in range(main._menu_rows.size()):
+		var row: Button = main._menu_rows[index]
+		assert_eq(row.modulate, Color.WHITE)
+		assert_eq(row.position, Vector2(56, 300 + 56 * index), "Rows settle on their step")
+	for chrome: Control in main._menu_chrome:
+		assert_eq(chrome.modulate, Color.WHITE)
 
 
 func test_reduced_menu_reveal_is_immediately_complete() -> void:
@@ -47,11 +51,14 @@ func test_reduced_menu_reveal_is_immediately_complete() -> void:
 	var main := MAIN_SCENE.instantiate()
 	add_child_autofree(main)
 	assert_eq(main._menu_background.modulate.a, 1.0)
-	assert_eq(main._menu_kicker.modulate, Color.WHITE)
-	assert_eq(main._menu_rule.scale, Vector2.ONE)
-	assert_eq(main._menu_title.position, Vector2(66, 140))
-	assert_eq(main._menu_subtitle.position.y, 222.0)
-	assert_eq(main._menu_motion_button.position.y, 444.0)
+	assert_eq(main._menu_badge.modulate, Color.WHITE)
+	assert_eq(main._menu_badge.position, Vector2(56, 64))
+	for index: int in range(main._menu_rows.size()):
+		var row: Button = main._menu_rows[index]
+		assert_eq(row.modulate, Color.WHITE, "Reduced motion shows the finished menu at once")
+		assert_eq(row.position, Vector2(56, 300 + 56 * index))
+	for chrome: Control in main._menu_chrome:
+		assert_eq(chrome.modulate, Color.WHITE)
 
 
 func test_cashier_content_reveal_is_bounded_and_restores_every_control() -> void:

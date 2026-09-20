@@ -18,14 +18,12 @@ var _is_playing: bool = false
 var _message_serial: int = 0
 var _menu_transitioning: bool = false
 var _menu_background: TextureRect
-var _menu_kicker: Label
-var _menu_rule: ColorRect
-var _menu_title: Label
 var _menu_badge: TextureRect
 ## The menu's own rows, in the order the player walks them.
 var _menu_rows: Array[Button] = []
 var _menu_selector: TextureRect
-var _menu_subtitle: Label
+## The version ticker and the notice band, in the order they settle.
+var _menu_chrome: Array[Control] = []
 var _menu_prompt_panel: Panel
 var _menu_prompt: Label
 var _menu_motion_button: Button
@@ -193,35 +191,6 @@ func _build_menu() -> void:
 	readability.texture = shade
 	readability.size = Vector2(760, 540)
 	_menu.add_child(readability)
-	_menu_rule = ColorRect.new()
-	_menu_rule.name = "BrassRule"
-	_menu_rule.position = Vector2(70, 116)
-	_menu_rule.size = Vector2(72, 3)
-	_menu_rule.color = Color("c8a34b")
-	_menu.add_child(_menu_rule)
-	_menu_kicker = Label.new()
-	_menu_kicker.name = "Kicker"
-	_menu_kicker.add_theme_font_override("font", Typography.DISPLAY_FONT)
-	_menu_kicker.position = Vector2(70, 82)
-	_menu_kicker.text = tr("MENU_KICKER")
-	_menu_kicker.add_theme_font_size_override("font_size", Typography.SUPPORTING)
-	_menu_kicker.add_theme_color_override("font_color", Color("c8a34b"))
-	_menu.add_child(_menu_kicker)
-	_menu_title = Label.new()
-	_menu_title.add_theme_font_override("font", Typography.DISPLAY_FONT)
-	_menu_title.name = "Title"
-	_menu_title.position = Vector2(66, 140)
-	_menu_title.add_theme_font_size_override("font_size", 58)
-	_menu_title.add_theme_color_override("font_color", Color("f1e8d8"))
-	_menu_title.text = tr("GAME_TITLE")
-	_menu.add_child(_menu_title)
-	# The kicker, rule and title stay as nodes because the menu reveal animates
-	# them, but the player sees the painted badge instead of typeset words.
-	# The kicker, rule, title and subtitle stay as nodes because the menu reveal
-	# animates them, but the player sees the painted badge instead of typeset
-	# words. The subtitle also said "Three games" long after there were nine.
-	for typeset: Control in [_menu_kicker, _menu_rule, _menu_title]:
-		typeset.visible = false
 	_menu_badge = TextureRect.new()
 	_menu_badge.name = "TitleBadge"
 	_menu_badge.texture = preload("res://assets/branding/house_rules_logo.png")
@@ -229,20 +198,9 @@ func _build_menu() -> void:
 	_menu_badge.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_menu_badge.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	_menu_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_menu_badge.position = Vector2(56, 64)
+	_menu_badge.position = MENU_BADGE_POSITION
 	_menu_badge.size = Vector2(380, 152)
 	_menu.add_child(_menu_badge)
-	_menu_subtitle = Label.new()
-	_menu_subtitle.name = "Subtitle"
-	_menu_subtitle.add_theme_font_override("font", Typography.UI_FONT)
-	_menu_subtitle.position = Vector2(72, 222)
-	_menu_subtitle.size = Vector2(380, 60)
-	_menu_subtitle.text = tr("MENU_SUBTITLE")
-	_menu_subtitle.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_menu_subtitle.add_theme_font_size_override("font_size", 18)
-	_menu_subtitle.add_theme_color_override("font_color", Color("b8ad9c"))
-	_menu_subtitle.visible = false
-	_menu.add_child(_menu_subtitle)
 	_menu_prompt_panel = _panel(
 		Vector2(70, 320), Vector2(360, 104), Color("17161af2"), Color("c8a34b")
 	)
@@ -270,11 +228,19 @@ func _build_menu() -> void:
 ## them; they are simply no longer what the player uses.
 const MENU_ROW_RECT := Rect2(56, 300, 330, 46)
 const MENU_ROW_STEP: float = 56.0
+## Where the painted badge sits, and how far it drops in over the reveal.
+const MENU_BADGE_POSITION := Vector2(56, 64)
+const MENU_BADGE_RISE: float = 8.0
+## How far each row slides in from the left as it arrives.
+const MENU_ROW_SLIDE: float = 18.0
 
 
 func _build_menu_rows() -> void:
 	for typeset: Control in [_menu_prompt_panel, _menu_prompt, _menu_motion_button]:
 		typeset.visible = false
+	# A hidden Control can still hold focus, and a focus owner nobody can see is
+	# a menu with no ring drawn anywhere on it. The retired key leaves the ring.
+	_menu_motion_button.focus_mode = Control.FOCUS_NONE
 	_menu_selector = TextureRect.new()
 	_menu_selector.name = "MenuSelector"
 	_menu_selector.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -336,6 +302,7 @@ func _build_menu_chrome() -> void:
 		tr("MENU_VERSION") % ProjectSettings.get_setting("application/config/version", "0.0.0")
 	)
 	_menu.add_child(version)
+	_menu_chrome.append(version)
 	var band := ColorRect.new()
 	band.name = "MenuNotice"
 	band.position = Vector2(0, 494)
@@ -343,6 +310,7 @@ func _build_menu_chrome() -> void:
 	band.color = Color("0a0809b4")
 	band.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_menu.add_child(band)
+	_menu_chrome.append(band)
 	var notice := Label.new()
 	notice.name = "MenuNoticeText"
 	notice.add_theme_font_override("font", Typography.UI_FONT)
@@ -354,6 +322,7 @@ func _build_menu_chrome() -> void:
 	notice.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	notice.text = tr("MENU_NOTICE")
 	_menu.add_child(notice)
+	_menu_chrome.append(notice)
 
 
 ## Puts the arrowhead beside whichever row has focus.
@@ -369,15 +338,17 @@ func _place_menu_selector(row: Button) -> void:
 func _refresh_menu_rows() -> void:
 	if _menu_rows.size() < 3:
 		return
-	_menu_rows[0].text = "  " + tr("MENU_ROW_PLAY")
-	_menu_rows[1].text = (
-		"  "
-		+ (
-			tr("MENU_ROW_MOTION")
-			% (tr("SETTING_ON") if MotionPolicy.is_reduced() else tr("SETTING_OFF"))
-		)
+	# The reduced-motion row carries its shortcut glyph, because the shortcut
+	# works from anywhere on the menu and is otherwise undiscoverable.
+	var motion := (
+		tr("MENU_ROW_MOTION")
+		% (tr("SETTING_ON") if MotionPolicy.is_reduced() else tr("SETTING_OFF"))
 	)
+	_menu_rows[0].text = "  " + tr("MENU_ROW_PLAY")
+	_menu_rows[1].text = "  " + motion + "   " + InputRouter.glyph("secondary")
 	_menu_rows[2].text = "  " + tr("MENU_ROW_QUIT")
+	for row: Button in _menu_rows:
+		row.accessibility_name = row.text.strip_edges()
 
 
 func _build_motion_preference_button() -> void:
@@ -474,103 +445,90 @@ func _play_menu_reveal() -> void:
 		_apply_menu_final_state()
 		return
 	_menu_background.modulate.a = 0.0
-	_menu_kicker.modulate.a = 0.0
-	_menu_rule.modulate.a = 0.0
-	_menu_rule.scale.x = 0.25
-	_menu_title.modulate.a = 0.0
-	_menu_title.position = Vector2(66, 148)
-	_menu_subtitle.modulate.a = 0.0
-	_menu_subtitle.position.y = 230.0
-	_menu_prompt_panel.modulate.a = 0.0
-	_menu_prompt.modulate.a = 0.0
-	_menu_motion_button.modulate.a = 0.0
-	_menu_motion_button.position.y = 452.0
-	_menu_prompt_panel.pivot_offset = _menu_prompt_panel.size * 0.5
-	_menu_prompt_panel.scale = Vector2(0.98, 0.98)
+	_menu_badge.modulate.a = 0.0
+	_menu_badge.position.y = MENU_BADGE_POSITION.y + MENU_BADGE_RISE
+	for chrome: Control in _menu_chrome:
+		chrome.modulate.a = 0.0
+	for row: Button in _menu_rows:
+		row.modulate.a = 0.0
+		row.position.x = MENU_ROW_RECT.position.x - MENU_ROW_SLIDE
 	_menu_reveal_tween = create_tween().set_parallel(true)
 	_menu_reveal_tween.tween_property(_menu_background, "modulate:a", 1.0, 0.24)
-	_menu_reveal_tween.tween_property(_menu_kicker, "modulate:a", 1.0, 0.14).set_delay(0.04)
-	_menu_reveal_tween.tween_property(_menu_rule, "modulate:a", 1.0, 0.14).set_delay(0.06)
+	_menu_reveal_tween.tween_property(_menu_badge, "modulate:a", 1.0, 0.18).set_delay(0.04)
 	(
 		_menu_reveal_tween
-		. tween_property(_menu_rule, "scale:x", 1.0, 0.18)
-		. set_delay(0.06)
+		. tween_property(_menu_badge, "position:y", MENU_BADGE_POSITION.y, 0.20)
+		. set_delay(0.04)
 		. set_trans(Tween.TRANS_QUAD)
 		. set_ease(Tween.EASE_OUT)
 	)
-	_menu_reveal_tween.tween_property(_menu_title, "modulate:a", 1.0, 0.18).set_delay(0.08)
-	(
-		_menu_reveal_tween
-		. tween_property(_menu_title, "position:y", 140.0, 0.18)
-		. set_delay(0.08)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	_menu_reveal_tween.tween_property(_menu_subtitle, "modulate:a", 1.0, 0.16).set_delay(0.13)
-	(
-		_menu_reveal_tween
-		. tween_property(_menu_subtitle, "position:y", 222.0, 0.18)
-		. set_delay(0.13)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	_menu_reveal_tween.tween_property(_menu_prompt_panel, "modulate:a", 1.0, 0.18).set_delay(0.18)
-	_menu_reveal_tween.tween_property(_menu_prompt, "modulate:a", 1.0, 0.18).set_delay(0.18)
-	(
-		_menu_reveal_tween
-		. tween_property(_menu_prompt_panel, "scale", Vector2.ONE, 0.18)
-		. set_delay(0.18)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
-	_menu_reveal_tween.tween_property(_menu_motion_button, "modulate:a", 1.0, 0.16).set_delay(0.23)
-	(
-		_menu_reveal_tween
-		. tween_property(_menu_motion_button, "position:y", 444.0, 0.18)
-		. set_delay(0.23)
-		. set_trans(Tween.TRANS_QUAD)
-		. set_ease(Tween.EASE_OUT)
-	)
+	# The rows arrive one after the other, so the reveal walks the eye down the
+	# list in the order the player will walk it.
+	for index: int in range(_menu_rows.size()):
+		var row := _menu_rows[index]
+		var delay := 0.14 + 0.05 * float(index)
+		_menu_reveal_tween.tween_property(row, "modulate:a", 1.0, 0.16).set_delay(delay)
+		(
+			_menu_reveal_tween
+			. tween_property(row, "position:x", MENU_ROW_RECT.position.x, 0.20)
+			. set_delay(delay)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
+	for chrome: Control in _menu_chrome:
+		_menu_reveal_tween.tween_property(chrome, "modulate:a", 1.0, 0.18).set_delay(0.32)
 
 
 func _play_menu_breath() -> void:
 	if _menu_attract_tween != null and _menu_attract_tween.is_valid():
 		_menu_attract_tween.kill()
-	_menu_prompt_panel.pivot_offset = _menu_prompt_panel.size * 0.5
+	var row := _focused_menu_row()
+	if row == null:
+		return
+	# Scaling from the middle, so the row swells in place instead of growing
+	# out of its top-left corner and shouldering the arrowhead aside.
+	row.pivot_offset = row.size * 0.5
 	_menu_attract_tween = create_tween().set_parallel(true)
 	(
 		_menu_attract_tween
-		. tween_property(_menu_prompt_panel, "scale", Vector2(1.018, 1.018), 0.16)
+		. tween_property(row, "scale", Vector2(1.018, 1.018), 0.16)
 		. set_trans(Tween.TRANS_QUAD)
 		. set_ease(Tween.EASE_OUT)
 	)
-	_menu_attract_tween.tween_property(_menu_prompt, "modulate", Color("fff4d8"), 0.16)
+	_menu_attract_tween.tween_property(row, "modulate", Color("fff4d8"), 0.16)
 	_menu_attract_tween.chain().set_parallel(true)
 	(
 		_menu_attract_tween
-		. tween_property(_menu_prompt_panel, "scale", Vector2.ONE, 0.24)
+		. tween_property(row, "scale", Vector2.ONE, 0.24)
 		. set_trans(Tween.TRANS_QUAD)
 		. set_ease(Tween.EASE_IN_OUT)
 	)
-	_menu_attract_tween.tween_property(_menu_prompt, "modulate", Color.WHITE, 0.24)
+	_menu_attract_tween.tween_property(row, "modulate", Color.WHITE, 0.24)
+
+
+## Whichever row the player is standing on, or the first one before they move.
+func _focused_menu_row() -> Button:
+	if _menu_rows.is_empty():
+		return null
+	for row: Button in _menu_rows:
+		if row.has_focus():
+			return row
+	return _menu_rows[0]
 
 
 func _apply_menu_final_state() -> void:
 	if _menu_background == null:
 		return
 	_menu_background.modulate.a = 1.0
-	_menu_kicker.modulate = Color.WHITE
-	_menu_rule.modulate = Color.WHITE
-	_menu_rule.scale = Vector2.ONE
-	_menu_title.modulate.a = 1.0
-	_menu_title.position = Vector2(66, 140)
-	_menu_subtitle.modulate = Color.WHITE
-	_menu_subtitle.position.y = 222.0
-	_menu_prompt_panel.modulate.a = 1.0
-	_menu_prompt_panel.scale = Vector2.ONE
-	_menu_prompt.modulate = Color.WHITE
-	_menu_motion_button.modulate = Color.WHITE
-	_menu_motion_button.position.y = 444.0
+	_menu_badge.modulate = Color.WHITE
+	_menu_badge.position = MENU_BADGE_POSITION
+	for chrome: Control in _menu_chrome:
+		chrome.modulate = Color.WHITE
+	for index: int in range(_menu_rows.size()):
+		var row := _menu_rows[index]
+		row.modulate = Color.WHITE
+		row.scale = Vector2.ONE
+		row.position = MENU_ROW_RECT.position + Vector2(0.0, MENU_ROW_STEP * float(index))
 
 
 func _on_motion_preference_changed(reduced: bool) -> void:

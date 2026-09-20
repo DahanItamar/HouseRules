@@ -450,19 +450,23 @@ func test_main_menu_exposes_a_focusable_reduced_motion_setting() -> void:
 	MotionPolicy.set_reduced_motion(false)
 	var main := MAIN_SCENE.instantiate()
 	add_child_autofree(main)
-	var toggle: Button = main._menu_motion_button
-	assert_not_null(toggle)
-	assert_eq(toggle.focus_mode, Control.FOCUS_ALL)
-	assert_eq(toggle.size, Vector2(360, 56), "Setting keeps a generous controller target")
-	assert_string_contains(toggle.text, tr("SETTING_OFF"))
-	assert_string_contains(toggle.accessibility_name, tr("SETTING_OFF"))
-	toggle.grab_focus()
-	assert_eq(get_viewport().gui_get_focus_owner(), toggle)
-	toggle.pressed.emit()
+	var row: Button = main._menu_rows[1]
+	assert_not_null(row)
+	assert_eq(row.focus_mode, Control.FOCUS_ALL)
+	assert_true(row.visible, "The setting the player uses is the one on screen")
+	assert_gte(row.size.y, 44.0, "Setting keeps a generous controller target")
+	assert_string_contains(row.text, tr("SETTING_OFF"))
+	assert_string_contains(row.accessibility_name, tr("SETTING_OFF"))
+	row.grab_focus()
+	assert_eq(get_viewport().gui_get_focus_owner(), row)
+	# The retired settings key is hidden, and a hidden node that can still take
+	# focus leaves the menu with no ring drawn anywhere.
+	assert_false(main._menu_motion_button.visible)
+	assert_eq(main._menu_motion_button.focus_mode, Control.FOCUS_NONE)
+	row.pressed.emit()
 	assert_true(MotionPolicy.is_reduced())
-	assert_true(toggle.button_pressed)
-	assert_string_contains(toggle.text, tr("SETTING_ON"))
-	assert_string_contains(toggle.accessibility_name, tr("SETTING_ON"))
+	assert_string_contains(row.text, tr("SETTING_ON"))
+	assert_string_contains(row.accessibility_name, tr("SETTING_ON"))
 
 
 func test_main_menu_motion_shortcut_works_for_keyboard_and_controller_action() -> void:
@@ -474,7 +478,7 @@ func test_main_menu_motion_shortcut_works_for_keyboard_and_controller_action() -
 	shortcut.pressed = true
 	main._unhandled_input(shortcut)
 	assert_true(MotionPolicy.is_reduced())
-	assert_string_contains(main._menu_motion_button.text, InputRouter.glyph("secondary"))
+	assert_string_contains(main._menu_rows[1].text, InputRouter.glyph("secondary"))
 
 
 func test_reduced_motion_preference_persists_and_reloads() -> void:

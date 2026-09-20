@@ -50,8 +50,8 @@ func _capture() -> void:
 	# The menu reveal is a tween; let it land before the shutter.
 	await get_tree().create_timer(1.1).timeout
 	await _snapshot("01_menu")
-	if main.has_method("_toggle_motion_preference"):
-		main._menu_motion_button.grab_focus()
+	if not main._menu_rows.is_empty():
+		main._menu_rows[1].grab_focus()
 		await get_tree().create_timer(0.3).timeout
 		await _snapshot("02_menu_focus")
 	get_tree().quit()
