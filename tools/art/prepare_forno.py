@@ -195,58 +195,39 @@ def build_sheet(source: str, name: str, columns: int, rows: int, cell: int) -> N
     print(name, out.size, "%dx%d cells of %d" % (columns, rows, cell))
 
 
-## The two hosts the user approved, and which pose each of them holds in each
-## state of the bake. Generating them as one pair was rejected: these are the
-## two characters that already exist, and the point is only to stand them in one
-## room and have them react to the same thing at the same time.
-##
-## Every row is one game state, so a state can never show one of them
-## celebrating while the other winces.
-HOST_STATES: list[tuple[str, str, str]] = [
-    ("ready", "left_ready_8e26e5f4", "right_ready_b3eda408"),
-    ("launch", "left_launch_51807f94", "right_launch_15ab7320"),
-    ("baking", "left_tense_4f6a42b2", "right_baking_ec7dfd6b"),
-    ("served", "left_cheer_f4080c1d", "right_serve_4f6209ad"),
-    ("burnt", "left_burnt_v2_c4f739ea", "right_burnt_v2_79a04071"),
+## The two hosts, generated as ONE picture per state so their reaction is always
+## shared: there is no way for one to celebrate while the other winces, because
+## they are the same image. Each state is a full 16:9 frame with both women in
+## it, the blonde on the left and the brunette on the right, and the whole middle
+## transparent so the oven shows through between them.
+## v2 corrects where both of them are looking: the first pass had the brunette
+## turned away from the room, so she read as distracted rather than working. They
+## watch the oven while it bakes and come round to the player on the result.
+DUO_STATES: list[tuple[str, str]] = [
+    ("ready", "duo_v2_ready_7f14a8c0.png"),
+    ("tense", "duo_v2_tense_dd90116c.png"),
+    ("cheer", "duo_v2_cheer_0930e627.png"),
+    ("wince", "duo_v2_wince_22ea1e97.png"),
 ]
-## Every pose of one host is cut to this canvas, foot-aligned and centred on the
-## body, so changing pose never makes her jump sideways or hop off the floor.
-HOST_CELL = (1024, 1536)
+## Both hosts land on this one canvas, so switching state never shifts either of
+## them by a pixel.
+DUO_CANVAS = (1920, 1080)
 
 
-def build_host_poses() -> None:
-    """Cuts both hosts' poses to one shared, foot-aligned cell each.
-
-    The raw poses are opaque studio and kitchen renders; the transparent
-    versions under `cutouts/` come from `tools/art/cut_forno_hosts.py`.
-    """
+def build_host_duo() -> None:
     pipeline = _pipeline()
-    for side, index in (("left", 1), ("right", 2)):
-        poses = [(row[0], row[index]) for row in HOST_STATES]
-        trimmed = []
-        for _, source in poses:
-            image = _clean(Image.open(CUTOUTS / (source + ".png")), 1)
-            trimmed.append(_trim(image))
-        # One scale for the whole set, from the tallest pose, so they share a
-        # height and the floor line stays put.
-        scale = (HOST_CELL[1] - 24) / max(piece.height for piece in trimmed)
-        for (name, _), piece in zip(poses, trimmed):
-            sized = piece.resize(
-                (max(1, round(piece.width * scale)), max(1, round(piece.height * scale))),
-                Image.LANCZOS,
-            )
-            cell = Image.new("RGBA", HOST_CELL, (0, 0, 0, 0))
-            cell.paste(sized, ((HOST_CELL[0] - sized.width) // 2, HOST_CELL[1] - 12 - sized.height))
-            cell = pipeline._bleed(cell, np.zeros(1))
-            out = OUT / ("forno_host_%s_%s.png" % (side, name))
-            cell.save(out, optimize=True)
-            alpha = np.asarray(cell.getchannel("A")) > 128
-            ys, xs = np.nonzero(alpha)
-            print(
-                "forno_host_%s_%s.png %s used=Rect2(%d, %d, %d, %d)"
-                % (side, name, cell.size, xs.min(), ys.min(),
-                   xs.max() - xs.min() + 1, ys.max() - ys.min() + 1)
-            )
+    for name, source in DUO_STATES:
+        frame = _clean(Image.open(SOURCE / source), 1).resize(DUO_CANVAS, Image.LANCZOS)
+        frame = pipeline._bleed(frame, np.zeros(1))
+        out = OUT / ("forno_duo_%s.png" % name)
+        frame.save(out, optimize=True)
+        alpha = np.asarray(frame.getchannel("A")) > 128
+        ys, xs = np.nonzero(alpha)
+        print(
+            "forno_duo_%s.png %s used=Rect2(%d, %d, %d, %d)"
+            % (name, frame.size, xs.min(), ys.min(),
+               xs.max() - xs.min() + 1, ys.max() - ys.min() + 1)
+        )
 
 
 def build_hostess() -> None:
@@ -293,7 +274,7 @@ def main() -> int:
     build_sheet("icons_a534fda5.png", "forno_icons.png", 3, 2, 256)
     build_sheet("embers_dbebbbf9.png", "forno_embers.png", 4, 4, 256)
     build_hostess()
-    build_host_poses()
+    build_host_duo()
     return 0
 
 

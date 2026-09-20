@@ -406,21 +406,25 @@ func test_the_controller_bakes_pulls_and_walks_the_deck() -> void:
 # -------------------------------------------------------------- presentation
 
 
-func test_the_host_is_unique_clean_and_registered() -> void:
+func test_the_hosts_are_one_pair_who_share_every_reaction() -> void:
+	# The two pizzaiole are generated as ONE frame per state, so there is no way
+	# for one of them to celebrate while the other winces.
 	var panel: CoreOverclockPanel = _open().cabinet.panel
-	var host := panel.hostess
-	assert_eq(host.pose_ids(), [&"idle"] as Array[StringName], "One master pose so far")
-	for id: StringName in host.pose_ids():
-		var texture := host.pose_texture(id)
+	var hosts := panel.hosts
+	assert_eq(
+		hosts.state_ids(),
+		[&"ready", &"tense", &"cheer", &"wince"] as Array[StringName],
+		"One frame per feeling the bake can be in"
+	)
+	for id: StringName in hosts.state_ids():
+		var texture := hosts.state_texture(id)
 		var path := texture.resource_path
-		assert_true(
-			path.begins_with("res://assets/production/characters/hosts/forno_hostess"), path
-		)
+		assert_true(path.begins_with("res://assets/production/forno/forno_duo_"), path)
 		assert_false(OTHER_HOSTS.has(path), "%s is not another game's person" % path)
 		var image := texture.get_image()
 		if image.is_compressed():
 			image.decompress()
-		assert_eq(image.get_size(), Vector2i(1392, 2080), path)
+		assert_eq(image.get_size(), Vector2i(1920, 1080), path)
 		var last := Vector2i(image.get_width() - 1, image.get_height() - 1)
 		for corner: Vector2i in [Vector2i.ZERO, Vector2i(last.x, 0), Vector2i(0, last.y), last]:
 			assert_eq(image.get_pixelv(corner).a, 0.0, "%s corner %s is clear" % [path, corner])
@@ -464,11 +468,6 @@ func test_the_painted_art_is_sharp_enough_and_really_transparent() -> void:
 
 func test_nothing_covers_the_dial_the_strip_or_the_deck() -> void:
 	var panel: CoreOverclockPanel = _open().cabinet.panel
-	var lane := panel.hostess.get_parent() as Control
-	assert_true(lane.clip_contents, "The lane clips her at the deck")
-	var lane_rect := Rect2(lane.position, lane.size)
-	for rect: Rect2 in panel.protected_rects():
-		assert_false(lane_rect.intersects(rect), "The host stays clear of %s" % rect)
 	var dial := panel.gauge.dial_rect()
 	for rect: Rect2 in [
 		CoreOverclockTheme.HISTORY_RECT,
@@ -479,9 +478,15 @@ func test_nothing_covers_the_dial_the_strip_or_the_deck() -> void:
 	]:
 		assert_false(dial.intersects(rect), "The dial keeps clear of %s" % rect)
 	assert_true(TV_SAFE.encloses(dial), "The dial is inside TV-safe")
-	for id: StringName in panel.hostess.pose_ids():
-		var bounds := panel.hostess.pose_bounds(id)
-		assert_gte(bounds.end.y, lane.size.y, "%s reaches the deck (no floating gap)" % id)
+	# The pair stand either side of the oven; the centre of every frame is clear,
+	# so the dial and the pizza are never behind one of them.
+	for id: StringName in panel.hosts.state_ids():
+		var image := panel.hosts.state_texture(id).get_image()
+		if image.is_compressed():
+			image.decompress()
+		var middle := image.get_width() / 2
+		for row: int in range(0, image.get_height(), 64):
+			assert_eq(image.get_pixel(middle, row).a, 0.0, "%s leaves the centre line clear" % id)
 
 
 func test_controls_are_large_enough_and_inside_tv_safe() -> void:
@@ -536,14 +541,25 @@ func test_reduced_motion_bounds_every_effect() -> void:
 	assert_eq(panel._stage.position, Vector2.ZERO, "No screen shake")
 	assert_eq(panel.gauge._pop_left, 0.0, "The ticker is instant, with no pop")
 	assert_false(panel.burst.is_busy(), "No embers and no smoke")
-	assert_eq(panel.hostess.current_pose, &"idle", "The host keeps her master pose")
+	# Reduced motion cuts straight to the frame instead of cross-fading, but the
+	# pair still show whatever the bake is doing.
+	assert_eq(
+		panel.hosts.current_state,
+		CoreOverclockPanel._host_state_for(panel._math().state),
+		"The pair show the state the bake is actually in"
+	)
 	var guard: int = 0
 	while game.is_round_active and guard < 4000:
 		_step(game, 1.0 / 60.0)
 		guard += 1
 	assert_false(panel.burst.is_busy(), "No burst on the result either")
 	assert_eq(panel._stage.position, Vector2.ZERO, "No impact on the result")
-	assert_eq(panel.hostess.current_pose, &"idle")
+	assert_eq(
+		panel.hosts.current_state,
+		CoreOverclockPanel._host_state_for(panel._math().state),
+		"and they react together to how it ended"
+	)
+	assert_ne(panel.hosts.current_state, &"ready", "which is never 'waiting'")
 	panel.backdrop._process(1.0)
 	assert_eq(panel.backdrop._phase, 0.0, "The backdrop is static")
 

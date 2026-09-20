@@ -45,8 +45,16 @@ const BURNT := preload("res://assets/production/forno/forno_burnt_pizza.png")
 const ICONS := preload("res://assets/production/forno/forno_icons.png")
 const EMBERS := preload("res://assets/production/forno/forno_embers.png")
 const FRAME := preload("res://assets/production/forno/forno_frame.png")
-## The host is a placeholder until her final art lands; one constant swaps her.
-const HOSTESS := preload("res://assets/production/characters/hosts/forno_hostess.png")
+## The two pizzaiole, one painted frame per state of the bake with both of them
+## in it. They are generated together so their reaction is always shared; see
+## `CoreOverclockHosts`. The middle of every frame is transparent, so the oven
+## burns between them.
+const HOST_STATES: Dictionary = {
+	&"ready": preload("res://assets/production/forno/forno_duo_ready.png"),
+	&"tense": preload("res://assets/production/forno/forno_duo_tense.png"),
+	&"cheer": preload("res://assets/production/forno/forno_duo_cheer.png"),
+	&"wince": preload("res://assets/production/forno/forno_duo_wince.png"),
+}
 
 ## Sprite sheet grids, as re-cut by tools/art/prepare_forno.py.
 const ICON_GRID := Vector2i(3, 2)

@@ -27,7 +27,7 @@ const NOTICE_SECONDS: float = 1.8
 var backdrop: CoreOverclockBackdrop
 var gauge: CoreOverclockGauge
 var history: CoreOverclockHistory
-var hostess: CoreOverclockHostess
+var hosts: CoreOverclockHosts
 var burst: CoreOverclockBurst
 var baking_pizza: TextureRect
 ## Which painted bake stage `baking_pizza` is showing; -1 before the first one.
@@ -102,7 +102,7 @@ func _build_cabinet() -> void:
 	backdrop.size = Vector2(960, 540)
 	_stage.add_child(backdrop)
 	_build_left_column()
-	_build_host()
+	_build_hosts()
 	_build_baking_pizza()
 	gauge = CoreOverclockGauge.new()
 	gauge.position = CoreOverclockTheme.GAUGE_CENTRE - gauge.size * 0.5
@@ -139,18 +139,12 @@ func _build_left_column() -> void:
 	_stage.add_child(history)
 
 
-func _build_host() -> void:
-	var lane := Control.new()
-	lane.name = "FornoHostLane"
-	lane.position = CoreOverclockTheme.HOST_LANE.position
-	lane.size = CoreOverclockTheme.HOST_LANE.size
-	lane.clip_contents = true
-	lane.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lane.z_index = 3
-	_stage.add_child(lane)
-	hostess = CoreOverclockHostess.new()
-	hostess.place_on_cut(Vector2(lane.size.x * 0.5, lane.size.y), CoreOverclockTheme.HOST_LANE.size)
-	lane.add_child(hostess)
+## Both pizzaiole, as one layer. Each state of the bake is a single painted
+## frame with both of them in it, so their reaction is shared by construction.
+func _build_hosts() -> void:
+	hosts = CoreOverclockHosts.new()
+	hosts.z_index = 2
+	_stage.add_child(hosts)
 
 
 ## The pizza itself, in the oven mouth, browning as it bakes.
@@ -332,7 +326,6 @@ func begin_bake() -> void:
 	_impulse = 0.0
 	_pulse_left = 0.0
 	_roar_left = 0.0
-	hostess.watch_the_oven()
 	AudioService.play(&"oven_load")
 	_sync_state(true)
 	refresh()
@@ -391,6 +384,7 @@ func _sync_state(initial: bool) -> void:
 	var state := math.state
 	var previous := _shown_state
 	_shown_state = state
+	hosts.show_state(_host_state_for(state))
 	if initial:
 		return
 	if (
@@ -403,6 +397,19 @@ func _sync_state(initial: bool) -> void:
 		)
 		burst.sparks(CoreOverclockTheme.OVEN_MOUTH.get_center(), 8)
 	refresh()
+
+
+## What the pair are feeling at this point in the bake. Both of them feel it,
+## because a state is one painted frame of the two of them.
+static func _host_state_for(state: int) -> StringName:
+	match state:
+		CoreOverclockMath.State.OVERCLOCKING:
+			return &"tense"
+		CoreOverclockMath.State.CASHED_OUT:
+			return &"cheer"
+		CoreOverclockMath.State.CRASHED:
+			return &"wince"
+	return &"ready"
 
 
 func _update_shake(delta: float, heat: float, baking: bool) -> void:
@@ -451,7 +458,7 @@ func show_result(result: RoundResult) -> void:
 		CoreOverclockTheme.TERRACOTTA_DEEP if served else CoreOverclockTheme.CHAR
 	)
 	history.set_entries(math.history)
-	hostess.react_to_result(served)
+	hosts.show_state(&"cheer" if served else &"wince")
 	if served:
 		_present_served(result)
 	else:
