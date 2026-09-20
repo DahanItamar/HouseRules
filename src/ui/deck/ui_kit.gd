@@ -59,9 +59,6 @@ const THEMES: Dictionary = {
 	},
 	&"upgrade_cluster":
 	{
-		"panel": preload("res://assets/production/ui/kit/panel_harlequin.png"),
-		"panel_region": Rect2(3, 8, 1019, 992),
-		"panel_margin": 121,
 		"button": preload("res://assets/production/ui/kit/button_harlequin.png"),
 		"button_region": Rect2(24, 26, 976, 958),
 		"button_margin": 111,
@@ -70,9 +67,6 @@ const THEMES: Dictionary = {
 	},
 	&"core_overclock":
 	{
-		"panel": preload("res://assets/production/ui/kit/panel_forno.png"),
-		"panel_region": Rect2(10, 18, 1004, 970),
-		"panel_margin": 80,
 		"button": preload("res://assets/production/ui/kit/button_forno.png"),
 		"button_region": Rect2(20, 27, 983, 967),
 		"button_margin": 61,
