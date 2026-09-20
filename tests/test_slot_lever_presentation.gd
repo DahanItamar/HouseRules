@@ -73,10 +73,18 @@ func test_spin_pulls_lever_and_keeps_all_wager_input_gated() -> void:
 	assert_same(game.get("_pending"), pending_before)
 	assert_eq(pending_before.detail.get("symbols", []), symbols_before)
 
-	await wait_seconds(0.10)
+	# The lever swing is stepped by hand rather than slept through. Waiting in
+	# real time measured the machine this runs on, not the animation: under load
+	# the tween had barely started when the wait returned and the assertion below
+	# failed for want of frames.
+	var swing: Tween = panel._motion_tween
+	assert_not_null(swing, "The pull owns a tween")
+	swing.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+	swing.pause()
+	swing.custom_step(0.10)
 	assert_gt(absf(lever.rotation), 0.05, "The mechanical lever visibly leaves its rest pose")
 	assert_true(panel.has_active_motion())
-	await wait_seconds(0.34)
+	swing.custom_step(0.34)
 	assert_almost_eq(
 		lever.rotation,
 		LEVER_REST_ROTATION,
