@@ -1101,3 +1101,38 @@ a vibrating sprite rather than flight, and without the rise and fall inside the
 beat the wings move while the bird slides. `growth_per_second` went 0.40 to
 0.12 in the same pass, so 2x takes 5.8 s instead of 1.7 -- that does not touch
 the return, which is drawn before she leaves, only how long the nerve is held.
+
+### The crew, v5: the captain, and facing the board
+
+The user asked for the tricorn captain to stand on the right, and then for the
+pair to face each other rather than the player. Both are the same note: two
+people standing either side of a chart should be watching the chart.
+
+The approved captain frame `crew_v2_captain_b6699072.png` was uploaded as an
+`image_references` input so the costumes and both faces carried across, and four
+new states were generated from it with `gpt_image_2_5` at 16:9.
+
+| State | Job |
+| --- | --- |
+| Ready | `48889ddd-16a9-4978-aa4c-e94d80873306` |
+| Tense | `cb3e8b4b-c243-47b6-9301-54a0cb68ba07` |
+| Cheer | `c9a7055d-ce7f-4316-b181-0e3cdbba1a30` |
+| Wince | `12f28921-9747-447a-a915-570b07a65c72` |
+
+Each still holds **both women in one frame**, so the shared reaction survives.
+Each is a three-quarter turn inward: the blonde on the left faces right, the
+captain on the right faces left, with a wide empty gap between them that
+`prepare_corsair.py` splits down the middle. `middle_px=0` on all four, so
+nothing of either woman reaches the chart.
+
+Superseded on the way there, kept for provenance: `crew_v4_*` (the same four
+states, but both women facing the camera — generated before the user asked for
+the inward turn) and the `crew_v3_*` set, which had no captain at all.
+
+The generator paints a checkerboard where it is asked for transparency, so
+these arrive opaque. `tools/art/cut_corsair_crew.py` segments them with rembg's
+`isnet-general-use` and alpha matting, which keeps the ostrich plume on the
+tricorn and the fringe of the sash. It prints the painted fraction of each cut
+as well as the transparent one, because a frame that comes back nearly empty
+means the matting ate the women and the state has to be regenerated rather than
+shipped.

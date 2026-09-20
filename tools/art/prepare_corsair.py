@@ -46,11 +46,18 @@ WRECK_CELL = 512
 ## v3 takes every rope, hilt and pole out of their hands. Anything a character
 ## holds that reaches past her own outline gets sliced off by the lane crop, and
 ## a rope cut dead at the frame edge is the first thing the eye finds.
+## The crew, one frame per state, each holding both women. They arrive opaque
+## and are segmented by `cut_corsair_crew.py` first, so these read from
+## `cutouts/` rather than from the raw renders beside them.
+##
+## v5 turns the pair inward. They stand in lanes either side of the chart, so
+## facing the player meant two people ignoring the thing the player is watching;
+## a three-quarter turn toward the centre puts their attention on the board.
 CREW_STATES: list[tuple[str, str]] = [
-    ("ready", "crew_v3_ready_ea6f81cb.png"),
-    ("tense", "crew_v3_tense_033b6430.png"),
-    ("cheer", "crew_v3_cheer_96cada4d.png"),
-    ("wince", "crew_v3_wince_f2d4370c.png"),
+    ("ready", "cutouts/crew_v5_ready_48889ddd.png"),
+    ("tense", "cutouts/crew_v5_tense_cb3e8b4b.png"),
+    ("cheer", "cutouts/crew_v5_cheer_c9a7055d.png"),
+    ("wince", "cutouts/crew_v5_wince_12f28921.png"),
 ]
 CREW_CANVAS = (1920, 1080)
 
