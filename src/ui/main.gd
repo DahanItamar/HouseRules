@@ -8,6 +8,7 @@ var _floor: FloorController
 var _menu: CanvasLayer
 var _hud_layer: CanvasLayer
 var _bank_panel: Panel
+var _standing: HouseLevelHud
 var _chip_icon: CreditChipIcon
 var _hud: AnimatedNumberLabel
 var _credit_caption: Label
@@ -88,27 +89,31 @@ func _build_hud() -> void:
 	_hud_layer = CanvasLayer.new()
 	_hud_layer.layer = 10
 	add_child(_hud_layer)
-	_bank_panel = _panel(Vector2(18, 10), Vector2(168, 52), Color("17161af2"), Color("c8a34b"))
+	# The bank plate is its own opaque surface inside the TV-safe corner; the floor
+	# draws no full-width header band behind it.
+	_bank_panel = _panel(Vector2(48, 27), Vector2(168, 40), Color("17161a"), Color("c8a34b"))
 	_bank_panel.pivot_offset = _bank_panel.size * 0.5
 	_hud_layer.add_child(_bank_panel)
 	_chip_icon = CreditChipIcon.new()
-	_chip_icon.position = Vector2(28, 19)
+	_chip_icon.position = Vector2(56, 31)
+	# Drawn at 32 px so the plate stays 40 px tall and clears the dialogue lane.
+	_chip_icon.scale = Vector2(0.8, 0.8)
 	_hud_layer.add_child(_chip_icon)
 	_credit_caption = Label.new()
 	_credit_caption.add_theme_font_override("font", Typography.UI_FONT)
-	_credit_caption.position = Vector2(72, 14)
+	_credit_caption.position = Vector2(96, 27)
 	_credit_caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	_credit_caption.add_theme_font_size_override("font_size", Typography.BODY_MIN)
 	_credit_caption.add_theme_color_override("font_color", Color("b8ad9c"))
 	_hud_layer.add_child(_credit_caption)
 	_hud = AnimatedNumberLabel.new()
 	_hud.add_theme_font_override("font", Typography.DISPLAY_FONT)
-	_hud.position = Vector2(72, 28)
-	_hud.size = Vector2(126, 30)
-	_hud.add_theme_font_size_override("font_size", 24)
+	_hud.position = Vector2(96, 40)
+	_hud.size = Vector2(112, 26)
+	_hud.add_theme_font_size_override("font_size", 22)
 	_hud.add_theme_color_override("font_color", Color("f2c84b"))
 	_hud_layer.add_child(_hud)
-	_message_panel = _panel(Vector2(220, 104), Vector2(520, 40), Color("17161af2"), Color("c8a34b"))
+	_message_panel = _panel(Vector2(220, 104), Vector2(520, 40), Color("17161a"), Color("c8a34b"))
 	_message_panel.visible = false
 	_hud_layer.add_child(_message_panel)
 	_message = Label.new()
@@ -121,6 +126,11 @@ func _build_hud() -> void:
 	_message.add_theme_color_override("font_color", Color("f1e8d8"))
 	_message.visible = false
 	_hud_layer.add_child(_message)
+	# House standing sits beside the bank plate, inside the same TV-safe corner:
+	# the rank, a slim fill toward the next rung, and the card a new rung raises.
+	_standing = HouseLevelHud.new()
+	_standing.position = Vector2(224, 27)
+	_hud_layer.add_child(_standing)
 	# House Contracts live on the reception board in the Manager's Office; the
 	# HUD only toasts a completion (see _show_contract_completed).
 
@@ -430,6 +440,12 @@ func _refresh_hud() -> void:
 	_chip_icon.visible = on_floor
 	_credit_caption.visible = on_floor
 	_hud.visible = on_floor
+	if _standing != null:
+		_standing.visible = on_floor
+		if not on_floor:
+			_standing.dismiss_card()
+	# Time played is counted only while the player is actually at the tables.
+	Progression.set_counting_time(_is_playing)
 
 
 func _on_balance_changed(old_balance: int, new_balance: int) -> void:

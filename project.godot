@@ -19,12 +19,14 @@ config/features=PackedStringArray("4.7", "GL Compatibility")
 Wallet="*res://src/autoload/wallet.gd"
 RNGService="*res://src/autoload/rng_service.gd"
 Economy="*res://src/autoload/economy.gd"
+Progression="*res://src/autoload/progression.gd"
 SaveService="*res://src/autoload/save_service.gd"
 AudioService="*res://src/autoload/audio_service.gd"
 InputRouter="*res://src/autoload/input_router.gd"
 ScreenTransition="*res://src/autoload/screen_transition.gd"
 SceneRouter="*res://src/autoload/scene_router.gd"
 MotionPolicy="*res://src/ui/motion_policy.gd"
+DevOverlay="*res://src/ui/dev_menu/dev_overlay.gd"
 
 [accessibility]
 

@@ -83,28 +83,36 @@ func test_floor_avatar_animates_from_real_movement_and_keeps_facing() -> void:
 		)
 
 
-func test_floor_avatar_uses_four_real_leg_phases_at_a_walking_pace() -> void:
+func test_floor_avatar_walks_a_full_gait_cycle_at_a_walking_pace() -> void:
 	var avatar: FloorAvatar = _floor._avatar_visual
-	var regions: Dictionary = {}
+	var frames: Dictionary = {}
+	var eighth := FloorAvatar.WALK_CYCLE_DISTANCE / 8.0
 	avatar.set_motion(Vector2.RIGHT * 4.0)
-	for _phase: int in range(4):
-		regions[avatar._atlas.region] = true
-		avatar.set_motion(Vector2.RIGHT * 16.0)
-	assert_eq(regions.size(), 4, "Walk cycle uses four distinct contact and passing poses")
-	assert_false(avatar._sprite.flip_h, "East uses the authored east-facing frames")
+	for _beat: int in range(24):
+		avatar.set_motion(Vector2.RIGHT * eighth * 0.5)
+		frames[avatar.walk_frame] = true
+	assert_eq(frames.size(), 8, "Every phase of the filmed cycle is played")
+	assert_false(avatar._sprite.flip_h, "East uses the authored east-facing column")
 	assert_eq(
 		avatar._atlas.region.position.x,
 		2 * FloorAvatar.GUEST_CELL_SIZE.x,
-		"Right movement uses the east atlas column"
+		"Right movement uses the east column"
 	)
 	avatar.set_motion(Vector2.LEFT * 5.0)
-	assert_false(avatar._sprite.flip_h, "West has its own authored frames, never a mirror")
+	assert_eq(avatar.facing_index, 6, "Reversing aims the walker west at once")
+	# A reversal sweeps through the facings in between instead of popping, so
+	# the drawn column arrives a few hundredths of a second later.
+	for _turn: int in range(8):
+		avatar._process(FloorAvatar.TURN_STEP_TIME)
+	assert_false(avatar._sprite.flip_h, "West has its own authored column, never a mirror")
 	assert_eq(
 		avatar._atlas.region.position.x,
 		6 * FloorAvatar.GUEST_CELL_SIZE.x,
-		"Left movement uses the west atlas column"
+		"Left movement uses the west column"
 	)
 	assert_lte(FloorController.SPEED, 120.0, "Floor traversal stays at a natural walking pace")
+	var cadence := FloorController.SPEED / FloorAvatar.WALK_CYCLE_DISTANCE * 2.0
+	assert_between(cadence, 3.2, 4.4, "Steps per second stay in a brisk-walk range")
 
 
 func test_developer_floor_tools_warp_and_switch_whole_rooms() -> void:
@@ -320,7 +328,7 @@ func test_developer_cashier_enables_marker_and_repayment_with_infinite_funds() -
 	Wallet.set_test_mode(true)
 	assert_true(_floor.open_marker_desk())
 	assert_false(_floor._cashier_marker.disabled)
-	assert_eq(_floor._cashier_marker.text, tr("CASHIER_ADD_TEST_MARKER"))
+	assert_eq(_floor._cashier_marker.text, tr("CASHIER_ADD_TEST_MARKER") % Economy.marker_stipend())
 	_floor._cashier_marker.pressed.emit()
 	assert_eq(Economy.debt, Economy.MARKER_STIPEND)
 	assert_false(_floor._cashier_repay.disabled)
@@ -336,7 +344,10 @@ func test_insolvent_player_gets_a_safe_area_cashier_route_until_arrival() -> voi
 	_floor.refresh_proximity()
 	var waypoint: CashierWaypoint = _floor._cashier_waypoint
 	assert_true(waypoint.visible)
-	assert_eq((waypoint.get_node("Caption") as Label).text, tr("OFFICE_WAYPOINT"))
+	assert_eq(
+		(waypoint.get_node("Caption") as Label).text,
+		tr("OFFICE_WAYPOINT") % Economy.marker_stipend()
+	)
 	assert_gte(waypoint.position.x, CashierWaypoint.SAFE_MARGIN)
 	assert_gte(waypoint.position.y, CashierWaypoint.SAFE_MARGIN)
 	assert_lte(

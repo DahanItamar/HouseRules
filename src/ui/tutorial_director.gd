@@ -119,11 +119,11 @@ static func index_of(step_id: StringName) -> int:
 func line_text(step_id: StringName) -> String:
 	match step_id:
 		&"move":
-			return tr("TUTORIAL_MOVE") % InputRouter.glyph("move")
+			return tr("TUTORIAL_MOVE") % InputPromptLabel.token(&"move")
 		&"join":
-			return tr("TUTORIAL_JOIN") % [InputRouter.glyph("interact"), InputRouter.glyph("back")]
+			return tr("TUTORIAL_JOIN") % InputPromptLabel.tokens([&"interact", &"back"])
 		&"help":
-			return tr("TUTORIAL_HELP") % InputRouter.glyph("help")
+			return tr("TUTORIAL_HELP") % InputPromptLabel.token(&"help")
 	return tr("TUTORIAL_" + String(step_id).to_upper())
 
 
@@ -140,6 +140,7 @@ func _show(index: int) -> void:
 				{
 					"id": &"tutorial_next",
 					"label": tr("TUTORIAL_DONE") if last else tr("TUTORIAL_NEXT"),
+					"action": &"interact",
 				}
 			)
 		)
@@ -149,13 +150,14 @@ func _show(index: int) -> void:
 			. append(
 				{
 					"id": &"tutorial_next",
-					"label": tr("TUTORIAL_CONTINUE_ACTION") % InputRouter.glyph("secondary"),
+					"label": tr("TUTORIAL_NEXT"),
+					"action": &"secondary",
 				}
 			)
 		)
 	if not last:
 		choices.append(
-			{"id": &"tutorial_skip", "label": tr("TUTORIAL_SKIP") % InputRouter.glyph("back")}
+			{"id": &"tutorial_skip", "label": tr("TUTORIAL_SKIP_LABEL"), "action": &"back"}
 		)
 	host.speak(step.pose, line_text(step.id), choices, is_blocking())
 	step_changed.emit(step.id)

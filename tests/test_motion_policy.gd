@@ -120,7 +120,7 @@ func test_full_motion_focus_has_one_restrained_living_cue() -> void:
 	assert_true(feedback.is_processing())
 	assert_ne(button.self_modulate, Color.WHITE)
 	assert_eq(
-		button.scale, Vector2(1.025, 1.025), "Existing bounded focus scale remains authoritative"
+		button.scale, ButtonFeedback.HOVER_SCALE, "The shared bounded focus lift is authoritative"
 	)
 	button.release_focus()
 	assert_eq(button.self_modulate, Color.WHITE)
@@ -185,7 +185,11 @@ func test_reduced_avatar_keeps_directional_walk_frames_without_body_bob() -> voi
 	assert_true(avatar.is_walking)
 	assert_gt(avatar.walk_frame, -1, "Directional gait frames still communicate movement")
 	assert_eq(avatar._sprite.rotation, 0.0)
-	assert_eq(avatar._sprite.position, FloorAvatar.FOOT_OFFSET)
+	var torso := avatar._sprite.position
+	for _step: int in range(24):
+		avatar.set_motion(Vector2(2, 0))
+		assert_eq(avatar._sprite.position, torso, "No body bob or sway in reduced motion")
+	assert_eq(avatar._sprite.position.x, FloorAvatar.FOOT_OFFSET.x)
 	assert_eq(avatar._sprite.scale, Vector2.ONE * FloorAvatar.GUEST_SCALE)
 
 

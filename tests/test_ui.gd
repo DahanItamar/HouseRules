@@ -63,9 +63,11 @@ func test_casino_ui_uses_bundled_msdf_ready_fonts() -> void:
 	add_child_autofree(session)
 	session.begin(SLOT_DEFINITION)
 	assert_eq(session.cabinet.panel._title.get_theme_font("font"), Typography.DISPLAY_FONT)
+	# Quick-bet keys are button labels, so they take the display face like every
+	# other key on the deck; the captions around them stay in the UI face.
 	assert_eq(
 		session.cabinet.panel._stake_selector._buttons[0].get_theme_font("font"),
-		Typography.UI_FONT
+		Typography.DISPLAY_FONT
 	)
 
 
@@ -221,34 +223,60 @@ func test_shared_bet_console_respects_balance_and_locks_during_rounds() -> void:
 	assert_eq(game.selected_stake, 18)
 
 
-func test_every_game_exposes_direct_denomination_buttons_and_total_readout() -> void:
+func test_every_game_exposes_the_same_quick_bet_keys_and_total_readout() -> void:
+	# One row, one order, every game: the player learns the bet controls once.
 	for definition: CabinetDefinition in [SLOT_DEFINITION, BLACKJACK_DEFINITION, VAULT_DEFINITION]:
 		var session := CabinetSession.new()
 		add_child_autofree(session)
 		session.begin(definition)
 		var selector: StakeSelector = session.cabinet.panel._stake_selector
-		assert_eq(selector._button_amounts, session.cabinet.available_stakes())
 		assert_eq(
 			selector._buttons.map(func(button: Button) -> String: return button.text),
-			selector._button_amounts.map(func(amount: int) -> String: return str(amount))
+			["MIN", "10", "25", "X2", "X5", "ALL"],
+			"%s shows the shared quick-bet keys" % definition.id
+		)
+		assert_eq(
+			selector.operations(),
+			[
+				MiniGame.BetOperation.MIN,
+				MiniGame.BetOperation.ADD_10,
+				MiniGame.BetOperation.ADD_25,
+				MiniGame.BetOperation.MULTIPLY_2,
+				MiniGame.BetOperation.MULTIPLY_5,
+				MiniGame.BetOperation.MAX,
+			]
 		)
 		var selector_bounds := Rect2(Vector2.ZERO, selector.size)
 		for button_rect: Rect2 in selector.button_rects():
-			assert_true(selector_bounds.encloses(button_rect), "Every bet action remains in its console")
+			assert_true(
+				selector_bounds.encloses(button_rect), "Every bet action remains in its console"
+			)
+			assert_gte(button_rect.size.x, 44.0, "Quick-bet keys keep a 44 px target")
+			assert_gte(button_rect.size.y, 44.0)
 		assert_gte(Typography.PROMINENT, Typography.CRITICAL)
 
 
-func test_bet_buttons_select_the_exact_amount_and_show_persistent_feedback() -> void:
+func test_quick_bet_keys_apply_through_the_cabinet_and_show_feedback() -> void:
 	var session := CabinetSession.new()
 	add_child_autofree(session)
 	session.begin(SLOT_DEFINITION)
 	var selector: StakeSelector = session.cabinet.panel._stake_selector
-	var amount := selector._button_amounts[3]
+	var game: MiniGame = session.cabinet
+	game.select_stake(game.context.definition.min_bet)
+	selector.refresh_controls()
+	# X2 is the fourth key; the cabinet, not the console, decides what it becomes.
+	var doubled := game.bet_candidate(MiniGame.BetOperation.MULTIPLY_2)
 	selector._buttons[3].pressed.emit()
-	assert_eq(session.cabinet.selected_stake, amount)
-	assert_eq(selector._stake_value.target_value, amount)
-	assert_true(selector._buttons[3].button_pressed)
+	assert_eq(game.selected_stake, doubled)
+	assert_eq(selector._stake_value.target_value, doubled)
 	assert_gt(selector._bet_flash, 0.0)
+	# A key the wallet or the table would refuse is unavailable, and cannot fire.
+	game.select_stake(game.context.definition.max_bet)
+	selector.refresh_controls()
+	var over := selector._buttons[selector.operations().find(MiniGame.BetOperation.MULTIPLY_5)]
+	assert_true(over.disabled, "X5 past the cap reads unavailable")
+	over.pressed.emit()
+	assert_eq(game.selected_stake, game.context.definition.max_bet, "The clamp holds")
 
 
 func test_each_machine_has_distinct_ambient_motion() -> void:
@@ -284,18 +312,15 @@ func test_cabinet_controls_stay_inside_horizontal_tv_safe_area() -> void:
 		if definition.id == &"slot_classic":
 			controls.append(panel._slot_spin_label)
 		elif definition.id == &"blackjack":
-			controls.append_array([
-				panel._blackjack_primary, panel._blackjack_stand, panel._blackjack_double
-			])
+			# The deck shows only the actions valid now; check the shown keys.
+			for id: StringName in panel.control_deck().visible_action_ids():
+				controls.append(panel.control_deck().action_button(id))
 		else:
 			controls.append_array([panel._vault_open, panel._vault_cash_out])
 		for control: Control in controls:
-			assert_gte(control.position.x, 48.0, "%s keeps a 5%% left safe area" % control.name)
-			assert_lte(
-				control.position.x + control.size.x,
-				912.0,
-				"%s keeps a 5%% right safe area" % control.name
-			)
+			var rect := control.get_global_rect()
+			assert_gte(rect.position.x, 48.0, "%s keeps a 5%% left safe area" % control.name)
+			assert_lte(rect.end.x, 912.0, "%s keeps a 5%% right safe area" % control.name)
 
 
 func test_primary_controller_focus_and_help_focus_restore() -> void:
@@ -342,7 +367,9 @@ func test_display_targets_render_canvas_items_at_native_resolution() -> void:
 	assert_true(
 		ProjectSettings.get_setting("gui/theme/default_font_multichannel_signed_distance_field")
 	)
-	assert_eq(ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter"), 1)
+	assert_eq(
+		ProjectSettings.get_setting("rendering/textures/canvas_textures/default_texture_filter"), 1
+	)
 	var targets := {
 		"FHD / ROG Ally X": Vector2i(1920, 1080),
 		"1440p": Vector2i(2560, 1440),
@@ -406,9 +433,7 @@ func test_redesigned_shell_uses_high_resolution_production_environments() -> voi
 	main._process(2.1)
 	assert_false(main._menu_first_breath, "The main CTA has a bounded idle attract beat")
 	assert_not_null(main._menu_attract_tween)
-	var menu_art: Texture2D = load(
-		"res://assets/production/environments/casino_menu_hall.png"
-	)
+	var menu_art: Texture2D = load("res://assets/production/environments/casino_menu_hall.png")
 	var floor_art: Texture2D = load(
 		"res://assets/production/environments/casino_floor_background_v2.png"
 	)
@@ -457,18 +482,18 @@ func test_reduced_motion_preference_persists_and_reloads() -> void:
 	assert_true(MotionPolicy.is_reduced())
 
 
-func test_walk_atlas_has_four_phases_per_eight_directions_and_transparency() -> void:
-	var atlas: Texture2D = load(
-		"res://assets/production/characters/player_walk_v2.png"
-	)
+func test_player_walk_atlas_has_eight_directions_and_transparency() -> void:
+	var atlas: Texture2D = load(CharacterWalkAtlas.ATLAS_PATH)
 	assert_not_null(atlas)
-	assert_eq(atlas.get_size(), Vector2(1920, 960))
 	assert_eq(
-		atlas.get_width(),
-		atlas.get_height() * 2,
-		"Atlas retains eight integer square columns by four rows"
+		atlas.get_size(),
+		Vector2(CharacterWalkAtlas.CELL_SIZE * Vector2i(8, CharacterWalkAtlas.ROWS)),
+		"Eight facing columns by eight phase rows of 240 px cells"
 	)
-	assert_eq(atlas.get_image().get_pixel(0, 0).a, 0.0)
+	assert_eq(atlas.get_width(), atlas.get_height(), "Eight integer square cells each way")
+	var image := TexturePixels.readable(atlas)
+	assert_eq(image.get_pixel(0, 0).a, 0.0)
+	assert_eq(image.get_pixel(image.get_width() - 1, image.get_height() - 1).a, 0.0)
 
 
 func test_shared_scene_transition_and_lighting_layers_exist() -> void:
@@ -538,10 +563,16 @@ func test_higgsfield_slot_symbols_are_high_resolution_and_transparent() -> void:
 	for texture: Texture2D in SlotSymbol.TEXTURES:
 		var symbol_name := texture.resource_path
 		assert_string_starts_with(symbol_name, "res://assets/production/slot/elven/symbol_")
-		assert_eq(texture.get_size(), Vector2(1024, 1024), "%s retains its sharp master" % symbol_name)
+		assert_eq(
+			texture.get_size(), Vector2(1024, 1024), "%s retains its sharp master" % symbol_name
+		)
 		var image := texture.get_image()
 		assert_eq(image.get_pixel(0, 0).a, 0.0, "%s magenta corner is transparent" % symbol_name)
-		assert_gt(image.get_used_rect().size.x, 400, "%s retains a substantial opaque subject" % symbol_name)
+		assert_gt(
+			image.get_used_rect().size.x,
+			400,
+			"%s retains a substantial opaque subject" % symbol_name
+		)
 
 
 func test_slot_uses_a_full_screen_sharp_higgsfield_stage() -> void:
@@ -584,7 +615,14 @@ func test_slot_deck_exposes_bet_multiplier_and_return() -> void:
 		10,
 		190,
 		RoundResult.Outcome.WIN,
-		{"symbols": [SlotMachineMath.Symbol.SEVEN, SlotMachineMath.Symbol.SEVEN, SlotMachineMath.Symbol.SEVEN]}
+		{
+			"symbols":
+			[
+				SlotMachineMath.Symbol.SEVEN,
+				SlotMachineMath.Symbol.SEVEN,
+				SlotMachineMath.Symbol.SEVEN
+			]
+		}
 	)
 	game.panel._result = result
 	game.panel.refresh()
@@ -605,9 +643,7 @@ func test_blackjack_and_vault_use_distinct_full_screen_stages() -> void:
 	var table := blackjack_panel.find_child("BlackjackTableArt", true, false) as Sprite2D
 	assert_not_null(table)
 	assert_gte(
-		table.texture.get_width() * table.scale.x,
-		800.0,
-		"Blackjack felt owns the full game stage"
+		table.texture.get_width() * table.scale.x, 800.0, "Blackjack felt owns the full game stage"
 	)
 	assert_gte(table.texture.get_width(), 3840, "Blackjack table retains a native 4K master")
 	assert_not_null(blackjack_panel.find_child("BlackjackControlDeck", true, false))
@@ -674,5 +710,9 @@ func test_vault_uses_physical_tiles_with_flip_reveals() -> void:
 	game.panel.refresh()
 	assert_true(game.panel._vault_tiles[0].is_flipping, "Newly revealed box starts its flip")
 	assert_true(game.panel._vault_revealed.has(0))
-	assert_ne(game.panel._status.text, onboarding_text, "First choice clears the persistent instruction")
-	assert_eq(game.panel._status.text, game.panel._detail.text, "In-round status becomes live telemetry")
+	assert_ne(
+		game.panel._status.text, onboarding_text, "First choice clears the persistent instruction"
+	)
+	assert_eq(
+		game.panel._status.text, game.panel._detail.text, "In-round status becomes live telemetry"
+	)

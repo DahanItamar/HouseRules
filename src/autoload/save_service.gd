@@ -32,6 +32,7 @@ func save() -> Error:
 	state.contract_log = Economy.completion_log_snapshot()
 	state.rng_states = RNGService.snapshot()
 	state.achievements = platform.achievements.duplicate()
+	Progression.write_state(state)
 	var error: Error = platform.write_save(slot, JSON.stringify(state.to_dict()).to_utf8_buffer())
 	if error != OK:
 		save_failed.emit(error)
@@ -79,6 +80,7 @@ func _apply_state() -> void:
 	Economy.reset_contracts(state.active_contracts, state.contract_completions)
 	Economy.load_completion_log(state.contract_log)
 	platform.achievements = state.achievements.duplicate()
+	Progression.apply_state(state)
 
 
 func _recover_corrupt() -> Error:
@@ -102,6 +104,16 @@ func _migrate(data: Dictionary, version: int) -> Dictionary:
 		migrated["schema_version"] = 2
 		migrated["active_contracts"] = []
 		migrated["contract_completions"] = "0"
+	elif version == 2:
+		# House standing arrived with schema 3. It is derived from
+		# lifetime_wagered, which every older save already carries, so an old
+		# profile keeps its earned tier and only backfills the three records
+		# that could not have been kept: the streaks and the deed.
+		migrated["schema_version"] = 3
+		migrated["current_win_streak"] = "0"
+		migrated["longest_win_streak"] = "0"
+		migrated["acknowledged_tier"] = "0"
+		migrated["house_owned"] = false
 	else:
 		return {}
 	return migrated
@@ -112,6 +124,12 @@ func _valid_state(data: Dictionary) -> bool:
 		var value: Variant = data.get(key, -1)
 		if not _is_integer(value) or int(value) < 0 or int(value) > Wallet.MAX_CHIPS:
 			return false
+	for key: String in ["current_win_streak", "longest_win_streak", "acknowledged_tier"]:
+		var record: Variant = data.get(key, 0)
+		if not _is_integer(record) or int(record) < 0 or int(record) > Wallet.MAX_CHIPS:
+			return false
+	if not data.get("house_owned", false) is bool:
+		return false
 	if not _valid_nested_state(data):
 		return false
 	var tier: Variant = data.get("tier_unlocked", 0)

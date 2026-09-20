@@ -1,7 +1,7 @@
 class_name SaveGame
 extends RefCounted
 
-const CURRENT_SCHEMA_VERSION: int = 2
+const CURRENT_SCHEMA_VERSION: int = 3
 ## First-run tour states. Saves written before the tour existed load as DONE.
 const TUTORIAL_PENDING := "pending"
 const TUTORIAL_DONE := "done"
@@ -28,6 +28,14 @@ var tutorial_state: String = TUTORIAL_PENDING
 var wing_invitations: Array[String] = []
 ## Newest first: {"title_key": String, "reward": int}.
 var contract_log: Array[Dictionary] = []
+## House standing records (schema 3). Standing itself is read from
+## `lifetime_wagered`; these are the three things it cannot be derived from.
+var current_win_streak: int = 0
+var longest_win_streak: int = 0
+## The highest rung the player has already been shown, so a reload is quiet.
+var acknowledged_tier: int = 0
+## True once the Manager has sold the House.
+var house_owned: bool = false
 
 
 func to_dict() -> Dictionary:
@@ -50,7 +58,11 @@ func to_dict() -> Dictionary:
 		"created_at": created_at,
 		"tutorial_state": tutorial_state,
 		"wing_invitations": wing_invitations.duplicate(),
-		"contract_log": contract_log.duplicate(true)
+		"contract_log": contract_log.duplicate(true),
+		"current_win_streak": str(current_win_streak),
+		"longest_win_streak": str(longest_win_streak),
+		"acknowledged_tier": str(acknowledged_tier),
+		"house_owned": house_owned
 	}
 
 
@@ -79,6 +91,14 @@ static func from_dict(data: Dictionary) -> SaveGame:
 			if wing is String and not result.wing_invitations.has(wing):
 				result.wing_invitations.append(wing)
 	result.contract_log = sanitize_contract_log(data.get("contract_log", []))
+	result.current_win_streak = maxi(int(data.get("current_win_streak", 0)), 0)
+	result.longest_win_streak = maxi(
+		int(data.get("longest_win_streak", 0)), result.current_win_streak
+	)
+	result.acknowledged_tier = clampi(
+		int(data.get("acknowledged_tier", 0)), 0, HouseLevel.TIERS.size() - 1
+	)
+	result.house_owned = bool(data.get("house_owned", false))
 	return result
 
 

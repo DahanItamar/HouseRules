@@ -41,9 +41,16 @@ func is_below_solvency_floor() -> bool:
 	return Wallet.balance < SOLVENCY_FLOOR
 
 
+## Chips the Manager writes on one marker. `MARKER_STIPEND` is the base every
+## profile starts on; House standing raises it, and only above Whale, so the
+## shipped marker rules are unchanged until 100,000 chips have been turned over.
+func marker_stipend() -> int:
+	return maxi(HouseLevel.marker_stipend(lifetime_wagered), MARKER_STIPEND)
+
+
 func can_take_marker() -> bool:
 	return (
-		debt <= Wallet.MAX_CHIPS - MARKER_STIPEND
+		debt <= Wallet.MAX_CHIPS - marker_stipend()
 		and (is_below_solvency_floor() or Wallet.test_mode_enabled)
 	)
 
@@ -159,9 +166,10 @@ func record_round(cabinet_id: StringName, result: RoundResult) -> void:
 func take_marker() -> bool:
 	if not can_take_marker():
 		return false
-	debt += MARKER_STIPEND
-	if not Wallet.try_apply(0, MARKER_STIPEND):
-		debt -= MARKER_STIPEND
+	var stipend := marker_stipend()
+	debt += stipend
+	if not Wallet.try_apply(0, stipend):
+		debt -= stipend
 		return false
 	debt_changed.emit(debt)
 	if not Wallet.test_mode_enabled:

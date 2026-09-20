@@ -1,0 +1,187 @@
+{
+  "about": "Progression and stats UI (Higgsfield gpt_image_2_5, transparent). Nine-slice pieces list a four-side patch margin in source pixels and the flat centre colour behind them. Icons and medallions are trimmed and centred on one square canvas each. Import with mipmaps.",
+  "jobs": {
+    "bar_track": "b2d793e1-c398-4c34-b73f-0e79876c8e74",
+    "bar_fill": "86e1fde1-d1a4-41d0-a537-4ea081f5ff3d",
+    "stats_panel": "2c0382a9-8ad7-4e78-ab2e-5a87b4f7d3a1",
+    "rank_medallions": "494570ad-98ef-417a-9142-ae90308d2649",
+    "deed_keys": "f92a6f07-142a-4c32-be38-120bfa767386",
+    "stat_icons": "029a8af5-834c-4c74-8935-f6f3e8b0576a"
+  },
+  "pieces": {
+    "bar_fill": {
+      "path": "res://assets/production/ui/progression/bar_fill.png",
+      "kind": "nine_slice",
+      "patch_margin": {
+        "left": 65,
+        "right": 65,
+        "top": 0,
+        "bottom": 0
+      },
+      "centre_colour": "#ae7e23",
+      "size": [
+        888,
+        139
+      ]
+    },
+    "bar_track": {
+      "path": "res://assets/production/ui/progression/bar_track.png",
+      "kind": "nine_slice",
+      "patch_margin": {
+        "left": 79,
+        "right": 79,
+        "top": 20,
+        "bottom": 20
+      },
+      "centre_colour": "#0c0c0c",
+      "size": [
+        920,
+        162
+      ],
+      "channel_inset": {
+        "left": 37,
+        "right": 38,
+        "top": 18,
+        "bottom": 18
+      }
+    },
+    "deed_keys": {
+      "path": "res://assets/production/ui/progression/deed_keys.png",
+      "kind": "art",
+      "size": [
+        1024,
+        932
+      ],
+      "note": "The parchment is deliberately blank; the deed's wording is drawn in code."
+    },
+    "icon_cabinet": {
+      "path": "res://assets/production/ui/progression/icon_cabinet.png",
+      "kind": "icon",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "icon_chips": {
+      "path": "res://assets/production/ui/progression/icon_chips.png",
+      "kind": "icon",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "icon_clock": {
+      "path": "res://assets/production/ui/progression/icon_clock.png",
+      "kind": "icon",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "icon_coin": {
+      "path": "res://assets/production/ui/progression/icon_coin.png",
+      "kind": "icon",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "icon_down": {
+      "path": "res://assets/production/ui/progression/icon_down.png",
+      "kind": "icon",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "icon_flame": {
+      "path": "res://assets/production/ui/progression/icon_flame.png",
+      "kind": "icon",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "icon_laurel": {
+      "path": "res://assets/production/ui/progression/icon_laurel.png",
+      "kind": "icon",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "icon_up": {
+      "path": "res://assets/production/ui/progression/icon_up.png",
+      "kind": "icon",
+      "size": [
+        128,
+        128
+      ]
+    },
+    "rank_guest": {
+      "path": "res://assets/production/ui/progression/rank_guest.png",
+      "kind": "icon",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "rank_high_roller": {
+      "path": "res://assets/production/ui/progression/rank_high_roller.png",
+      "kind": "icon",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "rank_owner": {
+      "path": "res://assets/production/ui/progression/rank_owner.png",
+      "kind": "icon",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "rank_partner": {
+      "path": "res://assets/production/ui/progression/rank_partner.png",
+      "kind": "icon",
+      "size": [
+        256,
+        256
+      ],
+      "derived_from": "rank_owner",
+      "note": "Five medallions were painted for six ranks: Partner is the Owner key tinted to aged bronze so the pure gold key belongs to Owner alone."
+    },
+    "rank_regular": {
+      "path": "res://assets/production/ui/progression/rank_regular.png",
+      "kind": "icon",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "rank_whale": {
+      "path": "res://assets/production/ui/progression/rank_whale.png",
+      "kind": "icon",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "stats_panel": {
+      "path": "res://assets/production/ui/progression/stats_panel.png",
+      "kind": "nine_slice",
+      "patch_margin": {
+        "left": 83,
+        "right": 83,
+        "top": 83,
+        "bottom": 83
+      },
+      "centre_colour": "#080808",
+      "size": [
+        926,
+        914
+      ]
+    }
+  }
+}

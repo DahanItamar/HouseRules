@@ -50,7 +50,7 @@ var blocking: bool = true
 var _panel: Panel
 var _rules: Array[ColorRect] = []
 var _name_label: Label
-var _body: Label
+var _body: InputPromptLabel
 var _cameo_frame: Panel
 var _cameo_clip: Control
 var _cameo: TextureRect
@@ -144,8 +144,10 @@ func speaker_faces_text() -> bool:
 
 
 ## Shows one line. `speaker` is {"name", "texture", "region", "faces_right"};
-## `choices` is [{"id", "label"}]. `placement` optionally anchors the panel near
-## a painted speaker: {"panel": Rect2, "cameo_side": StringName, "pointer": Vector2}.
+## `choices` is [{"id", "label", "action"?}]: an optional input action draws its
+## glyph on the button. The line may carry input tokens such as `{move}`.
+## `placement` optionally anchors the panel near a painted speaker:
+## {"panel": Rect2, "cameo_side": StringName, "pointer": Vector2}.
 ## `hard` rectangles must stay uncovered; `soft` ones are avoided when possible.
 func present(
 	speaker: Dictionary,
@@ -165,7 +167,7 @@ func present(
 	atlas.region = speaker.region
 	_cameo.texture = atlas
 	_name_label.text = String(speaker.name)
-	_body.text = text_value
+	_body.template = text_value
 	_apply_layout(_choose(placement, hard, soft), placement)
 	_set_choices(choices)
 	_open = true
@@ -391,7 +393,11 @@ func _step_focus(step: int) -> void:
 func _current_choices() -> Array[Dictionary]:
 	var choices: Array[Dictionary] = []
 	for index: int in range(_buttons.size()):
-		choices.append({"id": _choice_ids[index], "label": _buttons[index].text})
+		var choice := {"id": _choice_ids[index], "label": _buttons[index].text}
+		var prompt := _buttons[index] as PromptButton
+		if prompt != null and prompt.action != &"":
+			choice["action"] = prompt.action
+		choices.append(choice)
 	return choices
 
 
@@ -410,7 +416,8 @@ func _set_choices(choices: Array[Dictionary]) -> void:
 	var x := column_x + column_width - (width * count + 8.0 * (count - 1))
 	for index: int in range(count):
 		var choice: Dictionary = choices[index]
-		var button := Button.new()
+		var button := PromptButton.new()
+		button.action = StringName(choice.get("action", &""))
 		button.name = "Choice_%s" % String(choice.id)
 		button.text = String(choice.label)
 		button.position = Vector2(x + index * (width + 8.0), _panel.size.y - MIN_TARGET - 12.0)
@@ -495,7 +502,7 @@ func _build() -> void:
 	_name_label.add_theme_font_size_override("font_size", Typography.CONTROL)
 	_name_label.add_theme_color_override("font_color", BRASS)
 	_panel.add_child(_name_label)
-	_body = Label.new()
+	_body = InputPromptLabel.new()
 	_body.name = "Line"
 	_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_body.add_theme_font_override("font", Typography.UI_FONT)

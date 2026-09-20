@@ -6,12 +6,14 @@ extends Control
 ## It only reads Economy; contract progress, completion and rewards stay in
 ## Economy.record_round. The board sits on the left of the office so the player
 ## at reception, the secretary and the room controls stay visible.
+##
+## Each row's bar is a painted `ProgressMeter`, so it fills smoothly when a
+## contract advances and lands on its final width at once under reduced motion.
 
 signal closed
 
 const RECT := Rect2(48, 72, 404, 372)
 const SURFACE := Color("0e0b0df5")
-const TRACK := Color("2a2226")
 const BRASS := Color("c8a34b")
 const IVORY := Color("f1e8d8")
 const MUTED := Color("b8ad9c")
@@ -98,7 +100,7 @@ func row_data() -> Array[Dictionary]:
 					"title": (row.title as Label).text,
 					"progress": (row.progress as Label).text,
 					"reward": (row.reward as Label).text,
-					"fill": (row.fill as ColorRect).size.x / BAR_WIDTH,
+					"fill": (row.meter as ProgressMeter).shown_ratio(),
 				}
 			)
 		)
@@ -120,7 +122,7 @@ func refresh() -> void:
 	for index: int in range(_rows.size()):
 		var row: Dictionary = _rows[index]
 		var shown := index < contracts.size()
-		for key: String in ["title", "progress", "reward", "track", "fill"]:
+		for key: String in ["title", "progress", "reward", "meter"]:
 			(row[key] as CanvasItem).visible = shown
 		if not shown:
 			continue
@@ -130,8 +132,8 @@ func refresh() -> void:
 			tr("CONTRACT_BOARD_PROGRESS") % [contract.progress, contract.target]
 		)
 		(row.reward as Label).text = tr("CONTRACT_BOARD_REWARD") % contract.reward
-		var ratio := clampf(float(contract.progress) / maxf(float(contract.target), 1.0), 0.0, 1.0)
-		(row.fill as ColorRect).size.x = BAR_WIDTH * ratio
+		var ratio := float(contract.progress) / maxf(float(contract.target), 1.0)
+		(row.meter as ProgressMeter).set_ratio(ratio)
 	var entries := Economy.completion_log
 	for index: int in range(_log_lines.size()):
 		var label := _log_lines[index]
@@ -175,14 +177,12 @@ func _build() -> void:
 		var row := {
 			"title": _label("", Vector2(18, top), Vector2(290, 22), 16, IVORY, false),
 			"reward": _label("", Vector2(306, top), Vector2(80, 22), 16, BRASS, true),
-			"track": _bar(Vector2(18, top + 28), BAR_WIDTH, TRACK),
-			"fill": _bar(Vector2(18, top + 28), 0.0, BRASS),
+			"meter": _meter(Vector2(18, top + 26), index),
 			"progress": _label("", Vector2(316, top + 21), Vector2(70, 20), 14, MUTED, false),
 		}
 		(row.reward as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		(row.progress as Label).horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		(row.title as Label).name = "ContractTitle%d" % index
-		(row.fill as ColorRect).name = "ContractFill%d" % index
 		_rows.append(row)
 	var log_top := ROW_TOP + Economy.CONTRACT_SLOTS * ROW_HEIGHT + 2.0
 	_rule(Vector2(18, log_top), RECT.size.x - 36.0)
@@ -232,14 +232,13 @@ func _label(
 	return label
 
 
-func _bar(at: Vector2, width: float, color: Color) -> ColorRect:
-	var bar := ColorRect.new()
-	bar.position = at
-	bar.size = Vector2(width, 6)
-	bar.color = color
-	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_panel.add_child(bar)
-	return bar
+func _meter(at: Vector2, index: int) -> ProgressMeter:
+	var meter := ProgressMeter.new()
+	meter.name = "ContractFill%d" % index
+	meter.position = at
+	meter.size = Vector2(BAR_WIDTH, 11)
+	_panel.add_child(meter)
+	return meter
 
 
 func _rule(at: Vector2, width: float) -> void:
