@@ -1,7 +1,7 @@
 class_name CoreOverclockMath
 extends RefCounted
-## Core Overclock: a crash game, presented as Forno d'Oro, a pizza bake. A run
-## climbs an exponential multiplier curve until it crashes; the player banks the
+## Core Overclock: a crash game, presented as Corsair's Reach. A run climbs an
+## exponential multiplier curve until it crashes; the player hauls in the
 ## multiplier before it does, or loses the stake. This file is the theme-free
 ## math: the presentation names the states.
 ##

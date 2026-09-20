@@ -1,7 +1,5 @@
 keys,en
 GAME_TITLE,HOUSE RULES
-MENU_KICKER,VELVET DECO CASINO
-MENU_SUBTITLE,"Three games. One bankroll. The house remembers."
 MENU_CONTROLS,"[%s] Enter the casino\n[%s] Save and quit"
 MENU_REDUCED_MOTION,[%s] REDUCED MOTION  %s
 MENU_REDUCED_MOTION_HELP,Stops ambient movement and shortens transitions.
@@ -632,27 +630,27 @@ CABINET_CORE_OVERCLOCK_NAME,CORSAIR'S REACH
 CORE_OVERCLOCK_THEME_TITLE,CORSAIR'S REACH
 CORE_OVERCLOCK_STATE_READY,AT ANCHOR
 CORE_OVERCLOCK_STATE_COUNTDOWN,MAKING SAIL
-CORE_OVERCLOCK_STATE_BAKING,RUNNING
-CORE_OVERCLOCK_STATE_SERVED,HAULED IN
-CORE_OVERCLOCK_STATE_BURNT,BROKEN UP
+CORE_OVERCLOCK_STATE_RUNNING,RUNNING
+CORE_OVERCLOCK_STATE_HAULED,HAULED IN
+CORE_OVERCLOCK_STATE_CRASHED,BROKEN UP
 CORE_OVERCLOCK_RECENT,RECENT RUNS
 CORE_OVERCLOCK_VALUE,HAUL %d
-CORE_OVERCLOCK_ACTION_BAKE,CAST OFF
+CORE_OVERCLOCK_ACTION_LAUNCH,CAST OFF
 CORE_OVERCLOCK_ACTION_PULL,HAUL IT IN
 CORE_OVERCLOCK_AUTO_OFF,NO ORDERS
 CORE_OVERCLOCK_AUTO_AT,TURN AT %s×
 CORE_OVERCLOCK_STATUS_READY,Set your stake and cast off
 CORE_OVERCLOCK_STATUS_COUNTDOWN,Making sail before the swell
-CORE_OVERCLOCK_STATUS_BAKING,Haul it in before the sea takes her
-CORE_OVERCLOCK_STATUS_SERVED,Hauled in at %s× · paid %d
-CORE_OVERCLOCK_STATUS_BURNT,Broken up at %s×
+CORE_OVERCLOCK_STATUS_RUNNING,Haul it in before the sea takes her
+CORE_OVERCLOCK_STATUS_HAULED,Hauled in at %s× · paid %d
+CORE_OVERCLOCK_STATUS_CRASHED,Broken up at %s×
 CORE_OVERCLOCK_NEED_STAKE,No stake your credits can cover
 CORE_OVERCLOCK_HELP_LOCKED,The guide opens between runs
-DECK_FORNO_BETTING,"Set your stake with {bet_down}{bet_up}, then {interact} Cast off      {back} Leave"
-DECK_FORNO_COUNTDOWN,Making sail…
-DECK_FORNO_BAKING,{interact} Haul it in      every wave she rides is more gold
-DECK_FORNO_SERVED,You keep %d      {interact} Sail again
-DECK_FORNO_BURNT,The sea takes %d      {interact} Sail again
+DECK_CORSAIR_BETTING,"Set your stake with {bet_down}{bet_up}, then {interact} Cast off      {back} Leave"
+DECK_CORSAIR_COUNTDOWN,Making sail…
+DECK_CORSAIR_RUNNING,{interact} Haul it in      every wave she rides is more gold
+DECK_CORSAIR_HAULED,You keep %d      {interact} Sail again
+DECK_CORSAIR_CRASHED,The sea takes %d      {interact} Sail again
 HELP_CORE_OVERCLOCK_GOAL,Run your galleon before a rising sea and haul in the prize before she is taken.
 HELP_CORE_OVERCLOCK_STEPS,"Set your stake with {bet_down} and {bet_up}.
 Optionally give standing orders with {secondary}: she turns back there by herself.
@@ -669,9 +667,9 @@ HELP_CORE_OVERCLOCK_CONTROLS,"%s  Cast off, then haul in
 %s  Change stake
 %s  Leave"
 HELP_CORE_OVERCLOCK_NOTE,One run in %.0f%% is taken before she clears the bar. Every order returns the same 97%%.
-HELP_PAY_FORNO_REACH,Turn back at %s×
-HELP_CONTROL_FORNO_PRIMARY,Bake / Pull it out
-HELP_CONTROL_FORNO_AUTO,Oven timer
+HELP_PAY_CORSAIR_REACH,Turn back at %s×
+HELP_CONTROL_CORSAIR_PRIMARY,Cast off / Haul it in
+HELP_CONTROL_CORSAIR_AUTO,Auto-haul target
 TIER_GUEST,GUEST
 TIER_REGULAR,REGULAR
 TIER_HIGH_ROLLER,HIGH ROLLER

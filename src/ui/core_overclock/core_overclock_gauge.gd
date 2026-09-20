@@ -1,13 +1,13 @@
 class_name CoreOverclockGauge
 extends Control
-## The oven temperature gauge: the cabinet's central object and the only live
-## multiplier on the screen. The painted brass gauge carries a blank cream dial;
-## the heat sweep, the ticks, the needle, the multiplier and what the pizza is
-## worth are all drawn on that dial in code, in dark ink so they read against
-## the cream.
+## The readout: the cabinet's central object and the only live multiplier on the
+## screen. In its `bare` form it is the number alone, set over the chart. The
+## painted brass compass case carries a blank cream dial instead, and the climb
+## sweep, the ticks, the needle, the multiplier and what the run is worth are all
+## drawn on that dial in code, in dark ink so they read against the cream.
 ##
 ## The needle is on a spring, so it sweeps with a little overshoot instead of
-## snapping, and the dial warms in colour as the bake goes on. The multiplier is
+## snapping, and the face warms in colour as the climb goes on. The multiplier is
 ## the one thing that must always be readable, so nothing is ever drawn over the
 ## dial, the number is fitted to the dial rather than clipped, and the pop it
 ## makes when it crosses a whole multiplier is bounded - and skipped entirely
@@ -29,24 +29,24 @@ const SETTLE_POP_SCALE: float = 0.18
 const NEEDLE_STIFFNESS: float = 120.0
 const NEEDLE_DAMPING: float = 14.0
 const NEEDLE_CEILING: float = 1.12
-## The kick the needle takes when the pizza burns.
+## The kick the needle takes when the sea takes her.
 const SLAM_SPEED: float = 9.0
-## How hard the needle trembles at full heat, in radians.
+## How hard the needle trembles at the top of the climb, in radians.
 const TREMBLE: float = 0.014
 
 signal whole_multiple_passed
 
 var centi: int = 100
 var auto_centi: int = 0
-## 0 to 1 while the oven comes up to temperature during the countdown.
+## 0 to 1 while the cabinet makes sail during the countdown.
 var charge: float = 0.0
 var caption: String = ""
-var caption_color := CoreOverclockTheme.TERRACOTTA_DEEP
+var caption_color := CoreOverclockTheme.RUST_DEEP
 var value_text: String = ""
 ## Drawn as bare typography over the canvas, with no case around it.
 var bare: bool = false
 var number_color := CoreOverclockTheme.INK
-var baking: bool = false
+var climbing: bool = false
 var _needle: float = 0.0
 var _needle_speed: float = 0.0
 var _pop_left: float = 0.0
@@ -103,8 +103,8 @@ func set_charge(value: float) -> void:
 	queue_redraw()
 
 
-func set_bake_state(is_baking: bool) -> void:
-	baking = is_baking
+func set_climb_state(is_climbing: bool) -> void:
+	climbing = is_climbing
 	queue_redraw()
 
 
@@ -119,7 +119,7 @@ func set_caption(text: String, ink: Color) -> void:
 	queue_redraw()
 
 
-## What the pizza is worth right now.
+## What the run is worth right now.
 func set_value(text: String) -> void:
 	value_text = text
 	queue_redraw()
@@ -130,12 +130,12 @@ func set_number_color(ink: Color) -> void:
 	queue_redraw()
 
 
-## One larger bounded pop when the bake settles.
+## One larger bounded pop when the run settles.
 func settle_pop() -> void:
 	_pop(SETTLE_POP_SCALE)
 
 
-## The burn: the needle is kicked past its stop and settles back.
+## The sea taking her: the needle is kicked past its stop and settles back.
 func slam() -> void:
 	if MotionPolicy.is_reduced():
 		return
@@ -155,7 +155,7 @@ func reset() -> void:
 	_pop_scale = 0.0
 	_needle = 0.0
 	_needle_speed = 0.0
-	baking = false
+	climbing = false
 	charge = 0.0
 	queue_redraw()
 
@@ -169,7 +169,7 @@ func _pop(scale_amount: float) -> void:
 
 
 func _process(delta: float) -> void:
-	var target := _heat()
+	var target := _climb()
 	if MotionPolicy.is_reduced():
 		if not is_equal_approx(_needle, target):
 			_needle = target
@@ -183,7 +183,7 @@ func _process(delta: float) -> void:
 		if absf(_needle - before) > 0.0002:
 			queue_redraw()
 		_phase += delta
-		if baking:
+		if climbing:
 			queue_redraw()
 	if _pop_left > 0.0:
 		_pop_left = maxf(_pop_left - delta, 0.0)
@@ -194,17 +194,17 @@ func _on_motion_preference_changed(reduced: bool) -> void:
 	if reduced:
 		_pop_left = 0.0
 		_phase = 0.0
-		_needle = _heat()
+		_needle = _climb()
 		_needle_speed = 0.0
 	queue_redraw()
 
 
-func _heat() -> float:
-	return CoreOverclockTheme.heat_of(centi)
+func _climb() -> float:
+	return CoreOverclockTheme.climb_of(centi)
 
 
 func _draw() -> void:
-	var heat := _heat()
+	var climb := _climb()
 	var centre := dial_centre()
 	var radius := dial_radius()
 	if bare:
@@ -213,35 +213,35 @@ func _draw() -> void:
 		# middle of the canvas and hid the very thing the player is watching.
 		_draw_readout(centre, radius)
 		return
-	_draw_lamp(centre, radius, heat)
+	_draw_lamp(centre, radius, climb)
 	draw_texture_rect(CoreOverclockTheme.GAUGE, Rect2(Vector2.ZERO, size), false)
-	_draw_dial_warmth(centre, radius, heat)
-	_draw_sweep(centre, radius, heat)
+	_draw_dial_warmth(centre, radius, climb)
+	_draw_sweep(centre, radius, climb)
 	_draw_ticks(centre, radius)
 	_draw_needle(centre, radius)
 	_draw_charge(centre, radius)
 	_draw_readout(centre, radius)
 
 
-## The oven light on the glass, warmer the longer the bake runs. Cabinet screens
-## may glow; the floor and the HUD may not.
-func _draw_lamp(centre: Vector2, radius: float, heat: float) -> void:
-	var ink := CoreOverclockTheme.heat_color(heat)
+## Lamplight on the glass, warmer the further the run has climbed. Cabinet
+## screens may glow; the floor and the HUD may not.
+func _draw_lamp(centre: Vector2, radius: float, climb: float) -> void:
+	var ink := CoreOverclockTheme.climb_color(climb)
 	for index: int in range(5):
-		var alpha := (0.05 + heat * 0.12) * (1.0 - float(index) / 5.0)
+		var alpha := (0.05 + climb * 0.12) * (1.0 - float(index) / 5.0)
 		draw_circle(centre, radius + 8.0 + float(index) * 6.0, Color(ink, alpha))
 
 
-## The cream dial itself takes the heat, so the whole face warms as it bakes.
-func _draw_dial_warmth(centre: Vector2, radius: float, heat: float) -> void:
-	if heat <= 0.0:
+## The cream dial takes the colour too, so the whole face warms with the climb.
+func _draw_dial_warmth(centre: Vector2, radius: float, climb: float) -> void:
+	if climb <= 0.0:
 		return
-	draw_circle(centre, radius * 0.99, Color(CoreOverclockTheme.heat_color(heat), heat * 0.26))
+	draw_circle(centre, radius * 0.99, Color(CoreOverclockTheme.climb_color(climb), climb * 0.26))
 
 
-## The heat sweep filled in behind the ticks, and the set timer marked on it.
-func _draw_sweep(centre: Vector2, radius: float, heat: float) -> void:
-	var ink := CoreOverclockTheme.heat_color(heat)
+## The climb sweep filled in behind the ticks, and the auto-haul target on it.
+func _draw_sweep(centre: Vector2, radius: float, climb: float) -> void:
+	var ink := CoreOverclockTheme.climb_color(climb)
 	draw_arc(
 		centre,
 		radius * 0.88,
@@ -266,12 +266,12 @@ func _draw_sweep(centre: Vector2, radius: float, heat: float) -> void:
 		)
 	if auto_centi <= 0:
 		return
-	var mark := SWEEP_START + SWEEP_SPAN * CoreOverclockTheme.heat_of(auto_centi)
+	var mark := SWEEP_START + SWEEP_SPAN * CoreOverclockTheme.climb_of(auto_centi)
 	var direction := Vector2(cos(mark), sin(mark))
 	draw_line(
 		centre + direction * (radius * 0.76),
 		centre + direction * (radius * 0.99),
-		CoreOverclockTheme.TERRACOTTA,
+		CoreOverclockTheme.RUST,
 		2.5,
 		true
 	)
@@ -292,10 +292,10 @@ func _draw_ticks(centre: Vector2, radius: float) -> void:
 		)
 
 
-## A terracotta needle riding the rim, so it never crosses the number.
+## A rust-red needle riding the rim, so it never crosses the number.
 func _draw_needle(centre: Vector2, radius: float) -> void:
 	var tremble := 0.0
-	if baking and MotionPolicy.allows_continuous_motion():
+	if climbing and MotionPolicy.allows_continuous_motion():
 		tremble = sin(_phase * 26.0) * TREMBLE * _needle
 	var angle := SWEEP_START + SWEEP_SPAN * _needle + tremble
 	var direction := Vector2(cos(angle), sin(angle))
@@ -304,12 +304,12 @@ func _draw_needle(centre: Vector2, radius: float) -> void:
 	var base := centre + direction * (radius * 0.78)
 	draw_colored_polygon(
 		PackedVector2Array([tip, base + side * 5.0, base - side * 5.0]),
-		CoreOverclockTheme.TERRACOTTA_DEEP
+		CoreOverclockTheme.RUST_DEEP
 	)
-	draw_circle(centre + direction * (radius * 0.78), 3.0, CoreOverclockTheme.TERRACOTTA_DEEP)
+	draw_circle(centre + direction * (radius * 0.78), 3.0, CoreOverclockTheme.RUST_DEEP)
 
 
-## The countdown, as the oven coming up to temperature around the dial.
+## The countdown, as the cabinet making sail around the dial.
 func _draw_charge(centre: Vector2, radius: float) -> void:
 	if charge <= 0.0:
 		return
@@ -394,5 +394,5 @@ func _draw_readout(centre: Vector2, radius: float) -> void:
 		value_text,
 		centre + Vector2(0.0, radius * (0.86 if bare else 0.48)),
 		_fitted_size(font, value_text, int(VALUE_SIZE * (1.5 if bare else 1.0)), radius * 1.18),
-		CoreOverclockTheme.BRASS_BRIGHT if bare else CoreOverclockTheme.TERRACOTTA_DEEP
+		CoreOverclockTheme.BRASS_BRIGHT if bare else CoreOverclockTheme.RUST_DEEP
 	)

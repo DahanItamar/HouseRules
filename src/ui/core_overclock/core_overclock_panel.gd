@@ -1,27 +1,27 @@
 class_name CoreOverclockPanel
 extends CabinetPanel
-## Forno d'Oro cabinet presentation, laid out on the centre line: the oven gauge
-## at the middle of the screen, the bake curve and the recent-bakes board in the
-## left column, the pizzaiola in the right column at the same width, the pizza
-## baking on the counter under the gauge, and the shared control deck across the
-## foot. The oven timer sits top-left, mirroring How to play top-right.
+## Corsair's Reach cabinet presentation, laid out on the centre line: the chart
+## and the climb in the middle of the screen with the multiplier read off it, the
+## crew in lanes down either edge, and the shared control deck across the foot.
+## The auto-haul target sits top-left, mirroring How to play top-right.
 ##
-## Game state is read from the cabinet every frame and never written. The bake
-## is already decided when it starts; this only replays it.
+## Game state is read from the cabinet every frame and never written. The run is
+## already decided when it starts; this only replays it.
 
-const STAGE_NAME := "FornoStage"
-## Shake starts only once the oven is genuinely hot, and stays small.
+const STAGE_NAME := "CorsairStage"
+## Shake starts only once the climb is genuinely long, and stays small.
 const SHAKE_FROM: float = 0.30
 const SHAKE_PIXELS: float = 3.2
-const BURN_IMPULSE: float = 8.0
+const CRASH_IMPULSE: float = 8.0
 const IMPULSE_DECAY: float = 22.0
-## The fire's pulse: the interval shortens and the pitch rises with the heat.
+## The swell's pulse: the interval shortens and the pitch rises with the climb.
 const PULSE_SLOW: float = 0.50
 const PULSE_FAST: float = 0.13
 const ROAR_FROM: float = 0.40
 const ROAR_SLOW: float = 0.62
 const ROAR_FAST: float = 0.30
-const SERVED_SECONDS: float = 2.4
+## How long a settled run is held on screen before the line is cleared.
+const SETTLE_SECONDS: float = 2.4
 ## How long the ship's break-up plays for.
 const WRECK_SECONDS: float = 0.9
 const NOTICE_SECONDS: float = 1.8
@@ -46,7 +46,7 @@ var _shake_phase: float = 0.0
 var _impulse: float = 0.0
 var _pulse_left: float = 0.0
 var _roar_left: float = 0.0
-var _served_left: float = 0.0
+var _settle_left: float = 0.0
 var _notice_key: String = ""
 var _notice: Tween
 
@@ -125,16 +125,16 @@ func _build_cabinet() -> void:
 	call_deferred("_focus_default_action")
 
 
-## The left column: the recent-bakes board, on the same terracotta plate language
-## and the same width as the host lane opposite.
+## The recent-runs strip in the top-left corner, on the same brass-and-rope
+## plate language as the title and the auto-haul target.
 ##
-## A drawn bake curve used to sit above it and plot the multiplier the dial was
-## already showing. Two readouts of one number is one too many, so the curve is
-## gone and the pizza in the oven carries the tension instead.
+## A second drawn curve used to sit above it and plot the multiplier the readout
+## was already showing. Two readouts of one number is one too many, so that curve
+## is gone and the climb over the chart carries the tension instead.
 func _build_left_column() -> void:
 	var border := CoreOverclockTheme.frame_border()
 	_stage.add_child(
-		CoreOverclockTheme.frame_plate("FornoRecentPlate", CoreOverclockTheme.HISTORY_RECT)
+		CoreOverclockTheme.frame_plate("CorsairRecentPlate", CoreOverclockTheme.HISTORY_RECT)
 	)
 	history = CoreOverclockHistory.new()
 	history.position = CoreOverclockTheme.HISTORY_RECT.position + Vector2.ONE * border
@@ -144,7 +144,7 @@ func _build_left_column() -> void:
 	_stage.add_child(history)
 
 
-## Both pizzaiole, as one layer. Each state of the bake is a single painted
+## Both of the crew, as one layer. Each state of the run is a single painted
 ## frame with both of them in it, so their reaction is shared by construction.
 func _build_hosts() -> void:
 	hosts = CoreOverclockHosts.new()
@@ -186,7 +186,7 @@ func _build_flight() -> void:
 
 func _build_title_plate() -> void:
 	var plate := CoreOverclockTheme.frame_plate(
-		"FornoTitlePlate", CoreOverclockTheme.TITLE_RECT, 0.075
+		"CorsairTitlePlate", CoreOverclockTheme.TITLE_RECT, 0.075
 	)
 	plate.z_index = 5
 	add_child(plate)
@@ -209,7 +209,7 @@ func _build_title_plate() -> void:
 
 func _build_deck() -> void:
 	deck = CabinetDeck.new()
-	deck.name = "FornoControlDeck"
+	deck.name = "CorsairControlDeck"
 	deck.z_index = 6
 	add_child(deck)
 	deck.build(CoreOverclockTheme.deck_style())
@@ -217,19 +217,20 @@ func _build_deck() -> void:
 	deck.bet.step_requested.connect(_on_deck_bet_step)
 	deck.quick_bets.operation_requested.connect(_on_quick_bet)
 	primary_button = deck.add_action(
-		&"primary", tr("CORE_OVERCLOCK_ACTION_BAKE"), &"interact", true
+		&"primary", tr("CORE_OVERCLOCK_ACTION_LAUNCH"), &"interact", true
 	)
-	primary_button.name = "FornoPrimaryAction"
+	primary_button.name = "CorsairPrimaryAction"
 	deck.action_pressed.connect(_on_deck_action)
 
 
-## The oven timer mirrors How to play at the other end of the header, so the
-## two settings sit at the same height and the header stays balanced. The deck
-## itself is full: balance, bet, the shared quick-bet row and the primary key.
+## The auto-haul target mirrors How to play at the other end of the header, so
+## the two settings sit at the same height and the header stays balanced. The
+## deck itself is full: balance, bet, the shared quick-bet row and the primary
+## key.
 func _build_timer_control() -> void:
 	var style := CoreOverclockTheme.deck_style()
 	auto_button = PromptButton.new()
-	auto_button.name = "FornoTimerAction"
+	auto_button.name = "CorsairAutoHaulAction"
 	auto_button.text = tr("CORE_OVERCLOCK_AUTO_OFF")
 	auto_button.action = &"secondary"
 	auto_button.focus_mode = Control.FOCUS_ALL
@@ -247,10 +248,10 @@ func _build_timer_control() -> void:
 
 
 ## The deck's bet steppers are pointer and shoulder-button controls and never
-## take focus, so the focus row is the timer, the primary key and Help.
+## take focus, so the focus row is the auto-haul target, the primary key and Help.
 func _link_focus() -> void:
-	# The header reads left to right - timer, then How to play - and both drop to
-	# the primary key at the foot of the screen.
+	# The header reads left to right - the target, then How to play - and both
+	# drop to the primary key at the foot of the screen.
 	auto_button.focus_neighbor_right = auto_button.get_path_to(_help_button)
 	auto_button.focus_neighbor_bottom = auto_button.get_path_to(primary_button)
 	_help_button.focus_neighbor_left = _help_button.get_path_to(auto_button)
@@ -278,10 +279,10 @@ func _on_quick_bet(operation: int) -> void:
 		refresh()
 
 
-## Each whole multiple the bake passes gets one tick, in step with the pop the
-## gauge gives the number.
+## Each whole multiple the climb passes gets one tick, in step with the pop the
+## readout gives the number.
 func _on_whole_multiple() -> void:
-	AudioService.play(&"oven_tick", 1.0 + CoreOverclockTheme.heat_of(gauge.centi) * 0.7)
+	AudioService.play(&"corsair_tick", 1.0 + CoreOverclockTheme.climb_of(gauge.centi) * 0.7)
 
 
 func _focus_default_action() -> void:
@@ -290,7 +291,7 @@ func _focus_default_action() -> void:
 	primary_button.grab_focus()
 
 
-## WASD/D-pad focus walk between the timer, the primary key and Help.
+## WASD/D-pad focus walk between the auto-haul target, the primary key and Help.
 func navigate(direction: Vector2i) -> bool:
 	var focused := get_viewport().gui_get_focus_owner()
 	if focused == null or not _owns_control(focused):
@@ -330,19 +331,19 @@ func show_notice(key: String) -> void:
 	refresh()
 
 
-## The cabinet has locked the stake and decided the bake; start the replay.
-func begin_bake() -> void:
+## The cabinet has locked the stake and decided the run; start the replay.
+func begin_run() -> void:
 	_result = null
 	gauge.reset()
 	gauge.set_number_color(CoreOverclockTheme.CREAM)
 	burst.clear()
 	# She leaves the perch; the line builds from nothing.
 	flight.set_reach(0.0, true)
-	_served_left = 0.0
+	_settle_left = 0.0
 	_impulse = 0.0
 	_pulse_left = 0.0
 	_roar_left = 0.0
-	AudioService.play(&"oven_load")
+	AudioService.play(&"corsair_cast_off")
 	_sync_state(true)
 	refresh()
 
@@ -352,12 +353,12 @@ func tick(delta: float) -> void:
 	if not _built:
 		return
 	var math := _math()
-	var baking := math.state == CoreOverclockMath.State.OVERCLOCKING
-	var heat := CoreOverclockTheme.heat_of(math.multiplier_centi)
+	var climbing := math.state == CoreOverclockMath.State.OVERCLOCKING
+	var climb := CoreOverclockTheme.climb_of(math.multiplier_centi)
 	if math.state != _shown_state:
 		_sync_state(false)
 	gauge.set_centi(math.multiplier_centi)
-	gauge.set_bake_state(baking)
+	gauge.set_climb_state(climbing)
 	gauge.set_charge(
 		(
 			0.0
@@ -365,21 +366,21 @@ func tick(delta: float) -> void:
 			else 1.0 - math.countdown_left / maxf(math.paytable.countdown_seconds, 0.001)
 		)
 	)
-	backdrop.set_bake(heat, baking or math.state == CoreOverclockMath.State.COUNTDOWN)
-	if baking:
+	backdrop.set_climb(climb, climbing or math.state == CoreOverclockMath.State.COUNTDOWN)
+	if climbing:
 		gauge.set_value(tr("CORE_OVERCLOCK_VALUE") % math.current_payout())
 		# She climbs with the multiplier: same curve, drawn instead of counted.
-		flight.set_reach(heat, true)
+		flight.set_reach(climb, true)
 	_advance_wreck(delta)
-	_update_shake(delta, heat, baking)
-	_update_audio(delta, heat, baking)
-	if _served_left > 0.0:
-		_served_left = maxf(_served_left - delta, 0.0)
-		if _served_left <= 0.0:
+	_update_shake(delta, climb, climbing)
+	_update_audio(delta, climb, climbing)
+	if _settle_left > 0.0:
+		_settle_left = maxf(_settle_left - delta, 0.0)
+		if _settle_left <= 0.0:
 			flight.set_reach(0.0, false)
 
 
-## Reacts once to each state the bake moves through.
+## Reacts once to each state the run moves through.
 func _sync_state(initial: bool) -> void:
 	var math := _math()
 	var state := math.state
@@ -392,13 +393,13 @@ func _sync_state(initial: bool) -> void:
 		state == CoreOverclockMath.State.OVERCLOCKING
 		and previous == CoreOverclockMath.State.COUNTDOWN
 	):
-		# The dough is on the stone: a puff of flour off the peel.
-		burst.puff(flight.crest_point(1.0), CoreOverclockTheme.EMBER_FLOUR[0], 170.0)
+		# She is away: a burst of spray off the water as the line goes out.
+		burst.puff(flight.crest_point(1.0), CoreOverclockTheme.EMBER_SPRAY[0], 170.0)
 		burst.sparks(flight.crest_point(1.0), 8)
 	refresh()
 
 
-## What the pair are feeling at this point in the bake. Both of them feel it,
+## What the pair are feeling at this point in the run. Both of them feel it,
 ## because a state is one painted frame of the two of them.
 static func _host_state_for(state: int) -> StringName:
 	match state:
@@ -411,7 +412,7 @@ static func _host_state_for(state: int) -> StringName:
 	return &"ready"
 
 
-func _update_shake(delta: float, heat: float, baking: bool) -> void:
+func _update_shake(delta: float, climb: float, climbing: bool) -> void:
 	if _impulse > 0.0:
 		_impulse = maxf(_impulse - delta * IMPULSE_DECAY, 0.0)
 	if not MotionPolicy.allows_camera_emphasis():
@@ -419,8 +420,8 @@ func _update_shake(delta: float, heat: float, baking: bool) -> void:
 		return
 	_shake_phase += delta
 	var amplitude := _impulse
-	if baking and heat > SHAKE_FROM:
-		amplitude = maxf(amplitude, (heat - SHAKE_FROM) / (1.0 - SHAKE_FROM) * SHAKE_PIXELS)
+	if climbing and climb > SHAKE_FROM:
+		amplitude = maxf(amplitude, (climb - SHAKE_FROM) / (1.0 - SHAKE_FROM) * SHAKE_PIXELS)
 	if amplitude <= 0.0:
 		_stage.position = Vector2.ZERO
 		return
@@ -429,50 +430,54 @@ func _update_shake(delta: float, heat: float, baking: bool) -> void:
 	)
 
 
-## The fire: a pulse that speeds up and rises in pitch with the heat, and a roar
-## under it once the bake is far enough along to be worth losing.
-func _update_audio(delta: float, heat: float, baking: bool) -> void:
-	if not baking:
+## The sea: a pulse that speeds up and rises in pitch with the climb, and a roar
+## under it once the run is far enough along to be worth losing.
+func _update_audio(delta: float, climb: float, climbing: bool) -> void:
+	if not climbing:
 		return
 	_pulse_left -= delta
 	if _pulse_left <= 0.0:
-		AudioService.play(&"oven_pulse", 1.0 + heat * 1.4)
-		_pulse_left = lerpf(PULSE_SLOW, PULSE_FAST, heat)
-	if heat < ROAR_FROM:
+		AudioService.play(&"corsair_wave", 1.0 + climb * 1.4)
+		_pulse_left = lerpf(PULSE_SLOW, PULSE_FAST, climb)
+	if climb < ROAR_FROM:
 		return
 	_roar_left -= delta
 	if _roar_left <= 0.0:
-		AudioService.play(&"oven_roar", 0.86 + heat * 0.4)
-		_roar_left = lerpf(ROAR_SLOW, ROAR_FAST, heat)
+		AudioService.play(&"corsair_roar", 0.86 + climb * 0.4)
+		_roar_left = lerpf(ROAR_SLOW, ROAR_FAST, climb)
 
 
-## Called by MiniGame after CabinetSession has settled the bake.
+## Called by MiniGame after CabinetSession has settled the run.
 func show_result(result: RoundResult) -> void:
 	_result = result
 	_status_key = "ROUND_READY"
-	var served: bool = result.detail.get("cashed_out", false)
+	var hauled_in: bool = result.detail.get("cashed_out", false)
 	var math := _math()
 	gauge.settle_pop()
 	# Gold when she came home, pale when the sea took her. Both have to hold
-	# against a dark canvas, so neither goes near the old oven inks.
-	gauge.set_number_color(CoreOverclockTheme.BRASS_BRIGHT if served else CoreOverclockTheme.MUTED)
+	# against a dark canvas, so neither goes near the reds on the ramp.
+	gauge.set_number_color(
+		CoreOverclockTheme.BRASS_BRIGHT if hauled_in else CoreOverclockTheme.MUTED
+	)
 	history.set_entries(math.history)
-	hosts.show_state(&"cheer" if served else &"wince")
-	if served:
-		_present_served(result)
+	hosts.show_state(&"cheer" if hauled_in else &"wince")
+	if hauled_in:
+		_present_haul(result)
 	else:
-		_present_burnt()
+		_present_crash()
 	refresh()
 	call_deferred("_focus_default_action")
 
 
-func _present_served(result: RoundResult) -> void:
-	AudioService.play(&"oven_serve")
+## She comes home with it: the line holds at the settled multiplier and the head
+## of it throws spray.
+func _present_haul(result: RoundResult) -> void:
+	AudioService.play(&"corsair_haul")
 	var multiple := float(result.payout) / maxf(result.stake, 1.0)
-	flight.set_reach(CoreOverclockTheme.heat_of(_math().settled_centi), true)
-	_served_left = MotionPolicy.finite_duration(SERVED_SECONDS)
+	flight.set_reach(CoreOverclockTheme.climb_of(_math().settled_centi), true)
+	_settle_left = MotionPolicy.finite_duration(SETTLE_SECONDS)
 	burst.sparks(flight.crest_point(1.0), 18 if multiple >= 5.0 else 10)
-	burst.puff(flight.crest_point(0.92), CoreOverclockTheme.EMBER_FLOUR[1], 150.0)
+	burst.puff(flight.crest_point(0.92), CoreOverclockTheme.EMBER_SPRAY[1], 150.0)
 	_win_flash.play(CoreOverclockTheme.BRASS_BRIGHT, multiple >= BIG_WIN_MULTIPLE)
 
 
@@ -497,18 +502,18 @@ func _advance_wreck(delta: float) -> void:
 
 ## She is taken: the needle slams, the screen goes white, and the sea closes
 ## over where she was.
-func _present_burnt() -> void:
-	AudioService.play(&"oven_burn")
+func _present_crash() -> void:
+	AudioService.play(&"corsair_breakup")
 	_wreck_at = flight.crest_point(1.0)
 	_wreck_left = MotionPolicy.finite_duration(WRECK_SECONDS)
-	flight.set_reach(CoreOverclockTheme.heat_of(maxi(_math().crash_centi, 100)), false)
-	_served_left = MotionPolicy.finite_duration(SERVED_SECONDS)
+	flight.set_reach(CoreOverclockTheme.climb_of(maxi(_math().crash_centi, 100)), false)
+	_settle_left = MotionPolicy.finite_duration(SETTLE_SECONDS)
 	gauge.slam()
 	burst.puff(flight.crest_point(1.0), CoreOverclockTheme.EMBER_SMOKE[0], 300.0, 0.9)
 	burst.puff(flight.crest_point(0.92), CoreOverclockTheme.EMBER_SMOKE[1], 190.0, 0.8)
 	burst.sparks(flight.crest_point(1.0), 14)
 	if MotionPolicy.allows_camera_emphasis():
-		_impulse = BURN_IMPULSE
+		_impulse = CRASH_IMPULSE
 	_win_flash.play(CoreOverclockTheme.CREAM, true)
 
 
@@ -521,7 +526,7 @@ func _refresh_gauge() -> void:
 		CoreOverclockMath.State.CASHED_OUT:
 			ink = CoreOverclockTheme.BRASS_BRIGHT
 		CoreOverclockMath.State.CRASHED:
-			ink = CoreOverclockTheme.TOMATO
+			ink = CoreOverclockTheme.ENSIGN
 	gauge.set_caption(tr(_state_key()), ink)
 	if math.state == CoreOverclockMath.State.CASHED_OUT and _result != null:
 		gauge.set_value(tr("CORE_OVERCLOCK_VALUE") % _result.payout)
@@ -536,11 +541,11 @@ func _state_key() -> String:
 		CoreOverclockMath.State.COUNTDOWN:
 			return "CORE_OVERCLOCK_STATE_COUNTDOWN"
 		CoreOverclockMath.State.OVERCLOCKING:
-			return "CORE_OVERCLOCK_STATE_BAKING"
+			return "CORE_OVERCLOCK_STATE_RUNNING"
 		CoreOverclockMath.State.CASHED_OUT:
-			return "CORE_OVERCLOCK_STATE_SERVED"
+			return "CORE_OVERCLOCK_STATE_HAULED"
 		CoreOverclockMath.State.CRASHED:
-			return "CORE_OVERCLOCK_STATE_BURNT"
+			return "CORE_OVERCLOCK_STATE_CRASHED"
 	return "CORE_OVERCLOCK_STATE_READY"
 
 
@@ -551,18 +556,18 @@ func _refresh_status() -> void:
 		text = tr(_notice_key)
 	elif math.state == CoreOverclockMath.State.CASHED_OUT and _result != null:
 		text = (
-			tr("CORE_OVERCLOCK_STATUS_SERVED")
+			tr("CORE_OVERCLOCK_STATUS_HAULED")
 			% [CoreOverclockMath.multiplier_text(math.settled_centi), _result.payout]
 		)
 	elif math.state == CoreOverclockMath.State.CRASHED and _result != null:
 		text = (
-			tr("CORE_OVERCLOCK_STATUS_BURNT")
+			tr("CORE_OVERCLOCK_STATUS_CRASHED")
 			% CoreOverclockMath.multiplier_text(maxi(math.crash_centi, 100))
 		)
 	elif math.state == CoreOverclockMath.State.COUNTDOWN:
 		text = tr("CORE_OVERCLOCK_STATUS_COUNTDOWN")
 	elif math.state == CoreOverclockMath.State.OVERCLOCKING:
-		text = tr("CORE_OVERCLOCK_STATUS_BAKING")
+		text = tr("CORE_OVERCLOCK_STATUS_RUNNING")
 	elif cabinet.selected_stake == 0:
 		text = tr("BET_NEED_CASHIER") % cabinet.context.definition.min_bet
 	else:
@@ -576,7 +581,7 @@ func _refresh_deck() -> void:
 		return
 	var math := _math()
 	var running: bool = cabinet.is_round_active
-	var baking := math.state == CoreOverclockMath.State.OVERCLOCKING
+	var climbing := math.state == CoreOverclockMath.State.OVERCLOCKING
 	var balance: int = cabinet.context.balance - (cabinet.current_stake if running else 0)
 	if Wallet.test_mode_enabled:
 		deck.balance.tag = tr("DECK_TEST_TAG")
@@ -601,7 +606,7 @@ func _refresh_deck() -> void:
 	)
 	deck.quick_bets.set_states(cabinet)
 	primary_button.text = (
-		tr("CORE_OVERCLOCK_ACTION_PULL") if running else tr("CORE_OVERCLOCK_ACTION_BAKE")
+		tr("CORE_OVERCLOCK_ACTION_PULL") if running else tr("CORE_OVERCLOCK_ACTION_LAUNCH")
 	)
 	if auto_button != null:
 		auto_button.text = (
@@ -611,7 +616,8 @@ func _refresh_deck() -> void:
 		)
 		_set_action_disabled(auto_button, running)
 	_set_action_disabled(
-		primary_button, (running and not baking) or (not running and not cabinet.call("can_bake"))
+		primary_button,
+		(running and not climbing) or (not running and not cabinet.call("can_launch"))
 	)
 	deck.show_actions([&"primary"] as Array[StringName])
 	var line := _instruction()
@@ -623,21 +629,21 @@ func _instruction() -> Array:
 	var math := _math()
 	match math.state:
 		CoreOverclockMath.State.COUNTDOWN:
-			return [tr("DECK_FORNO_COUNTDOWN"), InfoPlate.Tone.NEUTRAL]
+			return [tr("DECK_CORSAIR_COUNTDOWN"), InfoPlate.Tone.NEUTRAL]
 		CoreOverclockMath.State.OVERCLOCKING:
-			return [tr("DECK_FORNO_BAKING"), InfoPlate.Tone.NEUTRAL]
+			return [tr("DECK_CORSAIR_RUNNING"), InfoPlate.Tone.NEUTRAL]
 		CoreOverclockMath.State.CASHED_OUT:
 			if _result != null:
 				return [
-					tr("DECK_FORNO_SERVED") % (_result.payout - _result.stake),
+					tr("DECK_CORSAIR_HAULED") % (_result.payout - _result.stake),
 					InfoPlate.Tone.WIN,
 				]
 		CoreOverclockMath.State.CRASHED:
 			if _result != null:
-				return [tr("DECK_FORNO_BURNT") % _result.stake, InfoPlate.Tone.LOSS]
-	if not cabinet.call("can_bake"):
+				return [tr("DECK_CORSAIR_CRASHED") % _result.stake, InfoPlate.Tone.LOSS]
+	if not cabinet.call("can_launch"):
 		return [tr("DECK_NEED_FUNDS") % cabinet.context.definition.min_bet, InfoPlate.Tone.LOSS]
-	return [tr("DECK_FORNO_BETTING"), InfoPlate.Tone.NEUTRAL]
+	return [tr("DECK_CORSAIR_BETTING"), InfoPlate.Tone.NEUTRAL]
 
 
 func _refresh_help() -> void:
@@ -665,7 +671,7 @@ func _help_content() -> Dictionary:
 			payouts
 			. append(
 				[
-					tr("HELP_PAY_FORNO_REACH") % CoreOverclockMath.multiplier_text(centi),
+					tr("HELP_PAY_CORSAIR_REACH") % CoreOverclockMath.multiplier_text(centi),
 					tr("HELP_PAY_TIMES_DECIMAL") % (float(centi) / 100.0),
 				]
 			)
@@ -675,8 +681,8 @@ func _help_content() -> Dictionary:
 		"steps": Array(tr("HELP_CORE_OVERCLOCK_STEPS").split("\n")),
 		"controls":
 		[
-			"{interact} " + tr("HELP_CONTROL_FORNO_PRIMARY"),
-			"{secondary} " + tr("HELP_CONTROL_FORNO_AUTO"),
+			"{interact} " + tr("HELP_CONTROL_CORSAIR_PRIMARY"),
+			"{secondary} " + tr("HELP_CONTROL_CORSAIR_AUTO"),
 			"{bet_down}{bet_up} " + tr("HELP_CONTROL_BET"),
 			"{bet_max} " + tr("HELP_CONTROL_BET_MAX"),
 			"{help} " + tr("HELP_CONTROL_GUIDE"),

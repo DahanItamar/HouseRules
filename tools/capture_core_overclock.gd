@@ -1,14 +1,14 @@
 extends Node
-## Captures the Forno d'Oro cabinet (id core_overclock) at real output size:
-## the counter between bakes, the guide, the oven heating, an early bake, a long
-## bake, a pizza pulled out and served, one that burns, the history strip once it
-## has a few bakes on it, the oven timer set, and a reduced-motion bake.
+## Captures the Corsair's Reach cabinet (id core_overclock) at real output size:
+## the deck between runs, the guide, the countdown, an early climb, a long climb,
+## a run hauled in and paid out, one the sea takes, the recent-runs strip once it
+## has a few on it, the auto-haul target set, and a reduced-motion climb.
 ##
 ##   godot --path . tools/capture_core_overclock.tscn -- --capture-size=1920x1080
 ##
-## Bakes are started from a chosen uniform through CoreOverclockMath.begin_from,
-## so a long bake and a burn can both be shown on demand. That only chooses
-## which honest bake is replayed: the distribution and the settlement are the
+## Runs are started from a chosen uniform through CoreOverclockMath.begin_from,
+## so a long climb and a crash can both be shown on demand. That only chooses
+## which honest run is replayed: the distribution and the settlement are the
 ## shipped ones. Saves and the instance lock are isolated from the player's data.
 
 const OUTPUT := "res://tests/results/screenshots/core_overclock_fhd"
@@ -65,40 +65,40 @@ func _capture() -> void:
 	game.select_stake(200)
 	while game.get("math").auto_centi != 0:
 		game.call("cycle_auto_target")
-	await _bake(game, 4_000_000)
+	await _launch(game, 4_000_000)
 	await get_tree().create_timer(0.3).timeout
-	await _snapshot("03_oven_heating")
+	await _snapshot("03_countdown")
 	await _wait_until(func() -> bool: return _centi(game) > 130)
-	await _snapshot("04_early_bake")
+	await _snapshot("04_early_climb")
 	await _wait_until(func() -> bool: return _centi(game) > 900)
-	await _snapshot("05_long_bake")
+	await _snapshot("05_long_climb")
 	game.call("request_pull")
 	await get_tree().create_timer(0.12).timeout
-	await _snapshot("06_pulled_out")
-	_record(game, panel, "served")
+	await _snapshot("06_hauled_in")
+	_record(game, panel, "hauled_in")
 	await get_tree().create_timer(1.4).timeout
-	await _snapshot("07_served_settled")
-	# A bake the oven ends early: the largest uniforms burn under 1.10x.
-	await _bake(game, 900_000_000)
+	await _snapshot("07_paid_out")
+	# A run the sea ends early: the largest seeds crash under 1.10x.
+	await _launch(game, 900_000_000)
 	await _wait_until(func() -> bool: return not game.is_round_active)
 	await get_tree().create_timer(0.1).timeout
-	await _snapshot("08_burnt")
-	_record(game, panel, "burnt")
+	await _snapshot("08_crashed")
+	_record(game, panel, "crashed")
 	for uniform: int in [40_000_000, 600_000_000, 120_000_000, 200_000_000]:
-		await _bake(game, uniform)
+		await _launch(game, uniform)
 		await _wait_until(func() -> bool: return not game.is_round_active, 30.0)
 		await get_tree().create_timer(0.2).timeout
 	await _snapshot("09_history_strip")
-	# The oven timer set before the bake, shown on the gauge and the curve.
+	# The auto-haul target set before the run, shown on the readout and the curve.
 	while game.get("math").auto_centi != 200:
 		game.call("cycle_auto_target")
 	await get_tree().create_timer(0.3).timeout
-	await _snapshot("10_oven_timer_set")
+	await _snapshot("10_auto_haul_set")
 	motion_policy.call("set_reduced_motion_for_tests", true)
 	await get_tree().process_frame
-	await _bake(game, 3_000_000)
+	await _launch(game, 3_000_000)
 	await _wait_until(func() -> bool: return _centi(game) > 180)
-	await _snapshot("11_reduced_motion_bake")
+	await _snapshot("11_reduced_motion_climb")
 	await _wait_until(func() -> bool: return not game.is_round_active, 30.0)
 	await get_tree().create_timer(0.3).timeout
 	await _snapshot("12_reduced_motion_result")
@@ -114,15 +114,15 @@ func _centi(game: Node) -> int:
 	return (game.get("math") as CoreOverclockMath).multiplier_centi
 
 
-## Starts a bake whose crash point comes from `uniform`, through the cabinet, so
+## Starts a run whose crash point comes from `uniform`, through the cabinet, so
 ## the stake, the panel and the settlement are the shipped ones.
-func _bake(game: Node, uniform: int) -> void:
+func _launch(game: Node, uniform: int) -> void:
 	var math: CoreOverclockMath = game.get("math")
 	game.current_stake = game.selected_stake
 	game.is_round_active = true
 	math.reset()
 	math.begin_from(game.current_stake, uniform)
-	game.panel.begin_bake()
+	game.panel.begin_run()
 	await get_tree().process_frame
 
 
@@ -151,14 +151,14 @@ func _write_proof() -> void:
 		_output.path_join("core_overclock_motion_proof.json"), FileAccess.WRITE
 	)
 	file.store_string(JSON.stringify(_proof, "\t") + "\n")
-	print("FORNO PROOF ", _proof)
+	print("CORSAIR PROOF ", _proof)
 
 
 func _wait_until(condition: Callable, timeout_seconds: float = 12.0) -> void:
 	var deadline := Time.get_ticks_msec() + int(timeout_seconds * 1000.0)
 	while not condition.call():
 		if Time.get_ticks_msec() > deadline:
-			push_warning("Forno capture timed out waiting")
+			push_warning("Corsair capture timed out waiting")
 			return
 		await get_tree().process_frame
 

@@ -28,12 +28,12 @@ const CUES: Dictionary = {
 	&"lift_chime": [1046.5, 0.7, &"chime", -19.0],
 	&"door_latch": [150.0, 0.2, &"latch", -15.0],
 	&"stair_steps": [92.0, 0.62, &"steps", -18.0],
-	&"oven_load": [210.0, 0.34, &"peel", -13.0],
-	&"oven_pulse": [330.0, 0.11, &"crackle", -21.0],
-	&"oven_tick": [880.0, 0.06, &"tick", -19.0],
-	&"oven_roar": [58.0, 0.26, &"roar", -15.0],
-	&"oven_serve": [720.0, 0.40, &"major", -11.0],
-	&"oven_burn": [68.0, 0.42, &"scorch", -10.0],
+	&"corsair_cast_off": [210.0, 0.34, &"cast_off", -13.0],
+	&"corsair_wave": [330.0, 0.11, &"wave", -21.0],
+	&"corsair_tick": [880.0, 0.06, &"tick", -19.0],
+	&"corsair_roar": [58.0, 0.26, &"roar", -15.0],
+	&"corsair_haul": [720.0, 0.40, &"major", -11.0],
+	&"corsair_breakup": [68.0, 0.42, &"breakup", -10.0],
 }
 
 var output_enabled: bool = true
@@ -217,14 +217,14 @@ func _sample(character: StringName, frequency: float, time: float, phase: float)
 			var bolt := sin(TAU * 1500.0 * catch_time) * exp(-catch_time * 220.0) * 0.3
 			var thunk := sin(TAU * frequency * time) * exp(-time * 24.0) * 0.7
 			return click + (bolt if time >= 0.04 else 0.0) + thunk
-		&"peel":
-			# The peel on the stone: a wooden scrape, then the dough landing.
+		&"cast_off":
+			# Casting off: rope running out over wood, then the hull taking the water.
 			var scrape := sin(TAU * 1500.0 * time) * exp(-time * 40.0) * 0.26
 			var slide := sin(TAU * frequency * (1.0 - phase * 0.3) * time) * decay * 0.5
 			var settle := sin(TAU * 86.0 * time) * exp(-time * 12.0) * 0.22
 			return scrape + slide + settle
-		&"crackle":
-			# One crackle from the fire; the caller pitches it up with the heat.
+		&"wave":
+			# One wave breaking on the hull; the caller pitches it up as she climbs.
 			return (
 				(sin(TAU * frequency * time) + sin(TAU * frequency * 2.0 * time) * 0.22)
 				* attack
@@ -232,18 +232,18 @@ func _sample(character: StringName, frequency: float, time: float, phase: float)
 				* 0.5
 			)
 		&"roar":
-			# The draw of a wood fire: a low swell with a second breath under it.
+			# The sea running under her: a low swell with a second one behind it.
 			var second := maxf(time - 0.11, 0.0)
-			var first_breath := sin(TAU * frequency * time) * exp(-time * 20.0)
-			var second_breath := (
+			var first_swell := sin(TAU * frequency * time) * exp(-time * 20.0)
+			var second_swell := (
 				sin(TAU * frequency * 0.86 * second)
 				* exp(-second * 24.0)
 				* 0.6
 				* (1.0 if time >= 0.11 else 0.0)
 			)
-			return (first_breath + second_breath) * 0.85
-		&"scorch":
-			# A pizza going black: a falling note with a hiss of smoke over it.
+			return (first_swell + second_swell) * 0.85
+		&"breakup":
+			# She goes under: a falling note with the hiss of the sea over it.
 			return (
 				(sin(TAU * frequency * (1.0 - phase * 0.45) * time) + sin(TAU * 39.0 * time) * 0.45)
 				* pow(1.0 - phase, 1.6)

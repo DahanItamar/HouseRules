@@ -1,15 +1,15 @@
 class_name CoreOverclockHistory
 extends Control
-## The recent-bakes board: what each of the last bakes reached before it came
-## out or burned, newest first, on a small board in the left column under the
-## bake curve. Tomato for a pizza that burned at the door, crust for a quick
-## bake, brass for a long one.
+## The recent-runs strip: what each of the last runs reached before it was
+## hauled in or the sea took it, newest first, on a small plate in the top-left
+## corner. Red for a run that never cleared the bar, rope for a short one, brass
+## for a long one and ember for a very long one.
 ##
 ## The chips are deliberately small and muted, and each carries a "x", so the
-## board can never be mistaken for the live multiplier on the gauge.
+## strip can never be mistaken for the live multiplier on the chart.
 ##
 ## A new chip slides the row along once, in a bounded beat; under reduced motion
-## the board simply redraws with the new chip already in place.
+## the strip simply redraws with the new chip already in place.
 
 const COLUMNS: int = 3
 const ROWS: int = 2
@@ -71,7 +71,7 @@ func _draw() -> void:
 		CoreOverclockTheme.ICONS,
 		Rect2(Vector2(0.0, 0.0), Vector2.ONE * ICON_SIZE),
 		CoreOverclockTheme.sheet_region(
-			CoreOverclockTheme.ICON_SLICE,
+			CoreOverclockTheme.ICON_CREST,
 			CoreOverclockTheme.ICON_GRID,
 			CoreOverclockTheme.ICON_CELL
 		)

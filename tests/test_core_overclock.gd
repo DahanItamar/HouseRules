@@ -1,6 +1,6 @@
 extends GutTest
-## Forno d’Oro (cabinet id core_overclock): the crash distribution and its
-## exact 97% return at every timer setting, the 3% instant burn, exact auto
+## Corsair's Reach (cabinet id core_overclock): the crash distribution and its
+## exact 97% return at every auto-haul target, the 3% instant crash, exact auto
 ## cash-out, one settlement after the replay, replay determinism, chip
 ## conservation, wallet guards, the state machine, the unique host, 44 px targets
 ## inside TV-safe, the protected rectangles and reduced motion bounding every
@@ -69,7 +69,7 @@ func test_the_crash_curve_is_the_documented_survival_function() -> void:
 	assert_almost_eq(math.reach_probability(100), 0.97, 1e-12)
 	assert_eq(math.winning_count(200), 485_000_000, "2.00x is reached 48.5% of the time")
 	assert_eq(math.winning_count(1000), 97_000_000, "10.00x is reached 9.7% of the time")
-	# The crash point falls as the uniform rises, so "this bake reaches m" is
+	# The crash point falls as the uniform rises, so "this run reaches m" is
 	# exactly "this uniform is one of the winning_count(m) smallest".
 	for centi: int in [100, 101, 137, 200, 333, 1000, 12345]:
 		var cut := math.winning_count(centi)
@@ -80,7 +80,7 @@ func test_the_crash_curve_is_the_documented_survival_function() -> void:
 				"Uniform %d against a %d target" % [probe, centi]
 			)
 	assert_eq(math.crash_for(1), rules.cap_centi, "The smallest uniform is capped")
-	assert_eq(math.crash_for(total), 97, "The largest uniform burns before 1.00x")
+	assert_eq(math.crash_for(total), 97, "The largest uniform crashes before 1.00x")
 
 
 func test_every_timer_setting_returns_the_same_97_percent() -> void:
@@ -101,15 +101,13 @@ func test_every_timer_setting_returns_the_same_97_percent() -> void:
 		assert_almost_eq(math.expected_return(centi), 0.97, 0.00002, "%d" % centi)
 
 
-func test_the_instant_burn_is_exactly_three_percent() -> void:
+func test_the_instant_crash_is_exactly_three_percent() -> void:
 	var math := CoreOverclockMath.new()
-	assert_almost_eq(
-		math.bust_probability(), 0.03, 1e-12, "Exactly 3% of bakes never open a window"
-	)
+	assert_almost_eq(math.bust_probability(), 0.03, 1e-12, "Exactly 3% of runs never open a window")
 	assert_eq(
 		math.paytable.curve_denominator - math.winning_count(100),
 		30_000_000,
-		"30 million of the 1000 million uniforms burn, with no rounding"
+		"30 million of the 1000 million uniforms crash, with no rounding"
 	)
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20260920
@@ -121,7 +119,7 @@ func test_the_instant_burn_is_exactly_three_percent() -> void:
 		math.advance(1000.0)
 		if math.is_bust(math.crash_centi):
 			busts += 1
-	assert_almost_eq(float(busts) / float(rounds), 0.03, 0.004, "Sampled burn rate")
+	assert_almost_eq(float(busts) / float(rounds), 0.03, 0.004, "Sampled crash rate")
 
 
 func test_legal_stakes_always_settle_to_whole_chips() -> void:
@@ -146,7 +144,7 @@ func test_legal_stakes_always_settle_to_whole_chips() -> void:
 # --------------------------------------------------------------- state machine
 
 
-func test_the_state_machine_walks_idle_countdown_baking_and_settles() -> void:
+func test_the_state_machine_walks_idle_countdown_climbing_and_settles() -> void:
 	var math := CoreOverclockMath.new()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7
@@ -155,29 +153,29 @@ func test_the_state_machine_walks_idle_countdown_baking_and_settles() -> void:
 	math.begin(100, rng)
 	assert_eq(math.state, CoreOverclockMath.State.COUNTDOWN)
 	assert_true(math.is_running())
-	assert_false(math.can_cash_out(), "No window while the oven heats")
+	assert_false(math.can_cash_out(), "No window while she is making sail")
 	assert_null(math.cash_out(), "Cashing out before the window is refused")
 	assert_null(math.advance(math.paytable.countdown_seconds * 0.5))
 	assert_eq(math.state, CoreOverclockMath.State.COUNTDOWN)
 	assert_null(math.advance(math.paytable.countdown_seconds * 0.5 + 0.001))
 	assert_eq(math.state, CoreOverclockMath.State.OVERCLOCKING, "The window opens")
 	assert_true(math.can_cash_out())
-	assert_eq(math.multiplier_centi, 100, "The bake starts at 1.00x")
+	assert_eq(math.multiplier_centi, 100, "The climb starts at 1.00x")
 	var result := math.cash_out()
 	assert_not_null(result)
 	assert_eq(math.state, CoreOverclockMath.State.CASHED_OUT)
 	assert_false(math.is_running())
-	assert_null(math.cash_out(), "One pull per bake")
-	assert_null(math.advance(1.0), "A settled bake does not keep climbing")
+	assert_null(math.cash_out(), "One haul per run")
+	assert_null(math.advance(1.0), "A settled run does not keep climbing")
 
 
-func test_an_instant_burn_ends_on_the_frame_the_window_would_open() -> void:
+func test_an_instant_crash_ends_on_the_frame_the_window_would_open() -> void:
 	var math := CoreOverclockMath.new()
 	# The largest uniforms crash below 1.00x; seed the draw by hand.
 	math.begin_from(100, math.paytable.curve_denominator)
 	assert_true(math.is_bust(math.crash_centi))
 	var result := math.advance(math.paytable.countdown_seconds + 0.001)
-	assert_not_null(result, "The burn settles on that same step")
+	assert_not_null(result, "The crash settles on that same step")
 	assert_eq(math.state, CoreOverclockMath.State.CRASHED)
 	assert_eq(result.payout, 0)
 	assert_eq(result.outcome, RoundResult.Outcome.LOSS)
@@ -203,7 +201,7 @@ func test_the_curve_is_the_replay_and_never_rolls_again() -> void:
 	assert_eq(math.curve_centi(120.0), math.paytable.cap_centi, "The climb is capped")
 
 
-func test_one_bake_uses_exactly_one_uniform_from_the_cabinet_stream() -> void:
+func test_one_run_uses_exactly_one_uniform_from_the_cabinet_stream() -> void:
 	var math := CoreOverclockMath.new()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20260920
@@ -214,12 +212,12 @@ func test_one_bake_uses_exactly_one_uniform_from_the_cabinet_stream() -> void:
 		math.begin(100, rng)
 		math.advance(1000.0)
 		var value := expected.randi_range(1, math.paytable.curve_denominator)
-		assert_eq(math.value, value, "One uniform per bake")
+		assert_eq(math.value, value, "One uniform per run")
 		assert_eq(math.crash_centi, math.crash_for(value))
 	assert_eq(rng.state, expected.state, "No hidden extra draws")
 
 
-func test_the_same_seed_replays_the_same_bakes() -> void:
+func test_the_same_seed_replays_the_same_runs() -> void:
 	var first := _replay(4242)
 	var second := _replay(4242)
 	var other := _replay(4243)
@@ -246,14 +244,14 @@ func _replay(seed_value: int) -> Array:
 # --------------------------------------------------------------- auto cash-out
 
 
-func test_the_oven_timer_settles_at_exactly_its_setting_whatever_the_frame_rate() -> void:
+func test_the_auto_haul_settles_at_exactly_its_setting_whatever_the_frame_rate() -> void:
 	var math := CoreOverclockMath.new()
 	for target: int in [120, 150, 200, 300, 500, 1000]:
 		for slice: float in [1.0 / 120.0, 1.0 / 30.0, 0.5, 4.0, 1000.0]:
 			math.reset()
 			assert_true(math.set_auto_target(target) or math.auto_centi == target)
 			math.begin_from(100, 1)
-			assert_gte(math.crash_centi, target, "This bake reaches the timer")
+			assert_gte(math.crash_centi, target, "This run reaches the target")
 			var result: RoundResult = null
 			var guard: int = 0
 			while result == null and guard < 100000:
@@ -263,13 +261,13 @@ func test_the_oven_timer_settles_at_exactly_its_setting_whatever_the_frame_rate(
 			assert_eq(
 				math.settled_centi,
 				target,
-				"Timer %d at a %.4f s step settles exactly there" % [target, slice]
+				"Target %d at a %.4f s step settles exactly there" % [target, slice]
 			)
 			assert_eq(result.payout, target, "100 staked at %d" % target)
 			assert_eq(result.outcome, RoundResult.Outcome.CASHED_OUT)
 
 
-func test_a_timer_past_the_burn_point_still_loses() -> void:
+func test_a_target_past_the_crash_point_still_loses() -> void:
 	var math := CoreOverclockMath.new()
 	math.set_auto_target(1000)
 	# This uniform crashes at 2.42x, well under the 10.00x target.
@@ -282,23 +280,23 @@ func test_a_timer_past_the_burn_point_still_loses() -> void:
 	assert_eq(math.multiplier_centi, math.crash_centi, "It stops at the crash point")
 
 
-func test_a_timer_on_the_burn_point_serves_and_never_races_it() -> void:
+func test_a_target_on_the_crash_point_hauls_in_and_never_races_it() -> void:
 	var math := CoreOverclockMath.new()
 	var exact := math.crash_for(12345)
 	assert_true(math.set_auto_target(exact))
 	math.begin_from(100, 12345)
 	assert_eq(math.crash_centi, exact)
 	var result := math.advance(1000.0)
-	assert_eq(result.outcome, RoundResult.Outcome.CASHED_OUT, "Reaching the setting pulls it out")
+	assert_eq(result.outcome, RoundResult.Outcome.CASHED_OUT, "Reaching the setting hauls it in")
 	assert_eq(math.settled_centi, exact)
 
 
-func test_the_oven_timer_is_locked_while_a_pizza_is_in() -> void:
+func test_the_auto_haul_target_is_locked_while_a_run_is_out() -> void:
 	var math := CoreOverclockMath.new()
 	math.begin_from(100, 1)
-	assert_false(math.set_auto_target(500), "Not while a bake is running")
+	assert_false(math.set_auto_target(500), "Not while a run is climbing")
 	math.advance(1000.0)
-	assert_true(math.set_auto_target(500), "Between bakes it changes")
+	assert_true(math.set_auto_target(500), "Between runs it changes")
 	assert_false(math.is_legal_target(99))
 	assert_true(math.is_legal_target(0))
 
@@ -311,65 +309,65 @@ func test_the_wallet_settles_once_after_the_replay() -> void:
 	var game: MiniGame = session.cabinet
 	var math: CoreOverclockMath = game.get("math")
 	game.select_stake(100)
-	assert_true(game.call("cycle_auto_target"), "Step the oven timer on")
+	assert_true(game.call("cycle_auto_target"), "Step the auto-haul target on")
 	while math.auto_centi != 200:
 		game.call("cycle_auto_target")
-	assert_true(game.call("request_bake"))
+	assert_true(game.call("request_launch"))
 	assert_true(game.is_round_active)
-	assert_eq(Wallet.balance, 2000, "The wallet is untouched while it bakes")
+	assert_eq(Wallet.balance, 2000, "The wallet is untouched while she climbs")
 	assert_eq(math.state, CoreOverclockMath.State.COUNTDOWN)
 	_step(game, math.paytable.countdown_seconds + 0.001)
 	assert_eq(math.state, CoreOverclockMath.State.OVERCLOCKING)
-	assert_eq(Wallet.balance, 2000, "Still untouched mid-bake")
-	assert_false(game.call("request_bake"), "One bake at a time")
+	assert_eq(Wallet.balance, 2000, "Still untouched mid-run")
+	assert_false(game.call("request_launch"), "One run at a time")
 	var guard: int = 0
 	while game.is_round_active and guard < 4000:
 		_step(game, 1.0 / 60.0)
 		guard += 1
-	assert_false(game.is_round_active, "The bake ends")
+	assert_false(game.is_round_active, "The run ends")
 	var banked := math.state == CoreOverclockMath.State.CASHED_OUT
 	var expected := 2000 - 100 + (200 if banked else 0)
 	assert_eq(Wallet.balance, expected, "One settlement, once")
 	assert_eq(math.history.size(), 1, "The crash point is on the strip")
 
 
-func test_pulling_it_out_by_hand_pays_the_multiplier_on_the_dial() -> void:
+func test_hauling_in_by_hand_pays_the_multiplier_on_the_readout() -> void:
 	var session := _open()
 	var game: MiniGame = session.cabinet
 	var math: CoreOverclockMath = game.get("math")
 	game.select_stake(100)
-	assert_true(game.call("request_bake"))
+	assert_true(game.call("request_launch"))
 	_step(game, math.paytable.countdown_seconds + 0.5, 40)
 	if not game.is_round_active:
-		pass_test("This seeded bake burned before the first half second")
+		pass_test("This seeded run crashed before the first half second")
 		return
 	var shown := math.multiplier_centi
 	assert_true(game.call("request_pull"))
 	assert_false(game.is_round_active)
-	assert_eq(math.settled_centi, shown, "It pays what the dial read")
+	assert_eq(math.settled_centi, shown, "It pays what the readout showed")
 	assert_eq(Wallet.balance, 2000 - 100 + shown, "100 staked pays the multiplier")
 
 
-func test_leaving_mid_bake_forfeits_and_cannot_dodge_a_loss() -> void:
+func test_leaving_mid_run_forfeits_and_cannot_dodge_a_loss() -> void:
 	var session := _open()
 	var game: MiniGame = session.cabinet
 	var math: CoreOverclockMath = game.get("math")
 	game.select_stake(100)
-	assert_true(game.call("request_bake"))
+	assert_true(game.call("request_launch"))
 	game._unhandled_input(_action("back"))
 	assert_true(game.exit_confirmation.is_open, "A live stake needs the confirmation")
 	session.close()
 	assert_false(game.is_round_active)
 	assert_eq(Wallet.balance, 1900, "The stake is forfeit")
-	assert_eq(math.history.size(), 1, "The bake is still recorded")
+	assert_eq(math.history.size(), 1, "The run is still recorded")
 
 
-func test_wallet_guards_refuse_a_bake_the_bankroll_cannot_cover() -> void:
+func test_wallet_guards_refuse_a_run_the_bankroll_cannot_cover() -> void:
 	Wallet.reset(50)
 	var game: MiniGame = _open().cabinet
 	assert_eq(game.selected_stake, 0, "No stake below the 100-credit minimum")
-	assert_false(game.call("can_bake"))
-	assert_false(game.call("request_bake"))
+	assert_false(game.call("can_launch"))
+	assert_false(game.call("request_launch"))
 	assert_false(game.is_round_active)
 	assert_true((game.panel as CoreOverclockPanel).primary_button.disabled)
 	Wallet.reset(300)
@@ -378,43 +376,43 @@ func test_wallet_guards_refuse_a_bake_the_bankroll_cannot_cover() -> void:
 	assert_false(richer.select_stake(1000))
 
 
-func test_the_guide_waits_until_the_pizza_is_out() -> void:
+func test_the_guide_waits_until_the_run_is_over() -> void:
 	var game: MiniGame = _open().cabinet
 	var panel: CoreOverclockPanel = game.panel
 	game._unhandled_input(_action("help"))
-	assert_true(panel.help_open, "Between bakes the guide opens")
+	assert_true(panel.help_open, "Between runs the guide opens")
 	panel.set_help_open(false)
 	game.select_stake(100)
-	assert_true(game.call("request_bake"))
+	assert_true(game.call("request_launch"))
 	game._unhandled_input(_action("help"))
-	assert_false(panel.help_open, "A bake is not paused to read the guide")
+	assert_false(panel.help_open, "A run is not paused to read the guide")
 
 
-func test_the_controller_bakes_pulls_and_walks_the_deck() -> void:
+func test_the_controller_launches_hauls_and_walks_the_deck() -> void:
 	var game: MiniGame = _open().cabinet
 	var panel: CoreOverclockPanel = game.panel
 	await wait_process_frames(2)
-	assert_eq(get_viewport().gui_get_focus_owner(), panel.primary_button, "Bake has focus")
+	assert_eq(get_viewport().gui_get_focus_owner(), panel.primary_button, "Cast off has focus")
 	var math: CoreOverclockMath = game.get("math")
 	game._unhandled_input(_action("secondary"))
-	assert_ne(math.auto_centi, 0, "X steps the oven timer")
+	assert_ne(math.auto_centi, 0, "X steps the auto-haul target")
 	game._unhandled_input(_action("move_left"))
-	assert_eq(get_viewport().gui_get_focus_owner(), panel.auto_button, "Left reaches the timer")
+	assert_eq(get_viewport().gui_get_focus_owner(), panel.auto_button, "Left reaches the target")
 	game._unhandled_input(_action("move_right"))
 	assert_eq(get_viewport().gui_get_focus_owner(), panel._help_button, "The header reads on")
 	game._unhandled_input(_action("move_down"))
 	assert_eq(get_viewport().gui_get_focus_owner(), panel.primary_button, "Down returns")
 	game._unhandled_input(_action("interact"))
-	assert_true(game.is_round_active, "A bakes")
+	assert_true(game.is_round_active, "A casts off")
 	game._unhandled_input(_action("secondary"))
-	assert_false(game.call("cycle_auto_target"), "The timer is locked while it bakes")
+	assert_false(game.call("cycle_auto_target"), "The target is locked while she climbs")
 
 
 # -------------------------------------------------------------- presentation
 
 
 func test_the_hosts_are_one_pair_who_share_every_reaction() -> void:
-	# The two pizzaiole are generated as ONE frame per state, so there is no way
+	# The two of the crew are generated as ONE frame per state, so there is no way
 	# for one of them to celebrate while the other winces.
 	var panel: CoreOverclockPanel = _open().cabinet.panel
 	var hosts := panel.hosts
@@ -489,8 +487,8 @@ func test_nothing_covers_the_dial_the_strip_or_the_deck() -> void:
 	]:
 		assert_false(dial.intersects(rect), "The dial keeps clear of %s" % rect)
 	assert_true(TV_SAFE.encloses(dial), "The dial is inside TV-safe")
-	# The pair stand either side of the oven; the centre of every frame is clear,
-	# so the dial and the pizza are never behind one of them.
+	# The pair stand either side of the chart; the centre of every frame is clear,
+	# so the number and the climb are never behind one of them.
 	for id: StringName in panel.hosts.state_ids():
 		var image := panel.hosts.state_texture(id).get_image()
 		if image.is_compressed():
@@ -523,14 +521,14 @@ func test_controls_are_large_enough_and_inside_tv_safe() -> void:
 		assert_eq(control.focus_mode, Control.FOCUS_ALL, "%s takes focus" % control.name)
 
 
-func test_the_history_strip_keeps_the_recent_bakes() -> void:
+func test_the_history_strip_keeps_the_recent_runs() -> void:
 	var session := _open()
 	var game: MiniGame = session.cabinet
 	var math: CoreOverclockMath = game.get("math")
 	var panel: CoreOverclockPanel = game.panel
 	game.select_stake(100)
 	for _round_index: int in range(4):
-		assert_true(game.call("request_bake"))
+		assert_true(game.call("request_launch"))
 		var guard: int = 0
 		while game.is_round_active and guard < 4000:
 			_step(game, 1.0 / 60.0)
@@ -547,17 +545,17 @@ func test_reduced_motion_bounds_every_effect() -> void:
 	var game: MiniGame = _open().cabinet
 	var panel: CoreOverclockPanel = game.panel
 	game.select_stake(100)
-	assert_true(game.call("request_bake"))
+	assert_true(game.call("request_launch"))
 	_step(game, 0.5, 20)
 	assert_eq(panel._stage.position, Vector2.ZERO, "No screen shake")
 	assert_eq(panel.gauge._pop_left, 0.0, "The ticker is instant, with no pop")
-	assert_false(panel.burst.is_busy(), "No embers and no smoke")
+	assert_false(panel.burst.is_busy(), "No spray and no smoke")
 	# Reduced motion cuts straight to the frame instead of cross-fading, but the
-	# pair still show whatever the bake is doing.
+	# pair still show whatever the run is doing.
 	assert_eq(
 		panel.hosts.current_state,
 		CoreOverclockPanel._host_state_for(panel._math().state),
-		"The pair show the state the bake is actually in"
+		"The pair show the state the run is actually in"
 	)
 	var guard: int = 0
 	while game.is_round_active and guard < 4000:
@@ -575,14 +573,14 @@ func test_reduced_motion_bounds_every_effect() -> void:
 	assert_eq(panel.backdrop._phase, 0.0, "The backdrop is static")
 
 
-func test_full_motion_shakes_only_when_the_oven_is_hot() -> void:
+func test_full_motion_shakes_only_once_the_climb_is_long() -> void:
 	var game: MiniGame = _open().cabinet
 	var panel: CoreOverclockPanel = game.panel
 	panel.tick(0.016)
-	assert_eq(panel._stage.position, Vector2.ZERO, "Nothing shakes between bakes")
+	assert_eq(panel._stage.position, Vector2.ZERO, "Nothing shakes between runs")
 	var math: CoreOverclockMath = game.get("math")
 	game.select_stake(100)
-	game.call("request_bake")
+	game.call("request_launch")
 	_step(game, math.paytable.countdown_seconds + 0.01)
 	if game.is_round_active:
 		assert_lte(
@@ -592,27 +590,27 @@ func test_full_motion_shakes_only_when_the_oven_is_hot() -> void:
 		)
 
 
-func test_every_forno_label_is_translated() -> void:
+func test_every_corsair_label_is_translated() -> void:
 	var keys: Array[String] = [
 		"CABINET_CORE_OVERCLOCK_NAME",
 		"CORE_OVERCLOCK_THEME_TITLE",
 		"CORE_OVERCLOCK_STATE_READY",
 		"CORE_OVERCLOCK_STATE_COUNTDOWN",
-		"CORE_OVERCLOCK_STATE_BAKING",
-		"CORE_OVERCLOCK_STATE_SERVED",
-		"CORE_OVERCLOCK_STATE_BURNT",
-		"CORE_OVERCLOCK_ACTION_BAKE",
+		"CORE_OVERCLOCK_STATE_RUNNING",
+		"CORE_OVERCLOCK_STATE_HAULED",
+		"CORE_OVERCLOCK_STATE_CRASHED",
+		"CORE_OVERCLOCK_ACTION_LAUNCH",
 		"CORE_OVERCLOCK_ACTION_PULL",
 		"CORE_OVERCLOCK_AUTO_OFF",
 		"CORE_OVERCLOCK_AUTO_AT",
 		"CORE_OVERCLOCK_VALUE",
 		"CORE_OVERCLOCK_NEED_STAKE",
 		"CORE_OVERCLOCK_HELP_LOCKED",
-		"DECK_FORNO_BETTING",
-		"DECK_FORNO_COUNTDOWN",
-		"DECK_FORNO_BAKING",
-		"DECK_FORNO_SERVED",
-		"DECK_FORNO_BURNT",
+		"DECK_CORSAIR_BETTING",
+		"DECK_CORSAIR_COUNTDOWN",
+		"DECK_CORSAIR_RUNNING",
+		"DECK_CORSAIR_HAULED",
+		"DECK_CORSAIR_CRASHED",
 		"HELP_CORE_OVERCLOCK_RULES",
 		"HELP_CORE_OVERCLOCK_CONTROLS",
 		"HELP_CORE_OVERCLOCK_GOAL",

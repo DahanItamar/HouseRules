@@ -1,19 +1,19 @@
 class_name CoreOverclockHosts
 extends Control
-## The two pizzaiole of Forno d'Oro, who work the oven together.
+## The two of Corsair's Reach's crew, who watch the run together.
 ##
-## They are not two sprites. Each state of the bake is ONE painted frame with
-## both women in it -- the blonde standing left of the oven, the caramel brunette
-## right of it, the whole middle of the frame transparent so the oven burns
-## between them. Generating the pair together is the point: there is no way for
-## one of them to celebrate while the other winces, because a state is a single
-## picture of both.
+## They are not two sprites. Each state of the run is ONE painted frame with
+## both women in it -- the blonde standing in the left lane, the dark-haired one
+## in the right, the whole middle of the frame transparent so the chart and the
+## climb read between them. Generating the pair together is the point: there is
+## no way for one of them to celebrate while the other winces, because a state is
+## a single picture of both.
 ##
 ## Every frame is cut to the same canvas, so changing state never moves either
 ## woman by a pixel; only the feeling changes. The cabinet asks for a state and
 ## this cross-fades to it, or cuts straight to it under reduced motion.
 ##
-## Presentation only: it reads nothing and decides nothing about the bake.
+## Presentation only: it reads nothing and decides nothing about the run.
 
 const FADE_SECONDS: float = 0.22
 
@@ -24,7 +24,7 @@ var _fade: Tween
 
 
 func _init() -> void:
-	name = "FornoHosts"
+	name = "CorsairCrew"
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	position = Vector2.ZERO
 	size = Vector2(960, 540)
@@ -46,7 +46,7 @@ func _ready() -> void:
 		_layers[state] = layer
 
 
-## Every state the pair can be in, in the order the bake moves through them.
+## Every state the pair can be in, in the order the run moves through them.
 func state_ids() -> Array[StringName]:
 	var ids: Array[StringName] = []
 	for state: StringName in CoreOverclockTheme.HOST_STATES:
@@ -78,6 +78,6 @@ func show_state(state: StringName) -> void:
 	_fade.tween_property(arriving, "modulate:a", 1.0, FADE_SECONDS)
 
 
-## Back to the pair waiting for the next bake.
+## Back to the pair waiting for the next run.
 func reset_to_ready() -> void:
 	show_state(&"ready")

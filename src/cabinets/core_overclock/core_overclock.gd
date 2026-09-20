@@ -1,12 +1,12 @@
 extends MiniGame
-## Forno d'Oro, a crash game dressed as a pizza bake. The player sets a stake and
-## an optional oven timer, then sends the pizza in. The multiplier is how far
-## along the bake is; pulling it out pays stake x multiplier, and if it burns
-## first the stake is gone.
+## Corsair's Reach, a crash game. The player sets a stake and an optional
+## auto-haul target, then casts off. The multiplier is how far the parrot has
+## climbed; hauling in pays stake x multiplier, and if the sea takes her first
+## the stake is gone.
 ##
-## The crash point is drawn from the cabinet stream when the pizza goes in,
+## The crash point is drawn from the cabinet stream the moment a run launches,
 ## before anything moves, and the climb only replays it. The wallet settles
-## once, when the bake ends. Leaving mid-bake forfeits the stake, so Back is
+## once, when the run ends. Leaving mid-run forfeits the stake, so Back is
 ## never an escape.
 
 const STAKE_KEYS: Array[int] = [100, 200, 500, 1000]
@@ -18,7 +18,7 @@ func _create_panel() -> CabinetPanel:
 	return CoreOverclockPanel.new()
 
 
-## The bake itself is the reveal: the result settles when it ends, not held.
+## The run itself is the reveal: the result settles when it ends, not held.
 func _gates_result_on_reveal() -> bool:
 	return false
 
@@ -59,7 +59,7 @@ func is_deck_open() -> bool:
 	return context != null and not is_round_active and not is_result_pending
 
 
-func can_bake() -> bool:
+func can_launch() -> bool:
 	return (
 		is_deck_open()
 		and math.is_legal_stake(selected_stake)
@@ -68,31 +68,31 @@ func can_bake() -> bool:
 	)
 
 
-## The key the player holds: pull the pizza while one is baking, otherwise send
-## the next one in.
+## The one key the player holds: haul in while a run is climbing, otherwise
+## launch the next one.
 func request_primary() -> bool:
 	if is_round_active:
 		return request_pull()
-	return request_bake()
+	return request_launch()
 
 
-func request_bake() -> bool:
+func request_launch() -> bool:
 	if not is_deck_open():
 		return false
-	if not can_bake():
+	if not can_launch():
 		AudioService.play(&"loss")
 		_screen().show_notice("CORE_OVERCLOCK_NEED_STAKE")
 		return false
 	current_stake = selected_stake
 	is_round_active = true
 	math.reset()
-	# The crash point is decided here, before the pizza is on the stone.
+	# The crash point is decided here, before she ever leaves the perch.
 	math.begin(current_stake, context.rng)
-	_screen().begin_bake()
+	_screen().begin_run()
 	return true
 
 
-## Pulls the pizza at the multiplier now on the dial.
+## Hauls the run in at the multiplier now on the readout.
 func request_pull() -> bool:
 	if not is_round_active or is_result_pending:
 		return false
@@ -103,8 +103,8 @@ func request_pull() -> bool:
 	return true
 
 
-## Steps the oven timer through the presets. Only between bakes, so it can never
-## be a reaction to a multiplier already on the dial.
+## Steps the auto-haul target through the presets. Only between runs, so it can
+## never be a reaction to a multiplier already on the readout.
 func cycle_auto_target() -> bool:
 	if not is_deck_open():
 		return false
@@ -148,7 +148,7 @@ func _screen() -> CoreOverclockPanel:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _refuse_help_mid_bake(event):
+	if _refuse_help_mid_run(event):
 		return
 	if handle_common_input(event):
 		return
@@ -185,9 +185,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
-## The guide would pause a bake the player is meant to be watching, so it opens
-## between bakes only.
-func _refuse_help_mid_bake(event: InputEvent) -> bool:
+## The guide would pause a run the player is meant to be watching, so it opens
+## between runs only.
+func _refuse_help_mid_run(event: InputEvent) -> bool:
 	if not event.is_action_pressed("help") or not math.is_running():
 		return false
 	AudioService.play(&"loss")

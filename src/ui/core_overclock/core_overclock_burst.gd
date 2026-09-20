@@ -1,14 +1,14 @@
 class_name CoreOverclockBurst
 extends Node2D
-## Embers, flour and smoke, drawn from the painted sprite sheet.
+## Spray, spindrift and smoke, cut from the painted break-up sheet.
 ##
-## `sparks()` throws a handful of embers out of the oven mouth when a pizza is
-## pulled or when one burns; `puff()` puts one flour cloud or smoke roll on the
-## screen for the peel, the serve and the burn. Both are finite: every particle
-## has a life and the node is empty again when they end.
+## `sparks()` throws a handful of spray off the head of the line when a run is
+## hauled in or when the sea takes it; `puff()` puts one spindrift cloud or smoke
+## roll on the screen for the launch, the haul and the break-up. Both are finite:
+## every particle has a life and the node is empty again when they end.
 ##
-## Reduced motion shows neither - the dial, the deck and the history strip carry
-## the same information without anything flying across the screen.
+## Reduced motion shows neither - the number, the deck and the recent-runs strip
+## carry the same information without anything flying across the screen.
 
 const SPARK_SECONDS: float = 1.0
 const SPARK_GRAVITY: float = 520.0
@@ -30,7 +30,7 @@ func _ready() -> void:
 	MotionPolicy.motion_preference_changed.connect(_on_motion_preference_changed)
 
 
-## A handful of embers thrown up out of `origin`.
+## A handful of spray thrown up out of `origin`.
 func sparks(origin: Vector2, count: int) -> void:
 	if MotionPolicy.is_reduced():
 		return
@@ -56,7 +56,7 @@ func sparks(origin: Vector2, count: int) -> void:
 	queue_redraw()
 
 
-## One flour cloud or smoke roll from the sheet, centred on `origin`.
+## One spindrift cloud or smoke roll from the sheet, centred on `origin`.
 func puff(origin: Vector2, cell: int, width: float, seconds: float = PUFF_SECONDS) -> void:
 	if MotionPolicy.is_reduced():
 		return
