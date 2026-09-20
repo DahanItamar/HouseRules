@@ -656,3 +656,360 @@ In every sheet the model drew the "down" phase as a crouching lunge and repeated
 ## 2026-09-19 Vivienne seated at reception
 
 The executive assistant stood beside an empty chair at the Manager's Office reception, which read as pasted on. One `nano_banana_pro` edit (served as `nano_banana_2`, 1:1, 2k, 2 credits) of the current reception crop (upload `610e9570-d9c5-4d36-99b9-5fbf79d06065`, virtual crop [720,240,240,240]) with her concept `351fbaab-be0f-4dfe-a11f-9cd9806fd049` as the identity reference seats her in the burgundy chair behind the desk, writing in an appointment book beside her tablet and turning toward the entrance. Job `5b3ad23d-d8d3-45c9-a886-7437a27e8b8c`, saved as `assets/source/layered_v2/manager_office/office_secretary_seated_5b3ad23d.png`; it replaces the standing paint-in in `tools/art/bake_manager_office.json` (clip: `Reception` + [798,248,906,294] so the old standing figure is erased above the desk line). The dialogue pointer in `src/floor/office_host.gd` now aims at her seat (856, 304).
+
+## 2026-09-19 Themed control-deck UI kit
+
+One painted kit per cabinet theme for the redesigned control decks: a nine-slice panel frame, a nine-slice button plate and a round medallion (the How to Play button; its "?" is drawn in code because generated text is not allowed). All `gpt_image_2_5`, 1:1, high, 1k, `background: transparent`, 3 credits each (21 jobs, 63 credits). Several outputs leaked partial transparency into the centre, so every panel and button centre is repainted as one flat colour sampled just inside the rim; the manifest `assets/production/ui/kit/ui_kit.json` records the nine-slice margin and centre colour per piece. Raw outputs: `assets/source/layered_v2/ui_kit/`.
+
+| Theme | Panel | Button | Medallion |
+| --- | --- | --- | --- |
+| Elven Court | `7493e0c1-135a-40a6-8ffc-8023bda75230` | `6a4a5246-607f-461d-a7cc-913718b3e26b` | `0452e67f-e09d-41d3-a299-d45efa594e5f` |
+| Blackjack | `cf1fb4f0-704a-4dce-9ae6-a344a7e7da65` | `539ec5c4-ae45-46fe-871e-9799e35c24ce` | `ec6efef3-e0fa-4a34-8360-125ff73df719` |
+| Hexbound Vault | `99bb325f-2c0b-4360-9194-494012cb66eb` | `0dfb3f25-91e1-469e-8300-618c5240b29d` | `e4836562-db6c-4465-8c5e-a05cb5e83a16` |
+| Ruby Roulette | `02e6995f-6b58-4ca4-a8e4-b6af12e115a3` | `21fa9c4b-a260-41bc-9a5b-91d30d45fa51` | `a70b1410-82c0-4a70-ab3f-327d7e5e8b1b` |
+| Texas Hold'em | `76b87d1c-6175-4657-9f85-b144b063ae5d` | `2ef1e098-8849-4853-a08a-449dad527263` | `30cc92f5-62ed-4c87-805f-76c68c2578ce` |
+| Velvet Baccarat | `2df96987-ea9d-45a0-b5a6-78fb1cf0dd57` | `61a81b7b-a92f-4d17-bd14-3af5a1834d38` | `ac1f7647-13e3-4038-9672-6d7bfa39739a` |
+| Match Point | `5ea9369d-d44b-4dfa-9e67-f9bb9abb3a5a` | `a7af954d-2d99-4525-aded-a4b2f16d8b51` | `9b864a24-2bb3-4487-b69b-0ea7a2d2d475` |
+
+## 2026-09-20 Harlequin Masquerade (Upgrade Cluster, cluster-pays grid)
+
+The theme for the new `upgrade_cluster` cabinet: a carnival-theatre machine whose
+harlequin diamond motif matches the cluster grid. All raw outputs are Higgsfield
+transparent PNGs (or, for the four pose variants, opaque renders on a studio grey)
+and live in `assets/source/layered_v2/harlequin/`. They are never modified.
+
+Production files are derived by `tools/art/prepare_harlequin.py` (stage dressing,
+tiles, sidekicks and the pose cut-outs) and
+`tools/art/prepare_characters.py tools/art/characters_harlequin.json` (de-fringe,
+head-registered alignment onto the shared 1392×2080 canvas, alpha clean, pad).
+
+| Asset | Job | Production file |
+| --- | --- | --- |
+| Hostess master (identity reference for the poses) | `34997eda-22fa-4044-bba1-2c66a8d4918d` | `characters/hosts/harlequin_hostess.png` |
+| Pose: presenting | `75558280-d677-4cb3-90b3-1d4ae24b3c1c` | `characters/hosts/harlequin_hostess_present.png` |
+| Pose: celebration | `7362e4c2-d2fd-4581-9e1e-7aadfb37bfc0` | `characters/hosts/harlequin_hostess_cheer.png` |
+| Pose: mock pout | `fdb0da89-aecc-4235-9b4b-857fffd3cbdd` | `characters/hosts/harlequin_hostess_pout.png` |
+| Pose: mask raised | `fc5e136e-82b5-4f83-8dc7-c51a4dd6baf0` | `characters/hosts/harlequin_hostess_mask.png` |
+| Stage backdrop (3840×2160, no people) | `17738331-3f89-4eb5-9d7c-401ddf18ba13` | `harlequin/harlequin_stage_backdrop.png` |
+| Grid frame | `7225de82-fb67-4443-aed3-356a8e37ac8d` | `harlequin/harlequin_grid_frame.png` |
+| Multiplier bar plate | `65c9ff3f-2228-4bde-b2ee-29ffb4b8fd8a` | `harlequin/harlequin_multiplier_bar.png` |
+| Celebration crest (blank ribbon) | `a3842cf0-ff12-4248-a2e4-c412a259b76d` | `harlequin/harlequin_crest.png` |
+| Gem shard sheet (4×4) | `d4408a2c-9bcb-4132-b75b-c4001cc2a618` | `harlequin/harlequin_shards.png` |
+| Tile: emerald diamond | `bcf3e691-3c0e-4f07-97e8-b0aecb9bd8b0` | `harlequin/harlequin_tile_gem_green.png` |
+| Tile: rose diamond | `aea5de95-6ea1-4b04-8c53-1480ab9292cc` | `harlequin/harlequin_tile_gem_pink.png` |
+| Tile: amethyst diamond | `cea0179e-9a3c-4c9d-9bd7-63f95bbaa6cd` | `harlequin/harlequin_tile_gem_violet.png` |
+| Tile: pearl diamond | `b40952f0-5e2f-4fec-ae74-01dfd5e1016c` | `harlequin/harlequin_tile_gem_ivory.png` |
+| Tile: masquerade mask | `48067704-e9b3-4d69-9c4d-749a05459eb0` | `harlequin/harlequin_tile_mask.png` |
+| Tile: jester hat | `080010b9-53a8-494f-bdae-3560852d34ff` | `harlequin/harlequin_tile_jester_hat.png` |
+| Tile: carnival bells | `ab29c0c8-f8f9-4f0a-9ec7-a4332d6b066f` | `harlequin/harlequin_tile_bells.png` |
+| Tile: theatre ticket | `cac2cc55-fe38-472f-b0db-7265a32c7c96` | `harlequin/harlequin_tile_ticket.png` |
+| Sidekick: pink jester | `f098eadd-e909-4fd3-bf89-ad8013acc57a` | `harlequin/harlequin_sidekick_pink.png` |
+| Sidekick: green jester | `f93b2e9d-3554-4e25-ba56-5c69d4b8bf5c` | `harlequin/harlequin_sidekick_green.png` |
+
+### Processing notes
+
+**The studio grey could not be keyed by distance.** The four pose renders carry a
+warm vignette that swings the background by more than 60 levels corner to centre,
+*and* a wall-to-floor step with a painted cast shadow, so no single threshold and no
+fitted quadratic surface separated the figure cleanly (both were tried; the fitted
+surface left the floor and shadow attached). What works is a property the two sides
+do not share: the backdrop, the floor and the shadow are all near-neutral and
+mid-toned, while her skin, jacket, hair and the harlequin stripe are warm or
+saturated and her trousers and boots are far darker than any backdrop texel. The key
+is therefore "near-neutral **and** mid-toned **and** reachable from a corner of the
+frame without crossing the figure" — the connectivity test is what preserves the grey
+that belongs to her, such as the folds in the ivory blouse.
+
+**The presenting pose came back holding a chess board**, which has nothing to do with
+this machine. It is erased by polygon on the raw canvas, before any rescaling, in
+`ERASE` in `prepare_harlequin.py`; what is left is the open presenting palm the beat
+actually needs. The polygon steps around her fingertips, so a few pixels of the
+board's near edge survive on her fingers and read as a painted nail at runtime size.
+
+**Tiles** are trimmed to their paint and re-centred in a 256 px cell at one visual
+weight, so a narrow harlequin gem and a wide pair of bells carry the same weight on
+the board without either touching a cell edge.
+
+**No new generations were made for this pass.** The Higgsfield MCP server failed to
+connect for the whole session (`CONNECTION_CLOSED`), so every asset here is one the
+user supplied; nothing was regenerated or re-rolled. The one asset that would have
+benefited — a presenting pose without the chess board — was solved by editing instead.
+
+## Video walk cycle (player_walk_v3)
+
+The three earlier attempts at the player's walk all failed for the same reason:
+nothing in them was a real gait. Two were generated sprite sheets whose "frames"
+barely moved the legs, and the third was a procedural leg rig bolted under a static
+torso. This pass films the gait instead and samples it.
+
+### The five Kling clips
+
+One shot per authored facing, all of the same ivory-dinner-jacket player on a flat
+mid-grey seamless plate, from `generate_video`, model `kling3_0`, mode `pro`, 5 s,
+aspect `1:1`, sound off, `cfg_scale` 0.5, delivered at 1440x1440 / 24 fps (121
+frames). Sources live in `assets/source/layered_v2/walk_v2/`.
+
+| Facing | Job id | Start image media id | File |
+| --- | --- | --- | --- |
+| E (side, walking right) | `512bf8fa-456e-4c6a-9d27-1594fa2fce7d` | `3661051b-03df-44e2-a443-e191cfc1f0d9` | `video_side_512bf8fa.mp4` |
+| S (toward the camera) | `4921f301-c4dd-4044-88fc-0ca9f6f9067c` | `f1b3f8f2-6d97-43ee-ada8-677f999a39c9` | `video_front_4921f301.mp4` |
+| N (away from the camera) | `454b106f-8f4d-4f3c-9fb5-83a913400c6b` | `f19e1385-7337-4484-baf3-89dd1d3e69a2` | `video_back_454b106f.mp4` |
+| SE (three-quarter front) | `55aa5bdd-4206-40dd-93dc-c8f5a119f5b8` | `a305d9a0-41aa-4bca-9ded-71f78595ad1a` | `video_front34_55aa5bdd.mp4` |
+| NE (three-quarter back) | `4658ceb8-5be0-4e13-ada9-7cf19f63206a` | `385f6cf1-3119-477a-99d1-5fcac16a6424` | `video_back34_4658ceb8.mp4` |
+
+The prompt asked for the gait by name rather than for "a walk cycle": *"clear heel
+strike, the swing leg bending at the knee and passing the standing leg, toe-off,
+arms swinging opposite to the legs, gentle up-and-down body bob. The camera tracks
+smoothly alongside him so he stays centred in the frame at the same size the whole
+time. Plain flat mid-grey seamless background, no floor texture, no shadows, no
+other people, no cuts. Same outfit and face throughout."* Naming the landmarks is
+what made the legs actually alternate, and asking for a tracking camera is what kept
+the figure one size for long enough to cut a cycle out of it.
+
+**Credits.** All five clips were generated in the preceding session. This pass
+regenerated nothing -- every view came out usable -- so it spent 0 credits; the
+balance read 1942.25 (`ultra`) both before and after.
+
+### From clip to atlas
+
+`tools/art/build_player_walk_video.py` writes
+`assets/production/characters/player_walk_v3.png`: 8 facing columns
+(N, NE, E, SE, S, SW, W, NW, clockwise from north) by 8 phase rows, 240 px cells
+with a 9 px transparent gutter, 1920x1920. W, SW and NW are horizontal mirrors of
+E, SE and NE, which also flips their footedness, as a mirrored walker's should.
+
+1. **Key.** `key_out` from `build_player_walk.py` unmixes the flat grey. That alone
+   leaves the soft ground shadow, which is the same grey darkened, so a second test
+   marks every pixel lying on the backdrop's own line in RGB between 0.45x and 1.10x
+   its brightness, and keeps only the part of that mask a border flood fill reaches.
+   A grey fold inside the jacket therefore cannot punch a hole. Everything two pixels
+   inside the silhouette is forced back to full alpha and its original colour,
+   because a pure distance key reads the lapel piping and the shirt's shadow side as
+   half transparent and unmixes their colour away; only the rim stays soft. Edge
+   pixels are then de-fringed (alpha x1.18 - 34), which leaves 3.7% of the
+   partial-alpha pixels near-neutral mid-tone and no visible halo over magenta.
+2. **Find the cycle.** Three silhouette signals per frame: the feet's horizontal
+   separation measured across three bands of the lower body (0.74, 0.84 and 0.90 of
+   the figure height, so the back view's shoes and the front view's shins each get a
+   band that shows the stride), and the signed offset of the lowest foot from the
+   body axis. Each is flattened against a quadratic first, because the back view's
+   legs overlap progressively as the model turns a few degrees over the clip and that
+   slow slide buries the gait. A one-harmonic least-squares fit, scanned to a
+   twentieth of a frame, gives the **step** period; the cycle is twice it. Fitting at
+   the step rate rather than the cycle rate is what avoids the half/double ambiguity
+   that made an autocorrelation of the footedness signal pick 16.7 frames for NE.
+3. **Phase 0.** The crests of the fitted step wave are the contacts. Of the two in a
+   cycle it takes the one where the fitted once-per-cycle footedness wave is high,
+   i.e. the contact with the leading foot on the screen-right of the body axis.
+4. **Sample.** Eight even phases, each snapped to the nearest real frame. Nothing is
+   cross-faded, so no beat can morph. At a ~33-frame cycle the snap lands within 2%
+   of the ideal phase.
+5. **Stabilise.** Each frame is aligned on the centre of its head-and-collar band --
+   the one part of the silhouette that tracks the body without the swinging arms'
+   bias -- which removes the model's drift across the plate (up to 57 px in the back
+   clip) while leaving the hips and shoulders free to sway 2-6 atlas px around the
+   axis. Vertically the whole cycle shares one ground reference, so the natural bob
+   survives: the head rises and falls 5-6 atlas px (1.4-1.7 virtual px) twice per
+   cycle, lowest at the contacts on rows 0 and 4 and highest at the passing beats on
+   rows 2 and 6.
+6. **Scale.** One factor per view, to 200 px tall with the cycle's lowest sole on the
+   foot line (cell centre + 110 px). Every column lands at 191-199 px.
+
+| Facing | Clip | Steady window | Cycle (frames) | Source frames |
+| --- | --- | --- | --- | --- |
+| N | `video_back_454b106f` | 14-86 | 34.4 | 25, 30, 34, 38, 43, 47, 51, 56 |
+| NE | `video_back34_4658ceb8` | 14-86 | 32.6 | 37, 41, 45, 49, 53, 57, 62, 66 |
+| E | `video_side_512bf8fa` | 14-96 | 33.6 | 35, 39, 43, 47, 51, 56, 60, 64 |
+| SE | `video_front34_55aa5bdd` | 14-76 | 32.9 | 16, 20, 24, 29, 33, 37, 41, 45 |
+| S | `video_front_4921f301` | 14-66 | 28.5 | 36, 39, 43, 47, 50, 54, 57, 61 |
+
+The windows end before the camera pushes in far enough for the shoes to reach the
+bottom of the plate: past frame ~76 the front and three-quarter-front clips clip the
+figure, and a clipped silhouette breaks both the ground reference and the gait
+signals.
+
+**Honest caveats.** The back view's foot separation is genuinely weak -- the legs
+overlap for most of its cycle -- so its second contact (row 4) reads only a little
+wider than its passing beats, and its phase is the least certain of the five; its
+body bob and its row-0 contact are still in step with the rest. The front clip's
+cycle is 28.5 frames against 33-34 for the others, so its footfall rate differs at
+the source; phase-normalising to eight rows makes that invisible in game. Footedness
+across views is matched by the fitted once-per-cycle wave, which is strong for E and
+SE and faint for the two depth views, so which of N's or S's two contacts is "the
+right heel" is arbitrary -- what is guaranteed is that every column starts on a
+contact and passes on rows 2 and 6, which is what keeps turns from popping.
+
+### Playing it back
+
+`CharacterWalkAtlas.ACTIVE` is now `WALK_V3` (8 rows, idle row 2). The frame comes
+from distance walked, never from a timer: `FloorAvatar.set_motion` takes the
+displacement that actually survived collision, divides it by the avatar's scale and
+advances `walk_cycles` by that over `CYCLE_DISTANCE`. Walking into a wall therefore
+does not animate in place, and the soles stay locked to the carpet at any room scale.
+
+`CYCLE_DISTANCE` is 41.0 virtual px, measured from the art rather than chosen: the
+east contact frames plant their shoes 70.5 atlas px apart, a cycle is two of those
+steps, and 141 x `GUEST_SCALE` (0.29) is 40.9. At `FloorController.SPEED` (88 px/s)
+that is 2.15 cycles a second at avatar scale 1, and 1.4-1.6 at the scales the rooms
+actually draw him -- a brisk but natural walk. `STRIDE_DEPTH` stays 0.75: the floor's
+own foot ellipse squashes depth to 0.6, but the controller drives the same screen
+speed in every direction, so a strict 0.6 would spin the depth walks up into a
+scurry. Depth walks therefore slip a little; sideways walks do not slip at all.
+
+Two robustness fixes came out of the capture rig. The walk pose is now held 0.18 s
+after the last movement, and the gait only resets to the standing frame after 0.3 s
+of actually standing still, so a single slow frame can no longer restart the stride
+mid-walk. Before that, a capture frame that stalled on a 1920x1080 read-back was
+resetting the phase every other step.
+
+### Player scale against the painted adults
+
+The player was measured against standing painted adults in each room's 4K
+background, read off a virtual-coordinate grid. A drawn player is 200 x 0.29 = 58
+virtual px tall at avatar scale 1, so the scale a room needs is the painted adult's
+height in virtual px divided by 58.
+
+| Room | Painted reference | Height and foot y | Implied scale |
+| --- | --- | --- | --- |
+| Main Floor | slots couple | 67 px at y=188 | 1.16 |
+| Main Floor | vault couple | 71 px at y=215 | 1.22 |
+| Main Floor | cashier waitress | 93 px at y=465 | 1.60 |
+| Main Floor | lounge waitress | 90 px at y=477 | 1.55 |
+| High Roller | reception hostess | 107 px at y=197 | 1.84 |
+| High Roller | lounge waitress, bottom right | 100 px at y=445 | 1.72 |
+| VIP | roulette couple | 72 px at y=215 | 1.24 |
+| Manager's Office | the Manager (head count; his feet are behind the desk) | ~173 px at y=202 | ~2.98 |
+| Manager's Office | desk front face read as a 0.75 m rule | ~132 px at y=195 | ~2.28 |
+
+`data/floors/<room>.json` carries `avatar_scale_far` (top of the walk bounds) and
+`avatar_scale_near` (bottom); `FloorRoomLayout.avatar_scale_at` lerps between them
+from the foot y, and `FloorController._apply_avatar_scale` feeds the avatar its own
+position every frame. New values:
+
+| Room | far | near | Was |
+| --- | --- | --- | --- |
+| `main_floor` | 1.00 | 1.67 | 1.11 / 1.73 |
+| `high_roller` | 1.85 | 1.75 | 1.80 / 1.80 |
+| `vip` | 1.28 | 1.60 | 1.56 / 1.18 |
+| `manager_office` | 2.60 | 3.20 | 2.45 / 1.30 |
+
+Main Floor is a least-squares line through its four samples. The VIP and the office
+ramps were **inverted** -- the player shrank as he walked toward the camera -- which
+is most of why he read as tiny in those rooms; both now grow toward the near edge.
+High Roller keeps a nearly flat ramp because its two references disagree with
+perspective by only 7%, and in the wrong direction.
+
+**Honest caveat: the backgrounds are not perspective-consistent.** The Manager and
+the VIP bar hostess are painted as hero figures, larger than the same room's other
+adults; the VIP elevator doors and the office bookcases imply adults far smaller than
+the people standing next to them. Where sources disagree the calibration favours the
+larger, so the player never reads as a child, and it favours adults standing on floor
+the player can actually walk on. The office is the least certain of the four, because
+it holds no standing adult with visible feet: 2.60 / 3.20 puts the player at 161 px
+at the Manager's desk against the Manager's ~173, which reads as two adults, but it
+is an estimate from a head count and a desk height, not a measurement.
+
+Proof crops are in `tests/results/screenshots/walk_fhd/scale_*_after.png`, one per
+room, from `tools/capture_walk.tscn --scale-check` (add `--legacy-scale` for the
+before shot). In-engine walk proof is `walk_sheet.png` (8 facings x 8 phases),
+`walk_loop.gif` (a real-time square walk around the spawn) and `walk_cycles.gif`
+(one full cycle in each of the eight directions, cropped to the avatar and upscaled,
+so a sliding sole would show as the carpet slipping under a planted foot).
+
+### Progression and stats UI
+
+The House standing kit was generated with **Higgsfield** `gpt_image_2_5` (1:1,
+1k, transparent background) and processed by `tools/art/prepare_progression.py`
+into `assets/production/ui/progression/` with a manifest, `progression.json`,
+that records each piece's kind, nine-patch margin and flat centre colour.
+
+| Piece | Job |
+| --- | --- |
+| Progress-bar track (brass rim, milled edge, stepped end caps) | `b2d793e1-c398-4c34-b73f-0e79876c8e74` |
+| Progress-bar fill (brushed brass capsule) | `86e1fde1-d1a4-41d0-a537-4ea081f5ff3d` |
+| Stats/ledger panel frame (brass double rule, fan corners, walnut inlay) | `2c0382a9-8ad7-4e78-ab2e-5a87b4f7d3a1` |
+| Rank medallions, one row of five | `494570ad-98ef-417a-9142-ae90308d2649` |
+| Deed and keys on a velvet cushion | `f92a6f07-142a-4c32-be38-120bfa767386` |
+| Stat icon sheet, 4x2 | `029a8af5-834c-4c74-8935-f6f3e8b0576a` |
+
+Processing, in the same shape as the glyph kit:
+
+* The three nine-slice pieces are trimmed to their silhouette, any partial
+  transparency inside is composited over the flat centre sampled just within the
+  rim, and the bars have every column between their end caps replaced by the
+  median column, so a horizontal stretch is exact. The track's flat channel is
+  levelled to one colour; the fill is **not**, because its vertical brushed
+  sheen is the only thing that stops the bar reading as a plain rectangle, and
+  that axis is never stretched. The track also records the channel's inset
+  (37 / 18 px), which is how `ProgressMeter` insets the fill instead of guessing.
+* The medallion row and the icon sheet are split on their alpha gaps, cleaned on
+  every solid part rather than the largest one (a flame is three strands, a
+  laurel is two halves and a knot), then trimmed and centred on one square
+  canvas each: 256 px for the six ranks, 128 px for the eight icons.
+* **Five medallions were painted for six ranks.** Partner is the Owner key
+  tinted to aged bronze (`PARTNER_TINT` in the prepare script), so the pure gold
+  key stays Owner's alone. The manifest marks `rank_partner` as derived.
+* The deed's parchment is deliberately blank; its wording is drawn in code.
+
+Contact sheet: `tests/results/screenshots/ui_assets/progression_sheet.png`.
+Every produced PNG has fully transparent corners and is imported with mipmaps,
+so the 920 px bar master stays sharp at UHD while drawing 11-14 px tall on the
+960x540 virtual canvas.
+
+**The Higgsfield MCP was unavailable for part of this session** (the connector
+reported `CONNECTION_CLOSED`), so no further pieces were generated after the six
+above; the sixth rank was derived from an existing medallion rather than
+generated, as noted.
+
+## 2026-09-20 Forno d'Oro v2: the centred oven and the nine-stage bake
+
+The first Forno screen was rejected. Three things were wrong with it, and all
+three were art problems rather than code problems:
+
+* the oven was painted off to the right, so the dial and the pizza hung over the
+  middle of the counter attached to nothing;
+* the pizza had exactly one painted state, browned by a colour tint, so the bake
+  never actually looked like a bake;
+* a drawn bake curve plotted the same multiplier the dial was already showing.
+
+The curve is gone. The pizza is now the cabinet's real readout: it is made on
+the counter during the countdown and then browns in the oven mouth, and the dial
+under it carries the number. All `gpt_image_2_5`, high, `background: transparent`
+except the backdrop. Raw outputs are in `assets/source/layered_v2/forno/` and are
+never modified; production files come from `tools/art/prepare_forno.py`.
+
+| Asset | Job | Production file |
+| --- | --- | --- |
+| Counter backdrop, oven dead centre, no people (16:9) | `7ac3c1fc-6e2e-4ff8-909f-a9a1e9bec2ed` | — |
+| The same backdrop upscaled to 4K (`bytedance_image_upscale`) | `f9f4f802-c31d-483e-a9a6-eef799fee0f4` | `forno/forno_backdrop_v2.png` |
+| Bake 6, the hero margherita (identity reference for the set) | `009638a4-b1fe-4163-94df-2e9906cfac0a` | `forno/forno_bake_6.png` |
+| Bake 0, dough ball | `129dd089-0d92-4802-b29a-fc19c680a805` | `forno/forno_bake_0.png` |
+| Bake 1, stretched base | `2df8e78d-3acd-4a1a-8525-e05a025c242e` | `forno/forno_bake_1.png` |
+| Bake 2, sauced | `cb8c5df2-1700-405b-b21f-154c32cec80f` | `forno/forno_bake_2.png` |
+| Bake 3, topped and raw | `fd0356a5-61fa-4e11-8a4f-b1c8e7304a59` | `forno/forno_bake_3.png` |
+| Bake 4, early | `f93adda1-70e6-4ed8-a1be-6e340d10b29d` | `forno/forno_bake_4.png` |
+| Bake 5, melting | `cec2e859-7501-42eb-9d49-6f43e5f2222a` | `forno/forno_bake_5.png` |
+| Bake 7, deep | `e0098e96-1bb7-4872-8621-b9132ce21dca` | `forno/forno_bake_7.png` |
+| Bake 8, burnt | `bdc071a8-f112-439b-a1e0-f1f0eef27889` | `forno/forno_bake_8.png` |
+
+Stages 0-8 were generated from the hero with `image_references`, so every stage
+is the same pizza. They are cut to one shared 512 px cell at **one shared scale**
+taken from the widest piece, so the dough ball stays small and the finished pizza
+stays large; sizing each stage to fill its own cell would have thrown the growth
+away and made the dough read as big as the pizza.
+
+Superseded but kept for provenance: `forno_backdrop.png` (the off-centre oven),
+`forno_pizza.png` and `forno_burnt_pizza.png` (the single-state pizza), and
+`forno_oven_gauge.png`'s drawn companion curve.
+
+### Themed UI kit for the two new cabinets
+
+The kit from 2026-09-19 covered seven themes. Forno d'Oro had no entry at all, so
+its deck fell back to flat plates, and Harlequin Masquerade was borrowing the
+Hexbound Vault's button and medallion. Both now have their own. Same recipe as
+the original kit: `gpt_image_2_5`, 1:1, high, 1k, `background: transparent`.
+
+| Theme | Panel | Button | Medallion |
+| --- | --- | --- | --- |
+| Forno d'Oro | `20d1f991-6c26-4083-a37b-490f049c97db` | `0f62cd34-1392-4006-a69f-5d5d8412827d` | `86317252-d873-4fa2-bec2-02123d441ef7` |
+| Harlequin Masquerade | `b9ac3d1f-3261-419e-b648-4079f922ed60` | `0066278b-d563-4de1-aed0-66480817a886` | `2bde3eee-2456-40f9-9a0f-a69bcc90b275` |

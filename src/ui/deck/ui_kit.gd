@@ -14,12 +14,6 @@ extends RefCounted
 ## own transparent pad), so they record no region.
 const SHARED := &"shared"
 
-## Upgrade Cluster borrows the Hexbound Vault's button and medallion until its own
-## themed kit exists, so both themes name the same two textures. They are hoisted
-## here rather than preloaded twice.
-const VAULT_BUTTON := preload("res://assets/production/ui/kit/button_vault.png")
-const VAULT_MEDALLION := preload("res://assets/production/ui/kit/medallion_vault.png")
-
 const THEMES: Dictionary = {
 	SHARED:
 	{
@@ -49,10 +43,10 @@ const THEMES: Dictionary = {
 	},
 	&"minefield_vault":
 	{
-		"button": VAULT_BUTTON,
+		"button": preload("res://assets/production/ui/kit/button_vault.png"),
 		"button_region": Rect2(55, 51, 915, 922),
 		"button_margin": 124,
-		"medallion": VAULT_MEDALLION,
+		"medallion": preload("res://assets/production/ui/kit/medallion_vault.png"),
 		"medallion_region": Rect2(24, 12, 969, 984),
 	},
 	&"roulette":
@@ -63,18 +57,27 @@ const THEMES: Dictionary = {
 		"medallion": preload("res://assets/production/ui/kit/medallion_roulette.png"),
 		"medallion_region": Rect2(44, 32, 925, 943),
 	},
-	# Upgrade Cluster borrows the Hexbound Vault plates until its own themed art
-	# arrives; ClusterTheme is the one place that choice is recorded.
 	&"upgrade_cluster":
 	{
-		"panel": preload("res://assets/production/ui/kit/panel_vault.png"),
-		"panel_region": Rect2(38, 33, 952, 991),
-		"panel_margin": 110,
-		"button": VAULT_BUTTON,
-		"button_region": Rect2(55, 51, 915, 922),
-		"button_margin": 124,
-		"medallion": VAULT_MEDALLION,
-		"medallion_region": Rect2(24, 12, 969, 984),
+		"panel": preload("res://assets/production/ui/kit/panel_harlequin.png"),
+		"panel_region": Rect2(3, 8, 1019, 992),
+		"panel_margin": 121,
+		"button": preload("res://assets/production/ui/kit/button_harlequin.png"),
+		"button_region": Rect2(24, 26, 976, 958),
+		"button_margin": 111,
+		"medallion": preload("res://assets/production/ui/kit/medallion_harlequin.png"),
+		"medallion_region": Rect2(14, 4, 995, 969),
+	},
+	&"core_overclock":
+	{
+		"panel": preload("res://assets/production/ui/kit/panel_forno.png"),
+		"panel_region": Rect2(10, 18, 1004, 970),
+		"panel_margin": 80,
+		"button": preload("res://assets/production/ui/kit/button_forno.png"),
+		"button_region": Rect2(20, 27, 983, 967),
+		"button_margin": 61,
+		"medallion": preload("res://assets/production/ui/kit/medallion_forno.png"),
+		"medallion_region": Rect2(18, 14, 985, 985),
 	},
 	&"poker":
 	{
