@@ -12,7 +12,12 @@ const ENTRIES: Array[Dictionary] = [
 	{"room": &"vip", "kind": RoomTransition.LIFT, "cue": &"lift_chime"},
 	{"room": &"manager_office", "kind": RoomTransition.DOOR, "cue": &"door_latch"},
 ]
-const PASSAGE_TIMEOUT: float = 3.0
+## A ceiling, not a measurement. The assertion these waits serve is "the passage
+## finishes on its own", and a loaded machine that takes four seconds has still
+## satisfied it -- but at 3 s the wait gave up first and the test failed for want
+## of a runner, which is exactly what happened once on a full-suite run while a
+## capture was going. A longer ceiling weakens nothing and stops that.
+const PASSAGE_TIMEOUT: float = 10.0
 
 var _floor: FloorController
 var _transition: RoomTransition

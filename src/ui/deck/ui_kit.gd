@@ -67,11 +67,11 @@ const THEMES: Dictionary = {
 	},
 	&"core_overclock":
 	{
-		"button": preload("res://assets/production/ui/kit/button_forno.png"),
-		"button_region": Rect2(20, 27, 983, 967),
-		"button_margin": 61,
-		"medallion": preload("res://assets/production/ui/kit/medallion_forno.png"),
-		"medallion_region": Rect2(18, 14, 985, 985),
+		"button": preload("res://assets/production/ui/kit/button_corsair.png"),
+		"button_region": Rect2(14, 18, 996, 988),
+		"button_margin": 36,
+		"medallion": preload("res://assets/production/ui/kit/medallion_corsair.png"),
+		"medallion_region": Rect2(22, 9, 976, 992),
 	},
 	## The main menu's own key: burgundy enamel in a gold art-deco frame, cut from
 	## the same branding as the title badge.

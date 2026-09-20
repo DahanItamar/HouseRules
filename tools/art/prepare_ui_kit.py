@@ -28,12 +28,11 @@ OUT = ROOT / "assets/production/ui/kit"
 ## Raw output -> production file. Medallions keep their painted centre: the "?"
 ## is drawn on top in code, so there is nothing to stretch and nothing to flatten.
 PLATES: list[tuple[str, str, bool]] = [
-    ("button_forno_0f62cd34.png", "button_forno.png", True),
-    ("panel_forno_20d1f991.png", "panel_forno.png", True),
-    ("medallion_forno_86317252.png", "medallion_forno.png", False),
     ("button_harlequin_0066278b.png", "button_harlequin.png", True),
     ("panel_harlequin_b9ac3d1f.png", "panel_harlequin.png", True),
     ("medallion_harlequin_2bde3eee.png", "medallion_harlequin.png", False),
+    ("button_corsair_64a2b660.png", "button_corsair.png", True),
+    ("medallion_corsair_b320faa6.png", "medallion_corsair.png", False),
 ]
 
 

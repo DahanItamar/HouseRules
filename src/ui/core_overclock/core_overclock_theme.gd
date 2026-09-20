@@ -16,13 +16,16 @@ extends RefCounted
 ## right column at the same width, and the shared deck across the foot. The two
 ## columns keep equal margins, so nothing is crammed into a corner.
 ##
-## Rebuild the production art with `python tools/art/prepare_forno.py`;
+## Rebuild the production art with `python tools/art/prepare_corsair.py`;
 ## provenance is in docs/art/GENERATION-REPORT.md under "Forno d'Oro".
 
 const BACKDROP := preload("res://assets/production/corsair/corsair_sea.png")
 const GAUGE := preload("res://assets/production/corsair/corsair_compass.png")
-const ICONS := preload("res://assets/production/forno/forno_icons.png")
-const EMBERS := preload("res://assets/production/forno/forno_embers.png")
+## The crest stands in for the old ingredient sheet on the recent-runs strip.
+const ICONS := CREST
+## Spray, spindrift and smoke for the bursts: the same four stages of the
+## break-up the wreck plays, addressed one cell at a time.
+const EMBERS := WRECK
 ## The small plates behind the title, the timer and the recent runs are cut
 ## from the same chart frame as the crash box, so the whole cabinet is one
 ## set of materials rather than a pizzeria border left over from the theme
@@ -58,22 +61,20 @@ const HOST_STATES: Dictionary = {
 	&"wince": preload("res://assets/production/corsair/corsair_crew_wince.png"),
 }
 
-## Sprite sheet grids, as re-cut by tools/art/prepare_forno.py.
-const ICON_GRID := Vector2i(3, 2)
-const ICON_CELL: float = 256.0
-const EMBER_GRID := Vector2i(4, 4)
-const EMBER_CELL: float = 256.0
-## Icon cells by what they are, in sheet order.
+## Sprite sheet grids, as re-cut by tools/art/prepare_corsair.py.
+const ICON_GRID := Vector2i(1, 1)
+const ICON_CELL: float = 512.0
+const EMBER_GRID := Vector2i(2, 2)
+const EMBER_CELL: float = 512.0
+## The one crest cell on the recent-runs strip.
 const ICON_SLICE: int = 0
-const ICON_DOUGH: int = 1
-const ICON_TOMATO: int = 2
-const ICON_BASIL: int = 3
-const ICON_MOZZARELLA: int = 4
-const ICON_CHILLI: int = 5
-## Ember sheet cells: sparks, flour swirls and smoke puffs.
-const EMBER_SPARKS: Array[int] = [0, 5, 10, 14]
-const EMBER_FLOUR: Array[int] = [1, 4, 9, 12]
-const EMBER_SMOKE: Array[int] = [3, 6, 11, 15]
+
+## Which stage of the break-up each burst draws from. The sheet is 2x2 now, so
+## these are the four cells: impact spray, timbers, debris and smoke, and the
+## last of the foam.
+const EMBER_SPARKS: Array[int] = [0, 1]
+const EMBER_FLOUR: Array[int] = [0, 3]
+const EMBER_SMOKE: Array[int] = [2, 3]
 
 ## The blank cream dial inside the oven gauge, in texture fractions.
 const DIAL_CENTRE := Vector2(0.4971, 0.4873)
