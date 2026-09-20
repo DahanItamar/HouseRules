@@ -41,6 +41,9 @@ call, no account, no telemetry, no real-money anything** — saves are plain JSO
 
 </div>
 
+<img src="tests/results/screenshots/menu/01_menu.png" width="100%"
+     alt="The House Rules main menu: the crowned House Rules — High Roller Edition badge on the left over painted burgundy chevron rows reading ENTER THE CASINO, REDUCED MOTION OFF and SAVE AND QUIT, a gold selector arrow and a cyan focus ring on the first of them, key art on the right of a host in a pinstripe suit raising a whisky between a manager in black leather holding a folio and a croupier in burgundy fanning cards under a chandelier, and a notice along the bottom reading Play money only. No real-money wagering and no purchases of any kind.">
+
 ---
 
 ## The house edge is a test
@@ -166,13 +169,11 @@ the binary straight at the project:
 & 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --path .
 ```
 
-<img src="tests/results/screenshots/menu/01_menu.png" width="100%"
-     alt="The House Rules main menu: the crowned House Rules — High Roller Edition badge on the left, a brass-edged prompt panel below it reading [Enter] Enter the casino and [Esc] Save and quit, a painted burgundy key under that reading [X] REDUCED MOTION OFF, and key art on the right of a host in a pinstripe suit raising a whisky between a manager in black leather holding a folio and a croupier in burgundy fanning cards, under a chandelier.">
-
-<kbd>WASD</kbd> or the left stick moves. Step into a cabinet's brass inlay and <kbd>Enter</kbd>
-joins; <kbd>Esc</kbd> leaves, forfeiting the stake if a round is live. <kbd>X</kbd> on the main
-menu toggles Reduced Motion, the painted key above. <kbd>F1</kbd> opens any cabinet's help card,
-<kbd>F2</kbd> the collision overlay, and <kbd>F10</kbd> the developer menu in a debug build.
+That opens on the menu at the top of this page. <kbd>WASD</kbd> or the left stick moves. Step into
+a cabinet's brass inlay and <kbd>Enter</kbd> joins; <kbd>Esc</kbd> leaves, forfeiting the stake if
+a round is live. <kbd>X</kbd> on the main menu toggles Reduced Motion. <kbd>F1</kbd> opens any
+cabinet's help card, <kbd>F2</kbd> the collision overlay, and <kbd>F10</kbd> the developer menu in
+a debug build.
 
 Below, `godot` is that same 4.7.2 binary — substitute the full path if it is not on your `PATH`.
 
@@ -225,10 +226,10 @@ so the RTP evidence for a red build is downloadable from the run that produced i
 - **There is no LICENSE file.** Nothing here is licensed for reuse yet. The vendored GUT 9.5.0 and
   the bundled Barlow Condensed family carry their own licences
   (`assets/fonts/OFL-BarlowCondensed.txt`).
-- **Some documents under `docs/` have fallen behind the game.** `docs/SPEC.md` §2 still describes
-  a three-machine v1 with the upper rooms "empty and unreachable", and two cabinet pages still
-  carry a placement-pending status line. The spec's numbered acceptance criteria are current and
-  are what the suite asserts; the prose around them is dated and being corrected.
+- **The spec was written for a smaller game than the one that shipped.** Its fifty-three numbered
+  acceptance criteria are current and are what the suite asserts, but the prose around them was
+  drawn when v1 meant three machines and two locked doors. Read the criteria as the contract and
+  the narrative as history.
 - **The quick-bet row is not on every machine.** Elven Court, Blackjack, Hexbound Vault, Corsair's
   Reach and Harlequin Masquerade carry `MIN/10/25/X2/X5/ALL`. Roulette and Baccarat bet by placing
   chips of a chosen denomination on spots and Hold'em and Match Point use fixed stake keys, so the
