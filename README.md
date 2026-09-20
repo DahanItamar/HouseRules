@@ -4,9 +4,6 @@
 
 </div>
 
-<img src="tests/results/screenshots/floor_spawn.png" width="100%"
-     alt="The Main Floor from above: three carpeted islands labelled SLOTS, BLACKJACK and MINEFIELD VAULT with brass join inlays in front of them, guests seated at the machines and talking in the lounge, a roped staircase to the High Roller Salon on the left, the VIP Penthouse lift on the right, the curved cashier cage bottom right, and the player standing alone on open carpet in the middle under a prompt reading Move with W A S D.">
-
 <div align="center">
 
 **House Rules is an offline casino you walk around with a gamepad: nine cabinets across four
