@@ -25,6 +25,15 @@ const CUES: Dictionary = {
 	&"win": [880.0, 0.24, &"major", -12.0],
 	&"loss": [160.0, 0.18, &"thud", -14.0],
 	&"floor_ambience": [55.0, 8.0, &"ambience", -31.0],
+	&"lift_chime": [1046.5, 0.7, &"chime", -19.0],
+	&"door_latch": [150.0, 0.2, &"latch", -15.0],
+	&"stair_steps": [92.0, 0.62, &"steps", -18.0],
+	&"oven_load": [210.0, 0.34, &"peel", -13.0],
+	&"oven_pulse": [330.0, 0.11, &"crackle", -21.0],
+	&"oven_tick": [880.0, 0.06, &"tick", -19.0],
+	&"oven_roar": [58.0, 0.26, &"roar", -15.0],
+	&"oven_serve": [720.0, 0.40, &"major", -11.0],
+	&"oven_burn": [68.0, 0.42, &"scorch", -10.0],
 }
 
 var output_enabled: bool = true
@@ -50,7 +59,9 @@ func set_muted(value: bool) -> void:
 		_start_ambient_player(_ambient_cue)
 
 
-func play(cue: StringName) -> void:
+## `pitch` shifts one cue without a second stream: callers that rise with a
+## value (the Tidewater depth pulse, its heartbeat) pass it every time.
+func play(cue: StringName, pitch: float = 1.0) -> void:
 	if not CUES.has(cue):
 		return
 	cue_played.emit(cue)
@@ -58,6 +69,7 @@ func play(cue: StringName) -> void:
 		return
 	var player := AudioStreamPlayer.new()
 	player.stream = cue_stream(cue)
+	player.pitch_scale = clampf(pitch, 0.25, 4.0)
 	player.volume_db = float((CUES[cue] as Array)[3])
 	player.finished.connect(player.queue_free)
 	add_child(player)
@@ -121,8 +133,10 @@ func _sample(character: StringName, frequency: float, time: float, phase: float)
 			return sin(TAU * frequency * time) * attack * pow(1.0 - phase, 5.0) * 0.45
 		&"motor":
 			return (
-				(sin(TAU * (frequency + phase * 74.0) * time) * 0.46
-				+ sin(TAU * 31.0 * time) * 0.12)
+				(
+					sin(TAU * (frequency + phase * 74.0) * time) * 0.46
+					+ sin(TAU * 31.0 * time) * 0.12
+				)
 				* decay
 			)
 		&"clack":
@@ -135,14 +149,19 @@ func _sample(character: StringName, frequency: float, time: float, phase: float)
 			return sin(TAU * frequency * step * time) * attack * (1.0 - phase) * 0.8
 		&"card":
 			return (
-				(sin(TAU * (frequency + phase * 80.0) * time) * 0.36
-				+ sin(TAU * 1260.0 * time) * 0.12)
+				(
+					sin(TAU * (frequency + phase * 80.0) * time) * 0.36
+					+ sin(TAU * 1260.0 * time) * 0.12
+				)
 				* pow(1.0 - phase, 3.0)
 			)
 		&"flip":
 			return sin(TAU * (frequency + phase * 520.0) * time) * sin(phase * PI) * 0.62
 		&"chip":
-			return (sin(TAU * frequency * time) * 0.52 + sin(TAU * frequency * 1.51 * time) * 0.25) * decay
+			return (
+				(sin(TAU * frequency * time) * 0.52 + sin(TAU * frequency * 1.51 * time) * 0.25)
+				* decay
+			)
 		&"major":
 			var major_step: float = [1.0, 1.25, 1.5][mini(int(phase * 3.0), 2)]
 			return sin(TAU * frequency * major_step * time) * attack * (1.0 - phase) * 0.78
@@ -152,8 +171,7 @@ func _sample(character: StringName, frequency: float, time: float, phase: float)
 			return sin(TAU * frequency * (1.0 - phase * 0.35) * time) * pow(1.0 - phase, 3.2) * 0.75
 		&"tension":
 			return (
-				(sin(TAU * frequency * time) * 0.44
-				+ sin(TAU * frequency * 1.5 * time) * 0.16)
+				(sin(TAU * frequency * time) * 0.44 + sin(TAU * frequency * 1.5 * time) * 0.16)
 				* sin(phase * PI)
 			)
 		&"safe":
@@ -165,8 +183,7 @@ func _sample(character: StringName, frequency: float, time: float, phase: float)
 			)
 		&"bust":
 			return (
-				(sin(TAU * frequency * (1.0 - phase * 0.5) * time)
-				+ sin(TAU * 43.0 * time) * 0.4)
+				(sin(TAU * frequency * (1.0 - phase * 0.5) * time) + sin(TAU * 43.0 * time) * 0.4)
 				* decay
 				* 0.8
 			)
@@ -176,6 +193,69 @@ func _sample(character: StringName, frequency: float, time: float, phase: float)
 			var chime_phase := fmod(time, 4.0)
 			var chime := sin(TAU * 880.0 * chime_phase) * exp(-chime_phase * 8.0) * 0.035
 			return hum + room + chime
+		&"chime":
+			# Two soft bell strikes a major third apart, like a lift arriving.
+			var second_time := maxf(time - 0.22, 0.0)
+			var second_gate := 1.0 if time >= 0.22 else 0.0
+			var first_bell := (
+				(sin(TAU * frequency * time) + sin(TAU * frequency * 2.76 * time) * 0.16)
+				* exp(-time * 7.0)
+			)
+			var second_bell := (
+				(
+					sin(TAU * frequency * 0.8 * second_time)
+					+ sin(TAU * frequency * 0.8 * 2.76 * second_time) * 0.16
+				)
+				* exp(-second_time * 6.0)
+				* second_gate
+			)
+			return (first_bell + second_bell) * attack * 0.4
+		&"latch":
+			# A brass bolt click, its catch, then the walnut door settling.
+			var catch_time := maxf(time - 0.04, 0.0)
+			var click := sin(TAU * 2600.0 * time) * exp(-time * 260.0) * 0.4
+			var bolt := sin(TAU * 1500.0 * catch_time) * exp(-catch_time * 220.0) * 0.3
+			var thunk := sin(TAU * frequency * time) * exp(-time * 24.0) * 0.7
+			return click + (bolt if time >= 0.04 else 0.0) + thunk
+		&"peel":
+			# The peel on the stone: a wooden scrape, then the dough landing.
+			var scrape := sin(TAU * 1500.0 * time) * exp(-time * 40.0) * 0.26
+			var slide := sin(TAU * frequency * (1.0 - phase * 0.3) * time) * decay * 0.5
+			var settle := sin(TAU * 86.0 * time) * exp(-time * 12.0) * 0.22
+			return scrape + slide + settle
+		&"crackle":
+			# One crackle from the fire; the caller pitches it up with the heat.
+			return (
+				(sin(TAU * frequency * time) + sin(TAU * frequency * 2.0 * time) * 0.22)
+				* attack
+				* pow(1.0 - phase, 4.0)
+				* 0.5
+			)
+		&"roar":
+			# The draw of a wood fire: a low swell with a second breath under it.
+			var second := maxf(time - 0.11, 0.0)
+			var first_breath := sin(TAU * frequency * time) * exp(-time * 20.0)
+			var second_breath := (
+				sin(TAU * frequency * 0.86 * second)
+				* exp(-second * 24.0)
+				* 0.6
+				* (1.0 if time >= 0.11 else 0.0)
+			)
+			return (first_breath + second_breath) * 0.85
+		&"scorch":
+			# A pizza going black: a falling note with a hiss of smoke over it.
+			return (
+				(sin(TAU * frequency * (1.0 - phase * 0.45) * time) + sin(TAU * 39.0 * time) * 0.45)
+				* pow(1.0 - phase, 1.6)
+				* 0.82
+			)
+		&"steps":
+			# Three soft footfalls on a carpeted stair, each a little quieter.
+			var step_index := floorf(time / 0.2)
+			var local := fmod(time, 0.2)
+			var fall := sin(TAU * frequency * (1.0 - local * 1.4) * local) * exp(-local * 36.0)
+			var scuff := sin(TAU * 1700.0 * local) * exp(-local * 180.0) * 0.12
+			return (fall + scuff) * (1.0 - step_index * 0.2) * 0.7
 	return sin(TAU * frequency * time) * attack * decay * 0.65
 
 

@@ -35,12 +35,17 @@ const PORTRAITS: Dictionary = {
 	&"manager_offer": preload("res://assets/production/characters/staff/manager_offer.png"),
 	&"manager_toast": preload("res://assets/production/characters/staff/manager_toast.png"),
 }
-## The fixed HUD bank plaque in main.gd, which no office panel may cover.
-const HUD_BANK_RECT := Rect2(18, 10, 168, 52)
+## The fixed HUD plates in main.gd - the bank plaque and the standing plate
+## beside it - which no office panel may cover.
+const HUD_BANK_RECT := Rect2(18, 10, 418, 52)
 
 var floor_controller: FloorController
 var dialogue: DialoguePanel
 var board: ContractsBoard
+## House standing: the Manager's compact bars, the ledger and the deed.
+var standing: ManagerStandingPanel
+var ledger: StatsPanel
+var deed: DeedCard
 var invitation: WingInvitationCard
 var tutorial: TutorialDirector
 ## &"reception", &"manager" or &"" while no conversation is running.
@@ -59,6 +64,14 @@ func bind(controller: FloorController) -> void:
 	board = ContractsBoard.new()
 	_layer.add_child(board)
 	board.closed.connect(_on_board_closed)
+	standing = ManagerStandingPanel.new()
+	_layer.add_child(standing)
+	ledger = StatsPanel.new()
+	_layer.add_child(ledger)
+	ledger.closed.connect(_on_ledger_closed)
+	deed = DeedCard.new()
+	_layer.add_child(deed)
+	deed.closed.connect(_on_deed_closed)
 	invitation = WingInvitationCard.new()
 	_layer.add_child(invitation)
 	invitation.accepted.connect(_on_invitation_accepted)
@@ -78,7 +91,13 @@ func set_overlay_visible(is_visible: bool) -> void:
 
 ## A modal office panel owns input and holds the avatar still.
 func is_modal_open() -> bool:
-	return board.is_open() or invitation.is_open() or (dialogue.is_open() and dialogue.blocking)
+	return (
+		board.is_open()
+		or ledger.is_open()
+		or deed.is_open()
+		or invitation.is_open()
+		or (dialogue.is_open() and dialogue.blocking)
+	)
 
 
 func blocks_movement() -> bool:
@@ -88,6 +107,12 @@ func blocks_movement() -> bool:
 func handle_input(event: InputEvent) -> bool:
 	if invitation.is_open():
 		invitation.handle_input(event)
+		return true
+	if deed.is_open():
+		deed.handle_input(event)
+		return true
+	if ledger.is_open():
+		ledger.handle_input(event)
 		return true
 	if board.is_open():
 		board.handle_input(event)
@@ -140,14 +165,16 @@ func talk_to_secretary() -> void:
 	conversation = &"reception"
 	var choices: Array[Dictionary] = [
 		{"id": &"contracts", "label": tr("RECEPTION_CONTRACTS")},
+		{"id": &"ledger", "label": tr("RECEPTION_LEDGER")},
 		{"id": &"tour", "label": tr("RECEPTION_TOUR")},
-		{"id": &"leave", "label": tr("DIALOGUE_GOODBYE")},
+		{"id": &"leave", "label": tr("DIALOGUE_GOODBYE"), "action": &"back"},
 	]
 	speak(&"secretary_explain", tr("RECEPTION_GREETING"), choices)
 
 
 func talk_to_manager() -> void:
 	conversation = &"manager"
+	standing.show_standing()
 	_pending_invitations = OfficeState.pending_invitations(floor_controller)
 	if not _pending_invitations.is_empty():
 		_offer_invitation(_pending_invitations[0])
@@ -163,12 +190,40 @@ func open_contracts_board() -> void:
 	floor_controller.refresh_prompt()
 
 
+## Opens the House Ledger. Reachable from either desk, and from tests and
+## captures, because it only reads the save.
+func open_ledger(start_view: int = StatsPanel.View.OVERVIEW) -> void:
+	dialogue.close()
+	standing.visible = false
+	ledger.open(start_view)
+	floor_controller.refresh_prompt()
+
+
+## The Manager sells the House. The price leaves the bank through Progression,
+## which uses the Wallet's own boundary; nothing is paid back.
+func _buy_the_house() -> bool:
+	var price := HouseLevel.DEED_PRICE
+	var wagered := Progression.wagered()
+	if not Progression.buy_house():
+		_manager_business(tr("MANAGER_DEED_REFUSED"))
+		return false
+	dialogue.close()
+	standing.visible = false
+	AudioService.play(&"confirm")
+	deed.present(price, wagered)
+	floor_controller.refresh_prompt()
+	return true
+
+
 func end_conversation() -> void:
 	conversation = &""
 	_pending_invitations.clear()
 	if not tutorial.is_active():
 		dialogue.close()
 	board.close()
+	ledger.close()
+	deed.close()
+	standing.visible = false
 	floor_controller.refresh_proximity()
 	floor_controller.refresh_prompt()
 
@@ -179,6 +234,9 @@ func on_room_changed() -> void:
 		conversation = &""
 		_pending_invitations.clear()
 		board.close()
+		ledger.close()
+		deed.close()
+		standing.visible = false
 		if invitation.is_open():
 			invitation.accept_button().pressed.emit()
 		if not tutorial.is_active():
@@ -271,9 +329,19 @@ func _offer_invitation(wing_id: StringName) -> void:
 func _manager_business(line: String) -> void:
 	var choices: Array[Dictionary] = [
 		{"id": &"markers", "label": tr("MANAGER_MARKERS")},
-		{"id": &"leave", "label": tr("DIALOGUE_GOODBYE")},
 	]
+	if Progression.can_buy_house():
+		choices.append(
+			{
+				"id": &"deed",
+				"label": tr("MANAGER_BUY_HOUSE") % HouseLevel.short_chips(HouseLevel.DEED_PRICE)
+			}
+		)
+	choices.append({"id": &"ledger", "label": tr("MANAGER_LEDGER")})
+	choices.append({"id": &"leave", "label": tr("DIALOGUE_GOODBYE"), "action": &"back"})
 	var pose := &"manager_offer" if Economy.can_take_marker() or Economy.debt > 0 else &"manager"
+	# The Manager keeps the standing board on his desk while he is talking.
+	standing.show_standing()
 	speak(pose, line, choices)
 
 
@@ -284,6 +352,10 @@ func _on_choice(choice_id: StringName) -> void:
 	match choice_id:
 		&"contracts":
 			open_contracts_board()
+		&"ledger":
+			open_ledger()
+		&"deed":
+			_buy_the_house()
 		&"tour":
 			conversation = &""
 			dialogue.close()
@@ -314,3 +386,15 @@ func _on_invitation_accepted(wing_id: StringName) -> void:
 func _on_board_closed() -> void:
 	conversation = &""
 	floor_controller.refresh_proximity()
+
+
+func _on_ledger_closed() -> void:
+	conversation = &""
+	standing.visible = false
+	floor_controller.refresh_proximity()
+	floor_controller.refresh_prompt()
+
+
+func _on_deed_closed() -> void:
+	standing.show_standing()
+	_manager_business(tr("MANAGER_AFTER_DEED"))

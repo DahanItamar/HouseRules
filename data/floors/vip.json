@@ -7,6 +7,8 @@
   "collision_reference": "res://assets/production/environments/vip_collision_v2.png",
   "composite_preview": "res://assets/production/environments/vip_composite_preview_v2.png",
   "foot_radius": [10, 6],
+  "avatar_scale_far": 1.28,
+  "avatar_scale_near": 1.6,
   "spawn": [480, 372],
   "return_point": [480, 372],
   "walk_bounds": [[40, 70], [306, 70], [312, 77], [346, 77], [351, 70], [604, 70], [608, 77], [645, 77], [648, 70], [954, 70], [954, 536], [4, 536], [4, 218], [40, 214]],
@@ -53,5 +55,33 @@
   "cabinets": [
     "roulette",
     "poker"
-  ]
+  ],
+  "lights": [
+    {"name": "window_sconce_1", "at": [144, 18], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.4, "phase": 0.14, "flicker": 0.3},
+    {"name": "window_sconce_2", "at": [296, 18], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 5.2, "phase": 0.61, "flicker": 0.3},
+    {"name": "window_sconce_3", "at": [365, 17], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 3.8, "phase": 0.33, "flicker": 0.3},
+    {"name": "window_sconce_4", "at": [592, 18], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 6.3, "phase": 0.87, "flicker": 0.3},
+    {"name": "window_sconce_5", "at": [662, 18], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.6, "phase": 0.45, "flicker": 0.3},
+    {"name": "bar_sconce", "at": [767, 15], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 5.5, "phase": 0.02, "flicker": 0.3},
+    {"name": "west_wall_sconce_upper", "at": [34, 48], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 3.6, "phase": 0.72, "flicker": 0.3},
+    {"name": "west_wall_sconce_lower", "at": [20, 133], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 6.1, "phase": 0.26, "flicker": 0.3},
+    {"name": "east_wall_sconce", "at": [924, 64], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 4.2, "phase": 0.91, "flicker": 0.3},
+    {"name": "sideboard_lamp", "at": [66, 64], "radius": 28, "squash": 0.8, "color": "ffd9a2", "strength": 0.076, "period": 5.0, "phase": 0.38, "flicker": 0.3},
+    {"name": "bar_lamp_west", "at": [746, 54], "radius": 30, "squash": 0.75, "color": "ffd9a2", "strength": 0.076, "period": 4.8, "phase": 0.57, "flicker": 0.3},
+    {"name": "bar_lamp_east", "at": [874, 122], "radius": 30, "squash": 0.75, "color": "ffd9a2", "strength": 0.076, "period": 3.9, "phase": 0.19, "flicker": 0.3, "motes": 3},
+    {"name": "poker_lamp", "at": [127, 120], "radius": 26, "squash": 0.8, "color": "ffd9a2", "strength": 0.075, "period": 5.9, "phase": 0.83, "flicker": 0.3},
+    {"name": "roulette_lamp_west", "at": [413, 126], "radius": 24, "squash": 0.8, "color": "ffd9a2", "strength": 0.075, "period": 4.1, "phase": 0.49, "flicker": 0.3},
+    {"name": "roulette_lamp_east", "at": [546, 126], "radius": 24, "squash": 0.8, "color": "ffd9a2", "strength": 0.075, "period": 6.5, "phase": 0.06, "flicker": 0.3},
+    {"name": "lounge_lamp_west", "at": [71, 424], "radius": 34, "squash": 0.72, "color": "ffd9a2", "strength": 0.076, "period": 4.3, "phase": 0.67, "flicker": 0.3, "motes": 3},
+    {"name": "lounge_lamp_east", "at": [878, 423], "radius": 34, "squash": 0.72, "color": "ffd9a2", "strength": 0.076, "period": 5.6, "phase": 0.28, "flicker": 0.3, "motes": 3},
+    {"name": "elevator_sconce_west", "at": [414, 455], "radius": 30, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 3.7, "phase": 0.52, "flicker": 0.3},
+    {"name": "elevator_sconce_east", "at": [546, 456], "radius": 30, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.9, "phase": 0.95, "flicker": 0.3}
+  ],
+  "ceiling_shadows": [
+    {"name": "chandelier_over_fan_inlay", "at": [480, 320], "radius": 78, "squash": 0.5, "lobes": 6, "spin_period": 100.0, "sway": [10, 3], "sway_period": 12.0, "alpha": 0.075}
+  ],
+  "glints": [
+    {"name": "vip_penthouse", "at": [438, 398], "size": [84, 16], "interval": 11.9, "phase": 2.6, "front": true}
+  ],
+  "screen_sparkles": []
 }

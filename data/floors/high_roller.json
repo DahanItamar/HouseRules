@@ -7,6 +7,8 @@
   "collision_reference": "res://assets/production/environments/high_roller_collision_v2.png",
   "composite_preview": "res://assets/production/environments/high_roller_composite_preview_v2.png",
   "foot_radius": [10, 6],
+  "avatar_scale_far": 1.85,
+  "avatar_scale_near": 1.75,
   "spawn": [480, 506],
   "return_point": [480, 506],
   "walk_bounds": [[14, 125], [16, 95], [28, 64], [55, 44], [95, 36], [132, 43], [152, 58], [160, 70], [190, 76], [224, 78], [226, 68], [372, 68], [372, 82], [400, 82], [400, 72], [535, 72], [558, 74], [558, 82], [590, 82], [590, 68], [740, 68], [740, 80], [770, 80], [786, 96], [797, 106], [815, 103], [935, 110], [948, 120], [950, 290], [938, 318], [938, 440], [956, 468], [956, 534], [6, 534], [6, 440], [14, 420]],
@@ -51,5 +53,31 @@
   "cabinets": [
     "baccarat",
     "match_point"
-  ]
+  ],
+  "lights": [
+    {"name": "wall_sconce_1", "at": [205, 30], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.3, "phase": 0.12, "flicker": 0.3},
+    {"name": "wall_sconce_2", "at": [386, 31], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 5.6, "phase": 0.53, "flicker": 0.3},
+    {"name": "wall_sconce_3", "at": [573, 29], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 3.9, "phase": 0.27, "flicker": 0.3},
+    {"name": "wall_sconce_4", "at": [754, 30], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 6.2, "phase": 0.81, "flicker": 0.3},
+    {"name": "wall_sconce_5", "at": [799, 44], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.8, "phase": 0.39, "flicker": 0.3},
+    {"name": "wall_sconce_6", "at": [943, 70], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 5.1, "phase": 0.66, "flicker": 0.3},
+    {"name": "booth_lamp", "at": [82, 104], "radius": 32, "squash": 0.75, "color": "ffd9a2", "strength": 0.076, "period": 4.1, "phase": 0.21, "flicker": 0.3, "motes": 3},
+    {"name": "booth_side_lamp", "at": [22, 124], "radius": 24, "squash": 0.8, "color": "ffd9a2", "strength": 0.07, "period": 5.8, "phase": 0.72, "flicker": 0.3},
+    {"name": "baccarat_lamp_left", "at": [411, 132], "radius": 30, "squash": 0.7, "color": "ffd9a2", "strength": 0.076, "period": 3.7, "phase": 0.44, "flicker": 0.3},
+    {"name": "baccarat_lamp_right", "at": [548, 131], "radius": 30, "squash": 0.7, "color": "ffd9a2", "strength": 0.076, "period": 4.9, "phase": 0.93, "flicker": 0.3},
+    {"name": "reception_lamp", "at": [823, 112], "radius": 24, "squash": 0.8, "color": "ffd9a2", "strength": 0.075, "period": 6.6, "phase": 0.08, "flicker": 0.3},
+    {"name": "lounge_lamp_west", "at": [102, 384], "radius": 34, "squash": 0.72, "color": "ffd9a2", "strength": 0.076, "period": 4.5, "phase": 0.58, "flicker": 0.3, "motes": 3},
+    {"name": "lounge_lamp_east", "at": [855, 378], "radius": 34, "squash": 0.72, "color": "ffd9a2", "strength": 0.076, "period": 5.4, "phase": 0.31, "flicker": 0.3, "motes": 3},
+    {"name": "wall_sconce_west", "at": [16, 342], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 3.5, "phase": 0.86, "flicker": 0.3},
+    {"name": "wall_sconce_east", "at": [932, 372], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 6.0, "phase": 0.17, "flicker": 0.3},
+    {"name": "door_lantern_west", "at": [382, 418], "radius": 30, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.7, "phase": 0.49, "flicker": 0.3},
+    {"name": "door_lantern_east", "at": [576, 419], "radius": 30, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 3.9, "phase": 0.02, "flicker": 0.3}
+  ],
+  "ceiling_shadows": [
+    {"name": "chandelier_over_elevator_apron", "at": [480, 466], "radius": 56, "squash": 0.45, "lobes": 6, "spin_period": 110.0, "sway": [8, 2], "sway_period": 13.5, "alpha": 0.075}
+  ],
+  "glints": [
+    {"name": "salon_title", "at": [434, 35], "size": [92, 20], "interval": 12.1, "phase": 3.1}
+  ],
+  "screen_sparkles": [[660, 36], [668, 42], [674, 34]]
 }

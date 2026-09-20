@@ -8,13 +8,14 @@ extends Node2D
 const LOOP_SECONDS := 12.0
 const REST_ELAPSED := 0.0
 const WARM := Color("e6b95f")
+## Lamp centres are measured on casino_floor_background_v2 (virtual pixels).
 const FIXTURES: Array[Dictionary] = [
-	{"lamp": Vector2(253, 34), "pool": Vector2(270, 136), "phase": 0.00, "energy": 1.00},
-	{"lamp": Vector2(413, 34), "pool": Vector2(420, 140), "phase": 0.19, "energy": 0.88},
-	{"lamp": Vector2(568, 34), "pool": Vector2(560, 140), "phase": 0.43, "energy": 0.92},
-	{"lamp": Vector2(729, 34), "pool": Vector2(710, 136), "phase": 0.68, "energy": 1.00},
-	{"lamp": Vector2(360, 452), "pool": Vector2(392, 394), "phase": 0.31, "energy": 0.78},
-	{"lamp": Vector2(584, 452), "pool": Vector2(552, 394), "phase": 0.82, "energy": 0.78},
+	{"lamp": Vector2(255, 30), "pool": Vector2(272, 132), "phase": 0.00, "energy": 1.00},
+	{"lamp": Vector2(420, 29), "pool": Vector2(427, 135), "phase": 0.19, "energy": 0.88},
+	{"lamp": Vector2(577, 29), "pool": Vector2(569, 135), "phase": 0.43, "energy": 0.92},
+	{"lamp": Vector2(740, 29), "pool": Vector2(721, 131), "phase": 0.68, "energy": 1.00},
+	{"lamp": Vector2(367, 463), "pool": Vector2(399, 405), "phase": 0.31, "energy": 0.78},
+	{"lamp": Vector2(594, 463), "pool": Vector2(562, 405), "phase": 0.82, "energy": 0.78},
 ]
 
 var elapsed: float = REST_ELAPSED
@@ -66,10 +67,14 @@ func _draw() -> void:
 		draw_circle(lamp, 8.0, Color(WARM, 0.025 + intensity * 0.045))
 		draw_circle(lamp, 3.0, Color("fff1bd", 0.12 + intensity * 0.12))
 		draw_colored_polygon(
-			PackedVector2Array([
-				lamp + Vector2(-3, 7), lamp + Vector2(3, 7),
-				pool + Vector2(35, 12), pool + Vector2(-35, 12),
-			]),
+			PackedVector2Array(
+				[
+					lamp + Vector2(-3, 7),
+					lamp + Vector2(3, 7),
+					pool + Vector2(35, 12),
+					pool + Vector2(-35, 12),
+				]
+			),
 			Color(WARM, 0.006 + intensity * 0.010)
 		)
 		draw_set_transform(pool, 0.0, Vector2(1.85, 0.42))
@@ -78,9 +83,13 @@ func _draw() -> void:
 
 	var sweep_x := 480.0 + reflection_offset()
 	draw_colored_polygon(
-		PackedVector2Array([
-			Vector2(sweep_x - 22, 315), Vector2(sweep_x - 12, 315),
-			Vector2(sweep_x + 30, 415), Vector2(sweep_x + 6, 415),
-		]),
+		PackedVector2Array(
+			[
+				Vector2(sweep_x - 22, 315),
+				Vector2(sweep_x - 12, 315),
+				Vector2(sweep_x + 30, 415),
+				Vector2(sweep_x + 6, 415),
+			]
+		),
 		Color(WARM, 0.014)
 	)

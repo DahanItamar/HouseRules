@@ -38,21 +38,29 @@ func _draw() -> void:
 		accent = Color("a92c3f")
 	var drift := sin(elapsed * 0.22) * 34.0
 	draw_colored_polygon(
-		PackedVector2Array([
-			Vector2(145 + drift, 0), Vector2(225 + drift, 0),
-			Vector2(430 + drift, size.y), Vector2(300 + drift, size.y),
-		]),
+		PackedVector2Array(
+			[
+				Vector2(145 + drift, 0),
+				Vector2(225 + drift, 0),
+				Vector2(430 + drift, size.y),
+				Vector2(300 + drift, size.y),
+			]
+		),
 		Color(warm, 0.025)
 	)
 	draw_colored_polygon(
-		PackedVector2Array([
-			Vector2(size.x - 205 - drift, 0), Vector2(size.x - 130 - drift, 0),
-			Vector2(size.x - 275 - drift, size.y), Vector2(size.x - 420 - drift, size.y),
-		]),
+		PackedVector2Array(
+			[
+				Vector2(size.x - 205 - drift, 0),
+				Vector2(size.x - 130 - drift, 0),
+				Vector2(size.x - 275 - drift, size.y),
+				Vector2(size.x - 420 - drift, size.y),
+			]
+		),
 		Color(accent, 0.022)
 	)
-	# Flat nested edge shadows provide depth without a decorative glow.
-	draw_rect(Rect2(0, 0, size.x, 12), Color("09070a52"))
+	# Flat nested edge shadows provide depth without a decorative glow. There is
+	# no full-width strip across the top: headers carry their own opaque plates.
 	draw_rect(Rect2(0, size.y - 18, size.x, 18), Color("09070a66"))
 	draw_rect(Rect2(0, 0, 14, size.y), Color("09070a47"))
 	draw_rect(Rect2(size.x - 14, 0, 14, size.y), Color("09070a47"))

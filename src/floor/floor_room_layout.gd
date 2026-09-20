@@ -18,8 +18,17 @@ var preview_only: bool = false
 var background_path: String = ""
 var foreground_path: String = ""
 var foot_radius := Vector2(10, 6)
-## Rooms painted at a closer camera draw the same avatar larger (1.0 = main floor).
+## Reference player scale for UI sizing that needs one number (station rims,
+## prompt and dialogue avoidance boxes). The drawn avatar uses avatar_scale_at().
 var avatar_scale: float = 1.0
+## Depth scaling for the top-down 3/4 view: the player's scale runs linearly
+## with foot y from `avatar_scale_far` at the top of the walk bounds to
+## `avatar_scale_near` at the bottom. Calibrated so a standing player matches the
+## painted adults at the same depth (see docs/art/GENERATION-REPORT.md).
+var avatar_scale_far: float = 1.0
+var avatar_scale_near: float = 1.0
+var avatar_depth_top: float = 0.0
+var avatar_depth_bottom: float = 540.0
 var spawn := Vector2.ZERO
 var return_point := Vector2.ZERO
 var walk_bounds := PackedVector2Array()
@@ -56,10 +65,18 @@ func _parse(data: Dictionary) -> void:
 	background_path = String(data.get("background", ""))
 	foreground_path = String(data.get("foreground", ""))
 	foot_radius = _vector(data.get("foot_radius", [10, 6]))
-	avatar_scale = float(data.get("avatar_scale", 1.0))
 	spawn = _vector(data["spawn"])
 	return_point = _vector(data.get("return_point", data["spawn"]))
 	walk_bounds = _points(data["walk_bounds"])
+	var base_scale := float(data.get("avatar_scale", 1.0))
+	avatar_scale_far = float(data.get("avatar_scale_far", base_scale))
+	avatar_scale_near = float(data.get("avatar_scale_near", base_scale))
+	avatar_depth_top = INF
+	avatar_depth_bottom = -INF
+	for point: Vector2 in walk_bounds:
+		avatar_depth_top = minf(avatar_depth_top, point.y)
+		avatar_depth_bottom = maxf(avatar_depth_bottom, point.y)
+	avatar_scale = base_scale
 	for entry: Dictionary in data.get("solids", []):
 		solids.append({"name": String(entry["name"]), "points": _points(entry["points"])})
 	for entry: Dictionary in data.get("occluders", []):
@@ -79,6 +96,15 @@ func _parse(data: Dictionary) -> void:
 	for key: String in raw_anchors:
 		anchors[StringName(key)] = _vector(raw_anchors[key])
 	_rebuild_warped_geometry()
+
+
+## Player scale for a foot at screen height `y` (virtual px).
+func avatar_scale_at(y: float) -> float:
+	var span := avatar_depth_bottom - avatar_depth_top
+	if span <= 0.0:
+		return avatar_scale_near
+	var t := clampf((y - avatar_depth_top) / span, 0.0, 1.0)
+	return lerpf(avatar_scale_far, avatar_scale_near, t)
 
 
 func background() -> Texture2D:

@@ -36,7 +36,10 @@ static func has_invitation(wing_id: StringName) -> bool:
 
 
 static func record_invitation(wing_id: StringName) -> void:
-	if Wallet.test_mode_enabled or SaveService.state == null:
+	# A wing opened only by the test bank or the developer overlay's unlock
+	# has not been earned, so its invitation is remembered for the session.
+	var earned := Economy.lifetime_wagered >= int(FloorController.WING_THRESHOLDS[wing_id])
+	if Wallet.test_mode_enabled or SaveService.state == null or not earned:
 		_session_invitations[wing_id] = true
 		return
 	if not SaveService.state.wing_invitations.has(String(wing_id)):

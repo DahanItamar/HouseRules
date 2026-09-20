@@ -204,7 +204,10 @@ def main(argv: list[str]) -> int:
             skin = fit(head_skin_stats(image), head_skin_stats(bases[base]))
             bust = fit(bust_stats(image), bust_stats(bases[base]))
             image = apply_fit(image, ((skin[0] + bust[0]) * 0.5, (skin[1] + bust[1]) * 0.5))
-            image = apply_fit(image, grades[base])
+            # A base that is not graded into a room (a cabinet host lit by its own
+            # machine) simply has no room grade to pass on.
+            if base in grades:
+                image = apply_fit(image, grades[base])
         # A transparent border guarantees clear corners even when the figure is
         # framed to the canvas edge (the dealer stops at mid-thigh).
         padded = Image.new("RGBA", (image.width + 32, image.height + 32), (0, 0, 0, 0))

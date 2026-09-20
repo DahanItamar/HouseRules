@@ -6,8 +6,10 @@
   "foreground": "res://assets/production/environments/manager_office_foreground_v2.png",
   "collision_reference": "res://assets/production/environments/manager_office_collision_v2.png",
   "composite_preview": "res://assets/production/environments/manager_office_composite_preview_v2.png",
-  "avatar_scale": 1.35,
+  "avatar_scale": 1.0,
   "foot_radius": [13, 8],
+  "avatar_scale_far": 1.0,
+  "avatar_scale_near": 1.67,
   "spawn": [480, 522],
   "return_point": [480, 522],
   "walk_bounds": [[44, 122], [100, 110], [205, 108], [860, 108], [918, 124], [948, 270], [954, 538], [6, 538], [10, 320]],
@@ -39,5 +41,27 @@
     "reception": [744, 452],
     "manager": [480, 238]
   },
-  "cabinets": []
+  "cabinets": [],
+  "lights": [
+    {"name": "wall_sconce_1", "at": [69, 29], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.5, "phase": 0.17, "flicker": 0.3},
+    {"name": "wall_sconce_2", "at": [226, 30], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 5.4, "phase": 0.62, "flicker": 0.3},
+    {"name": "wall_sconce_3", "at": [394, 33], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 3.9, "phase": 0.35, "flicker": 0.3},
+    {"name": "wall_sconce_4", "at": [577, 31], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 6.2, "phase": 0.88, "flicker": 0.3},
+    {"name": "wall_sconce_5", "at": [831, 32], "radius": 26, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.7, "phase": 0.46, "flicker": 0.3},
+    {"name": "wall_sconce_6", "at": [944, 67], "radius": 24, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 5.8, "phase": 0.04, "flicker": 0.3},
+    {"name": "west_wall_sconce", "at": [4, 352], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 3.6, "phase": 0.73, "flicker": 0.3},
+    {"name": "east_wall_sconce", "at": [950, 380], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 6.4, "phase": 0.29, "flicker": 0.3},
+    {"name": "door_sconce_west", "at": [378, 413], "radius": 30, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.2, "phase": 0.55, "flicker": 0.3},
+    {"name": "door_sconce_east", "at": [572, 413], "radius": 30, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 5.0, "phase": 0.12, "flicker": 0.3},
+    {"name": "banker_lamp", "at": [421, 122], "radius": 30, "squash": 0.7, "color": "f4e2a8", "strength": 0.076, "period": 4.0, "phase": 0.41, "flicker": 0.3, "motes": 3},
+    {"name": "floor_lamp", "at": [51, 170], "radius": 34, "squash": 0.85, "color": "ffd9a2", "strength": 0.076, "period": 5.5, "phase": 0.84, "flicker": 0.3},
+    {"name": "reception_lamp", "at": [794, 318], "radius": 28, "squash": 0.72, "color": "ffd9a2", "strength": 0.076, "period": 4.6, "phase": 0.23, "flicker": 0.3}
+  ],
+  "ceiling_shadows": [
+    {"name": "fan_over_lounge_rug", "at": [170, 300], "radius": 72, "squash": 0.45, "lobes": 4, "spin_period": 32.0, "sway": [5, 2], "sway_period": 14.0, "alpha": 0.075}
+  ],
+  "glints": [
+    {"name": "vault_wheel", "at": [690, 28], "size": [64, 52], "interval": 12.7, "phase": 4.4}
+  ],
+  "screen_sparkles": []
 }

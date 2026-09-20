@@ -7,6 +7,8 @@
   "collision_reference": "res://assets/production/environments/casino_floor_collision_v2.png",
   "composite_preview": "res://assets/production/environments/casino_floor_composite_preview_v2.png",
   "foot_radius": [10, 6],
+  "avatar_scale_far": 1.0,
+  "avatar_scale_near": 1.67,
   "spawn": [480, 408],
   "return_point": [480, 408],
   "walk_bounds": [[4, 68], [956, 68], [956, 532], [4, 532]],
@@ -64,5 +66,30 @@
     "slot_classic",
     "blackjack",
     "minefield_vault"
-  ]
+  ],
+  "lights": [
+    {"name": "stair_newel_upper", "at": [220, 74], "radius": 26, "squash": 0.9, "color": "ffd9a2", "strength": 0.075, "period": 4.6, "phase": 0.11, "flicker": 0.3},
+    {"name": "stair_newel_lower", "at": [42, 132], "radius": 28, "squash": 0.9, "color": "ffd9a2", "strength": 0.075, "period": 5.3, "phase": 0.47, "flicker": 0.3},
+    {"name": "slot_island_lamp", "at": [340, 58], "radius": 30, "squash": 0.8, "color": "ffd9a2", "strength": 0.07, "period": 3.8, "phase": 0.29, "flicker": 0.3},
+    {"name": "vip_arch_fan", "at": [881, 58], "radius": 36, "squash": 0.8, "color": "ffc46e", "strength": 0.065, "period": 6.1, "phase": 0.73, "flicker": 0.3},
+    {"name": "vip_sconce_west", "at": [804, 104], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 4.2, "phase": 0.58, "flicker": 0.3},
+    {"name": "vip_sconce_east", "at": [935, 108], "radius": 22, "squash": 1.0, "color": "ffcf8c", "strength": 0.075, "period": 5.7, "phase": 0.05, "flicker": 0.3},
+    {"name": "office_wall_sconce", "at": [893, 217], "radius": 16, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 4.9, "phase": 0.36, "flicker": 0.3},
+    {"name": "office_door_sconce", "at": [949, 247], "radius": 18, "squash": 1.0, "color": "ffcf8c", "strength": 0.07, "period": 3.4, "phase": 0.91, "flicker": 0.3},
+    {"name": "lounge_lamp_upper", "at": [77, 336], "radius": 36, "squash": 0.72, "color": "ffd9a2", "strength": 0.076, "period": 4.4, "phase": 0.62, "flicker": 0.3, "motes": 4},
+    {"name": "lounge_lamp_lower", "at": [125, 442], "radius": 36, "squash": 0.72, "color": "ffd9a2", "strength": 0.076, "period": 5.1, "phase": 0.18, "flicker": 0.3, "motes": 4},
+    {"name": "cashier_lamp_west", "at": [760, 372], "radius": 28, "squash": 0.75, "color": "ffd9a2", "strength": 0.075, "period": 3.6, "phase": 0.84, "flicker": 0.3},
+    {"name": "cashier_lamp_east", "at": [889, 412], "radius": 28, "squash": 0.75, "color": "ffd9a2", "strength": 0.075, "period": 6.4, "phase": 0.41, "flicker": 0.3}
+  ],
+  "ceiling_shadows": [
+    {"name": "chandelier_over_medallion", "at": [480, 304], "radius": 70, "squash": 0.5, "lobes": 6, "spin_period": 90.0, "sway": [10, 3], "sway_period": 12.5, "alpha": 0.075}
+  ],
+  "glints": [
+    {"name": "house_rules", "at": [466, 43], "size": [70, 19], "interval": 13.7, "phase": 2.0},
+    {"name": "slots_plate", "at": [313, 196], "size": [50, 15], "interval": 11.3, "phase": 5.2},
+    {"name": "blackjack_plate", "at": [479, 196], "size": [51, 15], "interval": 12.9, "phase": 8.6},
+    {"name": "vault_plate", "at": [650, 196], "size": [49, 15], "interval": 9.7, "phase": 11.4},
+    {"name": "vip_penthouse", "at": [848, 101], "size": [55, 17], "interval": 14.3, "phase": 6.9}
+  ],
+  "screen_sparkles": [[319, 102], [322, 81], [325, 93], [336, 128], [345, 128], [357, 89], [357, 123], [365, 115], [488, 80], [488, 115], [488, 134], [512, 81], [512, 137], [513, 116], [630, 104], [669, 136], [677, 135], [317, 119]]
 }

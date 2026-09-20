@@ -47,6 +47,7 @@ const CAMERA_CENTER := Vector2(480, 270)
 const CAMERA_FOCUS_ZOOM := Vector2(1.03, 1.03)
 const CAMERA_FOCUS_OFFSET: float = 9.0
 const CASHIER_NO_DIRECTION: int = -1
+## Height of the top strip the HUD plates occupy (plates only, never a band).
 const HUD_BAND_HEIGHT: float = 72.0
 const DEV_BUTTON_SIZE := Vector2(190, 44)
 const DEV_TARGETS: Array[Dictionary] = [
@@ -75,7 +76,7 @@ var nearby_station: StringName = &""
 var cabinet_positions: Dictionary = {}
 var definitions: Dictionary = {}
 var _background: Texture2D
-var _prompt: Label
+var _prompt: InputPromptLabel
 var _prompt_plaque: NinePatchRect
 var _prompt_ornament: Sprite2D
 var _cashier_open: bool = false
@@ -128,6 +129,11 @@ var _room_layer: CanvasLayer
 var _room_status: Label
 var _room_back: Button
 var _office: OfficeHost
+var _room_transition: RoomTransition
+## Debug-only hooks for the developer overlay (src/ui/dev_menu): while its panel
+## is open the avatar stands still; the wing unlock lasts for this session only.
+var dev_overlay_open: bool = false
+var dev_wings_unlocked: bool = false
 
 
 func _ready() -> void:
@@ -155,7 +161,8 @@ func _ready() -> void:
 	_avatar_visual.name = "FloorAvatar"
 	_avatar_visual.position = avatar_position
 	_depth_layer.add_child(_avatar_visual)
-	_prompt = Label.new()
+	_prompt = InputPromptLabel.new()
+	_prompt.name = "FloorPrompt"
 	_prompt.z_index = 10
 	_prompt.size = Vector2(260, 72)
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -239,7 +246,11 @@ func is_preview_room() -> bool:
 
 ## Wings open once the player has wagered enough, and always in the test bank.
 func is_wing_unlocked(wing_id: StringName) -> bool:
-	return Wallet.test_mode_enabled or Economy.lifetime_wagered >= int(WING_THRESHOLDS[wing_id])
+	return (
+		dev_wings_unlocked
+		or Wallet.test_mode_enabled
+		or Economy.lifetime_wagered >= int(WING_THRESHOLDS[wing_id])
+	)
 
 
 func is_main_floor() -> bool:
@@ -251,6 +262,10 @@ func enter_room(room_id: StringName) -> void:
 	assert(room_id in ROOM_IDS, "Unknown floor room: %s" % room_id)
 	if room != null and room.id == room_id:
 		return
+	# A direct switch (developer warp, tutorial) wins over a themed passage in flight.
+	var passage_switch := _room_transition != null and _room_transition.is_switching()
+	if _room_transition != null and _room_transition.is_active() and not passage_switch:
+		_room_transition.cancel()
 	if _cashier_open:
 		_close_cashier()
 	var from_id: StringName = room.id if room != null else MAIN_FLOOR
@@ -276,11 +291,31 @@ func enter_room(room_id: StringName) -> void:
 	refresh_proximity()
 	queue_redraw()
 	room_changed.emit(room.id)
-	AudioService.play(&"confirm")
+	# A themed passage plays its own lift chime, door latch or footsteps.
+	if not passage_switch:
+		AudioService.play(&"confirm")
 
 
 func return_to_main_floor() -> void:
-	enter_room(MAIN_FLOOR)
+	_travel_to(MAIN_FLOOR)
+
+
+## Themed passages through the stairs, lift and office door (src/floor/room_transition.gd).
+func room_transition() -> RoomTransition:
+	if _room_transition == null:
+		_room_transition = RoomTransition.new()
+		add_child(_room_transition)
+		_room_transition.bind(self)
+	return _room_transition
+
+
+func is_room_transition_active() -> bool:
+	return _room_transition != null and _room_transition.is_active()
+
+
+## Walks through an entry into `room_id`; false while a passage is already running.
+func _travel_to(room_id: StringName) -> bool:
+	return room_transition().travel(room_id)
 
 
 ## Returning players arrive where they left: at a wing entrance or the office door.
@@ -293,7 +328,8 @@ func _main_floor_arrival(from_id: StringName) -> Vector2:
 ## Closer-camera rooms draw the same avatar larger so it matches their furniture.
 func _apply_avatar_scale() -> void:
 	if _avatar_visual != null and room != null:
-		_avatar_visual.scale = Vector2.ONE * room.avatar_scale
+		# The avatar follows the room's depth scale from its own foot y.
+		_avatar_visual.call("follow_room_scale", room)
 
 
 ## Opens the Manager's marker desk: take and repay markers under Economy's rules.
@@ -385,11 +421,12 @@ func refresh_proximity() -> void:
 
 
 func interact() -> bool:
+	if is_room_transition_active():
+		return false
 	if nearby_station != &"":
 		return _office.interact_station(nearby_station)
 	if nearby_exit:
-		return_to_main_floor()
-		return true
+		return _travel_to(MAIN_FLOOR)
 	if nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
 			return false
@@ -399,12 +436,10 @@ func interact() -> bool:
 		AudioService.play(&"confirm")
 		return true
 	if nearby_office_door:
-		enter_room(OFFICE)
-		return true
+		return _travel_to(OFFICE)
 	if nearby_wing != &"":
 		if is_wing_unlocked(nearby_wing):
-			enter_room(nearby_wing)
-			return true
+			return _travel_to(nearby_wing)
 		_update_prompt()
 		return false
 	if is_main_floor() and avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
@@ -431,7 +466,12 @@ func _physics_process(delta: float) -> void:
 	if MotionPolicy.allows_continuous_motion():
 		_ambient_time += delta
 	queue_redraw()
-	if not _cashier_open and not _dev_open and not (_office != null and _office.blocks_movement()):
+	if (
+		not _cashier_open
+		and not _dev_open
+		and not dev_overlay_open
+		and not (_office != null and _office.blocks_movement())
+	):
 		move_avatar(Input.get_vector("move_left", "move_right", "move_up", "move_down"), delta)
 
 
@@ -509,56 +549,52 @@ static func _is_key_press(event: InputEvent, keycode: Key) -> bool:
 
 
 func _update_prompt() -> void:
-	var previous_text := _prompt.text
+	var previous_template := _prompt.template
 	_prompt.position = Vector2(56, 454)
 	_prompt.size = Vector2(848, 54)
 	_prompt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if _cashier_is_closing:
-		_prompt.text = ""
+		_prompt.template = ""
 	elif _cashier_open:
 		_prompt.position = Vector2(56, 486)
 		_prompt.size = Vector2(848, 42)
 		_refresh_cashier_menu()
-		_prompt.text = (
-			tr("CASHIER_ACTIONS")
-			% [InputRouter.glyph("move"), InputRouter.glyph("interact"), InputRouter.glyph("back")]
-		)
+		_prompt.template = (tr("CASHIER_ACTIONS") % ["{move}", "{interact}", "{back}"])
 	elif _office != null and _office.is_modal_open():
-		_prompt.text = ""
+		_prompt.template = ""
 	elif not is_main_floor() and nearby_definition == null:
 		_prompt.position = Vector2(330, 482)
 		_prompt.size = Vector2(300, 34)
 		if nearby_station != &"":
-			_prompt.text = (
-				tr("OFFICE_TALK_" + String(nearby_station).to_upper())
-				% InputRouter.glyph("interact")
+			_prompt.template = (
+				tr("OFFICE_TALK_" + String(nearby_station).to_upper()) % "{interact}"
 			)
 		elif nearby_exit:
-			_prompt.text = tr("ROOM_EXIT_PROMPT") % InputRouter.glyph("interact")
+			_prompt.template = tr("ROOM_EXIT_PROMPT") % "{interact}"
 		else:
-			_prompt.text = ""
+			_prompt.template = ""
 		_keep_prompt_off_player()
 	elif nearby_definition != null:
 		if _dismissed_game == nearby_definition.id:
-			_prompt.text = ""
+			_prompt.template = ""
 		elif Wallet.balance < nearby_definition.min_bet:
 			_prompt.position = _join_dialog_position(nearby_definition.id)
 			_prompt.size = JOIN_DIALOG_SIZE
-			_prompt.text = (
+			_prompt.template = (
 				tr("FLOOR_UNAVAILABLE")
 				% [tr(nearby_definition.name_key), nearby_definition.min_bet]
 			)
 		else:
 			_prompt.position = _join_dialog_position(nearby_definition.id)
 			_prompt.size = JOIN_DIALOG_SIZE
-			_prompt.text = (
+			_prompt.template = (
 				tr("FLOOR_JOIN_DIALOG")
 				% [
 					tr(nearby_definition.name_key),
 					nearby_definition.min_bet,
 					nearby_definition.max_bet,
-					InputRouter.glyph("interact"),
-					InputRouter.glyph("back")
+					"{interact}",
+					"{back}"
 				]
 			)
 	elif nearby_office_door:
@@ -570,37 +606,36 @@ func _update_prompt() -> void:
 			if not OfficeState.pending_invitations(self).is_empty()
 			else "OFFICE_DOOR_ENTER"
 		)
-		_prompt.text = tr(door_key) % InputRouter.glyph("interact")
+		_prompt.template = tr(door_key) % "{interact}"
 	elif nearby_wing != &"":
 		var wing_at: Vector2 = WING_POSITIONS[nearby_wing]
 		_prompt.position = Vector2(clampf(wing_at.x - 115.0, 24.0, 706.0), wing_at.y + 40.0)
 		_prompt.size = Vector2(230, 72)
 		if is_wing_unlocked(nearby_wing):
-			_prompt.text = (
-				tr("WING_ENTER")
-				% [InputRouter.glyph("interact"), tr("WING_" + String(nearby_wing).to_upper())]
+			_prompt.template = (
+				tr("WING_ENTER") % ["{interact}", tr("WING_" + String(nearby_wing).to_upper())]
 			)
 		else:
-			_prompt.text = (
+			_prompt.template = (
 				tr("WING_LOCKED")
 				% [tr("WING_" + String(nearby_wing).to_upper()), WING_THRESHOLDS[nearby_wing]]
 			)
 	elif avatar_position.distance_to(CASHIER_POSITION) <= INTERACTION_RADIUS:
 		_prompt.position = Vector2(350, 472)
 		_prompt.size = Vector2(260, 44)
-		_prompt.text = tr("CASHIER_PROMPT") % InputRouter.glyph("interact")
+		_prompt.template = tr("CASHIER_PROMPT") % "{interact}"
 	elif not _has_moved and not (_office != null and _office.tutorial.is_active()):
 		_prompt.position = Vector2(330, 486)
 		_prompt.size = Vector2(300, 34)
-		_prompt.text = (tr("FLOOR_HELP") % [InputRouter.glyph("move"), InputRouter.glyph("back")])
+		_prompt.template = (tr("FLOOR_HELP") % ["{move}", "{back}"])
 	else:
-		_prompt.text = ""
+		_prompt.template = ""
 	_prompt_target_visible = _floor_prompts_visible and not _prompt.text.is_empty()
 	if _prompt_target_visible:
 		_prompt.visible = true
 		_animate_prompt_change()
 	else:
-		_prompt.text = previous_text
+		_prompt.template = previous_template
 		_animate_prompt_hide()
 	queue_redraw()
 
@@ -739,7 +774,7 @@ func _finish_prompt_hide() -> void:
 	if _prompt_target_visible:
 		return
 	_prompt.visible = false
-	_prompt.text = ""
+	_prompt.template = ""
 	_prompt.modulate.a = 1.0
 	_prompt_tween = null
 	queue_redraw()
@@ -780,6 +815,10 @@ func _build_practical_lights() -> void:
 	_practical_lights.name = "PracticalLightRig"
 	_practical_lights.z_index = 1
 	add_child(_practical_lights)
+	# Breathing lamp pools, ceiling shade, brass glints and the player's contact shadow.
+	var ambience := FloorAmbientLights.new()
+	ambience.bind(self)
+	add_child(ambience)
 
 
 func _build_cashier_waypoint() -> void:
@@ -850,7 +889,11 @@ func _build_room_hud() -> void:
 	_room_status.add_theme_font_size_override("font_size", Typography.SUPPORTING)
 	_room_status.add_theme_color_override("font_color", BRASS)
 	_room_layer.add_child(_room_status)
-	_room_back = Button.new()
+	# The way back names its input: "(B) MAIN FLOOR" / "[Esc] MAIN FLOOR".
+	var back_button := PromptButton.new()
+	back_button.action = &"back"
+	back_button.glyph_side = PromptButton.GlyphSide.LEFT
+	_room_back = back_button
 	_room_back.name = "BackToMainFloor"
 	_room_back.position = Vector2(48, 452)
 	_room_back.size = Vector2(212, 48)
@@ -859,7 +902,7 @@ func _build_room_hud() -> void:
 	_room_back.add_theme_font_size_override("font_size", Typography.CONTROL)
 	for state: String in ["normal", "hover", "pressed", "focus"]:
 		var style := StyleBoxFlat.new()
-		style.bg_color = Color("141013f2") if state != "pressed" else Color("0c0a0c")
+		style.bg_color = Color("141013") if state != "pressed" else Color("0c0a0c")
 		style.border_color = CYAN if state == "focus" else BRASS
 		style.set_border_width_all(2 if state == "focus" else 1)
 		style.set_corner_radius_all(6)
@@ -874,7 +917,7 @@ func _refresh_room_hud() -> void:
 	if _room_layer == null:
 		return
 	_room_status.text = tr("ROOM_PREVIEW_ONLY") if is_preview_room() else ""
-	_room_back.text = tr("ROOM_BACK_BUTTON") % InputRouter.glyph("back")
+	_room_back.text = tr("ROOM_BACK_LABEL")
 	_sync_overlay_layers()
 
 
@@ -988,6 +1031,20 @@ func _toggle_dev_floor_tools(force_open: Variant = null) -> void:
 			(focused as Control).release_focus()
 
 
+## Debug-only: switches to `room_id` if needed and stands the avatar on `point`,
+## closing the cashier first. Used by the developer overlay.
+func dev_warp(room_id: StringName, point: Vector2) -> void:
+	if room == null or room.id != room_id:
+		enter_room(room_id)
+	if _cashier_open:
+		_close_cashier()
+	avatar_position = point
+	if _avatar_visual != null:
+		_avatar_visual.position = avatar_position
+	_has_moved = true
+	refresh_proximity()
+
+
 func _dev_warp_to(target_id: StringName) -> void:
 	_toggle_dev_floor_tools(false)
 	if target_id in ROOM_IDS:
@@ -1099,8 +1156,8 @@ func _settle_cashier_motion() -> void:
 func _draw() -> void:
 	draw_texture_rect(_background, Rect2(0, 0, 960, 540), false)
 	draw_rect(Rect2(0, 0, 960, 540), Color("0c0b0d24"))
-	# A flat band behind the top HUD keeps its text readable over the back wall.
-	draw_rect(Rect2(0, 0, 960, HUD_BAND_HEIGHT), Color("0c0b0d9c"))
+	# No full-width header band: every HUD plate carries its own opaque surface,
+	# so the painted back wall (and the people in it) is never cut by a dark bar.
 	for id: StringName in cabinet_positions:
 		var at: Vector2 = cabinet_positions[id]
 		var is_near: bool = nearby_definition != null and nearby_definition.id == id
@@ -1286,7 +1343,7 @@ func _build_cashier_menu() -> void:
 	_cashier_transfer_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_cashier_transfer_layer.z_index = 20
 	_cashier_panel.add_child(_cashier_transfer_layer)
-	_cashier_marker = _cashier_button(tr("CASHIER_TAKE_MARKER"), Vector2(20, 272), Vector2(200, 56))
+	_cashier_marker = _cashier_button("", Vector2(20, 272), Vector2(200, 56))
 	_cashier_marker.name = "TakeMarker"
 	_cashier_marker.pressed.connect(_take_cashier_marker)
 	_cashier_repay = _cashier_button("", Vector2(240, 272), Vector2(200, 56))
@@ -1427,8 +1484,11 @@ func _refresh_cashier_menu() -> void:
 			tr("CASHIER_PREVIEW")
 		)
 	_cashier_marker.disabled = not Economy.can_take_marker()
+	var stipend := Economy.marker_stipend()
 	_cashier_marker.text = (
-		tr("CASHIER_ADD_TEST_MARKER") if Wallet.test_mode_enabled else tr("CASHIER_TAKE_MARKER")
+		tr("CASHIER_ADD_TEST_MARKER") % stipend
+		if Wallet.test_mode_enabled
+		else tr("CASHIER_TAKE_MARKER") % stipend
 	)
 	_cashier_repay.disabled = repayment_limit <= 0
 	_cashier_repay.text = tr("CASHIER_CONFIRM_REPAY") % _cashier_repay_amount
@@ -1495,11 +1555,12 @@ func _close_cashier() -> void:
 
 
 func _take_cashier_marker() -> void:
+	var stipend := Economy.marker_stipend()
 	if not Economy.take_marker():
 		return
 	AudioService.play(&"confirm")
 	_refresh_cashier_menu()
-	_play_cashier_transaction(Economy.MARKER_STIPEND, true)
+	_play_cashier_transaction(stipend, true)
 	_cashier_initial_focus().call_deferred("grab_focus")
 
 

@@ -41,7 +41,7 @@ func _ready() -> void:
 	_caption.name = "Caption"
 	_caption.position = Vector2(44, 4)
 	_caption.size = Vector2(150, 36)
-	_caption.text = tr(caption_key)
+	_caption.text = tr(caption_key) % Economy.marker_stipend()
 	_caption.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_caption.add_theme_font_override("font", Typography.UI_FONT)
 	_caption.add_theme_font_size_override("font_size", Typography.SUPPORTING)
@@ -52,7 +52,7 @@ func _ready() -> void:
 
 
 func update_route(origin_world: Vector2, target_world: Vector2, should_show: bool) -> void:
-	_caption.text = tr(caption_key)
+	_caption.text = tr(caption_key) % Economy.marker_stipend()
 	var canvas_transform := get_viewport().get_canvas_transform()
 	var origin_screen := canvas_transform * origin_world
 	var target_screen := canvas_transform * target_world
@@ -80,12 +80,18 @@ func update_route(origin_world: Vector2, target_world: Vector2, should_show: boo
 		scale = Vector2.ONE if MotionPolicy.is_reduced() else Vector2(0.98, 0.98)
 		if not MotionPolicy.is_reduced():
 			_visibility_tween = create_tween().set_parallel(true)
-			_visibility_tween.tween_property(self, "modulate:a", 1.0, 0.16).set_trans(
-				Tween.TRANS_QUAD
-			).set_ease(Tween.EASE_OUT)
-			_visibility_tween.tween_property(self, "scale", Vector2.ONE, 0.16).set_trans(
-				Tween.TRANS_QUAD
-			).set_ease(Tween.EASE_OUT)
+			(
+				_visibility_tween
+				. tween_property(self, "modulate:a", 1.0, 0.16)
+				. set_trans(Tween.TRANS_QUAD)
+				. set_ease(Tween.EASE_OUT)
+			)
+			(
+				_visibility_tween
+				. tween_property(self, "scale", Vector2.ONE, 0.16)
+				. set_trans(Tween.TRANS_QUAD)
+				. set_ease(Tween.EASE_OUT)
+			)
 	else:
 		if MotionPolicy.is_reduced() or not visible:
 			hide()
@@ -93,12 +99,18 @@ func update_route(origin_world: Vector2, target_world: Vector2, should_show: boo
 			scale = Vector2.ONE
 			return
 		_visibility_tween = create_tween().set_parallel(true)
-		_visibility_tween.tween_property(self, "modulate:a", 0.0, 0.12).set_trans(
-			Tween.TRANS_QUAD
-		).set_ease(Tween.EASE_IN)
-		_visibility_tween.tween_property(self, "scale", Vector2(0.98, 0.98), 0.12).set_trans(
-			Tween.TRANS_QUAD
-		).set_ease(Tween.EASE_IN)
+		(
+			_visibility_tween
+			. tween_property(self, "modulate:a", 0.0, 0.12)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_IN)
+		)
+		(
+			_visibility_tween
+			. tween_property(self, "scale", Vector2(0.98, 0.98), 0.12)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_IN)
+		)
 		_visibility_tween.finished.connect(_finish_hide)
 
 

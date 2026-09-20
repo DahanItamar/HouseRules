@@ -121,12 +121,34 @@ func test_office_foreground_draws_over_a_player_behind_the_entrance() -> void:
 	assert_true(_floor._depth_layer.y_sort_enabled)
 
 
-func test_office_avatar_matches_the_closer_camera() -> void:
+func test_office_avatar_is_drawn_at_the_default_player_size() -> void:
+	# The office uses the same depth ramp as the Main Floor, so the player is the
+	# size he is everywhere else. An earlier draft blew him up to a head-and-
+	# shoulders close-up; the office is a normal room and he reads as one adult
+	# standing in it.
 	_floor.enter_room(OFFICE)
-	assert_almost_eq(_floor._avatar_visual.scale.x, _floor.room.avatar_scale, 0.001)
-	assert_gt(_floor.room.avatar_scale, 1.0)
+	var office := _floor.room
+	assert_almost_eq(
+		_floor._avatar_visual.scale.x, office.avatar_scale_at(_floor.avatar_position.y), 0.001
+	)
+	var in_office := _floor._avatar_visual.scale.x
+	assert_lte(in_office, 1.7, "The office player stays at the default floor size")
+	assert_gt(
+		office.avatar_scale_near,
+		office.avatar_scale_far,
+		"Walking toward the camera makes the player larger, never smaller"
+	)
 	_floor.return_to_main_floor()
-	assert_eq(_floor._avatar_visual.scale, Vector2.ONE)
+	var main := _floor.room
+	assert_almost_eq(
+		_floor._avatar_visual.scale.x, main.avatar_scale_at(_floor.avatar_position.y), 0.001
+	)
+	assert_almost_eq(
+		office.avatar_scale_far, main.avatar_scale_far, 0.001, "Same far end as the Main Floor"
+	)
+	assert_almost_eq(
+		office.avatar_scale_near, main.avatar_scale_near, 0.001, "Same near end as the Main Floor"
+	)
 
 
 # --- The Main Floor door and room switching --------------------------------
