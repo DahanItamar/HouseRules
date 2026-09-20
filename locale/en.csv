@@ -34,7 +34,7 @@ FLOOR_HELP,Move with %s.  [%s] Menu
 FLOOR_JOIN_DIALOG,"%s  ·  BET %d–%d CHIPS\n[%s] JOIN    [%s] CLOSE"
 CASHIER_NAME,CASHIER
 CASHIER_PROMPT,[%s] Visit cashier
-CASHIER_WAYPOINT,CASHIER  ·  100-CHIP MARKER
+CASHIER_WAYPOINT,CASHIER  ·  %d-CHIP MARKER
 CASHIER_ACTIONS,[%s] Select   [%s] Confirm   [%s] Leave
 CASHIER_CHIPS,CHIPS  %d
 CASHIER_TEST_BANK,TEST BANK  ∞
@@ -43,8 +43,8 @@ CASHIER_NO_DEBT,NO OUTSTANDING MARKER
 CASHIER_REPAY_AMOUNT,REPAYMENT AMOUNT
 CASHIER_REPAY_VALUE,%d CHIPS
 CASHIER_PAY_ALL,PAY ALL
-CASHIER_TAKE_MARKER,TAKE 100 MARKER
-CASHIER_ADD_TEST_MARKER,ADD TEST DEBT +100
+CASHIER_TAKE_MARKER,TAKE %d MARKER
+CASHIER_ADD_TEST_MARKER,ADD TEST DEBT +%d
 CASHIER_CONFIRM_REPAY,REPAY %d CHIPS
 CASHIER_PREVIEW,AFTER PAYMENT  CHIPS %d  ·  DEBT %d
 CASHIER_PREVIEW_TEST,AFTER PAYMENT  TEST BANK ∞  ·  DEBT %d
@@ -194,7 +194,7 @@ ROULETTE_REBET,REBET
 ROULETTE_SPIN,SPIN
 ROULETTE_BET_TOTAL,BET %d / %d
 ROULETTE_PAYS,%d TO 1
-ROULETTE_DECK_HINT,[%s] Place  [%s] Take back  [%s] Spin
+ROULETTE_DECK_HINT,{interact} Place  {secondary} Take back  {tertiary} Spin
 ROULETTE_HISTORY,RECENT
 ROULETTE_WHEEL_READY,WHEEL READY
 ROULETTE_SINGLE_ZERO,37 POCKETS · ONE ZERO
@@ -394,7 +394,7 @@ BACCARAT_CLEAR,CLEAR
 BACCARAT_REBET,REBET
 BACCARAT_DEAL,DEAL
 BACCARAT_BET_TOTAL,BET %d / %d
-BACCARAT_DECK_HINT,[%s] Place  [%s] Take back  [%s] Deal
+BACCARAT_DECK_HINT,{interact} Place  {secondary} Take back  {tertiary} Deal
 BACCARAT_BEAD_ROAD,BEAD ROAD
 BACCARAT_ROAD_COUNTS,B %d · P %d · T %d
 BACCARAT_BEAD_PLAYER,P
@@ -494,6 +494,235 @@ OFFICE_TALK_RECEPTION,[%s] Speak with Vivienne
 OFFICE_TALK_MANAGER,[%s] Speak with the Manager
 OFFICE_DOOR_ENTER,[%s] Enter the Manager's Office
 OFFICE_DOOR_INVITATION,[%s] The Manager has an invitation for you
-OFFICE_WAYPOINT,MANAGER  ·  100-CHIP MARKER
+OFFICE_WAYPOINT,MANAGER  ·  %d-CHIP MARKER
 MARKER_DESK_NAME,THE MANAGER'S MARKERS
 CASHIER_MARKERS_AT_OFFICE,Your chips are counted here. Markers are now arranged with the Manager: his office is the walnut door just north of this cage.
+INPUT_Q,Q
+INPUT_E,E
+INPUT_R,R
+INPUT_LB,LB
+INPUT_RB,RB
+INPUT_RT,RT
+INPUT_SPACE,Space
+INPUT_PS_CROSS,Cross
+INPUT_PS_CIRCLE,Circle
+INPUT_PS_SQUARE,Square
+INPUT_PS_TRIANGLE,Triangle
+INPUT_OPTIONS,Options
+INPUT_L1,L1
+INPUT_R1,R1
+INPUT_R2,R2
+INPUT_PLUS,+
+INPUT_L,L
+INPUT_R_SHOULDER,R
+INPUT_ZR,ZR
+ROOM_BACK_LABEL,MAIN FLOOR
+TUTORIAL_SKIP_LABEL,SKIP TOUR
+HELP_BUTTON_LABEL,HOW TO PLAY
+HELP_BUTTON_SHORT,RULES
+HELP_GOAL,GOAL
+HELP_STEPS,HOW TO PLAY
+HELP_PAYOUTS,PAYOUTS
+HELP_NOTES,GOOD TO KNOW
+HELP_PAGE,%d / %d
+HELP_FOOTER,{back} Close
+HELP_FOOTER_PAGED,{back} Close      {bet_down}{bet_up} Turn the page
+HELP_PAYOUTS_TIMES_BET,PAYOUTS  ·  TIMES YOUR BET
+HELP_PAYOUTS_WITH_MINES,PAYOUTS  ·  %d MINES
+HELP_BLACKJACK_GOAL,Finish closer to 21 than the dealer without going over.
+HELP_BLACKJACK_STEPS,"Set your bet with {bet_down} and {bet_up}, then press {interact} to deal.
+You and the dealer get two cards each; one dealer card stays face down.
+Hit {interact} for another card, Stand {secondary} to keep your total, or Double {tertiary} to double your bet for exactly one more card.
+The dealer reveals, draws to 16 and stands on 17. The closer hand wins."
+HELP_BLACKJACK_NOTE,"Cards 2 to 10 count their number, J, Q and K count 10, and an Ace counts 1 or 11."
+HELP_CONTROL_DEAL_HIT,Deal / Hit
+HELP_CONTROL_STAND,Stand
+HELP_CONTROL_DOUBLE,Double
+HELP_CONTROL_BET,Change bet
+HELP_CONTROL_BET_MAX,Table maximum
+HELP_CONTROL_GUIDE,This guide
+HELP_CONTROL_LEAVE,Leave
+HELP_CONTROL_SPIN,Spin
+HELP_CONTROL_OPEN,Enter / break a seal
+HELP_CONTROL_CASH_OUT,Cash out
+HELP_CONTROL_MOVE_GRID,Move on the grid
+HELP_CONTROL_MINES,Choose mines
+HELP_PAY_WIN,Win
+HELP_PAY_ONE_TO_ONE,1 to 1
+HELP_PAY_NATURAL,Blackjack
+HELP_PAY_THREE_TO_TWO,3 to 2
+HELP_PAY_DEALER_BUST,Dealer busts
+HELP_PAY_DOUBLE,Doubled win
+HELP_PAY_DOUBLE_VALUE,1 to 1 on 2× bet
+HELP_PAY_PUSH,Push
+HELP_PAY_RETURNED,Bet back
+HELP_PAY_THREE_OF,Three %s
+HELP_PAY_TWO_CHERRY,Two CHERRY
+HELP_PAY_TIMES,× %d
+HELP_PAY_TIMES_DECIMAL,× %.2f
+HELP_PAY_SAFE_CACHES,%d safe caches
+HELP_SLOT_CLASSIC_GOAL,Line up three matching symbols on the centre payline.
+HELP_SLOT_CLASSIC_STEPS,"Set your bet with {bet_down} and {bet_up}.
+Press {interact}, click SPIN or pull the lever to spin.
+Only the centre payline counts: three of a kind wins, and two cherries also pay.
+A win returns your bet times the symbol's multiplier."
+HELP_MINEFIELD_VAULT_GOAL,"Open safe caches to raise the multiplier, then cash out before you break a cursed rune."
+HELP_MINEFIELD_VAULT_STEPS,"Set your bet with {bet_down} and {bet_up}, and the number of mines with {move_vertical}.
+Press {interact} to enter the vault.
+Move with {move} and press {interact} to break a seal.
+Each safe cache raises the multiplier. Cash out with {secondary} at any time.
+A cursed rune ends the round and the bet is lost."
+DECK_BALANCE,BALANCE
+DECK_TEST_TAG,TEST
+DECK_YOUR_BET,YOUR BET
+DECK_IN_PLAY,IN PLAY
+DECK_TABLE_LIMIT,TABLE %d–%d
+DECK_QUICK_NEEDS,%s needs %d chips
+DECK_QUICK_OVER_TABLE,%s is over the table maximum of %d
+DECK_BJ_BETTING,"Set your bet with {bet_down}{bet_up}, then {interact} Deal      {back} Leave"
+DECK_BJ_DECIDE,You have %d.   Hit {interact}   or   Stand {secondary}
+DECK_BJ_DECIDE_DOUBLE,"You have %d.   Hit {interact},   Stand {secondary}   or   Double {tertiary}"
+DECK_BJ_DEALER_DRAWING,Dealer is drawing…
+DECK_BJ_DOUBLE_UNAVAILABLE,Double is only for your first two cards.   Hit {interact}   or   Stand {secondary}
+DECK_BJ_RESULT_WIN,You win %d      {interact} Deal again
+DECK_BJ_RESULT_NATURAL,Blackjack! You win %d      {interact} Deal again
+DECK_BJ_RESULT_PUSH,Push: your bet is returned      {interact} Deal again
+DECK_BJ_RESULT_LOSS,The house takes %d      {interact} Deal again
+DECK_NEED_FUNDS,This table needs %d credits. Visit the cashier.      {back} Leave
+CABINET_UPGRADE_CLUSTER_NAME,HARLEQUIN MASQUERADE
+CLUSTER_THEME_TITLE,HARLEQUIN MASQUERADE
+CLUSTER_PLAY,PLAY
+CLUSTER_READY,Set your bet and play the board.
+CLUSTER_TUMBLING,The board is tumbling…
+CLUSTER_RESULT_WIN,Paid %d on %d staked
+CLUSTER_RESULT_LOSS,No cluster. %d staked.
+CLUSTER_NEED_BET,Set a bet you can cover first
+CLUSTER_ROUND_WIN,ROUND WIN
+CLUSTER_WIN_MULTIPLE,%s × your bet
+CLUSTER_TUMBLE_COUNT,Tumble %d of %d
+CLUSTER_TUMBLE_TOTAL,%d tumbles this round
+CLUSTER_TUMBLE_TOTAL_ONE,One tumble this round
+CLUSTER_NO_TUMBLES,No tumbles yet
+CLUSTER_LEGEND_CAPTION,PAYS · CLUSTER OF %d
+CLUSTER_PAY_CLUSTER_OF,%d %s
+CLUSTER_DECK_READY,"Set your bet with {bet_down}{bet_up}, then {interact} Play      {back} Leave"
+CLUSTER_DECK_TUMBLING,"Clusters pay, tiles tumble, the bar upgrades every win…"
+CLUSTER_DECK_RESULT_WIN,You win %d      {interact} Play again
+CLUSTER_DECK_RESULT_LOSS,No cluster this round      {interact} Play again
+CLUSTER_BIG_WIN,BIG WIN
+CLUSTER_SUPER_WIN,SUPER WIN
+CLUSTER_MEGA_WIN,MEGA WIN
+CLUSTER_SYMBOL_EMERALD,Emerald diamond
+CLUSTER_SYMBOL_ROSE,Rose diamond
+CLUSTER_SYMBOL_AMETHYST,Amethyst diamond
+CLUSTER_SYMBOL_PEARL,Pearl diamond
+CLUSTER_SYMBOL_MASK,Masquerade mask
+CLUSTER_SYMBOL_JESTER,Jester hat
+CLUSTER_SYMBOL_BELLS,Carnival bells
+CLUSTER_SYMBOL_TICKET,Theatre ticket
+HELP_UPGRADE_CLUSTER_GOAL,"Land five or more matching symbols joined up, down, left or right. Diagonals never count."
+HELP_UPGRADE_CLUSTER_STEPS,"Set your bet with {bet_down} and {bet_up}.
+Press {interact} to play the board.
+Every cluster of five or more pays, then those tiles shatter and new ones tumble in.
+Each shattered tile charges the upgrade bar, and the bar's multiplier is applied to every win it has reached.
+The round ends when a tumble makes no new cluster."
+HELP_UPGRADE_CLUSTER_NOTE,"Pays are shown as a multiple of your bet, before the upgrade bar's multiplier."
+HELP_CONTROL_CLUSTER_PLAY,Play the board
+CABINET_CORE_OVERCLOCK_NAME,FORNO D'ORO
+CORE_OVERCLOCK_THEME_TITLE,FORNO D'ORO
+CORE_OVERCLOCK_STATE_READY,DOUGH READY
+CORE_OVERCLOCK_STATE_COUNTDOWN,OVEN HEATING
+CORE_OVERCLOCK_STATE_BAKING,BAKING
+CORE_OVERCLOCK_STATE_SERVED,SERVED
+CORE_OVERCLOCK_STATE_BURNT,BURNT
+CORE_OVERCLOCK_RECENT,RECENT BAKES
+CORE_OVERCLOCK_VALUE,WORTH %d
+CORE_OVERCLOCK_ACTION_BAKE,BAKE
+CORE_OVERCLOCK_ACTION_PULL,PULL IT OUT
+CORE_OVERCLOCK_AUTO_OFF,TIMER OFF
+CORE_OVERCLOCK_AUTO_AT,TIMER %s×
+CORE_OVERCLOCK_STATUS_READY,Set your stake and fire the oven
+CORE_OVERCLOCK_STATUS_COUNTDOWN,The oven is coming up to heat
+CORE_OVERCLOCK_STATUS_BAKING,Pull it out before it burns
+CORE_OVERCLOCK_STATUS_SERVED,Served at %s× · paid %d
+CORE_OVERCLOCK_STATUS_BURNT,Burnt at %s×
+CORE_OVERCLOCK_NEED_STAKE,No stake your credits can cover
+CORE_OVERCLOCK_HELP_LOCKED,The guide opens between bakes
+DECK_FORNO_BETTING,"Set your stake with {bet_down}{bet_up}, then {interact} Bake      {back} Leave"
+DECK_FORNO_COUNTDOWN,The oven is coming up to heat…
+DECK_FORNO_BAKING,{interact} Pull it out      every second in the oven is more crust
+DECK_FORNO_SERVED,You keep %d      {interact} Bake another
+DECK_FORNO_BURNT,The oven takes %d      {interact} Bake another
+HELP_CORE_OVERCLOCK_GOAL,Bake a pizza in the wood-fired oven and pull it out before it burns.
+HELP_CORE_OVERCLOCK_STEPS,"Set your stake with {bet_down} and {bet_up}.
+Optionally set the oven timer with {secondary}: it comes out there by itself.
+Press {interact} to send it in. The gauge climbs while it bakes.
+Press {interact} again to pull it out and take your stake times the gauge.
+If it burns first there is nothing to serve and the stake is gone."
+HELP_CORE_OVERCLOCK_RULES,"Send a pizza into the wood-fired oven. The longer it bakes the more it is worth: pulling it out pays your stake times the multiplier on the oven gauge.
+
+It can burn at any moment, and a burnt pizza pays nothing. Where it burns is drawn before the dough touches the stone, so nothing you do changes it — only when you choose to pull it out.
+
+Set the oven timer before the bake and it comes out at exactly that multiplier, whatever the frame rate. Every timer setting returns the same 97%%, so bake as long as your nerve allows."
+HELP_CORE_OVERCLOCK_CONTROLS,"%s  Bake, then pull it out
+%s  Oven timer
+%s  Change stake
+%s  Leave"
+HELP_CORE_OVERCLOCK_NOTE,One bake in %.0f%% burns at the door. Every timer setting returns the same 97%%.
+HELP_PAY_FORNO_REACH,Pull out at %s×
+HELP_CONTROL_FORNO_PRIMARY,Bake / Pull it out
+HELP_CONTROL_FORNO_AUTO,Oven timer
+TIER_GUEST,GUEST
+TIER_REGULAR,REGULAR
+TIER_HIGH_ROLLER,HIGH ROLLER
+TIER_WHALE,WHALE
+TIER_PARTNER,PARTNER
+TIER_OWNER,OWNER
+TIER_GUEST_INITIAL,G
+TIER_REGULAR_INITIAL,R
+TIER_HIGH_ROLLER_INITIAL,H
+TIER_WHALE_INITIAL,W
+TIER_PARTNER_INITIAL,P
+TIER_OWNER_INITIAL,O
+TIER_UNLOCK_GUEST,The Main Floor is open to you.
+TIER_UNLOCK_REGULAR,The Manager will write you a marker.
+TIER_UNLOCK_HIGH_ROLLER,The High Roller Salon is open.
+TIER_UNLOCK_WHALE,"The VIP Penthouse is open, and markers rise to 250."
+TIER_UNLOCK_PARTNER,Markers rise to 500.
+TIER_UNLOCK_OWNER,The Manager will sell you the House.
+STANDING_TOOLTIP,House standing: %s · %s wagered
+STANDING_LADDER_COMPLETE,TOP RUNG
+STANDING_NEW_TIER,NEW STANDING  ·  %s
+STANDING_NEXT,NEXT  ·  %s
+STANDING_TOP_RUNG,Nothing stands above this rung.
+STANDING_OWNERSHIP,BUY THE HOUSE
+STANDING_HOUSE_OWNED,The House is yours.
+STANDING_DEED_PRICE,The Manager will sell the deed for %s.
+STANDING_OWN_THE_HOUSE,Reach Owner and the Manager will sell.
+LEDGER_TITLE,HOUSE LEDGER
+LEDGER_STANDING,%s  ·  %s wagered
+LEDGER_VIEW_OVERVIEW,OVERVIEW
+LEDGER_VIEW_CABINETS,CABINETS
+LEDGER_NET,Net
+LEDGER_RETURNED,Chips returned
+LEDGER_STAKED,Chips staked
+LEDGER_BEST_WIN,Biggest single win
+LEDGER_STREAK,Longest win streak
+LEDGER_ROUNDS,Rounds played
+LEDGER_ROUNDS_VALUE,%d
+LEDGER_FAVOURITE,Most played
+LEDGER_PLAYED,Time at the tables
+LEDGER_CABINET_ROW,%s  ·  %d rounds
+LEDGER_CHIPS,%s
+LEDGER_CHIPS_UP,+%s
+LEDGER_NONE,None yet
+LEDGER_EMPTY,No rounds played yet. Every figure here is the record of a real round.
+LEDGER_CLOSE,[%s] CLOSE
+RECEPTION_LEDGER,THE HOUSE LEDGER
+MANAGER_LEDGER,THE HOUSE LEDGER
+MANAGER_BUY_HOUSE,BUY THE HOUSE  ·  %s
+MANAGER_DEED_REFUSED,Not yet. The deed wants the standing and the chips on the desk at the same time.
+MANAGER_AFTER_DEED,"Your house now. I'll keep the books, if you'll have me."
+DEED_TITLE,THE HOUSE IS YOURS
+DEED_LINE,"Paid %s chips for the deed, after turning over %s at the tables."
+DEED_CLOSE,[%s] CLOSE

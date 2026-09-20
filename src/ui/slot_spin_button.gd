@@ -1,6 +1,9 @@
 class_name SlotSpinButton
 extends Button
 ## Physical primary action for the Elven Court slot control deck.
+##
+## The seal carries the input that presses it, drawn above the word so a controller
+## player never has to guess which button spins the reels.
 
 const GOLD := Color("c9a646")
 const GOLD_BRIGHT := Color("ecd27c")
@@ -13,6 +16,9 @@ var idle_time: float = 0.0
 func _ready() -> void:
 	text = ""
 	flat = true
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	InputRouter.active_device_changed.connect(func(_device: int) -> void: queue_redraw())
+	InputRouter.gamepad_family_changed.connect(func(_family: int) -> void: queue_redraw())
 	add_theme_stylebox_override("focus", StyleBoxEmpty.new())
 	focus_mode = Control.FOCUS_ALL
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
@@ -39,12 +45,14 @@ func _draw() -> void:
 	# silver inner line, flanked by carved laurel leaves. No gradients or glow;
 	# keyboard/controller focus adds the shared cyan ring.
 	var center := size * 0.5
-	var idle_breath := (sin(idle_time * TAU / 1.8) + 1.0) * 0.5 if not disabled and MotionPolicy.allows_continuous_motion() else 0.0
+	var idle_breath := (
+		(sin(idle_time * TAU / 1.8) + 1.0) * 0.5
+		if not disabled and MotionPolicy.allows_continuous_motion()
+		else 0.0
+	)
 	var active_radius := 35.0 if button_pressed else 37.5 + idle_breath * 0.8
 	var gold := (
-		GOLD_BRIGHT
-		if is_hovered() or has_focus()
-		else GOLD.lerp(GOLD_BRIGHT, idle_breath * 0.3)
+		GOLD_BRIGHT if is_hovered() or has_focus() else GOLD.lerp(GOLD_BRIGHT, idle_breath * 0.3)
 	)
 	if disabled:
 		gold = Color("6f5d2c")
@@ -52,8 +60,10 @@ func _draw() -> void:
 	for side: float in [-1.0, 1.0]:
 		for leaf: int in range(3):
 			var angle := deg_to_rad(-38.0 + leaf * 38.0)
-			var base := center + Vector2(side * 46.0, 0.0) + Vector2(
-				side * cos(angle) * 6.0, sin(angle) * 20.0
+			var base := (
+				center
+				+ Vector2(side * 46.0, 0.0)
+				+ Vector2(side * cos(angle) * 6.0, sin(angle) * 20.0)
 			)
 			_draw_leaf(base, Vector2(side * cos(angle * 0.6), sin(angle) * 0.55).normalized(), gold)
 	draw_circle(center, 45.0, Color("071009"))
@@ -75,15 +85,25 @@ func _draw() -> void:
 		22,
 		Color("7f8a80") if disabled else Color("f6eed8")
 	)
+	# The prompt sits inside the seal, above the word, so the two read as one key.
+	var spec := InputRouter.glyph_spec(&"interact")
+	var glyph_height := 19.0
+	var glyph_width := InputGlyph.measure(spec, glyph_height)
+	InputGlyph.draw_spec(
+		self,
+		spec,
+		Rect2(
+			center + Vector2(-glyph_width * 0.5, -glyph_height - 4.0),
+			Vector2(glyph_width, glyph_height)
+		)
+	)
 
 
 func _draw_leaf(base: Vector2, direction: Vector2, color: Color) -> void:
 	var tip := base + direction * 20.0
 	var normal := Vector2(-direction.y, direction.x) * 6.5
 	var middle := base.lerp(tip, 0.45)
-	draw_colored_polygon(
-		PackedVector2Array([base, middle + normal, tip, middle - normal]), color
-	)
+	draw_colored_polygon(PackedVector2Array([base, middle + normal, tip, middle - normal]), color)
 	draw_line(base.lerp(tip, 0.15), base.lerp(tip, 0.8), Color("071009", 0.55), 1.0, true)
 
 

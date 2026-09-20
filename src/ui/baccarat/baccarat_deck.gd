@@ -25,7 +25,7 @@ var credit_value: AnimatedNumberLabel
 var _credit_caption: Label
 var _bet_line: Label
 var _spot_line: Label
-var _hint_line: Label
+var _hint_line: InputPromptLabel
 
 
 func _init() -> void:
@@ -62,8 +62,13 @@ func build(chip_textures: Dictionary, chip_values: Array[int]) -> void:
 	_spot_line = BaccaratStyle.label(
 		self, Rect2(info + Vector2(10, 27), Vector2(216, 20)), 14, BaccaratStyle.BRASS_BRIGHT
 	)
-	_hint_line = BaccaratStyle.label(
-		self, Rect2(info + Vector2(10, 48), Vector2(216, 18)), 12, BaccaratStyle.PEARL_MUTED
+	_hint_line = InputPromptLabel.new()
+	BaccaratStyle.dress(
+		_hint_line,
+		self,
+		Rect2(info + Vector2(10, 48), Vector2(216, 18)),
+		12,
+		BaccaratStyle.PEARL_MUTED
 	)
 	clear_button = _key("BaccaratClear", CLEAR_RECT, false, clear_pressed)
 	rebet_button = _key("BaccaratRebet", REBET_RECT, false, rebet_pressed)
@@ -115,14 +120,7 @@ func refresh_state(state: Dictionary) -> void:
 	rebet_button.disabled = not open or not state.can_rebet
 	deal_button.disabled = not open or int(state.total) <= 0
 	_bet_line.text = tr("BACCARAT_BET_TOTAL") % [int(state.total), int(state.cap)]
-	_hint_line.text = (
-		tr("BACCARAT_DECK_HINT")
-		% [
-			InputRouter.glyph("interact"),
-			InputRouter.glyph("secondary"),
-			InputRouter.glyph("tertiary"),
-		]
-	)
+	_hint_line.template = tr("BACCARAT_DECK_HINT")
 
 
 func set_spot_text(text: String) -> void:

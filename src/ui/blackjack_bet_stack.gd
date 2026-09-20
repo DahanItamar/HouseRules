@@ -23,10 +23,14 @@ const CHIP_RECT := Rect2(10, 0, 32, 45)
 const PAYOUT_OFFSET := Vector2(34, 4)
 const PLATE_RECT := Rect2(4, 52, 64, 20)
 const COLLECT_SECONDS: float = 0.34
+## Between hands the chosen stake waits on the betting spot at this opacity, so
+## the bet reads as chips on the table before the deal commits it.
+const PREVIEW_ALPHA: float = 0.55
 const PAYOUT_SECONDS: float = 0.36
 
 var wager: int = 0
 var is_live: bool = false
+var preview: bool = false
 var settle_kind: Settle = Settle.NONE
 ## Payout stack offset relative to this control (animated from the dealer).
 var payout_offset: Vector2 = PAYOUT_OFFSET
@@ -45,8 +49,24 @@ func _ready() -> void:
 	queue_redraw()
 
 
+## Shows the chosen (not yet committed) stake on the betting spot; 0 hides it.
+func show_preview(amount: int) -> void:
+	if is_live or settle_kind != Settle.NONE:
+		return
+	if _placement_tween != null and _placement_tween.is_valid():
+		_placement_tween.kill()
+	preview = amount > 0
+	wager = maxi(amount, 0)
+	visible = preview
+	position = TABLE_POSITION
+	modulate = Color(1, 1, 1, PREVIEW_ALPHA)
+	queue_redraw()
+
+
 func place_wager(amount: int, animated: bool = true) -> void:
 	var was_live := is_live
+	var was_preview := preview
+	preview = false
 	wager = maxi(amount, 0)
 	is_live = wager > 0
 	visible = is_live
@@ -59,6 +79,18 @@ func place_wager(amount: int, animated: bool = true) -> void:
 	if _placement_tween != null and _placement_tween.is_valid():
 		_placement_tween.kill()
 	modulate = Color.WHITE
+	if was_preview and not was_live:
+		# The previewed chips are already on the spot: the deal just commits them.
+		position = TABLE_POSITION
+		if not animated or MotionPolicy.is_reduced():
+			modulate.a = 1.0
+			queue_redraw()
+			return
+		modulate.a = PREVIEW_ALPHA
+		_placement_tween = create_tween()
+		_placement_tween.tween_property(self, "modulate:a", 1.0, 0.16)
+		queue_redraw()
+		return
 	var slide := animated and not was_live and not MotionPolicy.is_reduced()
 	position = SOURCE_POSITION if animated and not was_live else TABLE_POSITION
 	modulate.a = 0.0 if slide else 1.0
@@ -80,6 +112,7 @@ func place_wager(amount: int, animated: bool = true) -> void:
 ## Settles the wager for the shown result. Presentation only.
 func settle(kind: Settle, amount: int, returned: int = 0) -> void:
 	_stop_settle()
+	preview = false
 	if _placement_tween != null and _placement_tween.is_valid():
 		_placement_tween.kill()
 	wager = maxi(amount, 0)
@@ -128,6 +161,7 @@ func settle(kind: Settle, amount: int, returned: int = 0) -> void:
 
 func clear_wager(animated: bool = true) -> void:
 	_stop_settle()
+	preview = false
 	settle_kind = Settle.NONE
 	payout_visible = false
 	payout_offset = PAYOUT_OFFSET
@@ -189,7 +223,7 @@ func _apply_motion_preference(reduced: bool) -> void:
 
 
 func _draw() -> void:
-	if not is_live:
+	if not is_live and not preview:
 		return
 	_draw_chips(Vector2.ZERO)
 	if payout_visible:

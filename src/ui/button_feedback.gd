@@ -1,6 +1,14 @@
 class_name ButtonFeedback
 extends Node
-## Consistent, bounded casino-button motion. Never changes gameplay state.
+## Consistent, bounded casino-button motion shared by every interactive control.
+## Never changes gameplay state.
+##
+##   hover / focus  lift to HOVER_SCALE (the style's brighter brass edge does the rest)
+##   press          a quick PRESS_SCALE squash, then a release past rest and settle
+##   reduced motion no scaling at all; state changes are instant
+
+const HOVER_SCALE := Vector2(1.03, 1.03)
+const PRESS_SCALE := Vector2(0.97, 0.97)
 
 var _button: Button
 var _motion: Tween
@@ -46,7 +54,7 @@ func _process(delta: float) -> void:
 
 func _hover_in() -> void:
 	if not _button.disabled:
-		_animate_to(Vector2(1.025, 1.025), 0.09, Tween.TRANS_QUAD, Tween.EASE_OUT)
+		_animate_to(HOVER_SCALE, 0.09, Tween.TRANS_QUAD, Tween.EASE_OUT)
 
 
 func _hover_out() -> void:
@@ -56,7 +64,7 @@ func _hover_out() -> void:
 
 func _press() -> void:
 	if not _button.disabled:
-		_animate_to(Vector2(0.94, 0.94), 0.06, Tween.TRANS_QUAD, Tween.EASE_IN)
+		_animate_to(PRESS_SCALE, 0.06, Tween.TRANS_QUAD, Tween.EASE_IN)
 
 
 func _release() -> void:
@@ -67,9 +75,19 @@ func _release() -> void:
 		_animate_to(Vector2.ONE, 0.1, Tween.TRANS_QUAD, Tween.EASE_OUT)
 		return
 	_animate_to(Vector2(1.02, 1.02), 0.08, Tween.TRANS_BACK, Tween.EASE_OUT)
-	_motion.chain().tween_property(
-		_button, "scale", Vector2.ONE, MotionPolicy.finite_duration(0.08)
-	).set_trans(Tween.TRANS_QUAD)
+	var rest := HOVER_SCALE if _button.has_focus() or _hovered() else Vector2.ONE
+	(
+		_motion
+		. chain()
+		. tween_property(_button, "scale", rest, MotionPolicy.finite_duration(0.08))
+		. set_trans(Tween.TRANS_QUAD)
+	)
+
+
+func _hovered() -> bool:
+	if not _button.is_inside_tree():
+		return false
+	return _button.get_global_rect().has_point(_button.get_global_mouse_position())
 
 
 func _begin_focus_idle() -> void:
@@ -84,16 +102,21 @@ func _end_focus_idle() -> void:
 		_button.self_modulate = Color.WHITE
 
 
-func _animate_to(target: Vector2, duration: float, transition: Tween.TransitionType, ease: Tween.EaseType) -> void:
+func _animate_to(
+	target: Vector2, duration: float, transition: Tween.TransitionType, ease: Tween.EaseType
+) -> void:
 	if MotionPolicy.is_reduced():
 		_reset_scale()
 		return
 	if _motion != null:
 		_motion.kill()
 	_motion = create_tween()
-	_motion.tween_property(
-		_button, "scale", target, MotionPolicy.finite_duration(duration)
-	).set_trans(transition).set_ease(ease)
+	(
+		_motion
+		. tween_property(_button, "scale", target, MotionPolicy.finite_duration(duration))
+		. set_trans(transition)
+		. set_ease(ease)
+	)
 
 
 func _on_motion_preference_changed(reduced: bool) -> void:

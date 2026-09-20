@@ -44,6 +44,8 @@ var _celebration: WinCelebration
 var _win_flash: Control
 var _stake_selector: StakeSelector
 var _help_button: Button
+var _help_card: HelpCard
+var _control_deck: CabinetDeck
 var _help_overlay: Control
 var _help_shade: ColorRect
 var _help_modal: Panel
@@ -77,6 +79,7 @@ var _blackjack_bet_stack: Control
 var _blackjack_dealer_total_panel: Panel
 var _blackjack_player_total_panel: Panel
 var _blackjack_result_banner: Panel
+var _blackjack_result_plate: KitPlate
 var _blackjack_result_text: Label
 var _blackjack_dealer_presenter: BlackjackDealerPresenter
 var _blackjack_title_plaque: BlackjackConsole
@@ -106,6 +109,8 @@ var _action_disabled_cache: Dictionary = {}
 var _action_controls: Dictionary = {}
 
 const RESULT_READABLE_BEAT: float = 0.22
+## The header "How to play" control: 44 px tall, inside TV-safe (48, 27, 864x486).
+const HELP_BUTTON_RECT := Rect2(736, 27, 176, 44)
 const BIG_WIN_MULTIPLE: float = 5.0
 
 enum ResultImpactTier { NONE, WIN, BIG_WIN }
@@ -141,9 +146,7 @@ const VAULT_CASHOUT_METER_POSITION := Vector2(48, 284)
 const BLACKJACK_FELT := preload("res://assets/drafts/m2/felt_table.png")
 const CARD_BACK := preload("res://assets/drafts/m2/card_back.png")
 const BLACKJACK_TABLE := preload("res://assets/production/blackjack/blackjack_table_v2.png")
-const VAULT_BACKDROP := preload(
-	"res://assets/production/vault/witcher/witcher_vault_backdrop.png"
-)
+const VAULT_BACKDROP := preload("res://assets/production/vault/witcher/witcher_vault_backdrop.png")
 const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 const BLACKJACK_BET_STACK := preload("res://src/ui/blackjack_bet_stack.gd")
 ## Blackjack felt geometry (cabinet space). Cards are sized to the painted table:
@@ -155,15 +158,28 @@ const BLACKJACK_HAND_CENTER_X: float = 480.0
 const BLACKJACK_DEALER_CARD_Y: float = 227.0
 const BLACKJACK_PLAYER_CARD_Y: float = 335.0
 const BLACKJACK_HAND_MAX_WIDTH: float = 204.0
-const BLACKJACK_BADGE_SIZE := Vector2(86, 24)
+## Sized for the painted score badge: tall enough that its brass rim and corners
+## read, short enough to stay clear of the hand above and below it.
+const BLACKJACK_BADGE_SIZE := Vector2(96, 30)
 const BLACKJACK_BADGE_GAP: float = 10.0
-const BLACKJACK_PLAQUE_RECT := Rect2(392, 305, 176, 28)
+## Canvas pixels per source pixel for the two shared painted plaques.
+const BLACKJACK_BADGE_PLATE_SCALE: float = 0.12
+const BLACKJACK_BANNER_PLATE_SCALE: float = 0.107
+## The result banner sits in the band between the dealer's hand and the player's.
+const BLACKJACK_PLAQUE_RECT := Rect2(384, 301, 192, 33)
+## How the painted result banner is tinted for each outcome.
+const BANNER_TINTS: Dictionary = {
+	RoundResult.Outcome.WIN: Color.WHITE,
+	RoundResult.Outcome.LOSS: Color(0.96, 0.62, 0.56),
+	RoundResult.Outcome.PUSH: Color(0.93, 0.91, 0.86),
+}
 const BLACKJACK_DEAL_SECONDS: float = 0.30
 const BLACKJACK_DEAL_STAGGER: float = 0.08
 const BLACKJACK_SHOE_SCALE: float = 0.38
 const BLACKJACK_SHOE_ROTATION: float = -0.42
 const BLACKJACK_WIN_INK := Color("f2c84b")
-const BLACKJACK_LOSS_INK := Color("c9b9a6")
+## One accent per meaning: brass for a win, muted red for a loss, ivory for a push.
+const BLACKJACK_LOSS_INK := Color("d27a6c")
 const BLACKJACK_TEXT := Color("f1e8d8")
 const CABINET_WIN_FLASH_SCRIPT := preload("res://src/ui/cabinet_win_flash.gd")
 
@@ -369,6 +385,8 @@ func _process(delta: float) -> void:
 			var callback := _slot_finish_callback
 			_slot_finish_callback = Callable()
 			callback.call()
+
+
 func set_status(key: String) -> void:
 	if key == "ROUND_SPINNING":
 		_reset_slot_result_ticker()
@@ -394,8 +412,10 @@ func begin_slot_spin(symbols: Array, on_finished: Callable) -> void:
 		_slot_spin_targets.append(int(symbols[index]))
 		var center: SlotSymbol = _slot_reel_cells[index][2]
 		_slot_start_symbols[index] = center.symbol_index
-		var target_steps: int = 18 + index * 6 + posmod(
-			_slot_start_symbols[index] - _slot_spin_targets[index], SLOT_SYMBOL_COUNT
+		var target_steps: int = (
+			18
+			+ index * 6
+			+ posmod(_slot_start_symbols[index] - _slot_spin_targets[index], SLOT_SYMBOL_COUNT)
 		)
 		_slot_total_offsets[index] = target_steps * SLOT_CELL_HEIGHT
 	if int(symbols[0]) == int(symbols[1]):
@@ -419,6 +439,9 @@ func set_help_open(open: bool) -> void:
 	if open:
 		_focus_before_help = get_viewport().gui_get_focus_owner()
 	help_open = open
+	if open and _help_card != null:
+		_sync_help_card()
+		_help_card.reset_page()
 	if open and _help_overlay != null:
 		_help_overlay.visible = true
 		_help_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -435,9 +458,13 @@ func set_help_open(open: bool) -> void:
 				var item := _help_reveal_items[index]
 				var delay := 0.02 + index * 0.012
 				_help_tween.tween_property(item, "modulate:a", 1.0, 0.12).set_delay(delay)
-				_help_tween.tween_property(
-					item, "position:y", (_help_rest_positions[item] as Vector2).y, 0.14
-				).set_delay(delay)
+				(
+					_help_tween
+					. tween_property(
+						item, "position:y", (_help_rest_positions[item] as Vector2).y, 0.14
+					)
+					. set_delay(delay)
+				)
 			_help_tween.finished.connect(func() -> void: _help_tween = null)
 		var close_button := _help_overlay.find_child("HelpClose", true, false) as Button
 		if close_button != null:
@@ -472,16 +499,28 @@ func set_help_open(open: bool) -> void:
 
 
 func _build_help_ui() -> void:
-	_help_button = Button.new()
+	# A compact header control: brass "?" medallion, label and the input that
+	# opens the guide (F1, Menu, Options). It stays 44 px tall inside TV-safe.
+	_help_button = HelpButton.new()
 	_help_button.name = "HowToPlayButton"
-	_help_button.position = Vector2(770, 28)
-	_help_button.size = Vector2(142, 38)
+	_help_button.position = HELP_BUTTON_RECT.position
+	_help_button.size = HELP_BUTTON_RECT.size
 	_help_button.text = tr("HELP_BUTTON")
 	_help_button.add_theme_font_override("font", Typography.UI_FONT)
 	_help_button.add_theme_font_size_override("font_size", 14)
 	_help_button.z_index = 90
-	_help_button.add_theme_stylebox_override("normal", _panel_style(Color("17161af2"), Color("c8a34b"), 6))
-	_help_button.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
+	# The plate starts behind the medallion's centre, so the coin reads as a badge
+	# set on the plate's end.
+	for entry: Array in [
+		["normal", Color("17161a"), Color("8a6d36"), 1],
+		["hover", Color("211d20"), Color("f0cf73"), 1],
+		["pressed", Color("0f0d0e"), Color("f0cf73"), 1],
+		["focus", Color("00000000"), Color("48c5d5"), 2],
+	]:
+		var plate := _panel_style(entry[1], entry[2], 6, entry[3])
+		plate.expand_margin_left = -HELP_BUTTON_RECT.size.y * 0.5
+		plate.shadow_size = 0
+		_help_button.add_theme_stylebox_override(entry[0], plate)
 	_help_button.pressed.connect(toggle_help)
 	add_child(_help_button)
 	ButtonFeedback.attach(_help_button)
@@ -504,38 +543,237 @@ func _build_help_ui() -> void:
 	_help_modal.position = Vector2(170, 64)
 	_help_modal.size = Vector2(620, 412)
 	_help_modal.pivot_offset = _help_modal.size * 0.5
-	_help_modal.add_theme_stylebox_override("panel", _panel_style(Color("17161af7"), Color("c8a34b"), 8))
+	_help_modal.add_theme_stylebox_override(
+		"panel", _panel_style(Color("141214"), Color("c8a34b"), 8)
+	)
 	_help_overlay.add_child(_help_modal)
-	_help_title = _help_label(_help_modal, Vector2(32, 20), Vector2(470, 42), 28, Color("f1e8d8"))
-	var rules_heading := _help_label(_help_modal, Vector2(32, 76), Vector2(326, 24), 14, Color("c8a34b"))
+	_help_title = _help_label(_help_modal, Vector2(32, 16), Vector2(500, 44), 28, Color("f1e8d8"))
+	_help_title.add_theme_font_override("font", Typography.DISPLAY_FONT)
+	_help_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_help_title.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var header_rule := ColorRect.new()
+	header_rule.name = "HelpHeaderRule"
+	header_rule.color = Color("6e5225")
+	header_rule.position = Vector2(32, 66)
+	header_rule.size = Vector2(556, 1)
+	header_rule.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_help_modal.add_child(header_rule)
+	# The rules and controls text stay as the data every game writes into; the
+	# structured card below renders them (goal, numbered steps, glyph controls).
+	var rules_heading := _help_label(
+		_help_modal, Vector2(32, 76), Vector2(326, 24), 14, Color("c8a34b")
+	)
 	rules_heading.text = tr("HELP_RULES")
+	rules_heading.hide()
 	_help_rules = _help_label(_help_modal, Vector2(32, 108), Vector2(326, 238), 16, Color("f1e8d8"))
 	_help_rules.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var controls_heading := _help_label(_help_modal, Vector2(388, 76), Vector2(194, 24), 14, Color("c8a34b"))
-	controls_heading.text = tr("HELP_CONTROLS")
-	_help_controls = _help_label(_help_modal, Vector2(388, 108), Vector2(194, 238), 15, Color("f1e8d8"))
-	_help_controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	var footer := _help_label(
-		_help_modal, Vector2(32, 366), Vector2(420, 24), Typography.BODY_MIN, Color("b8ad9c")
+	_help_rules.hide()
+	var controls_heading := _help_label(
+		_help_modal, Vector2(388, 76), Vector2(194, 24), 14, Color("c8a34b")
 	)
-	footer.text = tr("HELP_CLOSE_HINT") % InputRouter.glyph("help")
+	controls_heading.text = tr("HELP_CONTROLS")
+	controls_heading.hide()
+	_help_controls = _help_label(
+		_help_modal, Vector2(388, 108), Vector2(194, 238), 15, Color("f1e8d8")
+	)
+	_help_controls.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_help_controls.hide()
+	_help_card = HelpCard.new()
+	_help_card.name = "HelpCard"
+	_help_card.position = Vector2(0, 76)
+	_help_modal.add_child(_help_card)
 	var close := Button.new()
 	close.name = "HelpClose"
-	close.position = Vector2(548, 16)
+	close.position = Vector2(544, 16)
 	close.size = Vector2(44, 44)
 	close.text = String.chr(0x00D7)
+	close.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	close.add_theme_font_override("font", Typography.UI_FONT)
 	close.add_theme_font_size_override("font_size", 24)
-	close.add_theme_stylebox_override("normal", _panel_style(Color("252126"), Color("6e5225"), 6))
-	close.add_theme_stylebox_override("focus", _panel_style(Color("252126"), Color("48c5d5"), 6, 2))
+	close.add_theme_color_override("font_color", Color("f1e8d8"))
+	close.add_theme_stylebox_override("normal", _panel_style(Color("1d191b"), Color("6e5225"), 6))
+	close.add_theme_stylebox_override("hover", _panel_style(Color("2a2225"), Color("f0cf73"), 6))
+	close.add_theme_stylebox_override("pressed", _panel_style(Color("120f10"), Color("f0cf73"), 6))
+	close.add_theme_stylebox_override(
+		"focus", _panel_style(Color("00000000"), Color("48c5d5"), 6, 2)
+	)
 	close.pressed.connect(func() -> void: set_help_open(false))
 	_help_modal.add_child(close)
 	ButtonFeedback.attach(close)
-	_help_reveal_items.assign(
-		[_help_title, rules_heading, _help_rules, controls_heading, _help_controls, footer, close]
-	)
+	_help_reveal_items.assign([_help_title, header_rule, _help_card, close])
 	for item: Control in _help_reveal_items:
 		_help_rest_positions[item] = item.position
+	InputRouter.active_device_changed.connect(func(_device: int) -> void: _queue_help_sync())
+	InputRouter.gamepad_family_changed.connect(func(_family: int) -> void: _queue_help_sync())
+
+
+## Moves the open guide one page (LB/RB, Q/E, left/right). Returns false at an end.
+func help_page_step(direction: int) -> bool:
+	if not help_open or _help_card == null:
+		return false
+	return _help_card.step_page(direction)
+
+
+func help_card() -> HelpCard:
+	return _help_card
+
+
+func _queue_help_sync() -> void:
+	if help_open:
+		call_deferred("_sync_help_card")
+
+
+## Renders the guide from this game's structured help content.
+func _sync_help_card() -> void:
+	if _help_card == null or cabinet == null or cabinet.context == null:
+		return
+	_help_card.set_content(_help_content())
+
+
+## Structured help for this cabinet. Games without their own content get it
+## derived from the rules and controls text they already write.
+func _help_content() -> Dictionary:
+	match cabinet.context.definition.id:
+		&"blackjack":
+			return _blackjack_help_content()
+		&"slot_classic":
+			return _slot_help_content()
+		&"minefield_vault":
+			return _vault_help_content()
+	return legacy_help_content(_help_rules.text, _help_controls.text)
+
+
+func _blackjack_help_content() -> Dictionary:
+	return {
+		"goal": tr("HELP_BLACKJACK_GOAL"),
+		"steps": Array(tr("HELP_BLACKJACK_STEPS").split("\n")),
+		"controls":
+		[
+			"{interact} " + tr("HELP_CONTROL_DEAL_HIT"),
+			"{secondary} " + tr("HELP_CONTROL_STAND"),
+			"{tertiary} " + tr("HELP_CONTROL_DOUBLE"),
+			"{bet_down}{bet_up} " + tr("HELP_CONTROL_BET"),
+			"{bet_max} " + tr("HELP_CONTROL_BET_MAX"),
+			"{help} " + tr("HELP_CONTROL_GUIDE"),
+			"{back} " + tr("HELP_CONTROL_LEAVE"),
+		],
+		"payouts":
+		[
+			[tr("HELP_PAY_WIN"), tr("HELP_PAY_ONE_TO_ONE")],
+			[tr("HELP_PAY_NATURAL"), tr("HELP_PAY_THREE_TO_TWO")],
+			[tr("HELP_PAY_DEALER_BUST"), tr("HELP_PAY_ONE_TO_ONE")],
+			[tr("HELP_PAY_DOUBLE"), tr("HELP_PAY_DOUBLE_VALUE")],
+			[tr("HELP_PAY_PUSH"), tr("HELP_PAY_RETURNED")],
+		],
+		"notes": [tr("HELP_BLACKJACK_NOTE")],
+	}
+
+
+func _slot_help_content() -> Dictionary:
+	var payouts: Array = []
+	var math: SlotMachineMath = cabinet.get("math")
+	if math != null:
+		for index: int in range(math.paytable.multipliers.size() - 1, -1, -1):
+			(
+				payouts
+				. append(
+					[
+						tr("HELP_PAY_THREE_OF") % tr("SYMBOL_%d" % index),
+						tr("HELP_PAY_TIMES") % math.paytable.multipliers[index],
+					]
+				)
+			)
+		payouts.append(
+			[tr("HELP_PAY_TWO_CHERRY"), tr("HELP_PAY_TIMES") % math.paytable.two_cherry_multiplier]
+		)
+	return {
+		"goal": tr("HELP_SLOT_CLASSIC_GOAL"),
+		"steps": Array(tr("HELP_SLOT_CLASSIC_STEPS").split("\n")),
+		"controls":
+		[
+			"{interact} " + tr("HELP_CONTROL_SPIN"),
+			"{bet_down}{bet_up} " + tr("HELP_CONTROL_BET"),
+			"{bet_max} " + tr("HELP_CONTROL_BET_MAX"),
+			"{help} " + tr("HELP_CONTROL_GUIDE"),
+			"{back} " + tr("HELP_CONTROL_LEAVE"),
+		],
+		"payouts": payouts,
+		"payout_caption": tr("HELP_PAYOUTS_TIMES_BET"),
+	}
+
+
+func _vault_help_content() -> Dictionary:
+	var mines: int = int(cabinet.get("mine_count"))
+	var payouts: Array = []
+	for safe: int in range(1, 6):
+		var returned := MinefieldMath.payout_for(1000, mines, safe)
+		payouts.append(
+			[tr("HELP_PAY_SAFE_CACHES") % safe, tr("HELP_PAY_TIMES_DECIMAL") % (returned / 1000.0)]
+		)
+	return {
+		"goal": tr("HELP_MINEFIELD_VAULT_GOAL"),
+		"steps": Array(tr("HELP_MINEFIELD_VAULT_STEPS").split("\n")),
+		"controls":
+		[
+			"{interact} " + tr("HELP_CONTROL_OPEN"),
+			"{secondary} " + tr("HELP_CONTROL_CASH_OUT"),
+			"{move} " + tr("HELP_CONTROL_MOVE_GRID"),
+			"{move_vertical} " + tr("HELP_CONTROL_MINES"),
+			"{bet_down}{bet_up} " + tr("HELP_CONTROL_BET"),
+			"{back} " + tr("HELP_CONTROL_LEAVE"),
+		],
+		"payouts": payouts,
+		"payout_caption": tr("HELP_PAYOUTS_WITH_MINES") % mines,
+	}
+
+
+## Derives a structured guide from a game's rules and controls text: the first
+## paragraph is the goal, the rest are steps, and each control line's leading
+## "[Enter]" / "WASD" style prompt becomes a glyph token for the active device.
+static func legacy_help_content(rules: String, controls: String) -> Dictionary:
+	var paragraphs: Array = []
+	for paragraph: String in rules.split("\n\n"):
+		if not paragraph.strip_edges().is_empty():
+			paragraphs.append(paragraph.strip_edges())
+	var needles: Array = []
+	for action: String in [
+		"move_horizontal",
+		"move_vertical",
+		"move",
+		"interact",
+		"back",
+		"secondary",
+		"tertiary",
+		"help"
+	]:
+		var glyph := InputRouter.glyph(action)
+		needles.append(["[%s]" % glyph, action])
+		needles.append([glyph, action])
+	# Longest first, so "Left stick / D-pad left-right" wins over "Left stick / D-pad".
+	needles.sort_custom(
+		func(a: Array, b: Array) -> bool: return String(a[0]).length() > String(b[0]).length()
+	)
+	var rows: Array = []
+	var notes: Array = []
+	for line: String in controls.split("\n"):
+		var row := line.strip_edges()
+		if row.is_empty():
+			continue
+		for needle: Array in needles:
+			if row.begins_with(String(needle[0])):
+				row = "{%s} %s" % [needle[1], row.substr(String(needle[0]).length()).strip_edges()]
+				break
+		if row.begins_with("{"):
+			rows.append(row)
+		else:
+			# A line without an input (e.g. "Chips sit below the layout") is a note.
+			notes.append(row)
+	return {
+		"goal": paragraphs[0] if not paragraphs.is_empty() else "",
+		"steps": paragraphs.slice(1),
+		"controls": rows,
+		"notes": notes,
+	}
 
 
 func _prepare_help_reveal() -> void:
@@ -635,45 +873,15 @@ func _refresh_blackjack() -> void:
 			_blackjack_dealer_total.set_number(
 				BlackjackMath.hand_value(math.dealer), tr("BLACKJACK_TOTAL")
 			)
-	if _blackjack_credit_value != null:
-		if Wallet.test_mode_enabled:
-			_blackjack_credit_value.set_infinity()
-		else:
-			_blackjack_credit_value.set_number(
-				maxi(
-					0,
-					cabinet.context.balance
-					- (cabinet.current_stake if cabinet.is_round_active else 0)
-				)
-			)
-		_set_live_text(
-			_blackjack_primary,
-			tr("ACTION_HIT") if cabinet.is_round_active else tr("ACTION_DEAL")
-		)
-		_set_live_text(_blackjack_double, (
-			tr("ACTION_DOUBLE_TO") % (cabinet.current_stake * 2)
-			if cabinet.is_round_active
-			else tr("ACTION_DOUBLE")
-		))
-		_set_action_disabled(_blackjack_primary, (
-			cabinet.is_result_pending
-			or (not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance)
-		))
-		_set_action_disabled(
-			_blackjack_stand, not cabinet.is_round_active or cabinet.is_result_pending
-		)
-		_set_action_disabled(_blackjack_double, (
-			cabinet.is_result_pending or not math.can_double(cabinet.context.balance)
-		))
+	_refresh_blackjack_deck(math)
 	if _blackjack_bet_stack != null:
 		var live_wager: int = cabinet.current_stake if cabinet.is_round_active else 0
 		if live_wager > 0:
 			_blackjack_bet_stack.place_wager(live_wager, not _blackjack_bet_stack.is_live)
-		elif _result == null:
+		elif _result == null and not _blackjack_bet_stack.preview:
 			_blackjack_bet_stack.clear_wager(false)
 	if _blackjack_result_banner != null and _result == null:
 		_blackjack_result_banner.hide()
-	_style_blackjack_stake_buttons()
 
 
 func _refresh_vault() -> void:
@@ -708,7 +916,9 @@ func _refresh_vault() -> void:
 			_cursor_tween = create_tween()
 			_cursor_tween.tween_property(_vault_cursor, "position", cursor_target, 0.09)
 	var cash_out := (
-		MinefieldMath.payout_for(cabinet.current_stake, cabinet.get("mine_count"), math.safe_reveals)
+		MinefieldMath.payout_for(
+			cabinet.current_stake, cabinet.get("mine_count"), math.safe_reveals
+		)
 		if cabinet.is_round_active and math.safe_reveals > 0
 		else 0
 	)
@@ -718,10 +928,7 @@ func _refresh_vault() -> void:
 		var safe_target := maxi(1, 25 - cabinet.get("mine_count"))
 		_vault_cashout_meter.set_ready(can_cash_out)
 		_vault_cashout_meter.set_values(
-			cash_out,
-			math.multiplier(),
-			float(math.safe_reveals) / float(safe_target),
-			true
+			cash_out, math.multiplier(), float(math.safe_reveals) / float(safe_target), true
 		)
 	_detail.add_theme_font_size_override("font_size", Typography.CRITICAL)
 	_controls.text = (
@@ -741,23 +948,29 @@ func _refresh_vault() -> void:
 			_vault_credit_value.set_number(
 				maxi(
 					0,
-					cabinet.context.balance
-					- (cabinet.current_stake if cabinet.is_round_active else 0)
+					(
+						cabinet.context.balance
+						- (cabinet.current_stake if cabinet.is_round_active else 0)
+					)
 				)
 			)
 		_set_live_text(
-			_vault_open,
-			tr("ACTION_OPEN") if cabinet.is_round_active else tr("ACTION_ENTER")
+			_vault_open, tr("ACTION_OPEN") if cabinet.is_round_active else tr("ACTION_ENTER")
 		)
-		_set_action_disabled(_vault_open, (
-			cabinet.is_result_pending
-			or (not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance)
-		))
-		_set_action_disabled(_vault_cash_out, (
+		_set_action_disabled(
+			_vault_open,
+			(
+				cabinet.is_result_pending
+				or (
+					not cabinet.is_round_active and cabinet.selected_stake > cabinet.context.balance
+				)
+			)
+		)
+		_set_action_disabled(
+			_vault_cash_out,
 			cabinet.is_result_pending or not cabinet.is_round_active or math.revealed.is_empty()
-		))
+		)
 	_title.text = tr("VAULT_WITCHER_TITLE")
-	_style_vault_stake_buttons()
 
 
 func _ensure_art() -> void:
@@ -765,11 +978,14 @@ func _ensure_art() -> void:
 	if id == _art_id:
 		return
 	_art_id = id
-	_lighting.mode = {
-		&"slot_classic": CasinoLighting.Mode.SLOT,
-		&"blackjack": CasinoLighting.Mode.BLACKJACK,
-		&"minefield_vault": CasinoLighting.Mode.VAULT,
-	}.get(id, CasinoLighting.Mode.MENU)
+	_lighting.mode = (
+		{
+			&"slot_classic": CasinoLighting.Mode.SLOT,
+			&"blackjack": CasinoLighting.Mode.BLACKJACK,
+			&"minefield_vault": CasinoLighting.Mode.VAULT,
+		}
+		. get(id, CasinoLighting.Mode.MENU)
+	)
 	if id == &"slot_classic":
 		_build_slot_art()
 		_apply_slot_fullscreen_layout()
@@ -969,7 +1185,9 @@ func _slot_elven_panel(node_name: String, rect: Rect2) -> Panel:
 	panel.size = rect.size
 	panel.z_index = 4
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_theme_stylebox_override("panel", _slot_elven_style(SLOT_ELVEN_PANEL, SLOT_ELVEN_GOLD, 2))
+	panel.add_theme_stylebox_override(
+		"panel", _slot_elven_style(SLOT_ELVEN_PANEL, SLOT_ELVEN_GOLD, 2)
+	)
 	add_child(panel)
 	var inset := Panel.new()
 	inset.name = "ElvenInlayLine"
@@ -997,135 +1215,168 @@ func _slot_elven_style(fill: Color, border: Color, border_width: int) -> StyleBo
 	return style
 
 
-## Per-game restyle of the shared StakeSelector, applied only from the slot path
-## (Blackjack and Vault keep the default casino console). Focus stays cyan.
-func _apply_slot_elven_stake_theme() -> void:
-	if _stake_selector == null:
-		return
-	var displayed := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
-	for child: Node in _stake_selector.get_children():
-		var button := child as Button
-		if button == null:
-			continue
-		var selected := button.text == str(displayed)
-		button.add_theme_color_override("font_color", SLOT_ELVEN_TEXT)
-		button.add_theme_color_override("font_pressed_color", SLOT_ELVEN_NIGHT)
-		button.add_theme_color_override("font_hover_pressed_color", SLOT_ELVEN_NIGHT)
-		button.add_theme_color_override("font_focus_color", SLOT_ELVEN_TEXT)
-		button.add_theme_color_override("font_disabled_color", Color("6f7d72"))
-		button.add_theme_stylebox_override(
-			"normal",
-			_slot_elven_style(
-				SLOT_ELVEN_GOLD if selected else SLOT_ELVEN_PANEL_INSET,
-				SLOT_ELVEN_GOLD_BRIGHT if selected else Color("3f5a4a"),
-				2 if selected else 1
-			)
-		)
-		button.add_theme_stylebox_override(
-			"hover", _slot_elven_style(Color("1a3a2c"), SLOT_ELVEN_GOLD, 2)
-		)
-		button.add_theme_stylebox_override(
-			"pressed", _slot_elven_style(SLOT_ELVEN_GOLD, SLOT_ELVEN_GOLD_BRIGHT, 2)
-		)
-		button.add_theme_stylebox_override(
-			"focus", _slot_elven_style(Color(0, 0, 0, 0), Color("48c5d5"), 2)
-		)
-		button.add_theme_stylebox_override(
-			"disabled",
-			_slot_elven_style(
-				Color("6f5d2c") if selected else Color("0d1813"), Color("2c3a32"), 1
-			)
-		)
-
-
 func _build_blackjack_deck() -> void:
-	# Walnut rail console with a felt-green wager inset: the salon's own HUD.
-	var deck := BlackjackConsole.new()
-	deck.name = "BlackjackControlDeck"
-	deck.position = Vector2(48, 430)
-	deck.size = Vector2(864, 98)
-	deck.z_index = 4
-	deck.felt_insets = [Rect2(130, 6, 346, 86)]
-	add_child(deck)
-	_blackjack_credit_value = _add_credit_meter(deck, Vector2(8, 9), Vector2(118, 80))
-	(_blackjack_credit_value.get_parent() as Panel).add_theme_stylebox_override(
-		"panel", _panel_style(Color("1d110b"), Color("8a682f"), 6, 1)
-	)
-	_blackjack_primary = _action_button(
-		tr("ACTION_DEAL"), Vector2(526, 444), Vector2(116, 68), Callable(cabinet, "request_primary")
-	)
-	_blackjack_stand = _action_button(
-		tr("ACTION_STAND"), Vector2(652, 444), Vector2(116, 68), Callable(cabinet, "request_stand")
-	)
-	_blackjack_double = _action_button(
-		tr("ACTION_DOUBLE"), Vector2(778, 444), Vector2(130, 68), Callable(cabinet, "request_double")
-	)
+	# The shared CabinetDeck in the salon's walnut-and-felt skin: instruction rail,
+	# balance, bet stepper with chips, and only the actions valid right now.
+	_control_deck = CabinetDeck.new()
+	_control_deck.name = "BlackjackControlDeck"
+	_control_deck.z_index = 4
+	add_child(_control_deck)
+	_control_deck.build(DeckStyle.blackjack())
+	_control_deck.balance.caption = tr("DECK_BALANCE")
+	_control_deck.bet.step_requested.connect(_on_deck_bet_step)
+	_control_deck.quick_bets.operation_requested.connect(_on_deck_quick_bet)
+	# Reaching for a key the table or the wallet refuses re-reads the rail, so the
+	# refusal is explained where the player is already looking.
+	_control_deck.quick_bets.highlight_changed.connect(refresh)
+	_blackjack_credit_value = _control_deck.balance.value_label
+	_blackjack_double = _control_deck.add_action(&"double", tr("ACTION_DOUBLE"), &"tertiary")
+	_blackjack_stand = _control_deck.add_action(&"stand", tr("ACTION_STAND"), &"secondary")
+	_blackjack_primary = _control_deck.add_action(&"primary", tr("ACTION_DEAL"), &"interact", true)
 	_blackjack_primary.name = "BlackjackPrimaryAction"
 	_blackjack_stand.name = "BlackjackStandAction"
 	_blackjack_double.name = "BlackjackDoubleAction"
-	for button: Button in [_blackjack_primary, _blackjack_stand, _blackjack_double]:
-		_style_blackjack_action(button, button == _blackjack_primary)
+	_control_deck.action_pressed.connect(_on_blackjack_deck_action)
+	# The deck's bet control replaces the shared row of chip buttons here.
+	_stake_selector.hide()
+	_stake_selector.process_mode = Node.PROCESS_MODE_DISABLED
 
 
-## Felt-green action keys framed in brass; cyan appears only as the focus ring.
-func _style_blackjack_action(button: Button, primary: bool) -> void:
-	var face := Color("155a41") if primary else Color("12402f")
-	button.add_theme_stylebox_override("normal", _panel_style(face, Color("c8a34b"), 7, 2))
-	button.add_theme_stylebox_override(
-		"hover", _panel_style(face.lightened(0.08), Color("f0c45e"), 7, 2)
-	)
-	button.add_theme_stylebox_override(
-		"pressed", _panel_style(face.darkened(0.25), Color("f0c45e"), 7, 2)
-	)
-	button.add_theme_stylebox_override("focus", _panel_style(face, Color("48c5d5"), 7, 3))
-	button.add_theme_stylebox_override(
-		"disabled", _panel_style(Color("1d140e"), Color("4b3a2a"), 7, 1)
-	)
-	button.add_theme_color_override("font_color", Color("f5ecd9"))
-	button.add_theme_color_override("font_disabled_color", Color("6f6254"))
+func _on_blackjack_deck_action(id: StringName) -> void:
+	match id:
+		&"primary":
+			cabinet.call("request_primary")
+		&"stand":
+			cabinet.call("request_stand")
+		&"double":
+			cabinet.call("request_double")
 
 
-## The shared StakeSelector keeps its behaviour; Blackjack only re-skins its keys
-## as walnut chips with a felt-green selected state. Re-applied after the selector
-## refreshes itself, so the shared defaults never flash through.
-func _style_blackjack_stake_buttons() -> void:
-	if _stake_selector == null:
+## − / + and the scroll wheel walk the table's legal denominations. The cabinet
+## applies the step under its own limits; the deck only asks.
+## A quick-bet key. The cabinet owns every wallet and table-limit clamp, so the
+## deck only forwards the operation and redraws whatever the cabinet allowed.
+func _on_deck_quick_bet(operation: int) -> void:
+	if cabinet == null:
 		return
-	var displayed := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
-	for child: Node in _stake_selector.get_children():
-		var button := child as Button
-		if button == null:
-			continue
-		var selected := button.text == str(displayed)
-		button.add_theme_stylebox_override(
-			"normal",
-			_stake_chip_style(
-				Color("155a41") if selected else Color("24160f"),
-				Color("f2c84b") if selected else Color("7a5c2a"),
-				2 if selected else 1
-			)
-		)
-		for entry: Array in [
-			["hover", Color("2f1d13"), Color("c8a34b"), 2],
-			["pressed", Color("155a41"), Color("f2c84b"), 2],
-			["focus", Color("24160f"), Color("48c5d5"), 2],
-			["disabled", Color("1d140e"), Color("3e3025"), 1],
-		]:
-			button.add_theme_stylebox_override(
-				entry[0], _stake_chip_style(entry[1], entry[2], entry[3])
-			)
-		if not button.pressed.is_connected(_style_blackjack_stake_buttons):
-			button.pressed.connect(_style_blackjack_stake_buttons)
+	if cabinet.apply_bet(operation):
+		refresh()
 
 
-func _stake_chip_style(face: Color, border: Color, width: int) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = face
-	style.border_color = border
-	style.set_border_width_all(width)
-	style.set_corner_radius_all(8)
-	style.anti_aliasing = true
-	return style
+func _on_deck_bet_step(direction: int) -> void:
+	if cabinet == null or cabinet.is_round_active or cabinet.is_result_pending:
+		return
+	if cabinet.adjust_stake(direction):
+		AudioService.play(&"chip")
+		refresh()
+
+
+func control_deck() -> CabinetDeck:
+	return _control_deck
+
+
+## The deck's state for Blackjack. Presentation only: it reads the cabinet and
+## the hand, never changes them, and never touches settlement timing.
+func _refresh_blackjack_deck(math: BlackjackMath) -> void:
+	if _control_deck == null:
+		return
+	var active := cabinet.is_round_active
+	var pending := cabinet.is_result_pending
+	var deciding := active and not pending
+	var balance := cabinet.context.balance
+	var can_deal := (
+		not active
+		and not pending
+		and cabinet.selected_stake >= cabinet.context.definition.min_bet
+		and cabinet.selected_stake <= balance
+	)
+	var can_double := deciding and math.can_double(balance)
+	# Balance: one plate; the test bank reads ∞ with a small TEST tag.
+	if Wallet.test_mode_enabled:
+		_control_deck.balance.tag = tr("DECK_TEST_TAG")
+		_control_deck.balance.set_infinite()
+	else:
+		_control_deck.balance.tag = ""
+		_control_deck.balance.set_value(maxi(0, balance - (cabinet.current_stake if active else 0)))
+	# Bet: the stake in play during a hand, the chosen stake between hands.
+	var stakes := cabinet.available_stakes()
+	var index := stakes.find(cabinet.selected_stake)
+	var betting := not active and not pending
+	_control_deck.bet.set_state(
+		cabinet.current_stake if active else cabinet.selected_stake,
+		betting and not stakes.is_empty(),
+		betting and index > 0,
+		betting and index >= 0 and index < stakes.size() - 1,
+		tr("DECK_IN_PLAY") if active else tr("DECK_YOUR_BET"),
+		(
+			tr("DECK_TABLE_LIMIT")
+			% [cabinet.context.definition.min_bet, cabinet.context.definition.max_bet]
+		),
+		cabinet.stake_options()
+	)
+	# Quick bets: the same six keys everywhere, live only while the stake can move.
+	_control_deck.quick_bets.visible = betting
+	_control_deck.quick_bets.set_states(cabinet if betting else null)
+	if _blackjack_bet_stack != null and betting and _result == null:
+		_blackjack_bet_stack.show_preview(cabinet.selected_stake if can_deal else 0)
+	# Actions: only what is valid now. Hidden actions are also disabled, so no
+	# input path can reach them.
+	# The deck owns these keys' positions, so their copy changes in place (the
+	# deck slides keys itself when the set of actions changes).
+	_blackjack_primary.text = tr("ACTION_HIT") if active else tr("ACTION_DEAL")
+	_blackjack_double.text = (
+		tr("ACTION_DOUBLE_TO") % (cabinet.current_stake * 2) if active else tr("ACTION_DOUBLE")
+	)
+	_set_action_disabled(_blackjack_primary, pending or (not active and not can_deal))
+	_set_action_disabled(_blackjack_stand, not deciding)
+	_set_action_disabled(_blackjack_double, pending or not math.can_double(balance))
+	var shown: Array[StringName] = []
+	if deciding:
+		if can_double:
+			shown.append(&"double")
+		shown.append_array([&"stand", &"primary"])
+	elif can_deal:
+		shown.append(&"primary")
+	_control_deck.show_actions(shown)
+	var line := _blackjack_instruction(math, deciding, can_double, can_deal)
+	_control_deck.set_instruction(line[0], line[1])
+
+
+## One plain sentence for the current Blackjack state, with inline glyphs.
+func _blackjack_instruction(
+	math: BlackjackMath, deciding: bool, can_double: bool, can_deal: bool
+) -> Array:
+	if cabinet.is_result_pending:
+		return [tr("DECK_BJ_DEALER_DRAWING"), InfoPlate.Tone.NEUTRAL]
+	if deciding:
+		if _status_key == "BLACKJACK_DOUBLE_UNAVAILABLE":
+			return [tr("DECK_BJ_DOUBLE_UNAVAILABLE"), InfoPlate.Tone.NEUTRAL]
+		var total := BlackjackMath.hand_value(math.player)
+		var key := "DECK_BJ_DECIDE_DOUBLE" if can_double else "DECK_BJ_DECIDE"
+		return [tr(key) % total, InfoPlate.Tone.NEUTRAL]
+	if not can_deal:
+		return [tr("DECK_NEED_FUNDS") % cabinet.context.definition.min_bet, InfoPlate.Tone.LOSS]
+	if _result != null and _result.outcome != RoundResult.Outcome.ABANDONED:
+		var net := _result.payout - _result.stake
+		if _result.outcome == RoundResult.Outcome.PUSH or net == 0:
+			return [tr("DECK_BJ_RESULT_PUSH"), InfoPlate.Tone.PUSH]
+		if net > 0:
+			var player: Array[int] = []
+			player.assign(_result.detail.get("player", []))
+			var natural := player.size() == 2 and BlackjackMath.hand_value(player) == 21
+			return [
+				tr("DECK_BJ_RESULT_NATURAL" if natural else "DECK_BJ_RESULT_WIN") % net,
+				InfoPlate.Tone.WIN,
+			]
+		return [tr("DECK_BJ_RESULT_LOSS") % _result.stake, InfoPlate.Tone.LOSS]
+	# A quick-bet key the wallet or the table would refuse explains itself here
+	# rather than just greying out with no reason given.
+	if _control_deck != null:
+		var blocked := _control_deck.quick_bets.unavailable_reason(cabinet)
+		if not blocked.is_empty():
+			return [blocked, InfoPlate.Tone.NEUTRAL]
+	return [tr("DECK_BJ_BETTING"), InfoPlate.Tone.NEUTRAL]
+
 
 func _build_vault_deck() -> void:
 	# Hexbound Vault HUD: carved-slate plates with silver rules and rivets, so
@@ -1157,7 +1408,11 @@ func _build_vault_deck() -> void:
 		tr("ACTION_ENTER"), Vector2(526, 442), Vector2(150, 70), Callable(cabinet, "request_open")
 	)
 	_vault_cash_out = _action_button(
-		tr("ACTION_CASH_OUT"), Vector2(688, 442), Vector2(210, 70), Callable(cabinet, "request_cash_out")
+		tr("ACTION_CASH_OUT"),
+		Vector2(688, 442),
+		Vector2(210, 70),
+		Callable(cabinet, "request_cash_out"),
+		&"secondary"
 	)
 	# Break Seal burns candle-amber; Cash Out is moon-silver. Cyan stays reserved
 	# for keyboard/controller focus.
@@ -1166,7 +1421,9 @@ func _build_vault_deck() -> void:
 
 
 func _style_vault_action(button: Button, face: Color, edge: Color, text: Color) -> void:
-	for state: String in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
+	for state: String in [
+		"font_color", "font_hover_color", "font_focus_color", "font_pressed_color"
+	]:
 		button.add_theme_color_override(state, text)
 	button.add_theme_color_override("font_disabled_color", Color("6f6c68"))
 	button.add_theme_stylebox_override("normal", VaultRuneFrame.button_style(face, edge, 2))
@@ -1198,51 +1455,15 @@ func _style_vault_credit_meter(value: AnimatedNumberLabel) -> void:
 			(child as Label).add_theme_color_override("font_color", VaultRuneFrame.MUTED_TEXT)
 
 
-func _style_vault_stake_buttons() -> void:
-	## Per-game override of the shared StakeSelector from the vault path only:
-	## squared slate chips, amber for the chosen stake, cyan only on focus.
-	if _stake_selector == null:
-		return
-	var displayed := cabinet.current_stake if cabinet.is_round_active else cabinet.selected_stake
-	for child: Node in _stake_selector.get_children():
-		var button := child as Button
-		if button == null:
-			continue
-		var selected := button.text == str(displayed)
-		button.add_theme_color_override("font_color", Color("ece6da"))
-		button.add_theme_stylebox_override(
-			"normal",
-			VaultRuneFrame.button_style(
-				VaultRuneFrame.UMBER if selected else VaultRuneFrame.STONE_RAISED,
-				VaultRuneFrame.AMBER if selected else VaultRuneFrame.SILVER_DIM,
-				2 if selected else 1
-			)
-		)
-		button.add_theme_stylebox_override(
-			"hover", VaultRuneFrame.button_style(Color("24242b"), VaultRuneFrame.SILVER, 2)
-		)
-		button.add_theme_stylebox_override(
-			"pressed", VaultRuneFrame.button_style(VaultRuneFrame.UMBER, VaultRuneFrame.AMBER, 2)
-		)
-		button.add_theme_stylebox_override(
-			"focus", VaultRuneFrame.button_style(VaultRuneFrame.STONE_RAISED, Color("48c5d5"), 2)
-		)
-		button.add_theme_stylebox_override(
-			"disabled", VaultRuneFrame.button_style(Color("141418"), Color("34363c"), 1)
-		)
-		if not button.pressed.is_connected(_style_vault_stake_buttons):
-			button.pressed.connect(_style_vault_stake_buttons)
-
-
 func _add_credit_meter(parent: Control, at: Vector2, dimensions: Vector2) -> AnimatedNumberLabel:
 	var panel := Panel.new()
 	panel.position = at
 	panel.size = dimensions
-	panel.add_theme_stylebox_override(
-		"panel", _panel_style(Color("17161a"), Color("6e5225"), 6, 1)
-	)
+	panel.add_theme_stylebox_override("panel", _panel_style(Color("17161a"), Color("6e5225"), 6, 1))
 	parent.add_child(panel)
-	var caption := _help_label(panel, Vector2(8, 4), Vector2(dimensions.x - 16, 18), 14, Color("b8ad9c"))
+	var caption := _help_label(
+		panel, Vector2(8, 4), Vector2(dimensions.x - 16, 18), 14, Color("b8ad9c")
+	)
 	caption.text = tr("HUD_TEST_BANK") if Wallet.test_mode_enabled else tr("HUD_CREDITS")
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var value := _help_number_label(
@@ -1252,8 +1473,17 @@ func _add_credit_meter(parent: Control, at: Vector2, dimensions: Vector2) -> Ani
 	return value
 
 
-func _action_button(label: String, at: Vector2, dimensions: Vector2, action: Callable) -> Button:
-	var button := Button.new()
+## One cabinet action key that names the input pressing it, for the games that
+## place their keys themselves rather than through the shared deck.
+func _action_button(
+	label: String,
+	at: Vector2,
+	dimensions: Vector2,
+	action: Callable,
+	input: StringName = &"interact"
+) -> Button:
+	var button := PromptButton.new()
+	button.action = input
 	button.text = label
 	button.position = at
 	button.size = dimensions
@@ -1264,16 +1494,25 @@ func _action_button(label: String, at: Vector2, dimensions: Vector2, action: Cal
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.add_theme_color_override("font_color", Color("f1e8d8"))
 	button.add_theme_color_override("font_disabled_color", Color("756d62"))
-	button.add_theme_stylebox_override("normal", _panel_style(Color("5a111c"), Color("c8a34b"), 7, 2))
-	button.add_theme_stylebox_override("hover", _panel_style(Color("731827"), Color("f0c45e"), 7, 2))
-	button.add_theme_stylebox_override("pressed", _panel_style(Color("351016"), Color("f0c45e"), 7, 2))
-	button.add_theme_stylebox_override("focus", _panel_style(Color("5a111c"), Color("48c5d5"), 7, 2))
-	button.add_theme_stylebox_override("disabled", _panel_style(Color("252126"), Color("4b443c"), 7, 1))
+	button.add_theme_stylebox_override(
+		"normal", _panel_style(Color("5a111c"), Color("c8a34b"), 7, 2)
+	)
+	button.add_theme_stylebox_override(
+		"hover", _panel_style(Color("731827"), Color("f0c45e"), 7, 2)
+	)
+	button.add_theme_stylebox_override(
+		"pressed", _panel_style(Color("351016"), Color("f0c45e"), 7, 2)
+	)
+	button.add_theme_stylebox_override(
+		"focus", _panel_style(Color("5a111c"), Color("48c5d5"), 7, 2)
+	)
+	button.add_theme_stylebox_override(
+		"disabled", _panel_style(Color("252126"), Color("4b443c"), 7, 1)
+	)
 	button.pressed.connect(func() -> void: action.call())
 	add_child(button)
 	ButtonFeedback.attach(button)
 	return button
-
 
 
 func _build_blackjack_art() -> void:
@@ -1295,10 +1534,12 @@ func _build_blackjack_art() -> void:
 	# salon identity, distinct from the other cabinets.
 	_blackjack_title_plaque = BlackjackConsole.new()
 	_blackjack_title_plaque.name = "BlackjackTitlePlaque"
-	_blackjack_title_plaque.position = Vector2(48, 24)
-	_blackjack_title_plaque.size = Vector2(252, 82)
+	# Title only: the deck's instruction rail now says what to do, so the plaque
+	# no longer repeats a status line.
+	_blackjack_title_plaque.position = Vector2(48, 27)
+	_blackjack_title_plaque.size = Vector2(252, 52)
 	_blackjack_title_plaque.corner_radius = 6
-	_blackjack_title_plaque.suit_row_origin = Vector2(184, 25)
+	_blackjack_title_plaque.suit_row_origin = Vector2(184, 27)
 	add_child(_blackjack_title_plaque)
 	move_child(_blackjack_title_plaque, _title.get_index())
 	_blackjack_dealer_total_panel = _blackjack_total_badge("DealerTotalBadge")
@@ -1324,6 +1565,9 @@ func _build_blackjack_art() -> void:
 	)
 	_blackjack_result_banner.hide()
 	add_child(_blackjack_result_banner)
+	_blackjack_result_plate = _fit_shared_plate(
+		_blackjack_result_banner, "result_banner", BLACKJACK_BANNER_PLATE_SCALE
+	)
 	_blackjack_result_text = _help_label(
 		_blackjack_result_banner,
 		Vector2(6, 1),
@@ -1337,17 +1581,34 @@ func _build_blackjack_art() -> void:
 	_build_blackjack_deck()
 
 
-## Small near-black total badge with a brass hairline, attached beside a hand.
+## The painted brass-rimmed score badge, attached beside a hand.
 func _blackjack_total_badge(node_name: String) -> Panel:
 	var badge := Panel.new()
 	badge.name = node_name
 	badge.size = BLACKJACK_BADGE_SIZE
 	badge.z_index = 5
 	badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	badge.add_theme_stylebox_override("panel", _panel_style(Color("17161aee"), Color("c8a34b"), 5, 1))
+	badge.add_theme_stylebox_override(
+		"panel", _panel_style(Color("17161aee"), Color("c8a34b"), 5, 1)
+	)
 	badge.hide()
 	add_child(badge)
+	_fit_shared_plate(badge, "score_badge", BLACKJACK_BADGE_PLATE_SCALE)
 	return badge
+
+
+## Puts one of the shared painted plaques behind `owner` and drops the flat box it
+## replaces. Returns the plate so a caller can tint it per outcome.
+func _fit_shared_plate(owner: Panel, part: String, plate_scale: float) -> KitPlate:
+	var plate := KitPlate.new()
+	plate.name = "Plaque"
+	if not plate.configure(UiKit.SHARED, part, plate_scale):
+		plate.queue_free()
+		return null
+	owner.add_child(plate)
+	plate.fit(Rect2(Vector2.ZERO, owner.size))
+	owner.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
+	return plate
 
 
 func _blackjack_badge_label(badge: Panel, node_name: String) -> AnimatedNumberLabel:
@@ -1361,14 +1622,13 @@ func _blackjack_badge_label(badge: Panel, node_name: String) -> AnimatedNumberLa
 	return label
 
 
-
 func _apply_blackjack_fullscreen_layout() -> void:
 	_frame.position = Vector2.ZERO
 	_frame.size = Vector2(960, 540)
 	_frame.color = Color("160b0b")
 	# Title and live status share one brass-framed plaque in the top-left corner so
 	# the dealer stands clear in the centre of the room.
-	_title.position = Vector2(62, 29)
+	_title.position = Vector2(62, 33)
 	_title.size = Vector2(170, 40)
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	_title.add_theme_font_size_override("font_size", 30)
@@ -1376,6 +1636,7 @@ func _apply_blackjack_fullscreen_layout() -> void:
 	_stake.position = Vector2(82, 469)
 	_stake.size = Vector2(210, 44)
 	_stake.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_status.hide()
 	_status.position = Vector2(62, 68)
 	_status.size = Vector2(226, 36)
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
@@ -1394,13 +1655,14 @@ func _apply_blackjack_fullscreen_layout() -> void:
 	_controls.size = Vector2(796, 24)
 	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls.add_theme_font_size_override("font_size", 16)
-	_stake_selector.position = Vector2(184, 438)
+	_stake_selector.position = Vector2(184, 433)
 	_stake_selector.size = Vector2(340, 80)
 	_stake_selector.z_index = 6
 
 
-
-func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], hide_hole: bool) -> void:
+func _render_blackjack_hand(
+	player_cards: Array[int], dealer_cards: Array[int], hide_hole: bool
+) -> void:
 	if not _blackjack_dealt and not player_cards.is_empty():
 		_clear_blackjack_cards()
 		_blackjack_dealt = true
@@ -1411,20 +1673,26 @@ func _render_blackjack_hand(player_cards: Array[int], dealer_cards: Array[int], 
 	# while assigning initial travel delays in physical P/D/P/D order.
 	for index: int in range(dealer_cards.size()):
 		var dealer_stagger := index * 2 + 1 if initial_deal else deal_index
-		if _sync_playing_card(
-			dealer_cards[index],
-			index,
-			dealer_cards.size(),
-			true,
-			hide_hole and index == 1,
-			dealer_stagger
-		) and not initial_deal:
+		if (
+			_sync_playing_card(
+				dealer_cards[index],
+				index,
+				dealer_cards.size(),
+				true,
+				hide_hole and index == 1,
+				dealer_stagger
+			)
+			and not initial_deal
+		):
 			deal_index += 1
 	for index: int in range(player_cards.size()):
 		var player_stagger := index * 2 if initial_deal else deal_index
-		if _sync_playing_card(
-			player_cards[index], index, player_cards.size(), false, false, player_stagger
-		) and not initial_deal:
+		if (
+			_sync_playing_card(
+				player_cards[index], index, player_cards.size(), false, false, player_stagger
+			)
+			and not initial_deal
+		):
 			deal_index += 1
 	var newly_dealt := _blackjack_cards.size() - cards_before
 	if newly_dealt > 0 and _blackjack_dealer_presenter != null:
@@ -1445,8 +1713,7 @@ func _blackjack_badge_position(hand_size: int, dealer_hand: bool) -> Vector2:
 	var right := (last.position as Vector2).x + card_size.x
 	var base_y := BLACKJACK_DEALER_CARD_Y if dealer_hand else BLACKJACK_PLAYER_CARD_Y
 	return Vector2(
-		right + BLACKJACK_BADGE_GAP,
-		base_y + card_size.y * 0.5 - BLACKJACK_BADGE_SIZE.y * 0.5
+		right + BLACKJACK_BADGE_GAP, base_y + card_size.y * 0.5 - BLACKJACK_BADGE_SIZE.y * 0.5
 	)
 
 
@@ -1475,9 +1742,12 @@ func _place_blackjack_badges(dealer_count: int, player_count: int) -> void:
 			continue
 		if _blackjack_badge_tween == null:
 			_blackjack_badge_tween = create_tween().set_parallel(true)
-		_blackjack_badge_tween.tween_property(badge, "position", target, 0.20).set_trans(
-			Tween.TRANS_CUBIC
-		).set_ease(Tween.EASE_OUT)
+		(
+			_blackjack_badge_tween
+			. tween_property(badge, "position", target, 0.20)
+			. set_trans(Tween.TRANS_CUBIC)
+			. set_ease(Tween.EASE_OUT)
+		)
 
 
 func prepare_blackjack_round() -> void:
@@ -1528,7 +1798,6 @@ func _sync_playing_card(
 	return true
 
 
-
 func _blackjack_card_layout(hand_index: int, hand_size: int, dealer_hand: bool) -> Dictionary:
 	var safe_hand_size := maxi(hand_size, 1)
 	var card_size := BLACKJACK_DEALER_CARD if dealer_hand else BLACKJACK_PLAYER_CARD
@@ -1543,7 +1812,8 @@ func _blackjack_card_layout(hand_index: int, hand_size: int, dealer_hand: bool) 
 	return {
 		"size": card_size,
 		# Half-pixel snapping keeps Control offsets exact, so size never drifts.
-		"position": Vector2(
+		"position":
+		Vector2(
 			snappedf(BLACKJACK_HAND_CENTER_X - hand_width * 0.5 + hand_index * card_pitch, 0.5),
 			snappedf(base_y + absf(fan) * 0.6, 0.5)
 		),
@@ -1575,7 +1845,6 @@ func _reflow_blackjack_card(card: PlayingCard, layout: Dictionary) -> void:
 	reflow.tween_property(card, "scale", Vector2.ONE, 0.20)
 	reflow.tween_property(card, "modulate:a", 1.0, 0.12)
 	reflow.finished.connect(_finish_blackjack_card_motion.bind(card_id))
-
 
 
 func _apply_blackjack_card_layout(card: PlayingCard, layout: Dictionary) -> void:
@@ -1621,7 +1890,6 @@ func _settle_blackjack_card_motions() -> void:
 		if is_instance_valid(card) and not layout.is_empty():
 			_apply_blackjack_card_layout(card, layout)
 			card.modulate.a = 1.0
-
 
 
 func _add_playing_card(
@@ -1760,8 +2028,9 @@ func _build_vault_art() -> void:
 	for index: int in range(25):
 		var tile := VaultTile.new()
 		tile.name = "VaultTile%02d" % index
-		tile.position = VAULT_GRID_ORIGIN + Vector2(
-			(index % 5) * VAULT_GRID_PITCH, (index / 5) * VAULT_GRID_PITCH
+		tile.position = (
+			VAULT_GRID_ORIGIN
+			+ Vector2((index % 5) * VAULT_GRID_PITCH, (index / 5) * VAULT_GRID_PITCH)
 		)
 		tile.size = Vector2.ONE * VAULT_TILE_SIZE
 		tile.reveal_effect_requested.connect(_on_vault_reveal_effect.bind(tile))
@@ -1858,15 +2127,14 @@ func _apply_vault_fullscreen_layout() -> void:
 	_title.add_theme_font_size_override("font_size", 32)
 	_title.add_theme_color_override("font_color", VaultRuneFrame.SILVER_TEXT)
 	if _help_button != null:
-		_help_button.add_theme_stylebox_override(
-			"normal", VaultRuneFrame.button_style(Color("111115f0"), VaultRuneFrame.SILVER_DIM, 1)
-		)
-		_help_button.add_theme_stylebox_override(
-			"hover", VaultRuneFrame.button_style(Color("1d1d24"), VaultRuneFrame.SILVER, 1)
-		)
-		_help_button.add_theme_stylebox_override(
-			"focus", VaultRuneFrame.button_style(Color("1d1d24"), Color("48c5d5"), 2)
-		)
+		for entry: Array in [
+			["normal", Color("111115"), VaultRuneFrame.SILVER_DIM, 1],
+			["hover", Color("1d1d24"), VaultRuneFrame.SILVER, 1],
+			["focus", Color("00000000"), Color("48c5d5"), 2],
+		]:
+			var plate := VaultRuneFrame.button_style(entry[1], entry[2], entry[3])
+			plate.expand_margin_left = -HELP_BUTTON_RECT.size.y * 0.5
+			_help_button.add_theme_stylebox_override(entry[0], plate)
 		_help_button.add_theme_color_override("font_color", VaultRuneFrame.SILVER_TEXT)
 	_stake.position = Vector2(64, 444)
 	_stake.size = Vector2(250, 44)
@@ -1889,7 +2157,7 @@ func _apply_vault_fullscreen_layout() -> void:
 	_controls.size = Vector2(796, 24)
 	_controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_controls.add_theme_font_size_override("font_size", 16)
-	_stake_selector.position = Vector2(184, 434)
+	_stake_selector.position = Vector2(184, 433)
 	_stake_selector.size = Vector2(340, 80)
 	_stake_selector.z_index = 6
 
@@ -1899,7 +2167,6 @@ func _refresh_slot() -> void:
 		return
 	# The slot presents its Elven Court theme name on the painted plaque.
 	_title.text = tr("SLOT_THEME_TITLE")
-	_apply_slot_elven_stake_theme()
 	var displayed_credit: int = cabinet.context.balance
 	if cabinet.is_round_active:
 		displayed_credit = maxi(0, displayed_credit - cabinet.current_stake)
@@ -1910,20 +2177,20 @@ func _refresh_slot() -> void:
 	if _result != null:
 		var multiplier: int = _result.payout / maxi(_result.stake, 1)
 		_set_live_text(_slot_result_value, tr("SLOT_RETURNED") % _result.payout)
-		_set_live_text(_slot_result_formula, (
+		_set_live_text(
+			_slot_result_formula,
 			tr("SLOT_RESULT_FORMULA") % [_result.stake, multiplier, _result.payout]
-		))
+		)
 	elif cabinet.is_round_active:
 		_set_live_text(_slot_result_value, tr("ROUND_SPINNING"))
 		_set_live_text(_slot_result_formula, tr("SLOT_BET_IN_PLAY") % cabinet.current_stake)
 	else:
 		_set_live_text(_slot_result_value, tr("SLOT_RETURNED") % 0)
 		_set_live_text(_slot_result_formula, tr("SLOT_IDLE_FORMULA") % cabinet.selected_stake)
-	_set_action_disabled(_slot_spin_label, (
-		cabinet.is_round_active
-		or help_open
-		or cabinet.selected_stake > cabinet.context.balance
-	))
+	_set_action_disabled(
+		_slot_spin_label,
+		cabinet.is_round_active or help_open or cabinet.selected_stake > cabinet.context.balance
+	)
 	if _slot_lever != null:
 		_slot_lever.disabled = _slot_spin_label.disabled
 		_slot_lever.queue_redraw()
@@ -1954,9 +2221,12 @@ func _set_live_text(control: Control, next_text: String) -> void:
 	control.modulate.a = 0.56
 	var tween := create_tween().set_parallel(true)
 	_state_feedback_tweens[control_id] = tween
-	tween.tween_property(control, "position", rest_position, 0.18).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
+	(
+		tween
+		. tween_property(control, "position", rest_position, 0.18)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 	tween.tween_property(control, "modulate:a", 1.0, 0.15).set_trans(Tween.TRANS_QUAD)
 	tween.finished.connect(_finish_state_feedback.bind(control_id))
 
@@ -1981,9 +2251,9 @@ func _set_action_disabled(button: BaseButton, disabled: bool) -> void:
 	button.modulate = Color("fff0cf")
 	var tween := create_tween().set_parallel(true)
 	_action_enable_tweens[control_id] = tween
-	tween.tween_property(button, "scale", Vector2.ONE, 0.22).set_trans(
-		Tween.TRANS_BACK
-	).set_ease(Tween.EASE_OUT)
+	tween.tween_property(button, "scale", Vector2.ONE, 0.22).set_trans(Tween.TRANS_BACK).set_ease(
+		Tween.EASE_OUT
+	)
 	tween.tween_property(button, "modulate", Color.WHITE, 0.18).set_trans(Tween.TRANS_QUAD)
 	tween.finished.connect(_finish_action_enable_feedback.bind(control_id))
 
@@ -2124,9 +2394,7 @@ func _play_art_entrance() -> void:
 	_art_root.modulate.a = 0.0
 	_art_root.position.y = 0.0 if MotionPolicy.is_reduced() else 8.0
 	_entrance_tween = create_tween().set_parallel(true)
-	_entrance_tween.tween_property(
-		_art_root, "modulate:a", 1.0, MotionPolicy.finite_duration(0.2)
-	)
+	_entrance_tween.tween_property(_art_root, "modulate:a", 1.0, MotionPolicy.finite_duration(0.2))
 	if not MotionPolicy.is_reduced():
 		_entrance_tween.tween_property(_art_root, "position:y", 0.0, 0.2)
 
@@ -2150,12 +2418,18 @@ func _start_slot_motion() -> void:
 	if _slot_lever != null and not MotionPolicy.is_reduced():
 		_slot_lever.rotation = 0.0
 		_motion_tween = create_tween()
-		_motion_tween.tween_property(_slot_lever, "rotation", 2.15, 0.14).set_trans(
-			Tween.TRANS_QUAD
-		).set_ease(Tween.EASE_IN)
-		_motion_tween.tween_property(_slot_lever, "rotation", 0.0, 0.22).set_trans(
-			Tween.TRANS_BACK
-		).set_ease(Tween.EASE_OUT)
+		(
+			_motion_tween
+			. tween_property(_slot_lever, "rotation", 2.15, 0.14)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_IN)
+		)
+		(
+			_motion_tween
+			. tween_property(_slot_lever, "rotation", 0.0, 0.22)
+			. set_trans(Tween.TRANS_BACK)
+			. set_ease(Tween.EASE_OUT)
+		)
 		_motion_tween.finished.connect(_settle_slot_lever_motion)
 	elif _slot_lever != null:
 		_settle_slot_lever_motion()
@@ -2225,9 +2499,14 @@ func _stop_reel(reel_index: int, emit_impact: bool = true) -> void:
 			_slot_anticipation_frame.visible = false
 			_slot_anticipation_frame.modulate.a = 1.0
 	for cell: SlotSymbol in _slot_reel_cells[reel_index]:
-		create_tween().tween_method(
-			cell.set_spin_strength, cell.spin_strength, 0.0, MotionPolicy.finite_duration(0.18)
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		(
+			create_tween()
+			. tween_method(
+				cell.set_spin_strength, cell.spin_strength, 0.0, MotionPolicy.finite_duration(0.18)
+			)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
 	var reel: Control = _slot_reels[reel_index]
 	if emit_impact:
 		AudioService.play(&"reel_stop")
@@ -2324,9 +2603,7 @@ func _help_number_label(
 	return label
 
 
-func _panel_style(
-	fill: Color, border: Color, radius: int, border_width: int = 1
-) -> StyleBoxFlat:
+func _panel_style(fill: Color, border: Color, radius: int, border_width: int = 1) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = fill
 	style.border_color = border
@@ -2343,14 +2620,16 @@ func _add_ambient(color: Color) -> void:
 	_ambient.name = "CasinoAmbient"
 	_ambient.size = Vector2(960, 110)
 	_ambient.accent = color
-	_ambient.mode = {
-		&"slot_classic": CasinoAmbient.Mode.SLOT,
-		&"blackjack": CasinoAmbient.Mode.BLACKJACK,
-		&"minefield_vault": CasinoAmbient.Mode.VAULT,
-	}.get(cabinet.context.definition.id, CasinoAmbient.Mode.LOBBY)
+	_ambient.mode = (
+		{
+			&"slot_classic": CasinoAmbient.Mode.SLOT,
+			&"blackjack": CasinoAmbient.Mode.BLACKJACK,
+			&"minefield_vault": CasinoAmbient.Mode.VAULT,
+		}
+		. get(cabinet.context.definition.id, CasinoAmbient.Mode.LOBBY)
+	)
 	_ambient.z_index = 10
 	_art_root.add_child(_ambient)
-
 
 
 func _animate_blackjack_result(result: RoundResult) -> void:
@@ -2362,6 +2641,11 @@ func _animate_blackjack_result(result: RoundResult) -> void:
 	if _blackjack_result_banner != null:
 		_blackjack_result_text.text = copy[0]
 		_blackjack_result_text.add_theme_color_override("font_color", ink)
+		if _blackjack_result_plate != null:
+			# One meaning per colour: brass for a win, muted red for a loss, ivory
+			# for a push. The painted plaque itself never changes.
+			_blackjack_result_plate.base_tint = BANNER_TINTS.get(result.outcome, Color.WHITE)
+			_blackjack_result_plate.set_state(KitPlate.State.NORMAL)
 		_blackjack_result_banner.show()
 		_blackjack_result_banner.position = BLACKJACK_PLAQUE_RECT.position
 		_blackjack_result_banner.modulate.a = 1.0
@@ -2384,12 +2668,20 @@ func _animate_blackjack_result(result: RoundResult) -> void:
 	_blackjack_fx_tween.tween_property(_blackjack_result_banner, "modulate:a", 1.0, 0.18).set_delay(
 		0.08
 	)
-	_blackjack_fx_tween.tween_property(
-		_blackjack_result_banner, "position", BLACKJACK_PLAQUE_RECT.position, 0.24
-	).set_delay(0.08).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
-	_blackjack_fx_tween.tween_property(
-		_blackjack_result_banner, "scale", Vector2.ONE, 0.24
-	).set_delay(0.08).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	(
+		_blackjack_fx_tween
+		. tween_property(_blackjack_result_banner, "position", BLACKJACK_PLAQUE_RECT.position, 0.24)
+		. set_delay(0.08)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_blackjack_fx_tween
+		. tween_property(_blackjack_result_banner, "scale", Vector2.ONE, 0.24)
+		. set_delay(0.08)
+		. set_trans(Tween.TRANS_CUBIC)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 ## Plaque copy, ink and chip settle for a result. Reads the result only.
@@ -2411,10 +2703,11 @@ func _blackjack_result_copy(result: RoundResult) -> Array:
 			key = "BLACKJACK_RESULT_DEALER_BUST"
 		return [tr(key) % net, BLACKJACK_WIN_INK, BlackjackBetStack.Settle.WIN]
 	var loss_key := (
-		"BLACKJACK_RESULT_BUST" if BlackjackMath.hand_value(player) > 21 else "BLACKJACK_RESULT_LOSS"
+		"BLACKJACK_RESULT_BUST"
+		if BlackjackMath.hand_value(player) > 21
+		else "BLACKJACK_RESULT_LOSS"
 	)
 	return [tr(loss_key), BLACKJACK_LOSS_INK, BlackjackBetStack.Settle.LOSS]
-
 
 
 func _reset_blackjack_result_feedback_for_round() -> void:
@@ -2454,7 +2747,9 @@ func _animate_vault_result(result: RoundResult) -> void:
 	if MotionPolicy.is_reduced():
 		return
 	_vault_fx_tween = create_tween().set_parallel(true)
-	_vault_fx_tween.tween_property(_vault_cursor, "scale", Vector2.ONE, 0.32).set_trans(Tween.TRANS_BACK)
+	_vault_fx_tween.tween_property(_vault_cursor, "scale", Vector2.ONE, 0.32).set_trans(
+		Tween.TRANS_BACK
+	)
 
 
 func _result_impact_tier(result: RoundResult) -> ResultImpactTier:
@@ -2474,7 +2769,10 @@ func _play_result_impact(result: RoundResult) -> void:
 	if _art_root == null:
 		return
 	_art_root.position = Vector2.ZERO
-	if _last_result_impact_tier == ResultImpactTier.NONE or not MotionPolicy.allows_camera_emphasis():
+	if (
+		_last_result_impact_tier == ResultImpactTier.NONE
+		or not MotionPolicy.allows_camera_emphasis()
+	):
 		return
 	_result_impact_tween = create_tween()
 	if _last_result_impact_tier == ResultImpactTier.WIN:
@@ -2482,9 +2780,12 @@ func _play_result_impact(result: RoundResult) -> void:
 		# natural 2x ceiling. It reads as contact without becoming camera shake.
 		_result_impact_tween.tween_property(_art_root, "position", Vector2(0, 1.5), 0.045)
 		_result_impact_tween.tween_property(_art_root, "position", Vector2(0, -0.75), 0.045)
-		_result_impact_tween.tween_property(_art_root, "position", Vector2.ZERO, 0.08).set_trans(
-			Tween.TRANS_QUAD
-		).set_ease(Tween.EASE_OUT)
+		(
+			_result_impact_tween
+			. tween_property(_art_root, "position", Vector2.ZERO, 0.08)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
 		return
 	var impact_offsets: Array[Vector2] = [
 		Vector2(-6.0, -1.5),
@@ -2494,9 +2795,12 @@ func _play_result_impact(result: RoundResult) -> void:
 	]
 	for offset: Vector2 in impact_offsets:
 		_result_impact_tween.tween_property(_art_root, "position", offset, 0.045)
-	_result_impact_tween.tween_property(_art_root, "position", Vector2.ZERO, 0.08).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
+	(
+		_result_impact_tween
+		. tween_property(_art_root, "position", Vector2.ZERO, 0.08)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _shake_stage(intensity: float, duration: float) -> void:
@@ -2518,9 +2822,12 @@ func _shake_stage(intensity: float, duration: float) -> void:
 			Vector2(direction * intensity * falloff, 0),
 			duration / float(beats)
 		)
-	_result_impact_tween.tween_property(
-		_art_root, "position", Vector2.ZERO, 0.05
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_result_impact_tween
+		. tween_property(_art_root, "position", Vector2.ZERO, 0.05)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _pulse_slot_win(result: RoundResult) -> void:
@@ -2538,16 +2845,17 @@ func _pulse_slot_win(result: RoundResult) -> void:
 		_slot_win_band.modulate.a = 0.75 if MotionPolicy.is_reduced() else 1.0
 	_slot_win_tween = create_tween().set_parallel(true)
 	var payline_duration := MotionPolicy.finite_duration(0.22)
-	_slot_win_tween.tween_property(
-		_slot_payline, "scale", Vector2.ONE, payline_duration
-	).set_trans(Tween.TRANS_BACK)
-	_slot_win_tween.tween_property(
-		_slot_payline, "color", Color("d9b44a"), payline_duration
+	_slot_win_tween.tween_property(_slot_payline, "scale", Vector2.ONE, payline_duration).set_trans(
+		Tween.TRANS_BACK
 	)
+	_slot_win_tween.tween_property(_slot_payline, "color", Color("d9b44a"), payline_duration)
 	if _slot_win_band != null and not MotionPolicy.is_reduced():
-		_slot_win_tween.tween_property(
-			_slot_win_band, "modulate:a", 0.30, MotionPolicy.finite_duration(0.44)
-		).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		(
+			_slot_win_tween
+			. tween_property(_slot_win_band, "modulate:a", 0.30, MotionPolicy.finite_duration(0.44))
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
 	var beat_delay := MotionPolicy.finite_duration(0.09)
 	var rise_duration := MotionPolicy.finite_duration(0.10)
 	var settle_duration := MotionPolicy.finite_duration(0.16)
@@ -2557,21 +2865,33 @@ func _pulse_slot_win(result: RoundResult) -> void:
 		var symbol: Control = _slot_symbols[reel_index]
 		symbol.pivot_offset = symbol.size * 0.5
 		var delay := beat_delay * sequence_index
-		_slot_win_tween.tween_property(
-			symbol, "scale", peak_scale, rise_duration
-		).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		_slot_win_tween.tween_property(
-			symbol, "scale", Vector2.ONE, settle_duration
-		).set_delay(delay + rise_duration).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		(
+			_slot_win_tween
+			. tween_property(symbol, "scale", peak_scale, rise_duration)
+			. set_delay(delay)
+			. set_trans(Tween.TRANS_QUAD)
+			. set_ease(Tween.EASE_OUT)
+		)
+		(
+			_slot_win_tween
+			. tween_property(symbol, "scale", Vector2.ONE, settle_duration)
+			. set_delay(delay + rise_duration)
+			. set_trans(Tween.TRANS_BACK)
+			. set_ease(Tween.EASE_OUT)
+		)
 		if not MotionPolicy.is_reduced():
 			_queue_slot_symbol_tumble(reel_index, delay)
-			_slot_win_tween.tween_callback(
-				func() -> void: _emit_slot_win_impact(reel_index)
-			).set_delay(delay + rise_duration * 0.65)
+			(
+				_slot_win_tween
+				. tween_callback(func() -> void: _emit_slot_win_impact(reel_index))
+				. set_delay(delay + rise_duration * 0.65)
+			)
 	if _slot_win_band != null and not MotionPolicy.is_reduced():
-		_slot_win_tween.tween_callback(
-			func() -> void: _slot_win_band.visible = false
-		).set_delay(MotionPolicy.finite_duration(0.50))
+		(
+			_slot_win_tween
+			. tween_callback(func() -> void: _slot_win_band.visible = false)
+			. set_delay(MotionPolicy.finite_duration(0.50))
+		)
 
 
 func _queue_slot_symbol_tumble(reel_index: int, delay: float) -> void:
@@ -2601,36 +2921,64 @@ func _queue_slot_symbol_tumble(reel_index: int, delay: float) -> void:
 	_slot_cascade_clones.append(outgoing)
 	_slot_cascade_clones.append(incoming)
 	var tumble_duration := MotionPolicy.finite_duration(0.20)
-	_slot_win_tween.tween_callback(
-		Callable(self, "_begin_slot_symbol_tumble").bind(source)
-	).set_delay(delay)
-	_slot_win_tween.tween_property(
-		outgoing, "position:y", source.position.y + SLOT_CELL_HEIGHT * 0.78, tumble_duration
-	).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_slot_win_tween.tween_property(
-		outgoing, "rotation", 0.10 if reel_index % 2 == 0 else -0.10, tumble_duration
-	).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_slot_win_tween.tween_property(
-		outgoing, "modulate:a", 0.0, tumble_duration
-	).set_delay(delay).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	_slot_win_tween.tween_property(
-		incoming, "position", source.position, tumble_duration
-	).set_delay(delay + MotionPolicy.finite_duration(0.035)).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
-	_slot_win_tween.tween_property(
-		incoming, "modulate:a", 1.0, tumble_duration
-	).set_delay(delay + MotionPolicy.finite_duration(0.035)).set_trans(
-		Tween.TRANS_QUAD
-	).set_ease(Tween.EASE_OUT)
-	_slot_win_tween.tween_property(
-		incoming, "scale", Vector2.ONE, tumble_duration
-	).set_delay(delay + MotionPolicy.finite_duration(0.035)).set_trans(
-		Tween.TRANS_BACK
-	).set_ease(Tween.EASE_OUT)
-	_slot_win_tween.tween_callback(
-		Callable(self, "_finish_slot_symbol_tumble").bind(source, outgoing, incoming)
-	).set_delay(delay + tumble_duration + MotionPolicy.finite_duration(0.05))
+	(
+		_slot_win_tween
+		. tween_callback(Callable(self, "_begin_slot_symbol_tumble").bind(source))
+		. set_delay(delay)
+	)
+	(
+		_slot_win_tween
+		. tween_property(
+			outgoing, "position:y", source.position.y + SLOT_CELL_HEIGHT * 0.78, tumble_duration
+		)
+		. set_delay(delay)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		_slot_win_tween
+		. tween_property(
+			outgoing, "rotation", 0.10 if reel_index % 2 == 0 else -0.10, tumble_duration
+		)
+		. set_delay(delay)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		_slot_win_tween
+		. tween_property(outgoing, "modulate:a", 0.0, tumble_duration)
+		. set_delay(delay)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_IN)
+	)
+	(
+		_slot_win_tween
+		. tween_property(incoming, "position", source.position, tumble_duration)
+		. set_delay(delay + MotionPolicy.finite_duration(0.035))
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_slot_win_tween
+		. tween_property(incoming, "modulate:a", 1.0, tumble_duration)
+		. set_delay(delay + MotionPolicy.finite_duration(0.035))
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_slot_win_tween
+		. tween_property(incoming, "scale", Vector2.ONE, tumble_duration)
+		. set_delay(delay + MotionPolicy.finite_duration(0.035))
+		. set_trans(Tween.TRANS_BACK)
+		. set_ease(Tween.EASE_OUT)
+	)
+	(
+		_slot_win_tween
+		. tween_callback(
+			Callable(self, "_finish_slot_symbol_tumble").bind(source, outgoing, incoming)
+		)
+		. set_delay(delay + tumble_duration + MotionPolicy.finite_duration(0.05))
+	)
 
 
 func _begin_slot_symbol_tumble(source: SlotSymbol) -> void:
@@ -2668,10 +3016,7 @@ func _emit_slot_win_impact(reel_index: int) -> void:
 	var reel: Control = _slot_reels[reel_index]
 	var symbol: Control = _slot_symbols[reel_index]
 	ImpactBurst.spawn(
-		_art_root,
-		reel.position + symbol.position + symbol.size * 0.5,
-		Color("f2c84b"),
-		false
+		_art_root, reel.position + symbol.position + symbol.size * 0.5, Color("f2c84b"), false
 	)
 
 
@@ -2704,13 +3049,18 @@ func _animate_slot_result(payout: int) -> void:
 		return
 	_slot_result_value.text = tr("SLOT_RETURNED") % 0
 	_slot_result_tween = create_tween()
-	_slot_result_tween.tween_method(
-		func(value: float) -> void:
-			_slot_result_value.text = tr("SLOT_RETURNED") % int(round(value)),
-		0.0,
-		float(payout),
-		clampf(0.35 + payout * 0.002, 0.35, 0.8)
-	).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	(
+		_slot_result_tween
+		. tween_method(
+			func(value: float) -> void:
+				_slot_result_value.text = tr("SLOT_RETURNED") % int(round(value)),
+			0.0,
+			float(payout),
+			clampf(0.35 + payout * 0.002, 0.35, 0.8)
+		)
+		. set_trans(Tween.TRANS_QUAD)
+		. set_ease(Tween.EASE_OUT)
+	)
 
 
 func _reset_slot_result_ticker() -> void:

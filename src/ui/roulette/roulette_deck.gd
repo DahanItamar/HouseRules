@@ -25,7 +25,7 @@ var credit_value: AnimatedNumberLabel
 var _credit_caption: Label
 var _bet_line: Label
 var _spot_line: Label
-var _hint_line: Label
+var _hint_line: InputPromptLabel
 
 
 func _init() -> void:
@@ -62,8 +62,13 @@ func build(chip_textures: Dictionary, chip_values: Array[int]) -> void:
 	_spot_line = RouletteStyle.label(
 		self, Rect2(info + Vector2(10, 27), Vector2(168, 20)), 14, RouletteStyle.BRASS_BRIGHT
 	)
-	_hint_line = RouletteStyle.label(
-		self, Rect2(info + Vector2(10, 48), Vector2(168, 18)), 12, RouletteStyle.IVORY_MUTED
+	_hint_line = InputPromptLabel.new()
+	RouletteStyle.dress(
+		_hint_line,
+		self,
+		Rect2(info + Vector2(10, 48), Vector2(168, 18)),
+		12,
+		RouletteStyle.IVORY_MUTED
 	)
 	clear_button = _key("RouletteClear", CLEAR_RECT, false, clear_pressed)
 	rebet_button = _key("RouletteRebet", REBET_RECT, false, rebet_pressed)
@@ -106,14 +111,7 @@ func refresh_state(state: Dictionary) -> void:
 	rebet_button.disabled = not open or not state.can_rebet
 	spin_button.disabled = not open or int(state.total) <= 0
 	_bet_line.text = tr("ROULETTE_BET_TOTAL") % [int(state.total), int(state.cap)]
-	_hint_line.text = (
-		tr("ROULETTE_DECK_HINT")
-		% [
-			InputRouter.glyph("interact"),
-			InputRouter.glyph("secondary"),
-			InputRouter.glyph("tertiary"),
-		]
-	)
+	_hint_line.template = tr("ROULETTE_DECK_HINT")
 
 
 func set_spot_text(text: String) -> void:

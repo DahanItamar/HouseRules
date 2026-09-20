@@ -92,3 +92,19 @@ static func draw_centered(
 	var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
 	var baseline := center + Vector2(-text_size.x * 0.5, font.get_ascent(font_size) * 0.5 - 1.0)
 	canvas.draw_string(font, baseline, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+
+
+## Dresses an existing label (e.g. an InputPromptLabel that draws inline glyphs)
+## in the same type as `label` builds, and parents it.
+static func dress(
+	text_label: Label, parent: Node, rect: Rect2, font_size: int, color: Color = IVORY
+) -> Label:
+	text_label.position = rect.position
+	text_label.size = rect.size
+	text_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	text_label.add_theme_font_override("font", Typography.UI_FONT)
+	text_label.add_theme_font_size_override("font_size", font_size)
+	text_label.add_theme_color_override("font_color", color)
+	text_label.clip_text = true
+	parent.add_child(text_label)
+	return text_label
