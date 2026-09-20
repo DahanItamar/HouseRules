@@ -386,9 +386,13 @@ func test_display_targets_render_canvas_items_at_native_resolution() -> void:
 
 func test_reference_captures_keep_a_full_16_by_9_frame() -> void:
 	for filename: String in ["03_slot_idle.png", "05_blackjack.png", "06_vault.png"]:
-		var texture: Texture2D = load("res://tests/results/screenshots/" + filename)
-		assert_not_null(texture, "%s is imported" % filename)
-		var dimensions := Vector2i(texture.get_width(), texture.get_height())
+		# Decoded from the file rather than loaded as a resource: the capture sets
+		# are evidence, not game art, and a fresh checkout has no import cache for
+		# them. The sibling resolution test already reads them this way.
+		var path := "res://tests/results/screenshots/" + filename
+		var image := Image.load_from_file(ProjectSettings.globalize_path(path))
+		assert_false(image.is_empty(), "%s can be decoded" % filename)
+		var dimensions := image.get_size()
 		assert_eq(dimensions.x * 9, dimensions.y * 16, "%s keeps the 16:9 frame" % filename)
 		assert_gte(dimensions.x, 960, "%s is at least the logical canvas width" % filename)
 
