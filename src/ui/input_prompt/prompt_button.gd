@@ -104,7 +104,10 @@ func _draw() -> void:
 		label_width = maxf(available - glyph_width - spacing, 0.0)
 		group = available
 	var x := (size.x - group) * 0.5
-	var mid := size.y * 0.5
+	# This button hides its native text and draws the group itself, so the content
+	# margin that sinks an ordinary label cannot reach it: it follows the plate down.
+	var sunk := KitPlate.PRESS_SHIFT if get_draw_mode() == DRAW_PRESSED else 0.0
+	var mid := size.y * 0.5 + sunk
 	var ascent := font.get_ascent(font_size)
 	var descent := font.get_descent(font_size)
 	var baseline := mid + (ascent - descent) * 0.5

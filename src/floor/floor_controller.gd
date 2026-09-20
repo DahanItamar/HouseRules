@@ -34,7 +34,8 @@ const PLAQUE_PADDING := Vector2(18, 12)
 const ANIMATED_PAIR_LABEL_SCRIPT := preload("res://src/ui/animated_pair_label.gd")
 const IVORY := Color("f1e8d8")
 const BRASS := Color("c8a34b")
-const CYAN := Color("48c5d5")
+## The lit brass a key wears while the pointer is on it.
+const BRASS_BRIGHT := Color("f0cf73")
 const MACHINE_ZONE_RADIUS: float = 50.0
 ## The join zone matches the brass diamond inlay painted in front of each island.
 const MACHINE_ZONE_SCALE := Vector2(1.28, 0.62)
@@ -900,13 +901,16 @@ func _build_room_hud() -> void:
 	_room_back.focus_mode = Control.FOCUS_ALL
 	_room_back.add_theme_font_override("font", Typography.UI_FONT)
 	_room_back.add_theme_font_size_override("font_size", Typography.CONTROL)
-	for state: String in ["normal", "hover", "pressed", "focus"]:
+	for state: String in ["normal", "hover", "pressed"]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color("141013") if state != "pressed" else Color("0c0a0c")
-		style.border_color = CYAN if state == "focus" else BRASS
-		style.set_border_width_all(2 if state == "focus" else 1)
+		style.border_color = BRASS_BRIGHT if state == "hover" else BRASS
+		style.set_border_width_all(1)
 		style.set_corner_radius_all(6)
+		if state == "pressed":
+			style.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
 		_room_back.add_theme_stylebox_override(state, style)
+	_room_back.add_theme_stylebox_override("focus", FocusRing.style(6.0))
 	_room_back.pressed.connect(return_to_main_floor)
 	_room_layer.add_child(_room_back)
 	ButtonFeedback.attach(_room_back)
@@ -1006,13 +1010,16 @@ func _dev_button(text_value: String, at: Vector2, dimensions: Vector2) -> Button
 	button.focus_mode = Control.FOCUS_ALL
 	button.add_theme_font_override("font", Typography.UI_FONT)
 	button.add_theme_font_size_override("font_size", Typography.CAPTION)
-	for state: String in ["normal", "hover", "pressed", "focus"]:
+	for state: String in ["normal", "hover", "pressed"]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color("5a111c") if state != "pressed" else Color("351016")
-		style.border_color = CYAN if state == "focus" else Color("8a682f")
-		style.set_border_width_all(2 if state == "focus" else 1)
+		style.border_color = BRASS_BRIGHT if state == "hover" else Color("8a682f")
+		style.set_border_width_all(1)
 		style.set_corner_radius_all(6)
+		if state == "pressed":
+			style.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
 		button.add_theme_stylebox_override(state, style)
+	button.add_theme_stylebox_override("focus", FocusRing.style(6.0))
 	_dev_panel.add_child(button)
 	ButtonFeedback.attach(button)
 	return button
@@ -1406,13 +1413,16 @@ func _cashier_button(text_value: String, at: Vector2, dimensions: Vector2) -> Bu
 	button.size = dimensions
 	button.add_theme_font_override("font", Typography.UI_FONT)
 	button.add_theme_font_size_override("font_size", Typography.CONTROL)
-	for state: String in ["normal", "hover", "pressed", "focus"]:
+	for state: String in ["normal", "hover", "pressed"]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = Color("5a111c") if state != "pressed" else Color("351016")
-		style.border_color = CYAN if state == "focus" else BRASS
+		style.border_color = BRASS_BRIGHT if state == "hover" else BRASS
 		style.set_border_width_all(2)
 		style.set_corner_radius_all(8)
+		if state == "pressed":
+			style.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
 		button.add_theme_stylebox_override(state, style)
+	button.add_theme_stylebox_override("focus", FocusRing.style(8.0))
 	var disabled_style := StyleBoxFlat.new()
 	disabled_style.bg_color = Color("24191c")
 	disabled_style.border_color = Color("5e554c")

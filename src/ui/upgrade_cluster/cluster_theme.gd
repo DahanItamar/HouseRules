@@ -81,7 +81,6 @@ const HARLEQUIN_PINK := Color("e2a0b4")
 const HARLEQUIN_GREEN := Color("1f6a45")
 const WIN := Color("f2c84b")
 const LOSS := Color("d27a6c")
-const FOCUS := Color("48c5d5")
 
 # -- Symbols ------------------------------------------------------------------
 ## Name key and the accent each symbol lights with, in Symbol order.
@@ -251,7 +250,6 @@ static func deck_style() -> DeckStyle:
 	style.win = WIN
 	style.loss = LOSS
 	style.push = TEXT
-	style.focus = FOCUS
 	style.kit_theme = &"upgrade_cluster"
 	return style
 

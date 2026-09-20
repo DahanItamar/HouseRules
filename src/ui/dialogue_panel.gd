@@ -23,7 +23,6 @@ const BUTTON_HOVER := Color("2a1f22")
 const BUTTON_PRESSED := Color("0c0a0c")
 const BRASS := Color("c8a34b")
 const IVORY := Color("f1e8d8")
-const CYAN := Color("48c5d5")
 const SAFE_RECT := Rect2(48, 27, 864, 486)
 const MIN_TARGET: float = 44.0
 const PANEL_SIZE := Vector2(460, 144)
@@ -520,16 +519,17 @@ static func _style_button(button: Button) -> void:
 	button.add_theme_color_override("font_hover_color", IVORY)
 	button.add_theme_color_override("font_focus_color", IVORY)
 	button.add_theme_color_override("font_pressed_color", BRASS)
-	for state: String in ["normal", "hover", "pressed", "focus"]:
+	for state: String in ["normal", "hover", "pressed"]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = (
 			BUTTON_HOVER
 			if state == "hover"
 			else (BUTTON_PRESSED if state == "pressed" else BUTTON_FILL)
 		)
-		style.border_color = CYAN if state == "focus" else Color(BRASS, 0.8)
-		style.set_border_width_all(2 if state == "focus" else 1)
+		style.border_color = Color(BRASS, 0.8)
+		style.set_border_width_all(1)
 		style.set_corner_radius_all(4)
-		if state == "focus":
-			style.draw_center = false
+		if state == "pressed":
+			style.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
 		button.add_theme_stylebox_override(state, style)
+	button.add_theme_stylebox_override("focus", FocusRing.style(4.0))

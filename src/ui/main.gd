@@ -265,9 +265,6 @@ func _build_menu_rows() -> void:
 		for state: String in ["font_color", "font_hover_color", "font_focus_color"]:
 			row.add_theme_color_override(state, Color("f6eed8"))
 		row.add_theme_color_override("font_pressed_color", Color("fff6dc"))
-		row.add_theme_stylebox_override(
-			"focus", _menu_button_style(Color(0, 0, 0, 0), Color("48c5d5"), 3)
-		)
 		var act := actions[index]
 		row.pressed.connect(func() -> void: act.call())
 		row.focus_entered.connect(_place_menu_selector.bind(row))
@@ -275,6 +272,10 @@ func _build_menu_rows() -> void:
 		ButtonFeedback.attach(row)
 		_menu.add_child(row)
 		UiKit.paint_button(row, &"menu_row", index == 0, 11.0)
+		# The same ring every key in the game wears, measured off this row's own
+		# plate. Called after the row is dressed, because that is when the plate
+		# exists to be measured.
+		FocusRing.apply(row, 11.0)
 		_menu_rows.append(row)
 	for index: int in range(_menu_rows.size()):
 		var row := _menu_rows[index]

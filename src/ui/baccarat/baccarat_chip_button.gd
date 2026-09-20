@@ -51,6 +51,15 @@ func _draw() -> void:
 	var ink := ink_for(amount)
 	BaccaratStyle.draw_centered(self, str(amount), center + lift, 16, Color(ink, alpha))
 	if has_focus(true):
-		draw_arc(center, FACE_SIZE * 0.5 + 4.0, 0.0, TAU, 40, BaccaratStyle.FOCUS, 3.0, true)
+		draw_arc(
+			center,
+			FACE_SIZE * 0.5 + FocusRing.OUTSET * 2.0,
+			0.0,
+			TAU,
+			40,
+			FocusRing.COLOR,
+			float(FocusRing.WIDTH),
+			true
+		)
 	elif is_hovered() and not disabled:
 		draw_arc(center + lift, FACE_SIZE * 0.5 + 1.0, 0.0, TAU, 40, BaccaratStyle.PEARL, 1.5, true)

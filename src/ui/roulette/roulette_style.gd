@@ -19,7 +19,7 @@ const RUBY_DEEP := Color("6d101b")
 const EBONY := Color("15100e")
 const ZERO_GREEN := Color("13704a")
 const LAYOUT_CLOTH := Color("0a1638d9")
-const FOCUS := Color("48c5d5")
+const FOCUS := FocusRing.COLOR
 const WIN_INK := Color("f2cf6b")
 const LOSS_INK := Color("c9b9a6")
 const TEXT_DISABLED := Color("6f6254")
@@ -54,8 +54,9 @@ static func style_button(button: Button, primary: bool = false) -> void:
 	var face := RUBY_DEEP if primary else MAHOGANY_RAISED
 	button.add_theme_stylebox_override("normal", box(face, BRASS, 2))
 	button.add_theme_stylebox_override("hover", box(face.lightened(0.08), BRASS_BRIGHT, 2))
-	button.add_theme_stylebox_override("pressed", box(face.darkened(0.3), BRASS_BRIGHT, 2))
-	button.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), FOCUS, 3))
+	var held := box(face.darkened(0.3), BRASS_BRIGHT, 2)
+	held.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
+	button.add_theme_stylebox_override("pressed", held)
 	button.add_theme_stylebox_override("disabled", box(MAHOGANY_DEEP, BRASS_DIM.darkened(0.3), 1))
 	for state: String in [
 		"font_color", "font_hover_color", "font_focus_color", "font_pressed_color"
@@ -67,6 +68,8 @@ static func style_button(button: Button, primary: bool = false) -> void:
 	# The table's own keys wear the same painted plate the shared deck uses, so
 	# one cabinet does not mix painted keys with flat ones.
 	UiKit.paint_button(button, &"roulette", primary)
+	# Ringed last, so the ring takes its corner from whichever face won.
+	FocusRing.apply(button, 3.0)
 
 
 static func label(parent: Node, rect: Rect2, font_size: int, color: Color = IVORY) -> Label:

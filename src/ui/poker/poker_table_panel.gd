@@ -60,7 +60,6 @@ const SURFACE := Color("0b0e14f5")
 const SAPPHIRE := Color("14336a")
 const SAPPHIRE_DEEP := Color("0e2247")
 const BRASS := Color("d9b44a")
-const FOCUS := Color("48c5d5")
 const LOSS_INK := Color("d98c8c")
 const DISABLED_INK := Color("5d6776")
 
@@ -833,8 +832,11 @@ func _build_deck() -> void:
 		button.add_theme_color_override("font_disabled_color", Color("596372"))
 		button.add_theme_stylebox_override("normal", _style(Color("111722"), HAIRLINE, 6, 1))
 		button.add_theme_stylebox_override("hover", _style(Color("172238"), SILVER, 6, 1))
-		button.add_theme_stylebox_override("pressed", _style(SAPPHIRE, SILVER, 6, 2))
-		button.add_theme_stylebox_override("focus", _style(Color("111722"), FOCUS, 6, 2))
+		var held := _style(SAPPHIRE, SILVER, 6, 2)
+		held.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
+		button.add_theme_stylebox_override("pressed", held)
+		# Hollow, so focusing the selected stake does not hide that it is selected.
+		button.add_theme_stylebox_override("focus", FocusRing.style(6.0))
 		button.add_theme_stylebox_override(
 			"disabled", _style(Color("0c1017"), Color("2a313b"), 6, 1)
 		)
@@ -898,7 +900,6 @@ func _poker_action(node_name: String, rect: Rect2, action: Callable, primary: bo
 	button.add_theme_stylebox_override("normal", _style(face, SILVER, 7, 2))
 	button.add_theme_stylebox_override("hover", _style(face.lightened(0.1), Color("e6ecf2"), 7, 2))
 	button.add_theme_stylebox_override("pressed", _style(face.darkened(0.3), Color("e6ecf2"), 7, 2))
-	button.add_theme_stylebox_override("focus", _style(face, FOCUS, 7, 3))
 	button.add_theme_stylebox_override("disabled", _style(Color("0c1017"), Color("2a313b"), 7, 1))
 	button.pressed.connect(func() -> void: action.call())
 	add_child(button)
@@ -906,6 +907,9 @@ func _poker_action(node_name: String, rect: Rect2, action: Callable, primary: bo
 	# one cabinet does not mix painted keys with flat ones. It is laid down
 	# before the labels so it stays behind them.
 	UiKit.paint_button(button, &"poker", primary)
+	# Ringed after the plate, so the ring follows the sapphire key's painted corner
+	# instead of covering its face the way a filled focus box did.
+	FocusRing.apply(button, 7.0)
 	ButtonFeedback.attach(button)
 	var main := _help_label(
 		button, Vector2(4, 9), Vector2(rect.size.x - 8, 28), Typography.CONTROL, INK
@@ -925,7 +929,7 @@ func _poker_action(node_name: String, rect: Rect2, action: Callable, primary: bo
 func _restyle_help_button() -> void:
 	_help_button.add_theme_stylebox_override("normal", _style(SURFACE, HAIRLINE, 6, 1))
 	_help_button.add_theme_stylebox_override("hover", _style(Color("151b26"), SILVER, 6, 1))
-	_help_button.add_theme_stylebox_override("focus", _style(SURFACE, FOCUS, 6, 2))
+	_help_button.add_theme_stylebox_override("focus", FocusRing.style(6.0))
 	_help_button.add_theme_color_override("font_color", INK)
 
 

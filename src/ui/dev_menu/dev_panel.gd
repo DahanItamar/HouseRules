@@ -29,7 +29,6 @@ const BRASS_DIM := Color("5e4a28")
 const IVORY := Color("f1e8d8")
 const MUTED := Color("a99e90")
 const DISABLED_TEXT := Color("6d655c")
-const CYAN := Color("48c5d5")
 
 var actions: DevActions
 ## The overlay that owns this panel; provides the FPS readout toggle.
@@ -451,9 +450,7 @@ func _button(text_value: String, at: Vector2, dimensions: Vector2) -> Button:
 	button.add_theme_stylebox_override("hover", _style(ROW_HOVER, BRASS, 1))
 	button.add_theme_stylebox_override("pressed", _style(ROW_PRESSED, BRASS, 1))
 	button.add_theme_stylebox_override("disabled", _style(ROW, Color("2e2826"), 1))
-	var focus := _style(Color.TRANSPARENT, CYAN, 2)
-	focus.draw_center = false
-	button.add_theme_stylebox_override("focus", focus)
+	button.add_theme_stylebox_override("focus", FocusRing.style(4.0))
 	# A mouse click leaves no focus ring behind: cyan is for keyboard/controller.
 	button.gui_input.connect(
 		func(event: InputEvent) -> void:

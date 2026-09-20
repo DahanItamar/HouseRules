@@ -68,7 +68,7 @@ func _draw() -> void:
 			_draw_leaf(base, Vector2(side * cos(angle * 0.6), sin(angle) * 0.55).normalized(), gold)
 	draw_circle(center, 45.0, Color("071009"))
 	if has_focus():
-		draw_arc(center, 47.0, 0.0, TAU, 64, Color("48c5d5"), 2.0, true)
+		draw_arc(center, 47.0, 0.0, TAU, 64, FocusRing.COLOR, float(FocusRing.WIDTH), true)
 	draw_circle(center, 42.0, gold)
 	draw_circle(center, active_radius, face)
 	draw_arc(center, active_radius - 4.0, 0.0, TAU, 48, Color(SILVER, 0.75), 1.5, true)

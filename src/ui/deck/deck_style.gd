@@ -4,8 +4,9 @@ extends Resource
 ##
 ## Every cabinet uses the same deck structure; only these colours and materials
 ## change. Surfaces are flat and opaque (no gradients, glow or bloom), text is warm
-## off-white, structure is brass, and cyan is reserved for keyboard/controller
-## focus. Result accents carry one meaning each: win, loss, push.
+## off-white, structure is brass, and cyan is reserved for keyboard/controller focus,
+## which every key wears as the shared FocusRing. Result accents carry one meaning
+## each: win, loss, push.
 
 ## Deck plate and instruction rail.
 @export var surface := Color("17120f")
@@ -29,7 +30,6 @@ extends Resource
 @export var win := Color("f2c84b")
 @export var loss := Color("d27a6c")
 @export var push := Color("f1e8d8")
-@export var focus := Color("48c5d5")
 @export var corner_radius: int = 6
 ## The painted chip stack the bet control shows beside the stake.
 @export var chip_texture: Texture2D = preload("res://assets/production/ui/hud_chip_stack.png")
@@ -84,29 +84,29 @@ func panel_box(fill: Color, border: Color, border_width: int = 1, radius: int = 
 	return box
 
 
-## Applies the shared button states: hover brightens the brass edge, pressed
-## darkens the face, focus is the only place cyan appears.
+## Applies the shared button states: hover brightens the brass edge, pressed darkens
+## the face and drops its label, focus is the only place cyan appears and rings the
+## key rather than painting over it.
 func style_button(button: Button, face: Color, border: Color, primary: bool) -> void:
 	var width := 2 if primary else 1
 	button.add_theme_stylebox_override("normal", panel_box(face, border, width))
 	button.add_theme_stylebox_override(
 		"hover", panel_box(face.lightened(0.06), edge_bright, width + (0 if primary else 1))
 	)
-	button.add_theme_stylebox_override(
-		"pressed", panel_box(face.darkened(0.22), edge_bright, width)
-	)
-	button.add_theme_stylebox_override(
-		"hover_pressed", panel_box(face.darkened(0.22), edge_bright, width)
-	)
-	button.add_theme_stylebox_override("focus", panel_box(Color(0, 0, 0, 0), focus, 3))
+	for state: String in ["pressed", "hover_pressed"]:
+		var held := panel_box(face.darkened(0.22), edge_bright, width)
+		held.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
+		button.add_theme_stylebox_override(state, held)
+	FocusRing.apply(button, corner_radius)
 	button.add_theme_stylebox_override("disabled", panel_box(surface, hairline, 1))
 	button.add_theme_color_override("font_color", value)
 	button.add_theme_color_override("font_disabled_color", text_disabled)
 
 
-## Skins a button: flat states, or the kit's painted plate behind it when the
-## theme has one. The plate brightens on hover and darkens on press; the cyan
-## focus ring stays the only focus cue and appears for keyboard/controller only.
+## Skins a button: flat states, or the kit's painted plate behind it when the theme
+## has one. The plate is what reacts - it brightens on hover, warms when the key is
+## the selected one and sinks on press - and the cyan ring is sized to the corner
+## that plate actually paints, for keyboard/controller focus only.
 func skin_button(
 	button: Button, face: Color, border: Color, primary: bool, plate_scale: float = -1.0
 ) -> void:
@@ -122,13 +122,22 @@ func skin_button(
 	button.add_child(plate)
 	button.move_child(plate, 0)
 	var empty := StyleBoxEmpty.new()
-	for state: String in ["normal", "hover", "pressed", "hover_pressed", "disabled"]:
+	for state: String in ["normal", "hover", "disabled"]:
 		button.add_theme_stylebox_override(state, empty)
+	# The label rides the plate down rather than floating above a sunk key.
+	var held := StyleBoxEmpty.new()
+	held.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
+	for state: String in ["pressed", "hover_pressed"]:
+		button.add_theme_stylebox_override(state, held)
+	button.add_theme_stylebox_override("focus", FocusRing.for_plate(plate))
 	var sync := func() -> void:
 		plate.fit(Rect2(Vector2.ZERO, button.size))
 		plate.set_state(plate_state(button))
 	button.resized.connect(sync)
 	button.draw.connect(sync)
+	# A key redraws when it gains or loses focus, so the plate follows the ring.
+	button.focus_entered.connect(sync)
+	button.focus_exited.connect(sync)
 	sync.call()
 
 
@@ -140,6 +149,8 @@ static func plate_state(button: BaseButton) -> KitPlate.State:
 			return KitPlate.State.PRESSED
 		BaseButton.DRAW_HOVER, BaseButton.DRAW_HOVER_PRESSED:
 			return KitPlate.State.HOVER
+	if button.has_focus():
+		return KitPlate.State.FOCUSED
 	return KitPlate.State.NORMAL
 
 

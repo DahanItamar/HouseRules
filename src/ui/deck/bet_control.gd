@@ -263,7 +263,6 @@ class StepButton:
 	extends Button
 
 	const IVORY := Color("f1e8d8")
-	const CYAN := Color("48c5d5")
 
 	var sign_text: String = "+"
 	var action: StringName = &"bet_up"
@@ -297,7 +296,16 @@ class StepButton:
 			draw_circle(center, diameter * 0.5, style.edge * tint, true, -1.0, true)
 			draw_circle(center, diameter * 0.5 - 2.0, style.inset, true, -1.0, true)
 		if has_focus():
-			draw_arc(center, diameter * 0.5 + 2.0, 0.0, TAU, 48, CYAN, 2.0, true)
+			draw_arc(
+				center,
+				diameter * 0.5 + FocusRing.OUTSET,
+				0.0,
+				TAU,
+				48,
+				FocusRing.COLOR,
+				float(FocusRing.WIDTH),
+				true
+			)
 		var font := Typography.DISPLAY_FONT
 		var sign_size := 30
 		var ink := style.text_disabled if disabled else IVORY

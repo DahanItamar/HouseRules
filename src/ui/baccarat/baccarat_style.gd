@@ -20,7 +20,6 @@ const PEARL_FAINT := Color("f1eaf340")
 const PLAYER_BLUE := Color("2f58b0")
 const BANKER_RED := Color("b0293c")
 const TIE_JADE := Color("1f8659")
-const FOCUS := Color("48c5d5")
 const WIN_INK := Color("f2cf6b")
 const LOSS_INK := Color("c9bccf")
 const TEXT_DISABLED := Color("6e5f78")
@@ -57,8 +56,9 @@ static func style_button(button: Button, primary: bool = false) -> void:
 	var face := PLUM if primary else LACQUER_RAISED
 	button.add_theme_stylebox_override("normal", box(face, BRASS, 2))
 	button.add_theme_stylebox_override("hover", box(face.lightened(0.08), BRASS_BRIGHT, 2))
-	button.add_theme_stylebox_override("pressed", box(face.darkened(0.3), BRASS_BRIGHT, 2))
-	button.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), FOCUS, 3))
+	var held := box(face.darkened(0.3), BRASS_BRIGHT, 2)
+	held.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
+	button.add_theme_stylebox_override("pressed", held)
 	button.add_theme_stylebox_override("disabled", box(LACQUER_DEEP, BRASS_DIM.darkened(0.3), 1))
 	for state: String in [
 		"font_color", "font_hover_color", "font_focus_color", "font_pressed_color"
@@ -70,6 +70,8 @@ static func style_button(button: Button, primary: bool = false) -> void:
 	# The table's own keys wear the same painted plate the shared deck uses, so
 	# one cabinet does not mix painted keys with flat ones.
 	UiKit.paint_button(button, &"baccarat", primary)
+	# Ringed last, so the ring takes its corner from whichever face won.
+	FocusRing.apply(button, 4.0)
 
 
 static func label(parent: Node, rect: Rect2, font_size: int, color: Color = PEARL) -> Label:

@@ -118,13 +118,7 @@ func _draw() -> void:
 	)
 	_draw_stack(Vector2(size.x * 0.5, size.y - 20.0), dim)
 	if has_focus(true):
-		var ring := StyleBoxFlat.new()
-		ring.draw_center = false
-		ring.border_color = BaccaratStyle.FOCUS
-		ring.set_border_width_all(3)
-		ring.set_corner_radius_all(12)
-		ring.anti_aliasing = true
-		draw_style_box(ring, rect.grow(2.0))
+		draw_style_box(FocusRing.style(10.0), rect)
 
 
 func _draw_stack(base: Vector2, dim: bool) -> void:

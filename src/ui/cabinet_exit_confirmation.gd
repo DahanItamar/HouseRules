@@ -222,7 +222,9 @@ func _button(
 	button.add_theme_stylebox_override(
 		"pressed", _panel_style(fill.darkened(0.14), Color("c8a34b"), 7, 2)
 	)
-	button.add_theme_stylebox_override("focus", _panel_style(fill, Color("48c5d5"), 7, 2))
+	# A hollow ring: the destructive key stays red under the focus cue, and the
+	# ring carries no drop shadow of its own.
+	button.add_theme_stylebox_override("focus", FocusRing.style(7.0))
 	parent.add_child(button)
 	ButtonFeedback.attach(button)
 	return button

@@ -44,6 +44,15 @@ func _draw() -> void:
 	draw_texture_rect(chip_texture, face, false, Color(1, 1, 1, alpha))
 	RouletteStyle.draw_centered(self, str(amount), center + lift, 16, Color(Color("1b120c"), alpha))
 	if has_focus():
-		draw_arc(center, FACE_SIZE * 0.5 + 4.0, 0.0, TAU, 40, RouletteStyle.FOCUS, 3.0, true)
+		draw_arc(
+			center,
+			FACE_SIZE * 0.5 + FocusRing.OUTSET * 2.0,
+			0.0,
+			TAU,
+			40,
+			FocusRing.COLOR,
+			float(FocusRing.WIDTH),
+			true
+		)
 	elif is_hovered() and not disabled:
 		draw_arc(center + lift, FACE_SIZE * 0.5 + 1.0, 0.0, TAU, 40, RouletteStyle.IVORY, 1.5, true)

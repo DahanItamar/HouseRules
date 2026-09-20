@@ -515,12 +515,16 @@ func _build_help_ui() -> void:
 		["normal", Color("17161a"), Color("8a6d36"), 1],
 		["hover", Color("211d20"), Color("f0cf73"), 1],
 		["pressed", Color("0f0d0e"), Color("f0cf73"), 1],
-		["focus", Color("00000000"), Color("48c5d5"), 2],
 	]:
 		var plate := _panel_style(entry[1], entry[2], 6, entry[3])
 		plate.expand_margin_left = -HELP_BUTTON_RECT.size.y * 0.5
 		plate.shadow_size = 0
 		_help_button.add_theme_stylebox_override(entry[0], plate)
+	var help_ring := FocusRing.style(6.0)
+	# The coin medallion caps this key's left end, so the ring stops where the
+	# painted plate does rather than crossing the coin.
+	help_ring.expand_margin_left = -HELP_BUTTON_RECT.size.y * 0.5
+	_help_button.add_theme_stylebox_override("focus", help_ring)
 	_help_button.pressed.connect(toggle_help)
 	add_child(_help_button)
 	ButtonFeedback.attach(_help_button)
@@ -594,9 +598,7 @@ func _build_help_ui() -> void:
 	close.add_theme_stylebox_override("normal", _panel_style(Color("1d191b"), Color("6e5225"), 6))
 	close.add_theme_stylebox_override("hover", _panel_style(Color("2a2225"), Color("f0cf73"), 6))
 	close.add_theme_stylebox_override("pressed", _panel_style(Color("120f10"), Color("f0cf73"), 6))
-	close.add_theme_stylebox_override(
-		"focus", _panel_style(Color("00000000"), Color("48c5d5"), 6, 2)
-	)
+	close.add_theme_stylebox_override("focus", FocusRing.style(6.0))
 	close.pressed.connect(func() -> void: set_help_open(false))
 	_help_modal.add_child(close)
 	ButtonFeedback.attach(close)
@@ -1433,9 +1435,7 @@ func _style_vault_action(button: Button, face: Color, edge: Color, text: Color) 
 	button.add_theme_stylebox_override(
 		"pressed", VaultRuneFrame.button_style(face.darkened(0.3), edge.lightened(0.25), 2)
 	)
-	button.add_theme_stylebox_override(
-		"focus", VaultRuneFrame.button_style(face, Color("48c5d5"), 3)
-	)
+	button.add_theme_stylebox_override("focus", FocusRing.style(VaultRuneFrame.CORNER_RADIUS))
 	button.add_theme_stylebox_override(
 		"disabled", VaultRuneFrame.button_style(Color("16161a"), Color("3a3d44"), 1)
 	)
@@ -1503,9 +1503,7 @@ func _action_button(
 	button.add_theme_stylebox_override(
 		"pressed", _panel_style(Color("351016"), Color("f0c45e"), 7, 2)
 	)
-	button.add_theme_stylebox_override(
-		"focus", _panel_style(Color("5a111c"), Color("48c5d5"), 7, 2)
-	)
+	button.add_theme_stylebox_override("focus", FocusRing.style(7.0))
 	button.add_theme_stylebox_override(
 		"disabled", _panel_style(Color("252126"), Color("4b443c"), 7, 1)
 	)
@@ -2130,11 +2128,13 @@ func _apply_vault_fullscreen_layout() -> void:
 		for entry: Array in [
 			["normal", Color("111115"), VaultRuneFrame.SILVER_DIM, 1],
 			["hover", Color("1d1d24"), VaultRuneFrame.SILVER, 1],
-			["focus", Color("00000000"), Color("48c5d5"), 2],
 		]:
 			var plate := VaultRuneFrame.button_style(entry[1], entry[2], entry[3])
 			plate.expand_margin_left = -HELP_BUTTON_RECT.size.y * 0.5
 			_help_button.add_theme_stylebox_override(entry[0], plate)
+		var vault_ring := FocusRing.style(VaultRuneFrame.CORNER_RADIUS)
+		vault_ring.expand_margin_left = -HELP_BUTTON_RECT.size.y * 0.5
+		_help_button.add_theme_stylebox_override("focus", vault_ring)
 		_help_button.add_theme_color_override("font_color", VaultRuneFrame.SILVER_TEXT)
 	_stake.position = Vector2(64, 444)
 	_stake.size = Vector2(250, 44)

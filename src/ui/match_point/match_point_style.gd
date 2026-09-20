@@ -16,7 +16,6 @@ const CREAM_MUTED := Color("bdb39a")
 const BRASS := Color("c9a24e")
 const BRASS_BRIGHT := Color("ecca72")
 const BRASS_DIM := Color("7a6330")
-const FOCUS := Color("48c5d5")
 const WIN_INK := Color("f2cf6b")
 const LOSS_INK := Color("c9c0a6")
 const TEXT_DISABLED := Color("5f6d62")
@@ -33,6 +32,14 @@ static func draw_plate(canvas: CanvasItem, rect: Rect2, fill: Color = RACING_GRE
 static func draw_strip(canvas: CanvasItem, rect: Rect2, fill: Color = CREAM) -> void:
 	canvas.draw_rect(rect, fill)
 	canvas.draw_rect(rect, BRASS_DIM, false, 1.0)
+
+
+## A held key: the same plate with its label dropped the distance a painted plate
+## sinks, so a flat fallback presses the way the painted keys do.
+static func held_box(fill: Color) -> StyleBoxFlat:
+	var style := box(fill, BRASS_BRIGHT, 2)
+	style.content_margin_top = KitPlate.PRESS_SHIFT * 2.0
+	return style
 
 
 static func box(fill: Color, border: Color, width: int = 2, radius: int = 2) -> StyleBoxFlat:
@@ -54,8 +61,7 @@ static func style_button(button: Button, primary: bool = false) -> void:
 	var ink := CREAM_INK if primary else CREAM
 	button.add_theme_stylebox_override("normal", box(face, BRASS, 2))
 	button.add_theme_stylebox_override("hover", box(face.lightened(0.07), BRASS_BRIGHT, 2))
-	button.add_theme_stylebox_override("pressed", box(face.darkened(0.18), BRASS_BRIGHT, 2))
-	button.add_theme_stylebox_override("focus", box(Color(0, 0, 0, 0), FOCUS, 3))
+	button.add_theme_stylebox_override("pressed", held_box(face.darkened(0.18)))
 	button.add_theme_stylebox_override("disabled", box(RACING_DEEP, BRASS_DIM.darkened(0.3), 1))
 	for state: String in [
 		"font_color", "font_hover_color", "font_focus_color", "font_pressed_color"
@@ -67,6 +73,8 @@ static func style_button(button: Button, primary: bool = false) -> void:
 	# The table's own keys wear the same painted plate the shared deck uses, so
 	# one cabinet does not mix painted keys with flat ones.
 	UiKit.paint_button(button, &"match_point", primary)
+	# Ringed last, so the ring takes its corner from whichever face won.
+	FocusRing.apply(button, 2.0)
 
 
 ## A toggle key shows its selected state as a cream enamel face.
@@ -76,7 +84,7 @@ static func style_toggle(button: Button, selected: bool) -> void:
 		return
 	button.add_theme_stylebox_override("normal", box(CREAM, BRASS_BRIGHT, 2))
 	button.add_theme_stylebox_override("hover", box(CREAM.lightened(0.05), BRASS_BRIGHT, 2))
-	button.add_theme_stylebox_override("pressed", box(CREAM_SHADE, BRASS_BRIGHT, 2))
+	button.add_theme_stylebox_override("pressed", held_box(CREAM_SHADE))
 	button.add_theme_stylebox_override("disabled", box(CREAM_SHADE.darkened(0.25), BRASS_DIM, 1))
 	for state: String in [
 		"font_color", "font_hover_color", "font_focus_color", "font_pressed_color"

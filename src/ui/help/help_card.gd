@@ -20,7 +20,6 @@ const IVORY := Color("f1e8d8")
 const MUTED := Color("b8ad9c")
 const HAIRLINE := Color("4a3b22")
 const DISC_INK := Color("17120f")
-const CYAN := Color("48c5d5")
 const BODY_HEIGHT: float = 284.0
 const LEFT_X: float = 32.0
 const LEFT_WIDTH: float = 318.0
@@ -94,7 +93,6 @@ func _pager_button(node_name: String, glyph: String, direction: int) -> Button:
 		["hover", Color("2a2225"), BRASS_BRIGHT, 1],
 		["pressed", Color("120f10"), BRASS_BRIGHT, 1],
 		["disabled", Color("151214"), Color("2e2821"), 1],
-		["focus", Color(0, 0, 0, 0), CYAN, 2],
 	]:
 		var style := StyleBoxFlat.new()
 		style.bg_color = entry[1]
@@ -103,6 +101,7 @@ func _pager_button(node_name: String, glyph: String, direction: int) -> Button:
 		style.set_corner_radius_all(6)
 		style.anti_aliasing = true
 		button.add_theme_stylebox_override(entry[0], style)
+	button.add_theme_stylebox_override("focus", FocusRing.style(6.0))
 	button.pressed.connect(func() -> void: step_page(direction))
 	add_child(button)
 	ButtonFeedback.attach(button)
