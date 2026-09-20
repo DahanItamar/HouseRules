@@ -113,7 +113,7 @@ frame, the multiplier is set as bare type over it, and the crew either side reac
 frame she does. There is no ship and no dial, because a crash game is one object climbing a line
 and everything else on the canvas competes with the number you are deciding against.
 
-<img src="tests/results/screenshots/core_overclock_fhd/05_long_bake.png" width="100%"
+<img src="tests/results/screenshots/core_overclock_fhd/05_long_climb.png" width="100%"
      alt="Corsair's Reach mid-run: a moonlit sea, a rope-and-brass chart frame holding the word RUNNING above a bare 5.69× and a HAUL 1138 line, a scarlet macaw climbing a glowing gold trail from the bottom-left corner of the frame, a pirate crew member standing in a lane either side watching her, and a bottom deck with balance 4800, 200 in play, a MIN/10/25/X2/X5/ALL quick-bet row and a cyan-focused HAUL IT IN button">
 
 <img src="tests/results/screenshots/05_blackjack.png" width="100%"
