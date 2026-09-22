@@ -6,9 +6,7 @@ var _starting_reduced_motion: bool
 
 
 func before_each() -> void:
-	_starting_reduced_motion = bool(
-		ProjectSettings.get_setting(MotionPolicy.SETTING_PATH, false)
-	)
+	_starting_reduced_motion = bool(ProjectSettings.get_setting(MotionPolicy.SETTING_PATH, false))
 	ProjectSettings.set_setting(MotionPolicy.SETTING_PATH, false)
 	MotionPolicy.set_reduced_motion_for_tests(false)
 

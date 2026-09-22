@@ -339,13 +339,16 @@ func test_help_card_is_structured_and_pages() -> void:
 func test_help_control_instructions_wrap_instead_of_being_cut_off() -> void:
 	var card := HelpCard.new()
 	add_child_autofree(card)
-	card.set_content(
-		{
-			"controls":
-			[
-				"{back} Leave (asks first while chips are still committed to the table)",
-			]
-		}
+	(
+		card
+		. set_content(
+			{
+				"controls":
+				[
+					"{back} Leave (asks first while chips are still committed to the table)",
+				]
+			}
+		)
 	)
 	var rows := card.find_children("*", "InputPromptLabel", true, false)
 	var instruction: InputPromptLabel
