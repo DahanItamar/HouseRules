@@ -32,6 +32,7 @@ with a 9 px transparent gutter.
 from __future__ import annotations
 
 import argparse
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -47,11 +48,7 @@ from build_player_walk import key_out  # noqa: E402  (same-folder tool)
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets/source/layered_v2/walk_v2"
 OUTPUT = ROOT / "assets/production/characters/player_walk_v3.png"
-FFMPEG = Path(
-    "C:/Users/USER/AppData/Local/Microsoft/WinGet/Packages"
-    "/Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe"
-    "/ffmpeg-8.1.2-full_build/bin/ffmpeg.exe"
-)
+FFMPEG = shutil.which("ffmpeg") or "ffmpeg"
 
 CELL = 240
 GUTTER = 9

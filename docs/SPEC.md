@@ -594,7 +594,7 @@ keyboard-free handheld verification remain manual release checks in
 5. **Minefield Vault is a 5×5 grid with a player-chosen mine count of 1–24.** The multiplier curve derives from true odds reduced by a flat house edge.
 6. **Art is generated, then post-processed.** AI image generation produces raster output at its own resolution; reaching an exact 48×64 sprite at a locked palette needs a downsample, a palette quantize and a manual cleanup pass. Multi-frame animation with frame-to-frame consistency is where these tools are weakest, so animated sprites are specified for hand-pixelling or heavy cleanup, and generation is aimed at static and large elements — cabinet art, backgrounds, portraits, promo. `docs/art/ASSET-SPECS.md` is written on that basis.
 7. **Higgsfield source assets ship with provenance.** Generated masters, processing manifests and production derivatives are retained under `assets/source/`, `assets/drafts/`, `assets/production/` and `tools/art/` so the runtime never fetches art from the network.
-8. **The project root is `D:\Dev\repos\HouseRules`.** Documentation and scripts use project-relative paths except where a local Godot executable is explicitly required.
+8. **The project root is the repository checkout.** Documentation and scripts use project-relative paths except where a local Godot executable is explicitly required.
 
 ---
 

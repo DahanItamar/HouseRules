@@ -4,6 +4,10 @@ const BLACKJACK_DEFINITION: CabinetDefinition = preload("res://data/cabinets/bla
 const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
 
 
+func before_each() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+
+
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
 

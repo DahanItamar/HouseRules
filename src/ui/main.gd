@@ -21,7 +21,6 @@ var _menu_background: TextureRect
 var _menu_badge: TextureRect
 ## The menu's own rows, in the order the player walks them.
 var _menu_rows: Array[Button] = []
-var _menu_selector: TextureRect
 ## The version ticker and the notice band, in the order they settle.
 var _menu_chrome: Array[Control] = []
 var _menu_prompt_panel: Panel
@@ -34,6 +33,42 @@ var _menu_attract_elapsed: float = 0.0
 var _menu_first_breath: bool = true
 var _message_tween: Tween
 var _bank_feedback_tween: Tween
+
+
+## A contained focus trace that follows the menu plate's chevron silhouette.
+## The ordinary rounded StyleBox reads as a second rectangle around this one
+## asymmetric component; this keeps the same cyan language without inventing a
+## detached selector or painting outside the button.
+class MenuFocusFrame:
+	extends Control
+
+	var button: Button
+
+	func _init(target: Button) -> void:
+		button = target
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		button.focus_entered.connect(queue_redraw)
+		button.focus_exited.connect(queue_redraw)
+
+	func _draw() -> void:
+		if button == null or not button.has_focus():
+			return
+		var inset := float(FocusRing.WIDTH)
+		var tip := size.x - inset
+		var shoulder := size.x - 17.0
+		var top := inset
+		var bottom := size.y - inset
+		var points := PackedVector2Array(
+			[
+				Vector2(inset, top),
+				Vector2(shoulder, top),
+				Vector2(tip, size.y * 0.5),
+				Vector2(shoulder, bottom),
+				Vector2(inset, bottom),
+				Vector2(inset, top),
+			]
+		)
+		draw_polyline(points, FocusRing.COLOR, FocusRing.WIDTH, true)
 
 
 func _ready() -> void:
@@ -222,9 +257,9 @@ func _build_menu() -> void:
 
 ## The menu as a list the player walks, instead of a wall of key prompts.
 ##
-## Each row is a painted chevron that lights when it is the one you are standing
-## on, with a gold arrowhead beside it. The old prompt panel and the settings key
-## stay as nodes because the reveal animation drives them and the suite measures
+## Each row is a painted chevron that warms and receives the shared contained cyan
+## ring when it is the one you are standing on. The old prompt panel and settings
+## key stay as nodes because the reveal animation drives them and the suite measures
 ## them; they are simply no longer what the player uses.
 const MENU_ROW_RECT := Rect2(56, 300, 330, 46)
 const MENU_ROW_STEP: float = 56.0
@@ -241,15 +276,6 @@ func _build_menu_rows() -> void:
 	# A hidden Control can still hold focus, and a focus owner nobody can see is
 	# a menu with no ring drawn anywhere on it. The retired key leaves the ring.
 	_menu_motion_button.focus_mode = Control.FOCUS_NONE
-	_menu_selector = TextureRect.new()
-	_menu_selector.name = "MenuSelector"
-	_menu_selector.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_menu_selector.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_menu_selector.texture = UiKit.texture(&"menu_row", "medallion")
-	_menu_selector.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_menu_selector.size = Vector2(26, 26)
-	_menu_selector.z_index = 3
-	_menu.add_child(_menu_selector)
 	var actions: Array[Callable] = [_start_playing, _toggle_motion_preference, _quit_game]
 	for index: int in range(actions.size()):
 		var row := Button.new()
@@ -267,15 +293,17 @@ func _build_menu_rows() -> void:
 		row.add_theme_color_override("font_pressed_color", Color("fff6dc"))
 		var act := actions[index]
 		row.pressed.connect(func() -> void: act.call())
-		row.focus_entered.connect(_place_menu_selector.bind(row))
 		row.mouse_entered.connect(row.grab_focus)
 		ButtonFeedback.attach(row)
 		_menu.add_child(row)
 		UiKit.paint_button(row, &"menu_row", index == 0, 11.0)
-		# The same ring every key in the game wears, measured off this row's own
-		# plate. Called after the row is dressed, because that is when the plate
-		# exists to be measured.
-		FocusRing.apply(row, 11.0)
+		# The shared cyan focus language, traced to the row's actual chevron instead
+		# of wrapping its rectangular Control bounds.
+		row.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+		var focus_frame := MenuFocusFrame.new(row)
+		focus_frame.name = "MenuFocusFrame"
+		focus_frame.size = row.size
+		row.add_child(focus_frame)
 		_menu_rows.append(row)
 	for index: int in range(_menu_rows.size()):
 		var row := _menu_rows[index]
@@ -324,16 +352,6 @@ func _build_menu_chrome() -> void:
 	notice.text = tr("MENU_NOTICE")
 	_menu.add_child(notice)
 	_menu_chrome.append(notice)
-
-
-## Puts the arrowhead beside whichever row has focus.
-func _place_menu_selector(row: Button) -> void:
-	if _menu_selector == null:
-		return
-	_menu_selector.position = Vector2(
-		row.position.x - 32.0, row.position.y + row.size.y * 0.5 - 13.0
-	)
-	_menu_selector.visible = true
 
 
 func _refresh_menu_rows() -> void:
@@ -486,8 +504,7 @@ func _play_menu_breath() -> void:
 	var row := _focused_menu_row()
 	if row == null:
 		return
-	# Scaling from the middle, so the row swells in place instead of growing
-	# out of its top-left corner and shouldering the arrowhead aside.
+	# Scaling from the middle keeps the bounded attract beat visually centred.
 	row.pivot_offset = row.size * 0.5
 	_menu_attract_tween = create_tween().set_parallel(true)
 	(

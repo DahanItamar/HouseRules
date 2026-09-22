@@ -1,7 +1,7 @@
-# House Rules — session handoff
+# House Rules — project handoff
 
-Rewritten 2026-09-20 at the end of the session. Everything below was checked
-against the repo, not remembered.
+Updated 2026-09-22 for the public repository release. Everything below was
+checked against the repository.
 
 ---
 
@@ -13,24 +13,42 @@ Match Point, Harlequin Masquerade (cluster-pays) and **Corsair's Reach**
 (crash). **Four rooms**: Main Floor, High Roller Salon, VIP Penthouse,
 Manager's Office.
 
-* GUT: **572/572**, 53 scripts, ~125k assertions, including the million-round
+* GUT: **573/573**, 53 scripts, 124,982 assertions, including the million-round
   RTP harness per cabinet.
 * `tools/check_localization.py`: passes (621 keys, 448 referenced).
 * `gdformat --check` and `gdlint` over all of `src` and `tests`: pass.
-* CI green.
-* Every screenshot set in the repo was re-shot against this build.
-* `export/HouseRules.pck` rebuilt at `44b31b1`, 421.3 MB, smoke-launched
-  from an absolute path.
-  SHA-256 `1b6ba7fb440710db1684fd0a58e9d6776c402b94dd4dc2bb4438df055edcdc0c`
-  (rebuild after any commit — that hash is for that one).
+* The last remote CI run is green; the public-release commit still requires its
+  own CI run after push.
+* Canonical screenshot sets were re-shot against this runtime build.
+* `export/HouseRules.pck` is 421.3 MB and was smoke-launched successfully. The
+  public-repository cleanup changes only documentation, tooling, CI, and retired
+  evidence, so the packaged runtime remains current.
+  SHA-256 `a9eeab88a66b630197460bfe38dcfbc20b62e47e9edc0237e33cb9d978583c04`
+  (rebuild after any runtime code or asset change).
+
+### Public-release cleanup
+
+* Replaced the development-heavy README with a player- and contributor-friendly
+  overview, gallery, run instructions, controls, test contract, and AI disclosure.
+* Removed obsolete builder prompt files and five superseded one-off screenshot
+  batches; canonical captures and every README image remain.
+* Removed the ignored 1,410-frame temporary walk dump. In total, about 640 MiB
+  of tracked and local-only review output was removed from the working tree.
+* Replaced workstation-specific paths with repository-relative or PATH-based
+  discovery and restricted GitHub Actions to read-only repository contents.
+* Scanned the current tree and all Git commits for private keys and common OpenAI,
+  GitHub, AWS, Google, and Slack token formats: no credential-shaped value found.
+  All commit authors use the GitHub noreply address.
+* The current tracked tree has no file over GitHub's 100 MB per-file limit.
 
 ## 2. What this session did
 
 ### The main menu
 
 It was a badge, a prompt panel and one settings key. It is now a list the
-player walks: three painted chevron rows with a gold arrowhead beside the
-focused one, a version ticker and the play-money notice band, over the hall.
+player walks: three painted chevron rows with a cyan chevron outline contained
+inside the focused row, a version ticker and the play-money notice band, over
+the hall.
 
 Photographing it exposed two real bugs. **The focus ring had vanished** — a
 hidden `Control` in Godot can still own focus, and the retired settings key was
@@ -47,10 +65,18 @@ read "Three games. One bankroll." with nine on the floor.
 ### One selected-state cue, everywhere
 
 `src/ui/focus_ring.gd` is now the single definition. The colour is unchanged —
-cyan is mandated by `CLAUDE.md` for keyboard and controller focus — but the
-line is drawn **outside** the key with no centre, so the painted plate, its
+cyan is reserved by the UI design system for keyboard and controller focus — but the
+line is drawn **inside** the key with no centre, so the painted plate, its
 hover brightening and a toggle's selected face stay visible under it. The
 corner radius is measured off each theme's button art rather than guessed.
+
+The selected tint now stays in the SDR range instead of bleaching painted
+materials. Long How to Play control labels wrap and paginate at their measured
+height rather than ending in ellipses. Match Point's primary Serve key keeps
+its intended cream enamel face, and focus falls back to an enabled stake key
+when Serve is unavailable. Motion-sensitive tests explicitly choose full or
+reduced motion, so a player's saved accessibility preference cannot make the
+suite nondeterministic.
 
 Three genuine bugs came out of that sweep: **filled focus boxes were erasing
 painted keys** (a focused poker CALL lost its silver frame entirely while its
@@ -164,25 +190,22 @@ photograph of a parrot and the README linked it under that name.
    Roulette and Baccarat bet by placing chips of a chosen denomination on
    spots — `MIN/10/25/X2/X5/ALL` does not map onto that. Poker and Match Point
    have fixed stake keys. This design decision has never actually been made.
-4. **The bet HUD covers the crew's boots** in Corsair. `CLAUDE.md` says HUD
-   panels must not cover people. It reads as them standing behind the console,
+4. **The bet HUD covers the crew's boots** in Corsair. The UI composition rules
+   say HUD panels must not cover people. It reads as them standing behind the console,
    and it follows the wireframe the user drew, but it is worth a look.
 5. **No `LICENSE` file.** That is the user's decision, not an oversight.
-6. **Repository size**: **3.95 GB packed**, 4.1 GB on disk, almost all of it
-   art and the 700-plus committed screenshots. GitHub warns above 1 GB and
-   soft-limits around 5 GB, so this is close to a real problem rather than a
-   tidiness one. Git LFS for `assets/` and `tests/results/screenshots/`, or
-   pruning superseded capture sets, would cut most of it. Meanwhile push in
-   sections — `git push origin <sha>:refs/heads/main` — one push can exceed
-   GitHub's 2 GB limit, and a fresh clone is a long download for anyone added
-   as a collaborator (`--filter=blob:none` spares them the blobs).
+6. **Repository size**: the checked-out tracked tree is about **2.75 GiB** and
+   packed Git history is about **3.95 GiB**, mostly high-resolution art, retained
+   generation sources, and canonical visual QA. There is no individual file over
+   100 MB, but a fresh clone remains substantial. A future Git LFS migration would
+   require a deliberate history rewrite and storage-budget decision.
 
 ## 5. How to verify
 
 ```powershell
 & 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --headless --path . --import
-& 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --headless --path . -s addons/gut/gut_cmdln.gd -gexit
-git checkout tests/results/rtp.json   # the suite rewrites its elapsed times
+& 'C:\Godot\Godot_v4.7.2-stable_win64_console.exe' --headless --path . -s addons/gut/gut_cmdln.gd -- -gexit
+git restore tests/results/rtp.json   # the suite rewrites its elapsed times
 python tools/check_localization.py
 python -m gdtoolkit.formatter --check src tests ; python -m gdtoolkit.linter src tests
 powershell -File tools/capture_all.ps1           # every set; -Only <name> for one

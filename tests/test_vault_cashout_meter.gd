@@ -3,6 +3,10 @@ extends GutTest
 const METER_SCRIPT := preload("res://src/ui/vault_cashout_meter.gd")
 
 
+func before_each() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+
+
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
 

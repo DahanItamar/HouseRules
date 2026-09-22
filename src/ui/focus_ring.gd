@@ -1,22 +1,23 @@
 class_name FocusRing
 extends RefCounted
-## The one selected-key cue in House Rules: a cyan ring drawn just outside a key's
+## The one selected-key cue in House Rules: a cyan ring contained by the key's
 ## painted edge.
 ##
 ## Keyboard and controller focus is the only place cyan is allowed, so this ring
 ## carries the whole "this is the key you are about to press" message. It does that
 ## by ringing a key instead of covering it. The box draws no centre, so the painted
 ## plate under it, its hover brightening and a toggle's selected face all stay
-## visible; and it expands OUTSET past the control, so the line sits beside the
-## painted frame instead of biting a rectangle out of it.
+## visible. The stroke stays within the component bounds so focus never looks like
+## a second panel floating outside the key.
 ##
 ## The ring is a plain stylebox with no tween, pulse or shadow behind it, so reduced
 ## motion keeps the whole cue and nothing here can turn into glow.
 
 const COLOR := Color("48c5d5")
 const WIDTH: int = 2
-## Canvas pixels the ring stands off the key's edge.
-const OUTSET: float = 2.0
+## Kept as a public layout constant for round keys. Zero guarantees that no focus
+## background or stroke escapes the component it describes.
+const OUTSET: float = 0.0
 
 ## The outer corner radius of each painted key, in master pixels. Measured from the
 ## alpha silhouette of assets/production/ui/kit/button_*.png by walking the diagonal
@@ -42,9 +43,7 @@ static func style(radius: float) -> StyleBoxFlat:
 	box.bg_color = Color(0, 0, 0, 0)
 	box.border_color = COLOR
 	box.set_border_width_all(WIDTH)
-	# Offsetting a rounded rectangle outwards grows its corner by the same amount,
-	# so the ring stays concentric with the edge it is following.
-	box.set_corner_radius_all(int(roundf(maxf(radius, 0.0) + OUTSET)))
+	box.set_corner_radius_all(int(roundf(maxf(radius, 0.0))))
 	box.set_expand_margin_all(OUTSET)
 	box.anti_aliasing = true
 	return box

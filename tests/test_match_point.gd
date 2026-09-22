@@ -220,11 +220,18 @@ func test_drop_settles_only_after_the_ball_lands() -> void:
 func test_wallet_guards_refuse_a_serve_the_bankroll_cannot_cover() -> void:
 	Wallet.reset(5)
 	var game: MiniGame = _open().cabinet
+	var panel := game.panel as MatchPointPanel
+	await wait_process_frames(2)
 	assert_eq(game.selected_stake, 0, "No stake below the 10-credit minimum")
 	assert_false(game.call("can_serve"))
 	assert_false(game.call("request_serve"))
 	assert_false(game.is_round_active)
-	assert_true((game.panel as MatchPointPanel).deck.serve_button.disabled)
+	assert_true(panel.deck.serve_button.disabled)
+	assert_ne(
+		get_viewport().gui_get_focus_owner(),
+		panel.deck.serve_button,
+		"Keyboard focus never rests on the disabled Serve key"
+	)
 	Wallet.reset(60)
 	var rich: MiniGame = _open().cabinet
 	assert_eq(rich.available_stakes(), [10, 20, 50] as Array[int], "Keys above the bankroll lock")

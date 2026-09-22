@@ -231,23 +231,27 @@ func _render_block(block: Dictionary, at: Vector2, width: float) -> float:
 			step.name = "HelpStep%d" % int(block.number)
 			return height + 8.0
 		"control":
+			var height := _control_height(block, width)
 			var glyphs := GlyphRow.new()
 			glyphs.name = "HelpControlGlyph"
 			glyphs.template = String(block.glyphs)
 			glyphs.position = at
-			glyphs.size = Vector2(GLYPH_COLUMN - 10.0, CONTROL_HEIGHT)
+			glyphs.size = Vector2(GLYPH_COLUMN - 10.0, height)
 			_page_root.add_child(glyphs)
 			var label := _prompt(
 				String(block.label),
 				at + Vector2(GLYPH_COLUMN, 0),
-				Vector2(width - GLYPH_COLUMN, CONTROL_HEIGHT),
+				Vector2(width - GLYPH_COLUMN, height),
 				15,
 				IVORY
 			)
 			label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-			label.autowrap_mode = TextServer.AUTOWRAP_OFF
-			label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-			return CONTROL_HEIGHT
+			# A control instruction is operational copy, not decoration. Never hide
+			# its recovery or confirmation clause behind an ellipsis: wrap the row
+			# and let pagination make room for it.
+			label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			label.text_overrun_behavior = TextServer.OVERRUN_NO_TRIMMING
+			return height
 		"payout":
 			var value_width := minf(
 				width * 0.5,
@@ -348,12 +352,17 @@ static func _block_height(block: Dictionary, width: float) -> float:
 		"step":
 			return maxf(20.0, _text_height(String(block.text), width - 30.0, 15)) + 8.0
 		"control":
-			return CONTROL_HEIGHT
+			return _control_height(block, width)
 		"payout":
 			return PAYOUT_HEIGHT
 		"note":
 			return _text_height(String(block.text), width, 14) + 8.0
 	return 0.0
+
+
+static func _control_height(block: Dictionary, width: float) -> float:
+	var label_width := maxf(width - GLYPH_COLUMN, 1.0)
+	return maxf(CONTROL_HEIGHT, _text_height(String(block.label), label_width, 15))
 
 
 ## Splits the content into pages of two columns that never overflow.

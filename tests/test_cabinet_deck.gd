@@ -336,6 +336,34 @@ func test_help_card_is_structured_and_pages() -> void:
 	panel.set_help_open(false)
 
 
+func test_help_control_instructions_wrap_instead_of_being_cut_off() -> void:
+	var card := HelpCard.new()
+	add_child_autofree(card)
+	card.set_content(
+		{
+			"controls":
+			[
+				"{back} Leave (asks first while chips are still committed to the table)",
+			]
+		}
+	)
+	var rows := card.find_children("*", "InputPromptLabel", true, false)
+	var instruction: InputPromptLabel
+	for row: InputPromptLabel in rows:
+		if "committed" in row.template:
+			instruction = row
+			break
+	assert_not_null(instruction, "The long keyboard instruction is rendered")
+	assert_eq(instruction.autowrap_mode, TextServer.AUTOWRAP_WORD_SMART)
+	assert_eq(instruction.text_overrun_behavior, TextServer.OVERRUN_NO_TRIMMING)
+	assert_gt(instruction.size.y, HelpCard.CONTROL_HEIGHT, "The complete label gets a second line")
+	assert_lte(
+		instruction.get_global_rect().end.y,
+		card.get_global_rect().position.y + HelpCard.BODY_HEIGHT,
+		"Wrapped instructions stay inside the help body"
+	)
+
+
 func test_legacy_help_text_becomes_glyph_rows_and_notes() -> void:
 	InputRouter.force_prompt_family(InputRouter.Device.KEYBOARD, InputRouter.GamepadFamily.XBOX)
 	var controls := (

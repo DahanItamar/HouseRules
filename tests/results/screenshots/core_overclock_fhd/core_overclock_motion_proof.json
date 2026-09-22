@@ -3,10 +3,10 @@
 		"auto_centi": 0,
 		"crash": "242.50",
 		"crash_centi": 24250,
-		"dial_reads": "9.04",
+		"dial_reads": "9.05",
 		"label": "hauled_in",
 		"matches": true,
-		"settled_centi": 904,
+		"settled_centi": 905,
 		"state": 4,
 		"uniform": 4000000
 	},

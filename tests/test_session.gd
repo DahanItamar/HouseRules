@@ -9,6 +9,7 @@ func before_each() -> void:
 	_original_platform = SaveService.platform
 	_original_test_mode = Wallet.test_mode_enabled
 	Wallet.set_test_mode(false)
+	MotionPolicy.set_reduced_motion_for_tests(false)
 	SaveService.platform = LocalPlatform.new("user://tests/session_%s" % Time.get_ticks_usec())
 	SaveService.new_game(1234)
 	_floor = FloorController.new()
@@ -23,6 +24,7 @@ func after_each() -> void:
 	SceneRouter.floor = null
 	SaveService.platform = _original_platform
 	Wallet.set_test_mode(_original_test_mode)
+	MotionPolicy.clear_test_override()
 	SaveService.new_game(1234)
 
 

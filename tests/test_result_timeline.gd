@@ -12,7 +12,7 @@ func before_each() -> void:
 	Wallet.set_test_mode(false)
 	_starting_balance = Wallet.balance
 	Wallet.reset(200)
-	MotionPolicy.clear_test_override()
+	MotionPolicy.set_reduced_motion_for_tests(false)
 
 
 func after_each() -> void:

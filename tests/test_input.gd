@@ -22,10 +22,12 @@ var _original_device: InputRouter.Device
 
 func before_each() -> void:
 	_original_device = InputRouter.active_device
+	MotionPolicy.set_reduced_motion_for_tests(false)
 
 
 func after_each() -> void:
 	get_tree().paused = false
+	MotionPolicy.clear_test_override()
 	InputRouter.active_device = _original_device
 	InputRouter.active_gamepad_device = -1
 	InputRouter.is_gamepad_disconnected = false

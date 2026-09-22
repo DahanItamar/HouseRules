@@ -130,7 +130,12 @@ func focus_stake(selected: int) -> void:
 		if int(key.get_meta("amount")) == selected and not key.disabled:
 			key.grab_focus()
 			return
-	serve_button.grab_focus()
+	for key: Button in stake_keys:
+		if not key.disabled:
+			key.grab_focus()
+			return
+	if not serve_button.disabled:
+		serve_button.grab_focus()
 
 
 func focus_serve() -> void:

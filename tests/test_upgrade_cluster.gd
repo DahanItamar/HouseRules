@@ -517,7 +517,8 @@ func test_reduced_motion_bounds_every_phase() -> void:
 		var bounded := ClusterTheme.phase(full)
 		assert_lte(bounded, ClusterTheme.REDUCED_PHASE, "phase %.2f is bounded" % full)
 		assert_gt(bounded, 0.0, "a bounded phase still happens")
-	MotionPolicy.clear_test_override()
+	# Keep this test independent from the player's saved accessibility choice.
+	MotionPolicy.set_reduced_motion_for_tests(false)
 	for full: float in [ClusterTheme.PULSE_SECONDS, ClusterTheme.TUMBLE_SECONDS]:
 		assert_eq(ClusterTheme.phase(full), full, "full motion is unchanged")
 

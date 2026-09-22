@@ -2,14 +2,20 @@ extends GutTest
 
 const SLOT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/slot_classic.tres")
 const VAULT_REVEAL_FX := preload("res://src/ui/vault_reveal_fx.gd")
+var _starting_reduced_motion: bool
 
 
 func before_each() -> void:
+	_starting_reduced_motion = bool(
+		ProjectSettings.get_setting(MotionPolicy.SETTING_PATH, false)
+	)
+	ProjectSettings.set_setting(MotionPolicy.SETTING_PATH, false)
 	MotionPolicy.set_reduced_motion_for_tests(false)
 
 
 func after_each() -> void:
 	MotionPolicy.clear_test_override()
+	ProjectSettings.set_setting(MotionPolicy.SETTING_PATH, _starting_reduced_motion)
 
 
 func test_project_defaults_to_full_motion() -> void:

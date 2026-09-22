@@ -15,8 +15,9 @@ const STATE_TINTS: Dictionary = {
 	State.HOVER: Color(1.14, 1.12, 1.08),
 	State.PRESSED: Color(0.82, 0.82, 0.82),
 	State.DISABLED: Color(0.55, 0.55, 0.55),
-	# Warm rather than bright, so a focused key still brightens further on hover.
-	State.FOCUSED: Color(1.12, 1.06, 0.94),
+	# A restrained warm selection, kept inside SDR range so focus does not bleach
+	# painted materials or compete with the cyan keyboard ring.
+	State.FOCUSED: Color(1.0, 0.96, 0.88),
 }
 ## Canvas pixels the plate drops while the key is held.
 const PRESS_SHIFT: float = 1.0

@@ -1036,8 +1036,8 @@ out instead of lighting it. The arrowhead is a separate sprite because it sits
 *outside* the row's box, to the left of it, and moves between rows on focus.
 
 The cyan focus ring is drawn by the engine over the top of whichever plate is
-showing. It is mandated by `CLAUDE.md` for keyboard and controller focus and is
-not part of the painted art.
+showing. The UI design system reserves it for keyboard and controller focus; it
+is not part of the painted art.
 
 ## 2026-09-20 Corsair's Reach (the crash cabinet, re-themed)
 

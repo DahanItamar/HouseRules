@@ -18,6 +18,9 @@ func before_each() -> void:
 	_original_motion_path = MotionPolicy.preference_path
 	_original_motion_persistence = MotionPolicy.persistence_enabled
 	MotionPolicy.persistence_enabled = false
+	# UI motion tests must not inherit the player's saved accessibility choice.
+	# They opt into reduced motion explicitly when that is the behavior under test.
+	MotionPolicy.set_reduced_motion(false)
 	SaveService.platform = LocalPlatform.new("user://tests/ui_%s" % Time.get_ticks_usec())
 	SaveService.new_game(20260918)
 
@@ -459,6 +462,13 @@ func test_main_menu_exposes_a_focusable_reduced_motion_setting() -> void:
 	assert_string_contains(row.accessibility_name, tr("SETTING_OFF"))
 	row.grab_focus()
 	assert_eq(get_viewport().gui_get_focus_owner(), row)
+	var focus := row.get_theme_stylebox("focus") as StyleBoxEmpty
+	assert_not_null(focus)
+	var frame := row.get_node_or_null("MenuFocusFrame") as Control
+	assert_not_null(frame, "Menu focus follows the chevron instead of a box")
+	assert_eq(frame.position, Vector2.ZERO)
+	assert_eq(frame.size, row.size, "The focus trace is contained by its button")
+	assert_null(main._menu.get_node_or_null("MenuSelector"), "No detached selector sits outside")
 	# The retired settings key is hidden, and a hidden node that can still take
 	# focus leaves the menu with no ring drawn anywhere.
 	assert_false(main._menu_motion_button.visible)

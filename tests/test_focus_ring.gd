@@ -4,8 +4,8 @@ extends GutTest
 ## Every cabinet used to draw its own focus cue - a differently sized rectangle,
 ## sometimes filled with the key's own face colour so focusing a selected key hid
 ## that it was selected. These tests hold every key in every cabinet to the shared
-## FocusRing: the mandated cyan, hollow, one stroke weight, standing outside the key
-## rather than cutting into it, and following a painted plate's own corner.
+## FocusRing: the mandated cyan, hollow, one stroke weight, contained by the key
+## instead of becoming a second box outside it, and following its painted corner.
 
 const CABINETS: Array[String] = [
 	"res://data/cabinets/baccarat.tres",
@@ -18,7 +18,7 @@ const CABINETS: Array[String] = [
 	"res://data/cabinets/slot_classic.tres",
 	"res://data/cabinets/upgrade_cluster.tres",
 ]
-## CLAUDE.md reserves this one colour for keyboard and controller focus.
+## The UI design system reserves this colour for keyboard and controller focus.
 const MANDATED_CYAN := Color("48c5d5")
 
 var _starting_balance: int
@@ -63,11 +63,11 @@ func test_the_focus_colour_has_one_home() -> void:
 	assert_false(ring.draw_center, "A ring never fills the key it rings")
 	assert_eq(ring.bg_color.a, 0.0, "Nothing behind the ring either")
 	assert_eq(ring.shadow_size, 0, "Flat: a focus cue is not a glow")
-	assert_eq(ring.expand_margin_top, FocusRing.OUTSET, "It stands off the edge")
+	assert_eq(ring.expand_margin_top, 0.0, "It stays inside the component")
 	assert_eq(
 		ring.corner_radius_top_left,
 		int(6.0 + FocusRing.OUTSET),
-		"Offsetting outwards grows the corner with it, so the ring stays concentric"
+		"The contained ring follows the component corner"
 	)
 
 
@@ -91,7 +91,7 @@ func test_every_cabinet_rings_its_keys_the_same_way() -> void:
 			assert_eq(ring.border_color, MANDATED_CYAN, "%s rings in cyan" % who)
 			assert_false(ring.draw_center, "%s does not cover its own face" % who)
 			assert_eq(ring.border_width_top, FocusRing.WIDTH, "%s shares one weight" % who)
-			assert_eq(ring.expand_margin_top, FocusRing.OUTSET, "%s rings outside" % who)
+			assert_eq(ring.expand_margin_top, 0.0, "%s contains its focus ring" % who)
 			assert_eq(ring.shadow_size, 0, "%s casts no shadow" % who)
 			checked += 1
 	assert_gt(checked, 20, "The whole house was walked, not one cabinet")
@@ -161,7 +161,7 @@ func test_a_selected_key_lights_its_plate_and_a_held_one_sinks() -> void:
 	)
 	plate.set_state(KitPlate.State.FOCUSED)
 	var lit := plate.modulate
-	assert_gt(lit.r, 1.0, "Focus warms the plate")
+	assert_eq(lit.r, 1.0, "Focus stays inside SDR instead of bleaching the plate")
 	assert_gt(lit.r, lit.b, "Warm gold, not a cyan wash over the art")
 	assert_eq(plate.position.y, resting, "Selecting a key does not move it")
 
@@ -176,4 +176,4 @@ func test_hover_still_outranks_focus_so_the_pointer_key_is_the_brightest() -> vo
 	var focused: Color = KitPlate.STATE_TINTS[KitPlate.State.FOCUSED]
 	var hovered: Color = KitPlate.STATE_TINTS[KitPlate.State.HOVER]
 	assert_gt(hovered.b, focused.b, "Hover reads brighter than the resting selection")
-	assert_gt(focused.r, 1.0, "But a selected key is still visibly lit")
+	assert_gt(focused.r, focused.g, "The selected key keeps a visible warm tint")

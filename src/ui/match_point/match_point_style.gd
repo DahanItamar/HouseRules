@@ -70,9 +70,12 @@ static func style_button(button: Button, primary: bool = false) -> void:
 	button.add_theme_color_override("font_disabled_color", TEXT_DISABLED)
 	button.add_theme_font_override("font", Typography.DISPLAY_FONT)
 	button.add_theme_font_size_override("font_size", 18)
-	# The table's own keys wear the same painted plate the shared deck uses, so
-	# one cabinet does not mix painted keys with flat ones.
-	UiKit.paint_button(button, &"match_point", primary)
+	# Stake and risk keys wear the clubhouse's painted plate.  The large primary
+	# key deliberately keeps its cream enamel face: the painted plate has a dark
+	# green centre, which would leave the primary's green ink unreadable and make
+	# an enabled Serve key look disabled.
+	if not primary:
+		UiKit.paint_button(button, &"match_point")
 	# Ringed last, so the ring takes its corner from whichever face won.
 	FocusRing.apply(button, 2.0)
 

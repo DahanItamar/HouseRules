@@ -4,6 +4,14 @@ const SLOT_DEFINITION: CabinetDefinition = preload("res://data/cabinets/slot_cla
 const CABINET_SCENE_REGISTRY := preload("res://src/cabinets/cabinet_scene_registry.gd")
 
 
+func before_each() -> void:
+	MotionPolicy.set_reduced_motion_for_tests(false)
+
+
+func after_each() -> void:
+	MotionPolicy.clear_test_override()
+
+
 func test_domain_layer_has_no_presentation_dependencies() -> void:
 	var forbidden: Array[String] = [
 		"extends Node",
