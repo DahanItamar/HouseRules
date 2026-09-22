@@ -14,6 +14,8 @@ real-money wagering.
 <img src="https://img.shields.io/badge/Type-Mini%20Game-7c3aed?style=flat-square" alt="Type: Mini Game">
 <img src="https://img.shields.io/badge/Built%20with-AI%20%2F%20LLM-2563eb?style=flat-square" alt="Built with AI and LLM tools">
 <img src="https://img.shields.io/badge/Engine-Godot%204-478cbf?style=flat-square&logo=godotengine&logoColor=white" alt="Engine: Godot 4">
+<img src="https://img.shields.io/badge/release-v1.0.0-a01236?style=flat-square" alt="Release: v1.0.0">
+<a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-f5c542?style=flat-square" alt="License: MIT"></a>
 <img src="https://img.shields.io/badge/tests-573%20passing-a01236?style=flat-square" alt="573 tests passing">
 <img src="https://img.shields.io/badge/assertions-124%2C982-2b2b33?style=flat-square" alt="124,982 assertions">
 <img src="https://img.shields.io/badge/cabinets-9-2b2b33?style=flat-square" alt="Nine playable cabinets">
@@ -215,9 +217,10 @@ The repository includes high-resolution production art, retained source material
 and visual QA evidence, so cloning it is a substantial download. Generated caches,
 exports, temporary captures, and retired one-off screenshot batches are excluded.
 
-There is currently no project-level open-source license. Unless a license is added,
-the source and original assets remain all rights reserved. Third-party components and
-fonts retain their own licenses.
+Project-authored source code, documentation, and original assets are available under
+the [`MIT License`](LICENSE), to the extent the project owns rights in them.
+Third-party components and fonts retain their upstream terms; see
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
 
 Topics: `godot`, `godot-game`, `mini-game`, `casino-game`,
 `keyboard-accessible`, `controller-support`, `game-development`, and

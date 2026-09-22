@@ -194,7 +194,9 @@ photograph of a parrot and the README linked it under that name.
 4. **The bet HUD covers the crew's boots** in Corsair. The UI composition rules
    say HUD panels must not cover people. It reads as them standing behind the console,
    and it follows the wireframe the user drew, but it is worth a look.
-5. **No `LICENSE` file.** That is the user's decision, not an oversight.
+5. **Licensing and release:** project-authored code, documentation, and original
+   assets are published under MIT, with upstream notices retained separately.
+   The first public release is tagged `v1.0.0`.
 6. **Repository size**: the checked-out tracked tree is about **2.75 GiB** and
    packed Git history is about **3.95 GiB**, mostly high-resolution art, retained
    generation sources, and canonical visual QA. There is no individual file over
