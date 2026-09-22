@@ -9,10 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       - run: pip install -r tools/requirements-dev.txt
@@ -32,7 +32,7 @@ jobs:
       - name: Supplemental slot variance diagnosis
         if: always()
         run: Godot_v4.7.2-stable_linux.x86_64 --headless --path . -s tests/slot_rtp_diagnostic.gd
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: rtp-evidence
