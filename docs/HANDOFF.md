@@ -17,8 +17,9 @@ Manager's Office.
   RTP harness per cabinet.
 * `tools/check_localization.py`: passes (621 keys, 448 referenced).
 * `gdformat --check` and `gdlint` over all of `src` and `tests`: pass.
-* The last remote CI run is green; the public-release commit still requires its
-  own CI run after push.
+* Public-release CI is green on 2026-09-22: localization, formatting, linting,
+  Godot import, the full test/RTP gate, supplemental variance diagnostics, and
+  evidence upload all passed.
 * Canonical screenshot sets were re-shot against this runtime build.
 * `export/HouseRules.pck` is 421.3 MB and was smoke-launched successfully. The
   public-repository cleanup changes only documentation, tooling, CI, and retired
