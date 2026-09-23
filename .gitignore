@@ -24,3 +24,8 @@ tests/results/screenshots/roulette_fix/
 tests/results/*.log
 assets/source/layered_v2/_rejected/
 tools/art/__pycache__/
+
+# Standalone portfolio project and its generated-art workspace.
+# The site has its own Git history and deployment lifecycle.
+/portfolio-site/
+/portfolio-art/

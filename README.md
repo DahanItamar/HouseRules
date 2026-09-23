@@ -19,8 +19,9 @@ real-money wagering.
 <img src="https://img.shields.io/badge/tests-573%20passing-a01236?style=flat-square" alt="573 tests passing">
 <img src="https://img.shields.io/badge/assertions-124%2C982-2b2b33?style=flat-square" alt="124,982 assertions">
 <img src="https://img.shields.io/badge/cabinets-9-2b2b33?style=flat-square" alt="Nine playable cabinets">
+<a href="https://houserules.itamardahan.com/"><img src="https://img.shields.io/badge/case%20study-live-0f766e?style=flat-square" alt="Live House Rules development case study"></a>
 
-[Play](#play) - [Games](#nine-playable-cabinets) - [Controls](#controls) -
+[Case study](https://houserules.itamardahan.com/) - [Play](#play) - [Games](#nine-playable-cabinets) - [Controls](#controls) -
 [Testing](#tested-gameplay) - [AI workflow](#built-with-ai) - [Documentation](#documentation)
 
 </div>
@@ -43,6 +44,9 @@ The project was created to answer a practical question:
 The result is not a prompt demo or a collection of mockups. It is a playable game
 with deterministic domain logic, persistent progression, accessibility support,
 automated visual captures, and a full regression suite.
+
+Explore the complete idea-to-release process in the
+[interactive House Rules development case study](https://houserules.itamardahan.com/).
 
 ## Nine playable cabinets
 
